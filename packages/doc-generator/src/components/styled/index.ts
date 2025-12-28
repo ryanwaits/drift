@@ -14,6 +14,8 @@ export type { ExportCardProps } from './ExportCard';
 export { ExportCard } from './ExportCard';
 export type { ExportIndexPageProps } from './ExportIndexPage';
 export { ExportIndexPage } from './ExportIndexPage';
+export type { FullAPIReferencePageProps } from './FullAPIReferencePage';
+export { FullAPIReferencePage } from './FullAPIReferencePage';
 export type { FunctionPageProps } from './FunctionPage';
 export { FunctionPage } from './FunctionPage';
 export type { InterfacePageProps } from './InterfacePage';
@@ -22,3 +24,19 @@ export type { NestedPropertyItemProps, ParameterItemProps } from './ParameterIte
 export { ParameterItem } from './ParameterItem';
 export type { VariablePageProps } from './VariablePage';
 export { VariablePage } from './VariablePage';
+
+// Section components (for composing custom layouts)
+export {
+  ClassSection,
+  type ClassSectionProps,
+  EnumSection,
+  type EnumSectionProps,
+  ExportSection,
+  type ExportSectionProps,
+  FunctionSection,
+  type FunctionSectionProps,
+  InterfaceSection,
+  type InterfaceSectionProps,
+  VariableSection,
+  type VariableSectionProps,
+} from './sections';

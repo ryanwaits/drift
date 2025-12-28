@@ -1,5 +1,16 @@
 # @openpkg-ts/doc-generator
 
+## 0.5.0
+
+### Minor Changes
+
+- Add FullAPIReferencePage component and refactor to section-based architecture
+
+  - New FullAPIReferencePage: single-page API ref with kind filtering
+  - New section components: FunctionSection, ClassSection, InterfaceSection, EnumSection, VariableSection, ExportSection
+  - Refactored page components to use sections internally (reduces duplication)
+  - Export sections from doc-generator and fumadocs-adapter for custom layouts
+
 ## 0.4.0
 
 ### Minor Changes
