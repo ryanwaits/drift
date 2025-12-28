@@ -1,5 +1,13 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.4.3
+
+### Patch Changes
+
+- Bump for doc-generator DocsKit code block improvements
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.3.4
+
 ## 0.4.2
 
 ### Patch Changes

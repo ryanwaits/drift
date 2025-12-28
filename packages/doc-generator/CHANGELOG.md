@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.3.4
+
+### Patch Changes
+
+- Use DocsKit code blocks in styled page components, add setup docs for Fumadocs integration
+
 ## 0.3.3
 
 ### Patch Changes
