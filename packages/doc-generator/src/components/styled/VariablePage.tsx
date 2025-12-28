@@ -1,6 +1,7 @@
 'use client';
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
+import { ClientDocsKitCode } from '@doccov/ui/docskit';
 import { formatSchema } from '../../core/query';
 
 export interface VariablePageProps {
@@ -69,9 +70,13 @@ export function VariablePage({
             {renderExample ? (
               renderExample(exampleCode, `${exp.name.toLowerCase()}.ts`)
             ) : (
-              <pre className="rounded-lg border border-border bg-muted/30 p-4 overflow-x-auto">
-                <code className="font-mono text-sm text-foreground">{exampleCode}</code>
-              </pre>
+              <ClientDocsKitCode
+                codeblock={{
+                  value: exampleCode,
+                  lang: 'ts',
+                  meta: '-c',
+                }}
+              />
             )}
           </div>
         )}

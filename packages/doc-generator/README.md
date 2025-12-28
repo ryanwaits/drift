@@ -81,6 +81,51 @@ import { FunctionPage, ClassPage } from '@openpkg-ts/doc-generator/react/styled'
 <ClassPage export={cls} />
 ```
 
+### Styled Components Setup (Fumadocs)
+
+Pre-styled components require CSS variables and Tailwind configuration for proper theming and syntax highlighting.
+
+#### 1. Install adapter
+
+```bash
+npm install @openpkg-ts/fumadocs-adapter
+```
+
+#### 2. Import CSS
+
+Add to your global CSS (e.g., `app/global.css`):
+
+```css
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+@import '@openpkg-ts/fumadocs-adapter/css';
+```
+
+This provides:
+- `--dk-*` variables for DocsKit code blocks
+- `--ch-*` variables for CodeHike syntax highlighting (GitHub theme)
+- `--api-*` variables for API reference styling
+- Light/dark mode support
+
+#### 3. Tailwind v4 source scanning
+
+Tailwind v4 excludes `node_modules` by default. Add this directive to scan styled component classes:
+
+```css
+@source "../node_modules/@openpkg-ts/doc-generator/dist/**/*.js";
+```
+
+Without this, utility classes like `lg:grid-cols-[1fr,minmax(0,420px)]` won't be included in your build.
+
+#### 4. Layout requirements
+
+Styled components use a two-column layout at the `lg:` breakpoint (1024px). For best results:
+
+- Content area should be >= 1024px wide
+- In Fumadocs, consider using `full` layout for API pages or hiding the TOC to maximize content width
+- On narrower viewports, the layout stacks vertically
+
 ## API Reference
 
 ### Core Functions

@@ -3,6 +3,7 @@
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import { cn } from '@doccov/ui/lib/utils';
 import { CodeTabs, ImportSection, type CodeTab } from '@doccov/ui/api';
+import { ClientDocsKitCode } from '@doccov/ui/docskit';
 import { Check, Copy } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { formatSchema } from '../../core/query';
@@ -50,15 +51,22 @@ export function FunctionPage({
             : example.title || `Example ${index + 1}`;
         const filename = `${exp.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${index + 1}.ts`;
 
+        // Detect language from example or default to typescript
+        const lang = typeof example === 'string' ? 'ts' : example.language || 'ts';
+
         return {
           label: title,
           code,
           content: renderExample ? (
             renderExample(code, filename)
           ) : (
-            <pre className="p-4 overflow-x-auto">
-              <code className="font-mono text-sm text-foreground">{code}</code>
-            </pre>
+            <ClientDocsKitCode
+              codeblock={{
+                value: code,
+                lang,
+                meta: '-c', // copy button enabled
+              }}
+            />
           ),
         };
       })

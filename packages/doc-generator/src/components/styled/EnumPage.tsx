@@ -1,6 +1,7 @@
 'use client';
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
+import { ClientDocsKitCode } from '@doccov/ui/docskit';
 import { buildSignatureString } from '../../core/query';
 
 export interface EnumPageProps {
@@ -99,9 +100,13 @@ export function EnumPage({ export: exp, spec, renderExample }: EnumPageProps): R
                 {renderExample ? (
                   renderExample(code, `${exp.name.toLowerCase()}-${index}.ts`)
                 ) : (
-                  <pre className="rounded-lg border border-border bg-secondary p-4 overflow-x-auto">
-                    <code className="font-mono text-sm text-foreground">{code}</code>
-                  </pre>
+                  <ClientDocsKitCode
+                    codeblock={{
+                      value: code,
+                      lang: 'ts',
+                      meta: '-c',
+                    }}
+                  />
                 )}
               </div>
             );
