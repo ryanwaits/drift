@@ -1,118 +1,100 @@
 'use client';
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import { ClientDocsKitCode } from '@doccov/ui/docskit';
-import { buildSignatureString } from '../../core/query';
+import {
+  APIParameterItem,
+  APISection,
+  ParameterList,
+} from '@doccov/ui/docskit';
+import type { ReactNode } from 'react';
+import {
+  buildImportStatement,
+  getLanguagesFromExamples,
+  specExamplesToCodeExamples,
+} from '../../adapters/spec-to-docskit';
 
 export interface EnumPageProps {
   export: SpecExport;
   spec: OpenPkg;
-  /** Custom code example renderer */
-  renderExample?: (code: string, filename: string) => React.ReactNode;
 }
 
 /**
- * Styled enum page component with Tailwind.
+ * Stripe-style enum page with two-column layout.
  */
-export function EnumPage({ export: exp, spec, renderExample }: EnumPageProps): React.ReactNode {
+export function EnumPage({ export: exp, spec }: EnumPageProps): ReactNode {
   const members = exp.members ?? [];
-  const hasExamples = exp.examples && exp.examples.length > 0;
-  const signature = buildSignatureString(exp);
+
+  // Convert spec data to DocsKit format
+  const languages = getLanguagesFromExamples(exp.examples);
+  const examples = specExamplesToCodeExamples(exp.examples);
+  const importStatement = buildImportStatement(exp, spec);
+
+  // Build enum definition for fallback example
+  const enumDefinition = members.length > 0
+    ? `enum ${exp.name} {\n${members.map(m => {
+        const value = m.schema !== undefined
+          ? typeof m.schema === 'object' && m.schema !== null
+            ? ((m.schema as Record<string, unknown>).const ?? (m.schema as Record<string, unknown>).default)
+            : m.schema
+          : undefined;
+        return `  ${m.name}${value !== undefined ? ` = ${JSON.stringify(value)}` : ''},`;
+      }).join('\n')}\n}`
+    : `enum ${exp.name} { }`;
+
+  const displayExamples = examples.length > 0 ? examples : [{
+    languageId: 'typescript',
+    code: `${importStatement}\n\n${enumDefinition}`,
+    highlightLang: 'ts',
+  }];
+
+  const displayLanguages = languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
 
   return (
-    <div className="space-y-6">
-      {/* Description */}
-      {exp.description && (
-        <p className="text-muted-foreground text-base leading-relaxed">{exp.description}</p>
-      )}
-
-      {/* Declaration */}
-      <section>
-        <h2 className="text-xl font-semibold mb-2">Declaration</h2>
-        <div className="rounded-lg border border-border bg-muted/30 p-4 overflow-x-auto">
-          <code className="font-mono text-sm text-foreground">{signature}</code>
-        </div>
-        {exp.deprecated && (
-          <div className="mt-2 rounded-md bg-yellow-500/10 border border-yellow-500/20 px-3 py-2 text-sm text-yellow-600 dark:text-yellow-400">
-            <strong>Deprecated:</strong> This export is deprecated.
-          </div>
-        )}
-      </section>
-
-      {/* Enum Members */}
-      {members.length > 0 && (
-        <section>
-          <h2 className="text-xl font-semibold mb-2">Members</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-2 px-3 font-medium text-muted-foreground">Name</th>
-                  <th className="text-left py-2 px-3 font-medium text-muted-foreground">Value</th>
-                  <th className="text-left py-2 px-3 font-medium text-muted-foreground">
-                    Description
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member, index) => {
-                  const value =
-                    member.schema !== undefined
-                      ? typeof member.schema === 'object' && member.schema !== null
-                        ? ((member.schema as Record<string, unknown>).const ??
-                          (member.schema as Record<string, unknown>).default ??
-                          '-')
-                        : member.schema
-                      : '-';
-
-                  return (
-                    <tr key={member.name ?? index} className="border-b border-border last:border-0">
-                      <td className="py-2 px-3 align-top">
-                        <code className="text-primary font-mono text-xs bg-secondary px-1.5 py-0.5 rounded">
-                          {member.name}
-                        </code>
-                      </td>
-                      <td className="py-2 px-3 align-top">
-                        <code className="font-mono text-xs text-muted-foreground">
-                          {String(value)}
-                        </code>
-                      </td>
-                      <td className="py-2 px-3 align-top text-muted-foreground">
-                        {member.description ?? ''}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-
-      {/* Examples */}
-      {hasExamples && (
-        <section>
-          <h2 className="text-xl font-semibold mb-2">Examples</h2>
-          {exp.examples!.map((example, index) => {
-            const code = typeof example === 'string' ? example : example.code;
-            return (
-              <div key={index} className="mb-4">
-                {renderExample ? (
-                  renderExample(code, `${exp.name.toLowerCase()}-${index}.ts`)
-                ) : (
-                  <ClientDocsKitCode
-                    codeblock={{
-                      value: code,
-                      lang: 'ts',
-                      meta: '-c',
-                    }}
-                  />
-                )}
+    <div className="doccov-enum-page not-prose">
+      <APISection
+        id={exp.id || exp.name}
+        title={`enum ${exp.name}`}
+        description={
+          <div className="space-y-3">
+            {exp.description && <p>{exp.description}</p>}
+            {exp.deprecated && (
+              <div className="rounded-md bg-yellow-500/10 border border-yellow-500/20 px-3 py-2 text-sm text-yellow-600 dark:text-yellow-400">
+                <strong>Deprecated:</strong> This export is deprecated.
               </div>
-            );
-          })}
-        </section>
-      )}
+            )}
+            <code className="text-sm font-mono bg-muted px-2 py-1 rounded inline-block">
+              {importStatement}
+            </code>
+          </div>
+        }
+        languages={displayLanguages}
+        examples={displayExamples}
+        codePanelTitle={exp.name}
+      >
+        {/* Enum Members */}
+        {members.length > 0 && (
+          <ParameterList title="Members">
+            {members.map((member, index) => {
+              const value = member.schema !== undefined
+                ? typeof member.schema === 'object' && member.schema !== null
+                  ? ((member.schema as Record<string, unknown>).const ??
+                    (member.schema as Record<string, unknown>).default ??
+                    undefined)
+                  : member.schema
+                : undefined;
+
+              return (
+                <APIParameterItem
+                  key={member.name ?? index}
+                  name={member.name}
+                  type={value !== undefined ? String(value) : 'auto'}
+                  description={member.description}
+                />
+              );
+            })}
+          </ParameterList>
+        )}
+      </APISection>
     </div>
   );
 }

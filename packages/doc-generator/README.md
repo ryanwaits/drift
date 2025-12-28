@@ -169,7 +169,7 @@ import {
   getMethods,
   getProperties,
   groupByVisibility,
-  sortByKindThenName,
+  sortByName,
 } from '@openpkg-ts/doc-generator'
 
 formatSchema({ type: 'string' }) // 'string'

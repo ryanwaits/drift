@@ -1,5 +1,16 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.5.0
+
+### Minor Changes
+
+- Add Stripe-style API reference components (APIParameterItem, ParameterList, ResponseBlock, APICodePanel, LanguageSelector, APISection) and refactor styled pages to use DocsKit components
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.4.0
+
 ## 0.4.3
 
 ### Patch Changes

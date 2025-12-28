@@ -48,7 +48,6 @@ export {
   isMethod,
   isProperty,
   resolveTypeRef,
-  sortByKindThenName,
   sortByName,
 } from './core/query';
 export type {

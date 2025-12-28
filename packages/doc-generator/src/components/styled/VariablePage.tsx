@@ -1,86 +1,81 @@
 'use client';
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import { ClientDocsKitCode } from '@doccov/ui/docskit';
+import {
+  APIParameterItem,
+  APISection,
+  ParameterList,
+} from '@doccov/ui/docskit';
+import type { ReactNode } from 'react';
+import {
+  buildImportStatement,
+  getLanguagesFromExamples,
+  specExamplesToCodeExamples,
+} from '../../adapters/spec-to-docskit';
 import { formatSchema } from '../../core/query';
 
 export interface VariablePageProps {
   export: SpecExport;
   spec: OpenPkg;
-  /** Custom code example renderer */
-  renderExample?: (code: string, filename: string) => React.ReactNode;
 }
 
 /**
- * Styled variable/constant page component with Tailwind.
+ * Stripe-style variable/constant page with two-column layout.
  */
 export function VariablePage({
   export: exp,
   spec,
-  renderExample,
-}: VariablePageProps): React.ReactNode {
+}: VariablePageProps): ReactNode {
   const typeValue = typeof exp.type === 'string' ? exp.type : formatSchema(exp.schema);
-  const hasExamples = exp.examples && exp.examples.length > 0;
 
-  const exampleCode = hasExamples
-    ? typeof exp.examples![0] === 'string'
-      ? exp.examples![0]
-      : exp.examples![0].code
-    : '';
+  // Convert spec data to DocsKit format
+  const languages = getLanguagesFromExamples(exp.examples);
+  const examples = specExamplesToCodeExamples(exp.examples);
+  const importStatement = buildImportStatement(exp, spec);
+
+  // Get const value if available
+  const constValue = exp.schema && typeof exp.schema === 'object'
+    ? (exp.schema as Record<string, unknown>).const
+    : undefined;
+
+  const displayExamples = examples.length > 0 ? examples : [{
+    languageId: 'typescript',
+    code: `${importStatement}\n\nconsole.log(${exp.name}); // ${constValue !== undefined ? JSON.stringify(constValue) : typeValue}`,
+    highlightLang: 'ts',
+  }];
+
+  const displayLanguages = languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
 
   return (
-    <div className="space-y-8">
-      {/* Description */}
-      {exp.description && (
-        <p className="text-muted-foreground text-lg leading-relaxed">{exp.description}</p>
-      )}
-
-      {/* Declaration */}
-      <div className="rounded-lg border border-border bg-muted/30 p-4 overflow-x-auto">
-        <code className="font-mono text-sm text-foreground whitespace-pre">
-          const {exp.name}: {typeValue}
-        </code>
-      </div>
-      {exp.deprecated && (
-        <div className="rounded-md bg-yellow-500/10 border border-yellow-500/20 px-3 py-2 text-sm text-yellow-600 dark:text-yellow-400">
-          <strong>Deprecated:</strong> This export is deprecated.
-        </div>
-      )}
-
-      {/* Two-column layout */}
-      <div className={`grid gap-8 ${hasExamples ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
-        {/* Left column: Type info */}
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-              Type
-            </h3>
-            <div className="rounded-lg border border-border bg-card p-4">
-              <code className="font-mono text-sm text-primary">{typeValue}</code>
-            </div>
-          </div>
-        </div>
-
-        {/* Right column: Examples */}
-        {hasExamples && (
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-              {exp.name} usage
-            </h3>
-            {renderExample ? (
-              renderExample(exampleCode, `${exp.name.toLowerCase()}.ts`)
-            ) : (
-              <ClientDocsKitCode
-                codeblock={{
-                  value: exampleCode,
-                  lang: 'ts',
-                  meta: '-c',
-                }}
-              />
+    <div className="doccov-variable-page not-prose">
+      <APISection
+        id={exp.id || exp.name}
+        title={`const ${exp.name}`}
+        description={
+          <div className="space-y-3">
+            {exp.description && <p>{exp.description}</p>}
+            {exp.deprecated && (
+              <div className="rounded-md bg-yellow-500/10 border border-yellow-500/20 px-3 py-2 text-sm text-yellow-600 dark:text-yellow-400">
+                <strong>Deprecated:</strong> This export is deprecated.
+              </div>
             )}
+            <code className="text-sm font-mono bg-muted px-2 py-1 rounded inline-block">
+              {importStatement}
+            </code>
           </div>
-        )}
-      </div>
+        }
+        languages={displayLanguages}
+        examples={displayExamples}
+        codePanelTitle={exp.name}
+      >
+        <ParameterList title="Type">
+          <APIParameterItem
+            name={exp.name}
+            type={typeValue}
+            description={constValue !== undefined ? `Value: ${JSON.stringify(constValue)}` : undefined}
+          />
+        </ParameterList>
+      </APISection>
     </div>
   );
 }

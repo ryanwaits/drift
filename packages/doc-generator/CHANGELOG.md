@@ -1,5 +1,16 @@
 # @openpkg-ts/doc-generator
 
+## 0.4.0
+
+### Minor Changes
+
+- Add Stripe-style API reference components (APIParameterItem, ParameterList, ResponseBlock, APICodePanel, LanguageSelector, APISection) and refactor styled pages to use DocsKit components
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/ui@0.3.0
+
 ## 0.3.4
 
 ### Patch Changes

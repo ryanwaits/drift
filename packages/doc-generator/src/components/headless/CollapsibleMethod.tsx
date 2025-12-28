@@ -1,8 +1,8 @@
 'use client';
 
-import type { SpecMember, SpecSchema } from '@openpkg-ts/spec';
+import type { SpecMember } from '@openpkg-ts/spec';
 import { useEffect, useState } from 'react';
-import { formatSchema } from '../../core/query';
+import { formatReturnType, formatSchema } from '../../core/query';
 
 export interface CollapsibleMethodProps {
   /** Method member to display */
@@ -15,11 +15,6 @@ export interface CollapsibleMethodProps {
   renderHeader?: (member: SpecMember, expanded: boolean, toggle: () => void) => React.ReactNode;
   /** Custom content renderer */
   renderContent?: (member: SpecMember) => React.ReactNode;
-}
-
-function formatReturnType(returns: { schema?: SpecSchema } | undefined): string {
-  if (!returns) return 'void';
-  return formatSchema(returns.schema);
 }
 
 function formatParamPreview(params: { name?: string }[] | undefined): string {
@@ -60,7 +55,7 @@ export function CollapsibleMethod({
   const isStatic = flags?.static;
   const isAsync = flags?.async;
 
-  const returnType = formatReturnType(sig?.returns);
+  const returnType = formatReturnType(sig);
   const paramPreview = formatParamPreview(sig?.parameters);
 
   const toggle = () => setExpanded(!expanded);

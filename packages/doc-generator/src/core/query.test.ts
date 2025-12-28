@@ -12,7 +12,6 @@ import {
   isMethod,
   isProperty,
   resolveTypeRef,
-  sortByKindThenName,
   sortByName,
 } from './query';
 
@@ -376,24 +375,3 @@ describe('sortByName', () => {
   });
 });
 
-describe('sortByKindThenName', () => {
-  test('sorts by kind first', () => {
-    const exports: SpecExport[] = [
-      { id: '1', name: 'B', kind: 'class' },
-      { id: '2', name: 'A', kind: 'function' },
-    ];
-    const sorted = sortByKindThenName(exports);
-    expect(sorted[0].kind).toBe('function');
-    expect(sorted[1].kind).toBe('class');
-  });
-
-  test('sorts by name within kind', () => {
-    const exports: SpecExport[] = [
-      { id: '1', name: 'B', kind: 'function' },
-      { id: '2', name: 'A', kind: 'function' },
-    ];
-    const sorted = sortByKindThenName(exports);
-    expect(sorted[0].name).toBe('A');
-    expect(sorted[1].name).toBe('B');
-  });
-});

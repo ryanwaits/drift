@@ -34,3 +34,30 @@ export { WithNotes } from './notes';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 export { TooltipLink, tooltip } from './tooltip';
 export { wordWrap } from './word-wrap';
+
+// Stripe-style API reference components
+export {
+  EndpointBadge,
+  endpointBadgeVariants,
+  type EndpointBadgeProps,
+  type HttpMethod,
+  EndpointHeader,
+  type EndpointHeaderProps,
+  APIParameterItem,
+  type APIParameterItemProps,
+  type APIParameterSchema,
+  ParameterList,
+  type ParameterListProps,
+  ResponseBlock,
+  type ResponseBlockProps,
+  LanguageSelector,
+  type LanguageSelectorProps,
+  type Language,
+  APICodePanel,
+  type APICodePanelProps,
+  type CodeExample,
+  APISection,
+  type APISectionProps,
+  APIReferencePage,
+  type APIReferencePageProps,
+} from './api';

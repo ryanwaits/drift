@@ -59,7 +59,6 @@ export {
   type SearchIndex,
   type SearchOptions,
   type SearchRecord,
-  sortByKindThenName,
   sortByName,
   toAlgoliaRecords,
   toDocusaurusSidebarJS,

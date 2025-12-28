@@ -1,5 +1,11 @@
 # @doccov/ui
 
+## 0.3.0
+
+### Minor Changes
+
+- Add Stripe-style API reference components (APIParameterItem, ParameterList, ResponseBlock, APICodePanel, LanguageSelector, APISection) and refactor styled pages to use DocsKit components
+
 ## 0.2.3
 
 ### Patch Changes

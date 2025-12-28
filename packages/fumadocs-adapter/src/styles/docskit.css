@@ -73,6 +73,7 @@
     --api-text-secondary: var(--color-fd-muted-foreground, hsl(0 0% 60%));
     --api-accent: var(--color-fd-primary, hsl(220 70% 55%));
     --api-accent-muted: var(--color-fd-primary, hsl(220 70% 55%) / 0.15);
+
   }
 
   /* Light mode overrides */
@@ -93,6 +94,7 @@
     --api-text-secondary: var(--color-fd-muted-foreground, hsl(0 0% 45%));
     --api-accent: var(--color-fd-primary, hsl(220 70% 50%));
     --api-accent-muted: var(--color-fd-primary, hsl(220 70% 50%) / 0.1);
+
   }
 }
 

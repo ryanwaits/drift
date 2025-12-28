@@ -295,30 +295,3 @@ export function sortByName<T extends { name: string }>(items: T[]): T[] {
   return [...items].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/**
- * Sort exports by kind, then name.
- * Kind order: function, class, interface, type, enum, variable, namespace, module, reference, external.
- *
- * @param exports - Array of exports to sort
- * @returns New sorted array
- */
-export function sortByKindThenName(exports: SpecExport[]): SpecExport[] {
-  const kindOrder: Record<SpecExportKind, number> = {
-    function: 0,
-    class: 1,
-    interface: 2,
-    type: 3,
-    enum: 4,
-    variable: 5,
-    namespace: 6,
-    module: 7,
-    reference: 8,
-    external: 9,
-  };
-
-  return [...exports].sort((a, b) => {
-    const kindDiff = kindOrder[a.kind] - kindOrder[b.kind];
-    if (kindDiff !== 0) return kindDiff;
-    return a.name.localeCompare(b.name);
-  });
-}
