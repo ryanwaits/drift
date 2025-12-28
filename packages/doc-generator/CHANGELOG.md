@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.6.2
+
+### Patch Changes
+
+- refactor: simplify css vars, use codehike theme colors, fix react key warnings
+
 ## 0.6.1
 
 ### Patch Changes

@@ -29,6 +29,28 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+
+  /* Docskit code block colors - mapped to CodeHike GitHub theme vars */
+  --color-dk-background: var(--ch-16);
+  --color-dk-border: var(--ch-23);
+  --color-dk-tabs-background: var(--ch-22);
+  --color-dk-tab-inactive-foreground: var(--ch-15);
+  --color-dk-tab-active-foreground: var(--ch-4);
+  --color-dk-selection: var(--ch-20);
+  --color-dk-line-number: var(--ch-24);
+  --color-dk-active-border: var(--ch-3);
+
+  /* CodeHike syntax colors for Tailwind utilities */
+  --color-ch-0: var(--ch-0);
+  --color-ch-1: var(--ch-1);
+  --color-ch-2: var(--ch-2);
+  --color-ch-3: var(--ch-3);
+  --color-ch-4: var(--ch-4);
+  --color-ch-5: var(--ch-5);
+  --color-ch-6: var(--ch-6);
+  --color-ch-7: var(--ch-7);
+  --color-ch-8: var(--ch-8);
+  --color-ch-9: var(--ch-9);
 }
 
 @layer base {
@@ -47,122 +69,37 @@
     --secondary-foreground: var(--color-fd-secondary-foreground, var(--color-fd-foreground));
     --accent: var(--color-fd-accent);
     --accent-foreground: var(--color-fd-accent-foreground, var(--color-fd-foreground));
-
-    /* Docskit code block colors - mapped to Fumadocs variables */
-    --dk-background: var(--color-fd-card, hsl(0 0% 3%));
-    --dk-border: var(--color-fd-border, hsl(0 0% 18%));
-    --dk-tabs-background: var(--color-fd-muted, hsl(0 0% 10%));
-    --dk-tab-inactive-foreground: var(--color-fd-muted-foreground, hsl(0 0% 60%));
-    --dk-tab-active-foreground: var(--color-fd-foreground, hsl(0 0% 98%));
-    --dk-selection: var(--color-fd-primary, hsl(220 70% 50%));
-
-    /* Line highlight colors */
-    --dk-line-bg: transparent;
-    --dk-line-border: transparent;
-
-    /* API Reference Typography */
-    --api-font-mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
-    --api-font-display: var(--font-sans, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
-
-    /* API Reference Colors (dark mode first) */
-    --api-bg-primary: var(--color-fd-background, hsl(0 0% 3%));
-    --api-bg-secondary: var(--color-fd-muted, hsl(0 0% 10%));
-    --api-bg-card: var(--color-fd-card, hsl(0 0% 6%));
-    --api-border: var(--color-fd-border, hsl(0 0% 18%));
-    --api-text-primary: var(--color-fd-foreground, hsl(0 0% 98%));
-    --api-text-secondary: var(--color-fd-muted-foreground, hsl(0 0% 60%));
-    --api-accent: var(--color-fd-primary, hsl(220 70% 55%));
-    --api-accent-muted: var(--color-fd-primary, hsl(220 70% 55%) / 0.15);
-
-  }
-
-  /* Light mode overrides */
-  .light,
-  [data-theme="light"] {
-    --dk-background: var(--color-fd-card, hsl(0 0% 98%));
-    --dk-border: var(--color-fd-border, hsl(0 0% 85%));
-    --dk-tabs-background: var(--color-fd-muted, hsl(0 0% 95%));
-    --dk-tab-inactive-foreground: var(--color-fd-muted-foreground, hsl(0 0% 45%));
-    --dk-tab-active-foreground: var(--color-fd-foreground, hsl(0 0% 10%));
-
-    /* API Reference Colors (light mode) */
-    --api-bg-primary: var(--color-fd-background, hsl(0 0% 100%));
-    --api-bg-secondary: var(--color-fd-muted, hsl(0 0% 96%));
-    --api-bg-card: var(--color-fd-card, hsl(0 0% 99%));
-    --api-border: var(--color-fd-border, hsl(0 0% 85%));
-    --api-text-primary: var(--color-fd-foreground, hsl(0 0% 10%));
-    --api-text-secondary: var(--color-fd-muted-foreground, hsl(0 0% 45%));
-    --api-accent: var(--color-fd-primary, hsl(220 70% 50%));
-    --api-accent-muted: var(--color-fd-primary, hsl(220 70% 50%) / 0.1);
-
   }
 }
 
-/* Tailwind utility classes for docskit */
+/* Tailwind utility classes for docskit - selection needs special handling */
 @layer utilities {
-  .bg-dk-background {
-    background-color: var(--dk-background);
-  }
-  .bg-dk-tabs-background {
-    background-color: var(--dk-tabs-background);
-  }
-  .border-dk-border {
-    border-color: var(--dk-border);
-  }
-  .text-dk-tab-inactive-foreground {
-    color: var(--dk-tab-inactive-foreground);
-  }
-  .text-dk-tab-active-foreground {
-    color: var(--dk-tab-active-foreground);
-  }
   .selection\:bg-dk-selection::selection,
   .selection\:bg-dk-selection *::selection {
-    background-color: var(--dk-selection);
-  }
-
-  /* API Reference utilities */
-  .font-api-mono {
-    font-family: var(--api-font-mono);
-  }
-  .font-api-display {
-    font-family: var(--api-font-display);
-  }
-  .bg-api-primary {
-    background-color: var(--api-bg-primary);
-  }
-  .bg-api-secondary {
-    background-color: var(--api-bg-secondary);
-  }
-  .bg-api-card {
-    background-color: var(--api-bg-card);
-  }
-  .border-api {
-    border-color: var(--api-border);
-  }
-  .text-api-primary {
-    color: var(--api-text-primary);
-  }
-  .text-api-secondary {
-    color: var(--api-text-secondary);
-  }
-  .text-api-accent {
-    color: var(--api-accent);
-  }
-  .bg-api-accent-muted {
-    background-color: var(--api-accent-muted);
+    background-color: var(--ch-20);
   }
 }
 
-/* Stripe-style FunctionPage layout */
+/* API Reference page layouts */
 @layer components {
-  .doccov-function-page {
-    /* Full width within container */
+  /* Common padding for all doccov pages - matches Fumadocs OpenAPI */
+  .doccov-function-page,
+  .doccov-class-page,
+  .doccov-interface-page,
+  .doccov-enum-page,
+  .doccov-variable-page,
+  .doccov-index-page,
+  .doccov-full-reference-page {
     width: 100%;
+    max-width: 1200px;
+    padding: 32px 24px 24px;
   }
 
   /* Mobile-first: stack layout on small screens */
   @media (max-width: 1023px) {
-    .doccov-function-page aside {
+    .doccov-function-page aside,
+    .doccov-class-page aside,
+    .doccov-interface-page aside {
       margin-top: 2rem;
       position: relative;
       top: auto;
@@ -173,8 +110,9 @@
 
   /* Large screens: two-column with sticky sidebar */
   @media (min-width: 1024px) {
-    .doccov-function-page {
-      /* Prevent overflow in grid */
+    .doccov-function-page,
+    .doccov-class-page,
+    .doccov-interface-page {
       overflow: visible;
     }
   }

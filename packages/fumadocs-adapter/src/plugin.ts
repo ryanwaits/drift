@@ -78,12 +78,16 @@ export function openpkgPlugin(options: OpenpkgPluginOptions = {}): LoaderPlugin 
         if (!kind || !KIND_BADGES[kind]) return node;
 
         // Add badge to node name
-        const badge = createElement(KindBadge, { kind });
+        const badge = createElement(KindBadge, { kind, key: 'badge' });
+        const name =
+          typeof node.name === 'string'
+            ? createElement('span', { key: 'name' }, node.name)
+            : node.name;
         const newName = createElement(
           'span',
           { className: 'openpkg-sidebar-item' },
           badge,
-          node.name
+          name
         );
 
         return { ...node, name: newName };

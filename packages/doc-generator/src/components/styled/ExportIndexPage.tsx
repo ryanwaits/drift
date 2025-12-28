@@ -116,7 +116,7 @@ export function ExportIndexPage({
   const totalExports = filteredGroups.reduce((sum, g) => sum + g.exports.length, 0);
 
   return (
-    <div className={cn('space-y-8 not-prose', className)}>
+    <div className={cn('doccov-index-page space-y-8 not-prose', className)}>
       {/* Package header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-3">

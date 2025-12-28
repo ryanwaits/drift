@@ -225,7 +225,7 @@ export function FullAPIReferencePage({
   const shouldShowFilters = showFilters && !kinds?.length && availableKinds.length > 1;
 
   return (
-    <div className={cn('not-prose', showTOC && 'lg:grid lg:grid-cols-[220px_1fr] lg:gap-8', className)}>
+    <div className={cn('doccov-full-reference-page not-prose', showTOC && 'lg:grid lg:grid-cols-[220px_1fr] lg:gap-8', className)}>
       {/* TOC Sidebar */}
       {showTOC && (
         <aside className="hidden lg:block">

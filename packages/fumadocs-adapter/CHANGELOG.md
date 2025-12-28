@@ -1,5 +1,13 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.6.2
+
+### Patch Changes
+
+- refactor: simplify css vars, use codehike theme colors, fix react key warnings
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.6.2
+
 ## 0.6.1
 
 ### Patch Changes
