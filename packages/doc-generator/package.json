@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/doc-generator",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "API doc generator consuming OpenPkg specs. TypeDoc alternative for modern doc frameworks.",
   "keywords": [
     "openpkg",

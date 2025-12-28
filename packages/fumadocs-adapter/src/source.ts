@@ -73,6 +73,23 @@ const KIND_LABELS: Partial<Record<SpecExportKind, string>> = {
   external: 'External',
 };
 
+const KIND_SLUGS: Partial<Record<SpecExportKind, string>> = {
+  function: 'functions',
+  class: 'classes',
+  interface: 'interfaces',
+  type: 'types',
+  enum: 'enums',
+  variable: 'variables',
+  namespace: 'namespaces',
+  module: 'modules',
+  reference: 'references',
+  external: 'externals',
+};
+
+function pluralizeKind(kind: SpecExportKind): string {
+  return KIND_SLUGS[kind] || `${kind}s`;
+}
+
 /**
  * Create a virtual source for Fumadocs from an OpenPkg spec.
  *
@@ -165,7 +182,7 @@ export function openpkgSource(
 
   for (const kind of KIND_ORDER) {
     if (groupedByKind.has(kind)) {
-      rootPages.push(`...${kind}s`);
+      rootPages.push(`...${pluralizeKind(kind)}`);
     }
   }
 
@@ -199,8 +216,9 @@ export function openpkgSource(
     const kindExports = groupedByKind.get(kind);
     if (!kindExports || kindExports.length === 0) continue;
 
-    const kindDir = `${baseDir}/${kind}s`;
-    const label = KIND_LABELS[kind] || `${kind}s`;
+    const kindSlug = pluralizeKind(kind);
+    const kindDir = `${baseDir}/${kindSlug}`;
+    const label = KIND_LABELS[kind] || kindSlug;
 
     // Sort exports alphabetically
     const sortedExports = [...kindExports].sort((a, b) =>
@@ -223,7 +241,7 @@ export function openpkgSource(
       files.push({
         type: 'page',
         path: `${kindDir}/${exp.id}.mdx`,
-        slugs: [kind + 's', exp.id],
+        slugs: [kindSlug, exp.id],
         data: {
           title: exp.name,
           description: exp.description,

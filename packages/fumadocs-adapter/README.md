@@ -1,6 +1,6 @@
 # @openpkg-ts/fumadocs-adapter
 
-Fumadocs integration for OpenPkg API documentation. Provides CSS variables and theming for `@openpkg-ts/doc-generator` styled components.
+Fumadocs integration for OpenPkg API documentation. Provides virtual source generation, styled components, and theming.
 
 ## Installation
 
@@ -33,23 +33,29 @@ Tailwind v4 excludes `node_modules` by default. Add this directive to include st
 @source "../node_modules/@openpkg-ts/doc-generator/dist/**/*.js";
 ```
 
-Without this, utility classes like `lg:grid-cols-[1fr,minmax(0,420px)]` won't be included in your production build.
-
-## Layout Requirements
-
-Styled components use a two-column layout at the `lg:` breakpoint (1024px). For best results:
-
-- Content area should be >= 1024px wide
-- Consider using `full` layout for API pages or hiding the TOC to maximize content width
-- On narrower viewports, the layout automatically stacks vertically
-
 ## Navigation Modes
 
-Two navigation patterns are supported:
+Two navigation patterns are supported via `openpkgSource`:
 
-### Mode A: Single Page (Stripe-style)
+### Single-Page Mode
 
 All exports on one scrollable page with filters and optional TOC:
+
+```ts
+// lib/api-source.ts
+import { loader } from 'fumadocs-core/source';
+import { openpkgSource, type OpenPkg } from '@openpkg-ts/fumadocs-adapter';
+import spec from './openpkg.json';
+
+export const apiSource = loader({
+  baseUrl: '/docs/api',
+  source: openpkgSource({
+    spec: spec as OpenPkg,
+    baseDir: 'api',
+    mode: 'single',
+  }),
+});
+```
 
 ```tsx
 // app/docs/(api)/api/page.tsx
@@ -61,75 +67,117 @@ export default function APIPage() {
     <FullAPIReferencePage
       spec={spec as OpenPkg}
       title="API Reference"
-      showTOC           // sticky sidebar navigation
-      showFilters       // kind filter buttons (functions, types, etc.)
+      showTOC        // sticky sidebar navigation
+      showFilters    // kind filter buttons
     />
   );
 }
 ```
 
-Props:
-- `showTOC` - Enable sticky sidebar with anchor links
-- `showFilters` - Show kind filter buttons (functions, classes, etc.)
-- `kinds` - Limit to specific export kinds: `['function', 'type']`
-
-### Mode B: Index + Individual Pages
-
-Grid of cards linking to individual pages:
-
 ```tsx
-// app/docs/(api)/api/page.tsx (index)
-import { ExportIndexPage, type OpenPkg } from '@openpkg-ts/fumadocs-adapter';
-import spec from '@/lib/openpkg.json';
-
-export default function APIIndexPage() {
-  return (
-    <ExportIndexPage
-      spec={spec as OpenPkg}
-      baseHref="/docs/api"
-      showSearch        // search input
-      showFilters       // category filter buttons
-    />
-  );
-}
-
-// app/docs/(api)/api/[kind]/[slug]/page.tsx (detail)
-import { FunctionPage, type OpenPkg, type SpecExport } from '@openpkg-ts/fumadocs-adapter';
-import spec from '@/lib/openpkg.json';
-
-export default function ExportDetailPage({ params }) {
-  const exp = (spec as OpenPkg).exports.find(e => e.id === params.slug);
-  return <FunctionPage export={exp as SpecExport} spec={spec as OpenPkg} />;
-}
-```
-
-## Using openpkgSource for Fumadocs Integration
-
-Generate a page tree for Fumadocs sidebar:
-
-```tsx
-// lib/api-source.ts
-import { loader } from 'fumadocs-core/source';
-import { openpkgSource, type OpenPkg } from '@openpkg-ts/fumadocs-adapter';
-import spec from './openpkg.json';
-
-export const apiSource = loader({
-  baseUrl: '/docs/api',
-  source: openpkgSource({ spec: spec as OpenPkg, baseDir: '' }),
-});
-```
-
-Then use in your layout:
-
-```tsx
-// app/docs/(api)/layout.tsx
-import { DocsLayout } from 'fumadocs-ui/layouts/docs';
+// app/docs/(api)/api/layout.tsx
 import { apiSource } from '@/lib/api-source';
+import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 
 export default function APILayout({ children }) {
   return <DocsLayout tree={apiSource.pageTree}>{children}</DocsLayout>;
 }
 ```
+
+### Multi-Page Mode
+
+Index page with cards + individual pages per export:
+
+```ts
+// lib/api-source.ts
+import { loader } from 'fumadocs-core/source';
+import { openpkgSource, openpkgPlugin, type OpenPkg } from '@openpkg-ts/fumadocs-adapter';
+import spec from './openpkg.json';
+
+export const apiSource = loader({
+  baseUrl: '/docs/reference',
+  source: openpkgSource({
+    spec: spec as OpenPkg,
+    baseDir: 'reference',
+    mode: 'pages',      // individual pages per export
+    indexPage: true,    // generate index page with cards
+  }),
+  plugins: [openpkgPlugin()],  // adds kind badges to sidebar
+});
+```
+
+```tsx
+// app/docs/(reference)/reference/[[...slug]]/page.tsx
+import { apiSource } from '@/lib/api-source';
+import { notFound } from 'next/navigation';
+import {
+  APIPage,
+  ExportIndexPage,
+  type OpenPkgIndexPageData,
+  type OpenPkgPageData,
+} from '@openpkg-ts/fumadocs-adapter';
+
+export default async function ReferencePage({ params }) {
+  const { slug } = await params;
+  const page = apiSource.getPage(slug);
+  if (!page) notFound();
+
+  const data = page.data;
+
+  // Index page
+  if ('isIndex' in data && data.isIndex) {
+    return (
+      <ExportIndexPage
+        spec={data.spec}
+        baseHref="/docs/reference"
+      />
+    );
+  }
+
+  // Individual export page
+  return (
+    <APIPage
+      spec={data.spec}
+      id={data.export.id}
+      baseHref="/docs/reference"
+    />
+  );
+}
+
+export function generateStaticParams() {
+  return apiSource.generateParams();
+}
+```
+
+```tsx
+// app/docs/(reference)/reference/layout.tsx
+import { apiSource } from '@/lib/api-source';
+import { DocsLayout } from 'fumadocs-ui/layouts/docs';
+
+export default function ReferenceLayout({ children }) {
+  return <DocsLayout tree={apiSource.pageTree}>{children}</DocsLayout>;
+}
+```
+
+## openpkgSource Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `spec` | `OpenPkg` | required | The OpenPkg spec object |
+| `baseDir` | `string` | `'api'` | Base directory for generated pages |
+| `mode` | `'pages' \| 'single'` | `'pages'` | Navigation mode |
+| `indexPage` | `boolean` | `true` | Generate index page (pages mode only) |
+
+## FullAPIReferencePage Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `spec` | `OpenPkg` | required | The OpenPkg spec |
+| `title` | `string` | spec.meta.name | Page title |
+| `description` | `ReactNode` | - | Description below title |
+| `showTOC` | `boolean` | `false` | Show sticky sidebar TOC |
+| `showFilters` | `boolean` | `true` | Show kind filter buttons |
+| `kinds` | `SpecExportKind[]` | all | Filter to specific kinds |
 
 ## CSS Variables Reference
 
@@ -143,10 +191,6 @@ export default function APILayout({ children }) {
 | `--dk-tab-inactive-foreground` | Inactive tab text |
 | `--dk-tab-active-foreground` | Active tab text |
 | `--dk-selection` | Text selection color |
-
-### CodeHike Variables (`--ch-*`)
-
-GitHub syntax theme colors (`--ch-0` through `--ch-26`). Automatically adapts to light/dark mode.
 
 ### API Reference Variables (`--api-*`)
 

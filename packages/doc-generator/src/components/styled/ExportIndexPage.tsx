@@ -38,6 +38,14 @@ const KIND_LABELS: Record<ExportKind, string> = {
   enum: 'Enums',
   variable: 'Variables',
 };
+const KIND_SLUGS: Record<ExportKind, string> = {
+  function: 'functions',
+  class: 'classes',
+  interface: 'interfaces',
+  type: 'types',
+  enum: 'enums',
+  variable: 'variables',
+};
 
 function groupByKind(exports: SpecExport[]): CategoryGroup[] {
   const groups: Map<ExportKind, SpecExport[]> = new Map();
@@ -202,7 +210,7 @@ export function ExportIndexPage({
                 key={exp.id}
                 name={exp.name}
                 description={exp.description}
-                href={`${baseHref}/${group.kind}s/${exp.id}`}
+                href={`${baseHref}/${KIND_SLUGS[group.kind]}/${exp.id}`}
                 kind={exp.kind as ExportKind}
               />
             ))}

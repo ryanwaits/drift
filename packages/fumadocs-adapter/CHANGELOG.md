@@ -1,5 +1,13 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.6.1
+
+### Patch Changes
+
+- fix: correct pluralization for class/interface slugs (classes not classs)
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.6.1
+
 ## 0.6.0
 
 ### Minor Changes

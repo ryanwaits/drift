@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.6.1
+
+### Patch Changes
+
+- fix: correct pluralization for class/interface slugs (classes not classs)
+
 ## 0.6.0
 
 ### Minor Changes
