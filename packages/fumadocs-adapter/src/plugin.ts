@@ -79,10 +79,12 @@ export function openpkgPlugin(options: OpenpkgPluginOptions = {}): LoaderPlugin 
 
         // Add badge to node name
         const badge = createElement(KindBadge, { kind, key: 'badge' });
-        const name =
-          typeof node.name === 'string'
-            ? createElement('span', { key: 'name' }, node.name)
-            : node.name;
+        // Always wrap name in a keyed span to avoid React key warnings
+        const name = createElement(
+          'span',
+          { key: 'name' },
+          node.name
+        );
         const newName = createElement(
           'span',
           { className: 'openpkg-sidebar-item' },

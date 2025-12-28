@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/fumadocs-adapter",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Fumadocs integration for OpenPkg API documentation",
   "type": "module",
   "sideEffects": false,

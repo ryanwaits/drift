@@ -1,5 +1,11 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.6.3
+
+### Patch Changes
+
+- fix: wrap sidebar node name in keyed span to fix react key warning
+
 ## 0.6.2
 
 ### Patch Changes
