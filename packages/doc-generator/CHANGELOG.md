@@ -1,5 +1,15 @@
 # @openpkg-ts/doc-generator
 
+## 0.5.1
+
+### Patch Changes
+
+- feat: add FullAPIReferencePage and section-based architecture
+
+  - Add FullAPIReferencePage for single-page API reference rendering
+  - Add section components (FunctionSection, ClassSection, etc.) for composability
+  - Refactor existing page components to use section components
+
 ## 0.5.0
 
 ### Minor Changes

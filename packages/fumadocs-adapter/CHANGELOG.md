@@ -1,5 +1,18 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.5.2
+
+### Patch Changes
+
+- feat: add FullAPIReferencePage and section-based architecture
+
+  - Add FullAPIReferencePage for single-page API reference rendering
+  - Add section components (FunctionSection, ClassSection, etc.) for composability
+  - Refactor existing page components to use section components
+
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.5.1
+
 ## 0.5.1
 
 ### Patch Changes
