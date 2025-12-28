@@ -43,13 +43,91 @@ Styled components use a two-column layout at the `lg:` breakpoint (1024px). For 
 - Consider using `full` layout for API pages or hiding the TOC to maximize content width
 - On narrower viewports, the layout automatically stacks vertically
 
-## Usage with doc-generator
+## Navigation Modes
+
+Two navigation patterns are supported:
+
+### Mode A: Single Page (Stripe-style)
+
+All exports on one scrollable page with filters and optional TOC:
 
 ```tsx
-import { FunctionPage } from '@openpkg-ts/doc-generator/react/styled'
+// app/docs/(api)/api/page.tsx
+import { FullAPIReferencePage, type OpenPkg } from '@openpkg-ts/fumadocs-adapter';
+import spec from '@/lib/openpkg.json';
 
-export default function APIDocsPage({ fn }) {
-  return <FunctionPage export={fn} />
+export default function APIPage() {
+  return (
+    <FullAPIReferencePage
+      spec={spec as OpenPkg}
+      title="API Reference"
+      showTOC           // sticky sidebar navigation
+      showFilters       // kind filter buttons (functions, types, etc.)
+    />
+  );
+}
+```
+
+Props:
+- `showTOC` - Enable sticky sidebar with anchor links
+- `showFilters` - Show kind filter buttons (functions, classes, etc.)
+- `kinds` - Limit to specific export kinds: `['function', 'type']`
+
+### Mode B: Index + Individual Pages
+
+Grid of cards linking to individual pages:
+
+```tsx
+// app/docs/(api)/api/page.tsx (index)
+import { ExportIndexPage, type OpenPkg } from '@openpkg-ts/fumadocs-adapter';
+import spec from '@/lib/openpkg.json';
+
+export default function APIIndexPage() {
+  return (
+    <ExportIndexPage
+      spec={spec as OpenPkg}
+      baseHref="/docs/api"
+      showSearch        // search input
+      showFilters       // category filter buttons
+    />
+  );
+}
+
+// app/docs/(api)/api/[kind]/[slug]/page.tsx (detail)
+import { FunctionPage, type OpenPkg, type SpecExport } from '@openpkg-ts/fumadocs-adapter';
+import spec from '@/lib/openpkg.json';
+
+export default function ExportDetailPage({ params }) {
+  const exp = (spec as OpenPkg).exports.find(e => e.id === params.slug);
+  return <FunctionPage export={exp as SpecExport} spec={spec as OpenPkg} />;
+}
+```
+
+## Using openpkgSource for Fumadocs Integration
+
+Generate a page tree for Fumadocs sidebar:
+
+```tsx
+// lib/api-source.ts
+import { loader } from 'fumadocs-core/source';
+import { openpkgSource, type OpenPkg } from '@openpkg-ts/fumadocs-adapter';
+import spec from './openpkg.json';
+
+export const apiSource = loader({
+  baseUrl: '/docs/api',
+  source: openpkgSource({ spec: spec as OpenPkg, baseDir: '' }),
+});
+```
+
+Then use in your layout:
+
+```tsx
+// app/docs/(api)/layout.tsx
+import { DocsLayout } from 'fumadocs-ui/layouts/docs';
+import { apiSource } from '@/lib/api-source';
+
+export default function APILayout({ children }) {
+  return <DocsLayout tree={apiSource.pageTree}>{children}</DocsLayout>;
 }
 ```
 

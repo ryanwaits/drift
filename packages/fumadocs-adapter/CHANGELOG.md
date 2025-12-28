@@ -1,5 +1,16 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.6.0
+
+### Minor Changes
+
+- add single-page mode and TOC navigation to FullAPIReferencePage
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.6.0
+
 ## 0.5.2
 
 ### Patch Changes

@@ -1,9 +1,9 @@
 'use client';
 
-import type { OpenPkg, SpecExportKind } from '@openpkg-ts/spec';
+import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
 import { APIReferencePage } from '@doccov/ui/docskit';
 import { cn } from '@doccov/ui/lib/utils';
-import { useState, useMemo, type ReactNode } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { ExportSection } from './sections/ExportSection';
 
 export interface FullAPIReferencePageProps {
@@ -13,6 +13,8 @@ export interface FullAPIReferencePageProps {
   kinds?: SpecExportKind[];
   /** Show kind filter buttons (default: true) */
   showFilters?: boolean;
+  /** Show in-page TOC navigation (default: false) */
+  showTOC?: boolean;
   /** Custom title (default: spec.meta.name) */
   title?: string;
   /** Custom description */
@@ -33,14 +35,31 @@ const KIND_LABELS: Record<ExportKind, string> = {
   variable: 'Variables',
 };
 
+/** Get display title for an export based on kind */
+function getExportTitle(exp: SpecExport): string {
+  switch (exp.kind) {
+    case 'function':
+      return `${exp.name}()`;
+    case 'class':
+      return `class ${exp.name}`;
+    case 'interface':
+    case 'type':
+      return exp.name;
+    case 'enum':
+      return `enum ${exp.name}`;
+    default:
+      return exp.name;
+  }
+}
+
 /**
  * Single-page API reference that renders all exports in a scrollable view.
  * Similar to Stripe's API documentation layout.
  *
  * @example
  * ```tsx
- * // Show all exports
- * <FullAPIReferencePage spec={spec} />
+ * // Show all exports with TOC
+ * <FullAPIReferencePage spec={spec} showTOC />
  * ```
  *
  * @example
@@ -53,11 +72,14 @@ export function FullAPIReferencePage({
   spec,
   kinds,
   showFilters = true,
+  showTOC = false,
   title,
   description,
   className,
 }: FullAPIReferencePageProps): ReactNode {
   const [activeFilter, setActiveFilter] = useState<ExportKind | 'all'>('all');
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const isScrollingRef = useRef(false);
 
   // Get available kinds from the spec
   const availableKinds = useMemo(() => {
@@ -96,6 +118,97 @@ export function FullAPIReferencePage({
     });
   }, [spec.exports, kinds, activeFilter]);
 
+  // Group exports by kind for TOC
+  const groupedExports = useMemo(() => {
+    const groups = new Map<ExportKind, SpecExport[]>();
+    for (const exp of filteredExports) {
+      const kind = exp.kind as ExportKind;
+      if (!groups.has(kind)) {
+        groups.set(kind, []);
+      }
+      groups.get(kind)!.push(exp);
+    }
+    return groups;
+  }, [filteredExports]);
+
+  // Scroll to section on initial load if hash present
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      // Delay to ensure sections are rendered
+      const timer = setTimeout(() => {
+        const element = document.getElementById(hash);
+        if (element) {
+          isScrollingRef.current = true;
+          element.scrollIntoView({ behavior: 'smooth' });
+          setActiveSection(hash);
+          setTimeout(() => {
+            isScrollingRef.current = false;
+          }, 1000);
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // IntersectionObserver for scroll tracking
+  useEffect(() => {
+    if (!showTOC || typeof window === 'undefined') return;
+
+    const sectionIds = filteredExports.map(exp => exp.id || exp.name);
+    const observers: IntersectionObserver[] = [];
+
+    // Create observer for each section
+    const handleIntersect = (entries: IntersectionObserverEntry[]) => {
+      if (isScrollingRef.current) return;
+
+      for (const entry of entries) {
+        if (entry.isIntersecting && entry.intersectionRatio > 0) {
+          const id = entry.target.id;
+          setActiveSection(id);
+          // Update URL hash without scrolling
+          if (typeof window !== 'undefined') {
+            window.history.replaceState(null, '', `#${id}`);
+          }
+          break;
+        }
+      }
+    };
+
+    const observer = new IntersectionObserver(handleIntersect, {
+      rootMargin: '-20% 0px -70% 0px',
+      threshold: 0,
+    });
+
+    // Observe all sections
+    for (const id of sectionIds) {
+      const element = document.getElementById(id);
+      if (element) {
+        observer.observe(element);
+      }
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [showTOC, filteredExports]);
+
+  // Handle TOC link click
+  const handleTOCClick = useCallback((id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      isScrollingRef.current = true;
+      element.scrollIntoView({ behavior: 'smooth' });
+      setActiveSection(id);
+      window.history.replaceState(null, '', `#${id}`);
+      setTimeout(() => {
+        isScrollingRef.current = false;
+      }, 1000);
+    }
+  }, []);
+
   // Build description with version
   const defaultDescription = (
     <div>
@@ -112,69 +225,118 @@ export function FullAPIReferencePage({
   const shouldShowFilters = showFilters && !kinds?.length && availableKinds.length > 1;
 
   return (
-    <div className={cn('not-prose', className)}>
-      <APIReferencePage
-        title={title || spec.meta.name || 'API Reference'}
-        description={description || defaultDescription}
-      >
-        {/* Kind filter buttons */}
-        {shouldShowFilters && (
-          <div className="flex flex-wrap gap-2 mb-8 -mt-4">
-            <button
-              type="button"
-              onClick={() => setActiveFilter('all')}
-              className={cn(
-                'px-3 py-1.5 text-sm rounded-md transition-all cursor-pointer',
-                activeFilter === 'all'
-                  ? 'bg-primary text-primary-foreground font-medium'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
-              )}
-            >
-              All
-            </button>
-            {availableKinds.map((kind) => (
+    <div className={cn('not-prose', showTOC && 'lg:grid lg:grid-cols-[220px_1fr] lg:gap-8', className)}>
+      {/* TOC Sidebar */}
+      {showTOC && (
+        <aside className="hidden lg:block">
+          <nav className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-4">
+            <h4 className="text-sm font-semibold text-foreground mb-3">On this page</h4>
+            <div className="space-y-4">
+              {KIND_ORDER.map((kind) => {
+                const exports = groupedExports.get(kind);
+                if (!exports?.length) return null;
+
+                return (
+                  <div key={kind}>
+                    <h5 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                      {KIND_LABELS[kind]}
+                    </h5>
+                    <ul className="space-y-1">
+                      {exports.map((exp) => {
+                        const id = exp.id || exp.name;
+                        const isActive = activeSection === id;
+                        return (
+                          <li key={id}>
+                            <button
+                              type="button"
+                              onClick={() => handleTOCClick(id)}
+                              className={cn(
+                                'block w-full text-left text-sm py-1 px-2 rounded-md transition-colors cursor-pointer truncate',
+                                isActive
+                                  ? 'bg-primary/10 text-primary font-medium'
+                                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                              )}
+                              title={getExportTitle(exp)}
+                            >
+                              {getExportTitle(exp)}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          </nav>
+        </aside>
+      )}
+
+      {/* Main content */}
+      <div>
+        <APIReferencePage
+          title={title || spec.meta.name || 'API Reference'}
+          description={description || defaultDescription}
+        >
+          {/* Kind filter buttons */}
+          {shouldShowFilters && (
+            <div className="flex flex-wrap gap-2 mb-8 -mt-4">
               <button
-                key={kind}
                 type="button"
-                onClick={() => setActiveFilter(kind)}
+                onClick={() => setActiveFilter('all')}
                 className={cn(
                   'px-3 py-1.5 text-sm rounded-md transition-all cursor-pointer',
-                  activeFilter === kind
+                  activeFilter === 'all'
                     ? 'bg-primary text-primary-foreground font-medium'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
                 )}
               >
-                {KIND_LABELS[kind]}
+                All
               </button>
-            ))}
-          </div>
-        )}
+              {availableKinds.map((kind) => (
+                <button
+                  key={kind}
+                  type="button"
+                  onClick={() => setActiveFilter(kind)}
+                  className={cn(
+                    'px-3 py-1.5 text-sm rounded-md transition-all cursor-pointer',
+                    activeFilter === kind
+                      ? 'bg-primary text-primary-foreground font-medium'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
+                  )}
+                >
+                  {KIND_LABELS[kind]}
+                </button>
+              ))}
+            </div>
+          )}
 
-        {/* Export sections */}
-        {filteredExports.map((exp) => (
-          <ExportSection key={exp.id || exp.name} export={exp} spec={spec} />
-        ))}
+          {/* Export sections */}
+          {filteredExports.map((exp) => (
+            <ExportSection key={exp.id || exp.name} export={exp} spec={spec} />
+          ))}
 
-        {/* Empty state */}
-        {filteredExports.length === 0 && (
-          <div className="rounded-lg border border-border bg-card/50 p-8 text-center">
-            <p className="text-muted-foreground">
-              {activeFilter !== 'all'
-                ? `No ${KIND_LABELS[activeFilter].toLowerCase()} found.`
-                : 'No exports found in this package.'}
-            </p>
-            {activeFilter !== 'all' && (
-              <button
-                type="button"
-                onClick={() => setActiveFilter('all')}
-                className="mt-3 text-sm text-primary hover:underline cursor-pointer"
-              >
-                Show all exports
-              </button>
-            )}
-          </div>
-        )}
-      </APIReferencePage>
+          {/* Empty state */}
+          {filteredExports.length === 0 && (
+            <div className="rounded-lg border border-border bg-card/50 p-8 text-center">
+              <p className="text-muted-foreground">
+                {activeFilter !== 'all'
+                  ? `No ${KIND_LABELS[activeFilter].toLowerCase()} found.`
+                  : 'No exports found in this package.'}
+              </p>
+              {activeFilter !== 'all' && (
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter('all')}
+                  className="mt-3 text-sm text-primary hover:underline cursor-pointer"
+                >
+                  Show all exports
+                </button>
+              )}
+            </div>
+          )}
+        </APIReferencePage>
+      </div>
     </div>
   );
 }

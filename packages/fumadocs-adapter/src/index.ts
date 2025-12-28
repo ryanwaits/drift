@@ -1,8 +1,10 @@
 // Re-export Fumadocs source integration
 export {
   openpkgSource,
+  type OpenPkgIndexPageData,
   type OpenPkgMetaData,
   type OpenPkgPageData,
+  type OpenPkgSinglePageData,
   type OpenPkgSourceOptions,
 } from './source';
 

@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.6.0
+
+### Minor Changes
+
+- add single-page mode and TOC navigation to FullAPIReferencePage
+
 ## 0.5.1
 
 ### Patch Changes
