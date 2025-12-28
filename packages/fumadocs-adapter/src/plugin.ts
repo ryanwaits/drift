@@ -77,22 +77,10 @@ export function openpkgPlugin(options: OpenpkgPluginOptions = {}): LoaderPlugin 
         const kind = pageData.export?.kind as SpecExportKind | undefined;
         if (!kind || !KIND_BADGES[kind]) return node;
 
-        // Add badge to node name
-        const badge = createElement(KindBadge, { kind, key: 'badge' });
-        // Always wrap name in a keyed span to avoid React key warnings
-        const name = createElement(
-          'span',
-          { key: 'name' },
-          node.name
-        );
-        const newName = createElement(
-          'span',
-          { className: 'openpkg-sidebar-item' },
-          badge,
-          name
-        );
+        // Add badge as icon instead of modifying name
+        const badge = createElement(KindBadge, { kind });
 
-        return { ...node, name: newName };
+        return { ...node, icon: badge };
       },
     },
   };

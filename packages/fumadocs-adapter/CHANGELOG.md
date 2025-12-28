@@ -1,5 +1,11 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.6.4
+
+### Patch Changes
+
+- fix: use node.icon for kind badges to avoid react key warning
+
 ## 0.6.3
 
 ### Patch Changes
