@@ -1,5 +1,11 @@
 # @doccov/ui
 
+## 0.3.1
+
+### Patch Changes
+
+- feat: add namespace/module/reference/external kind badges and refactor sidebar badge to use @doccov/ui
+
 ## 0.3.0
 
 ### Minor Changes

@@ -1,43 +1,28 @@
-import type { LoaderPlugin } from 'fumadocs-core/source';
-import type { Item } from 'fumadocs-core/page-tree';
 import type { SpecExportKind } from '@openpkg-ts/doc-generator';
+import type { Item } from 'fumadocs-core/page-tree';
+import type { LoaderPlugin } from 'fumadocs-core/source';
+import { createElement } from 'react';
+import { SidebarKindBadge } from './components/sidebar-badge';
 import type { OpenPkgPageData } from './source';
-import { createElement, type ReactNode } from 'react';
 
-const KIND_BADGES: Partial<Record<SpecExportKind, { label: string; className: string }>> = {
-  function: { label: 'fn', className: 'openpkg-badge-function' },
-  class: { label: 'C', className: 'openpkg-badge-class' },
-  interface: { label: 'I', className: 'openpkg-badge-interface' },
-  type: { label: 'T', className: 'openpkg-badge-type' },
-  enum: { label: 'E', className: 'openpkg-badge-enum' },
-  variable: { label: 'V', className: 'openpkg-badge-variable' },
-  namespace: { label: 'N', className: 'openpkg-badge-namespace' },
-  module: { label: 'M', className: 'openpkg-badge-module' },
-  reference: { label: 'R', className: 'openpkg-badge-reference' },
-  external: { label: 'X', className: 'openpkg-badge-external' },
-};
+// Re-export for backward compatibility
+export {
+  SidebarKindBadge as KindBadge,
+  type SidebarKindBadgeProps as KindBadgeProps,
+} from './components/sidebar-badge';
 
-export interface KindBadgeProps {
-  kind: SpecExportKind;
-  className?: string;
-}
-
-/**
- * Badge component to display export kind in sidebar.
- */
-export function KindBadge({ kind, className }: KindBadgeProps): ReactNode {
-  const badge = KIND_BADGES[kind];
-  if (!badge) return null;
-
-  return createElement(
-    'span',
-    {
-      className: `openpkg-kind-badge ${badge.className} ${className || ''}`.trim(),
-      'data-kind': kind,
-    },
-    badge.label
-  );
-}
+const SUPPORTED_KINDS = new Set<string>([
+  'function',
+  'class',
+  'interface',
+  'type',
+  'enum',
+  'variable',
+  'namespace',
+  'module',
+  'reference',
+  'external',
+]);
 
 export interface OpenpkgPluginOptions {
   /** Show kind badges in sidebar (default: true) */
@@ -75,10 +60,10 @@ export function openpkgPlugin(options: OpenpkgPluginOptions = {}): LoaderPlugin 
 
         const pageData = file.data as OpenPkgPageData;
         const kind = pageData.export?.kind as SpecExportKind | undefined;
-        if (!kind || !KIND_BADGES[kind]) return node;
+        if (!kind || !SUPPORTED_KINDS.has(kind)) return node;
 
         // Add badge as icon instead of modifying name
-        const badge = createElement(KindBadge, { kind });
+        const badge = createElement(SidebarKindBadge, { kind });
 
         return { ...node, icon: badge };
       },

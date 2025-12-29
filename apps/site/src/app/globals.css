@@ -59,6 +59,10 @@
   --kind-type: #0d9488;
   --kind-enum: #d97706;
   --kind-variable: #57534e;
+  --kind-namespace: #9333ea;
+  --kind-module: #1d4ed8;
+  --kind-reference: #6366f1;
+  --kind-external: #78716c;
 
   /* File icon colors */
   --icon-typescript: #3178c6;
@@ -206,6 +210,10 @@
   --kind-type: #2dd4bf;
   --kind-enum: #fbbf24;
   --kind-variable: #a8a29e;
+  --kind-namespace: #c084fc;
+  --kind-module: #93c5fd;
+  --kind-reference: #a5b4fc;
+  --kind-external: #d6d3d1;
 
   /* File icons */
   --icon-typescript: #60a5fa;
@@ -333,6 +341,10 @@
   --color-kind-type: var(--kind-type);
   --color-kind-enum: var(--kind-enum);
   --color-kind-variable: var(--kind-variable);
+  --color-kind-namespace: var(--kind-namespace);
+  --color-kind-module: var(--kind-module);
+  --color-kind-reference: var(--kind-reference);
+  --color-kind-external: var(--kind-external);
   --color-icon-typescript: var(--icon-typescript);
   --color-icon-javascript: var(--icon-javascript);
   --color-icon-html: var(--icon-html);

@@ -1,20 +1,4 @@
 // Re-export Fumadocs source integration
-export {
-  openpkgSource,
-  type OpenPkgIndexPageData,
-  type OpenPkgMetaData,
-  type OpenPkgPageData,
-  type OpenPkgSinglePageData,
-  type OpenPkgSourceOptions,
-} from './source';
-
-// Re-export Fumadocs plugin integration
-export {
-  openpkgPlugin,
-  KindBadge,
-  type KindBadgeProps,
-  type OpenpkgPluginOptions,
-} from './plugin';
 
 // Re-export spec types for convenience
 export type {
@@ -82,8 +66,8 @@ export {
   type ClassPageProps,
   ClassSection,
   type ClassSectionProps,
-  CodeTabs,
   type CodeTab,
+  CodeTabs,
   type CodeTabsProps,
   EnumPage,
   type EnumPageProps,
@@ -122,3 +106,23 @@ export {
   type DocDrift,
   type DocsMetadata,
 } from './components/coverage-badge';
+// Re-export sidebar badge component (alias for KindBadge)
+export {
+  SidebarKindBadge,
+  type SidebarKindBadgeProps,
+} from './components/sidebar-badge';
+// Re-export Fumadocs plugin integration
+export {
+  KindBadge,
+  type KindBadgeProps,
+  type OpenpkgPluginOptions,
+  openpkgPlugin,
+} from './plugin';
+export {
+  type OpenPkgIndexPageData,
+  type OpenPkgMetaData,
+  type OpenPkgPageData,
+  type OpenPkgSinglePageData,
+  type OpenPkgSourceOptions,
+  openpkgSource,
+} from './source';

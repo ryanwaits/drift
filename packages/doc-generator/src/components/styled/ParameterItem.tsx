@@ -144,6 +144,9 @@ function NestedPropertyItem({
 /**
  * Single parameter with expand capability for nested objects.
  * Features expandable nested params, type annotations, and required/optional badges.
+ *
+ * @deprecated Use APIParameterItem from @doccov/ui with specParamToAPIParam adapter.
+ * Will be removed in next major version.
  */
 export function ParameterItem({
   param,

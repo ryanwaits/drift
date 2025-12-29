@@ -2,6 +2,7 @@
 
 import type { SpecMember } from '@openpkg-ts/spec';
 import { useEffect, useState } from 'react';
+import { getMemberBadges } from '../../core/format';
 import { formatReturnType, formatSchema } from '../../core/query';
 
 export interface CollapsibleMethodProps {
@@ -50,13 +51,10 @@ export function CollapsibleMethod({
 
   const sig = member.signatures?.[0];
   const hasParams = sig?.parameters && sig.parameters.length > 0;
-  const visibility = member.visibility ?? 'public';
-  const flags = member.flags as Record<string, boolean> | undefined;
-  const isStatic = flags?.static;
-  const isAsync = flags?.async;
 
   const returnType = formatReturnType(sig);
   const paramPreview = formatParamPreview(sig?.parameters);
+  const badges = getMemberBadges(member);
 
   const toggle = () => setExpanded(!expanded);
 
@@ -66,11 +64,6 @@ export function CollapsibleMethod({
       setExpanded(true);
     }
   }, [member.name]);
-
-  const badges: string[] = [];
-  if (visibility !== 'public') badges.push(visibility);
-  if (isStatic) badges.push('static');
-  if (isAsync) badges.push('async');
 
   return (
     <div id={member.name} className={className} data-expanded={expanded}>

@@ -1,5 +1,19 @@
 # @openpkg-ts/doc-generator
 
+## 0.6.3
+
+### Patch Changes
+
+- feat: add namespace/module/reference/external kind badges and refactor sidebar badge to use @doccov/ui
+- Updated dependencies
+  - @doccov/ui@0.3.1
+
+## 0.6.3
+
+### Minor Changes
+
+- deprecate: ParameterItem component in favor of APIParameterItem from @doccov/ui with specParamToAPIParam adapter
+
 ## 0.6.2
 
 ### Patch Changes

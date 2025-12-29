@@ -14,6 +14,10 @@ const kindBadgeVariants = cva(
         type: 'bg-kind-type/15 text-kind-type',
         enum: 'bg-kind-enum/15 text-kind-enum',
         variable: 'bg-kind-variable/15 text-kind-variable',
+        namespace: 'bg-kind-namespace/15 text-kind-namespace',
+        module: 'bg-kind-module/15 text-kind-module',
+        reference: 'bg-kind-reference/15 text-kind-reference',
+        external: 'bg-kind-external/15 text-kind-external',
       },
       size: {
         sm: 'h-4 px-1 text-[10px]',
@@ -42,6 +46,10 @@ const KindBadge = React.forwardRef<HTMLSpanElement, KindBadgeProps>(
       type: 'type',
       enum: 'enum',
       variable: 'var',
+      namespace: 'ns',
+      module: 'mod',
+      reference: 'ref',
+      external: 'ext',
     };
     return (
       <span ref={ref} className={cn(kindBadgeVariants({ kind, size, className }))} {...props}>

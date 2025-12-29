@@ -1,5 +1,12 @@
 # @doccov/site
 
+## 0.3.6
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/ui@0.3.1
+
 ## 0.3.5
 
 ### Patch Changes

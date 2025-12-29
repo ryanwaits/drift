@@ -35,6 +35,8 @@ export {
 } from './adapters';
 export type { DocsInstance, LoadOptions } from './core/loader';
 export { createDocs, loadSpec } from './core/loader';
+// Format utilities
+export { formatBadges, getMemberBadges } from './core/format';
 // Query utilities
 export {
   buildSignatureString,

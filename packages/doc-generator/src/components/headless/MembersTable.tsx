@@ -1,7 +1,8 @@
 'use client';
 
 import type { SpecMember } from '@openpkg-ts/spec';
-import { formatSchema, getMethods, getProperties } from '../../core/query';
+import { getMemberBadges } from '../../core/format';
+import { formatSchema } from '../../core/query';
 
 export interface MembersTableProps {
   /** Members to display */
@@ -60,12 +61,6 @@ export interface MemberRowProps {
  * Individual member row.
  */
 export function MemberRow({ member }: MemberRowProps): React.ReactNode {
-  const visibility = member.visibility ?? 'public';
-  const flags = member.flags as Record<string, boolean> | undefined;
-  const isStatic = flags?.static;
-  const isAbstract = flags?.abstract;
-  const isReadonly = flags?.readonly;
-
   const type = formatSchema(member.schema);
 
   // For methods, build signature
@@ -81,11 +76,7 @@ export function MemberRow({ member }: MemberRowProps): React.ReactNode {
     signature = `(${params.join(', ')}): ${returnType}`;
   }
 
-  const badges: string[] = [];
-  if (visibility !== 'public') badges.push(visibility);
-  if (isStatic) badges.push('static');
-  if (isAbstract) badges.push('abstract');
-  if (isReadonly) badges.push('readonly');
+  const badges = getMemberBadges(member);
 
   return (
     <div data-member={member.name}>

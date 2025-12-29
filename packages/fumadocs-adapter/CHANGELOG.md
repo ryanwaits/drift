@@ -1,5 +1,13 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.6.5
+
+### Patch Changes
+
+- feat: add namespace/module/reference/external kind badges and refactor sidebar badge to use @doccov/ui
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.6.3
+
 ## 0.6.4
 
 ### Patch Changes

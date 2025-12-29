@@ -30,6 +30,18 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
 
+  /* Kind badge colors */
+  --color-kind-function: var(--kind-function);
+  --color-kind-class: var(--kind-class);
+  --color-kind-interface: var(--kind-interface);
+  --color-kind-type: var(--kind-type);
+  --color-kind-enum: var(--kind-enum);
+  --color-kind-variable: var(--kind-variable);
+  --color-kind-namespace: var(--kind-namespace);
+  --color-kind-module: var(--kind-module);
+  --color-kind-reference: var(--kind-reference);
+  --color-kind-external: var(--kind-external);
+
   /* Docskit code block colors - mapped to CodeHike GitHub theme vars */
   --color-dk-background: var(--ch-16);
   --color-dk-border: var(--ch-23);
@@ -69,6 +81,33 @@
     --secondary-foreground: var(--color-fd-secondary-foreground, var(--color-fd-foreground));
     --accent: var(--color-fd-accent);
     --accent-foreground: var(--color-fd-accent-foreground, var(--color-fd-foreground));
+
+    /* Kind badge colors - light mode defaults */
+    --kind-function: #7c3aed;
+    --kind-class: #2563eb;
+    --kind-interface: #0891b2;
+    --kind-type: #0d9488;
+    --kind-enum: #d97706;
+    --kind-variable: #57534e;
+    --kind-namespace: #9333ea;
+    --kind-module: #1d4ed8;
+    --kind-reference: #6366f1;
+    --kind-external: #78716c;
+  }
+
+  /* Dark mode kind badge colors */
+  .dark,
+  [data-theme="dark"] {
+    --kind-function: #a78bfa;
+    --kind-class: #60a5fa;
+    --kind-interface: #22d3ee;
+    --kind-type: #2dd4bf;
+    --kind-enum: #fbbf24;
+    --kind-variable: #a8a29e;
+    --kind-namespace: #c084fc;
+    --kind-module: #93c5fd;
+    --kind-reference: #a5b4fc;
+    --kind-external: #d6d3d1;
   }
 }
 

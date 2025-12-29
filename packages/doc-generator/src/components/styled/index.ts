@@ -21,6 +21,7 @@ export { FunctionPage } from './FunctionPage';
 export type { InterfacePageProps } from './InterfacePage';
 export { InterfacePage } from './InterfacePage';
 export type { NestedPropertyItemProps, ParameterItemProps } from './ParameterItem';
+/** @deprecated Use APIParameterItem from @doccov/ui with specParamToAPIParam adapter */
 export { ParameterItem } from './ParameterItem';
 export type { VariablePageProps } from './VariablePage';
 export { VariablePage } from './VariablePage';
