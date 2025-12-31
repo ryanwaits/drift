@@ -1,20 +1,6 @@
-import { KindBadge as UIKindBadge } from '@doccov/ui/badge';
+import { KindBadge as UIKindBadge, type KindBadgeKind } from '@doccov/ui/badge';
 import type { SpecExportKind } from '@openpkg-ts/doc-generator';
 import { createElement, type ReactNode } from 'react';
-
-// Map doc-generator kinds to @doccov/ui badge kinds
-// The UI badge uses lowercase strings that match CVA variants
-type UIBadgeKind =
-  | 'function'
-  | 'class'
-  | 'interface'
-  | 'type'
-  | 'enum'
-  | 'variable'
-  | 'namespace'
-  | 'module'
-  | 'reference'
-  | 'external';
 
 const SUPPORTED_KINDS: Set<string> = new Set([
   'function',
@@ -45,7 +31,7 @@ export function SidebarKindBadge({ kind, className }: SidebarKindBadgeProps): Re
   if (!SUPPORTED_KINDS.has(kind)) return null;
 
   return createElement(UIKindBadge, {
-    kind: kind as UIBadgeKind,
+    kind: kind as KindBadgeKind,
     size: 'sm',
     className,
   });

@@ -4,7 +4,15 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
-const inputVariants = cva(
+// Input variant types
+export type InputSize = 'sm' | 'md' | 'lg';
+export type InputVariant = 'default' | 'error';
+
+const inputVariants: (props?: {
+  inputSize?: InputSize | null;
+  variant?: InputVariant | null;
+  className?: string;
+}) => string = cva(
   // Base styles - monospace font, warm grays, smooth transition
   [
     'w-full font-mono text-[var(--input-text)]',
@@ -43,16 +51,18 @@ const inputVariants = cva(
   },
 );
 
-export interface InputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
-    VariantProps<typeof inputVariants> {
+export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+  inputSize?: InputSize | null;
+  variant?: InputVariant | null;
   label?: string;
   helperText?: string;
   error?: string;
   leftIcon?: React.ReactNode;
 }
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
+const Input: React.ForwardRefExoticComponent<
+  InputProps & React.RefAttributes<HTMLInputElement>
+> = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, inputSize, variant, label, helperText, error, leftIcon, id, ...props }, ref) => {
     const generatedId = React.useId();
     const inputId = id || `input-${generatedId}`;
@@ -105,7 +115,9 @@ export interface InputWithButtonProps extends Omit<InputProps, 'rightIcon' | 'on
   onSubmit?: (value: string) => void;
 }
 
-const InputWithButton = React.forwardRef<HTMLInputElement, InputWithButtonProps>(
+const InputWithButton: React.ForwardRefExoticComponent<
+  InputWithButtonProps & React.RefAttributes<HTMLInputElement>
+> = React.forwardRef<HTMLInputElement, InputWithButtonProps>(
   (
     {
       className,
@@ -224,7 +236,9 @@ export interface SearchInputProps extends Omit<InputProps, 'leftIcon'> {
   showClear?: boolean;
 }
 
-const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
+const SearchInput: React.ForwardRefExoticComponent<
+  SearchInputProps & React.RefAttributes<HTMLInputElement>
+> = React.forwardRef<HTMLInputElement, SearchInputProps>(
   ({ className, inputSize = 'md', showClear, onClear, ...props }, ref) => {
     const inputId = React.useId();
     return (

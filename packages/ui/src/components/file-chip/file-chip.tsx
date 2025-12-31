@@ -6,7 +6,9 @@ interface FileChipProps extends React.HTMLAttributes<HTMLSpanElement> {
   clickable?: boolean;
 }
 
-const FileChip = React.forwardRef<HTMLSpanElement, FileChipProps>(
+const FileChip: React.ForwardRefExoticComponent<
+  FileChipProps & React.RefAttributes<HTMLSpanElement>
+> = React.forwardRef<HTMLSpanElement, FileChipProps>(
   ({ filename, clickable = true, className, ...props }, ref) => {
     return (
       <span

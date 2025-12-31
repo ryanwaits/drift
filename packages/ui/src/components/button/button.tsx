@@ -4,7 +4,11 @@ import { Loader2 } from 'lucide-react';
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
-function ArrowIcon({ className }: { className?: string }) {
+// Button variant types
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'nav' | 'danger';
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'nav';
+
+function ArrowIcon({ className }: { className?: string }): React.ReactElement {
   return (
     <svg
       width="24"
@@ -24,7 +28,11 @@ function ArrowIcon({ className }: { className?: string }) {
   );
 }
 
-const buttonVariants = cva(
+const buttonVariants: (props?: {
+  variant?: ButtonVariant | null;
+  size?: ButtonSize | null;
+  className?: string;
+}) => string = cva(
   // Base styles: monospace font, flex layout, transitions
   'inline-flex items-center justify-center whitespace-nowrap font-mono font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
   {
@@ -54,9 +62,9 @@ const buttonVariants = cva(
   },
 );
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant | null;
+  size?: ButtonSize | null;
   asChild?: boolean;
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
@@ -67,7 +75,9 @@ export interface ButtonProps
   count?: string;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+const Button: React.ForwardRefExoticComponent<
+  ButtonProps & React.RefAttributes<HTMLButtonElement>
+> = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       className,

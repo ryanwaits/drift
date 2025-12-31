@@ -1,5 +1,11 @@
 # @doccov/ui
 
+## 0.3.2
+
+### Patch Changes
+
+- Add explicit type annotations to CVA variants and forwardRef components for better TypeScript inference
+
 ## 0.3.1
 
 ### Patch Changes

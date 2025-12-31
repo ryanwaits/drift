@@ -99,13 +99,6 @@ export {
   VariableSection,
   type VariableSectionProps,
 } from '@openpkg-ts/doc-generator/react/styled';
-// Re-export CoverageBadge (doccov-specific)
-export {
-  CoverageBadge,
-  type CoverageBadgeProps,
-  type DocDrift,
-  type DocsMetadata,
-} from './components/coverage-badge';
 // Re-export sidebar badge component (alias for KindBadge)
 export {
   SidebarKindBadge,

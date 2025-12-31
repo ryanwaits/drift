@@ -2,8 +2,27 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
+// Kind badge variant types
+export type KindBadgeKind =
+  | 'function'
+  | 'class'
+  | 'interface'
+  | 'type'
+  | 'enum'
+  | 'variable'
+  | 'namespace'
+  | 'module'
+  | 'reference'
+  | 'external';
+
+export type KindBadgeSize = 'sm' | 'md';
+
 // Kind badges - for TypeScript syntax (fn, cls, type, etc.)
-const kindBadgeVariants = cva(
+const kindBadgeVariants: (props?: {
+  kind?: KindBadgeKind | null;
+  size?: KindBadgeSize | null;
+  className?: string;
+}) => string = cva(
   'inline-flex items-center justify-center font-mono font-medium rounded shrink-0',
   {
     variants: {
@@ -31,13 +50,15 @@ const kindBadgeVariants = cva(
   },
 );
 
-export interface KindBadgeProps
-  extends React.HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof kindBadgeVariants> {
+export interface KindBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  kind?: KindBadgeKind | null;
+  size?: KindBadgeSize | null;
   label?: string;
 }
 
-const KindBadge = React.forwardRef<HTMLSpanElement, KindBadgeProps>(
+const KindBadge: React.ForwardRefExoticComponent<
+  KindBadgeProps & React.RefAttributes<HTMLSpanElement>
+> = React.forwardRef<HTMLSpanElement, KindBadgeProps>(
   ({ className, kind, size, label, ...props }, ref) => {
     const defaultLabels: Record<string, string> = {
       function: 'fn',
@@ -60,8 +81,16 @@ const KindBadge = React.forwardRef<HTMLSpanElement, KindBadgeProps>(
 );
 KindBadge.displayName = 'KindBadge';
 
+// Status badge variant types
+export type StatusBadgeStatus = 'success' | 'warning' | 'error' | 'neutral';
+export type StatusBadgeSize = 'sm' | 'md';
+
 // Status badges - for coverage/pass/fail states
-const statusBadgeVariants = cva(
+const statusBadgeVariants: (props?: {
+  status?: StatusBadgeStatus | null;
+  size?: StatusBadgeSize | null;
+  className?: string;
+}) => string = cva(
   'inline-flex items-center justify-center gap-1 font-medium rounded-full',
   {
     variants: {
@@ -83,14 +112,16 @@ const statusBadgeVariants = cva(
   },
 );
 
-export interface StatusBadgeProps
-  extends React.HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof statusBadgeVariants> {
+export interface StatusBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  status?: StatusBadgeStatus | null;
+  size?: StatusBadgeSize | null;
   label?: string;
   icon?: React.ReactNode;
 }
 
-const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
+const StatusBadge: React.ForwardRefExoticComponent<
+  StatusBadgeProps & React.RefAttributes<HTMLSpanElement>
+> = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
   ({ className, status, size, label, icon, children, ...props }, ref) => {
     return (
       <span ref={ref} className={cn(statusBadgeVariants({ status, size, className }))} {...props}>
@@ -102,4 +133,9 @@ const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
 );
 StatusBadge.displayName = 'StatusBadge';
 
-export { KindBadge, kindBadgeVariants, StatusBadge, statusBadgeVariants };
+export {
+  KindBadge,
+  kindBadgeVariants,
+  StatusBadge,
+  statusBadgeVariants,
+};

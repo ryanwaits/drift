@@ -9,7 +9,10 @@ export type ExportKind = 'function' | 'type' | 'variable' | 'class' | 'interface
 /**
  * Kind badge variants for export cards.
  */
-const kindBadgeVariants = cva(
+const kindBadgeVariants: (props?: {
+  kind?: ExportKind | null;
+  className?: string;
+}) => string = cva(
   'inline-flex items-center justify-center font-mono font-medium rounded shrink-0 h-5 px-1.5 text-xs',
   {
     variants: {
@@ -37,9 +40,7 @@ const kindLabels: Record<ExportKind, string> = {
   variable: 'var',
 };
 
-export interface ExportCardProps
-  extends React.AnchorHTMLAttributes<HTMLAnchorElement>,
-    VariantProps<typeof kindBadgeVariants> {
+export interface ExportCardProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   /** Export name */
   name: string;
   /** Description snippet */
@@ -47,7 +48,7 @@ export interface ExportCardProps
   /** Link to detail page */
   href: string;
   /** Export kind */
-  kind?: ExportKind;
+  kind?: ExportKind | null;
   /** Custom link component (for Next.js Link) */
   as?: React.ElementType;
 }
@@ -56,7 +57,9 @@ export interface ExportCardProps
  * Card component for displaying exports in an index grid.
  * Features function name styling, description, kind badge, and hover effects.
  */
-export const ExportCard = React.forwardRef<HTMLAnchorElement, ExportCardProps>(
+export const ExportCard: React.ForwardRefExoticComponent<
+  ExportCardProps & React.RefAttributes<HTMLAnchorElement>
+> = React.forwardRef<HTMLAnchorElement, ExportCardProps>(
   ({ name, description, href, kind = 'function', as: Component = 'a', className, ...props }, ref) => {
     const isFunction = kind === 'function';
 

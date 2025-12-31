@@ -104,7 +104,9 @@ function MiniProgress({ percent, className }: { percent: number; className?: str
   );
 }
 
-const SegmentedTabs = React.forwardRef<HTMLDivElement, SegmentedTabsProps>(
+const SegmentedTabs: React.ForwardRefExoticComponent<
+  SegmentedTabsProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, SegmentedTabsProps>(
   ({ tabs, activeTab, onTabChange, onTabClose, onAction, className }, ref) => {
     return (
       <div
@@ -251,7 +253,9 @@ interface TabsProps {
   size?: 'default' | 'lg';
 }
 
-const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
+const Tabs: React.ForwardRefExoticComponent<
+  TabsProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, TabsProps>(
   ({ tabs, activeTab, onTabChange, onTabClose, onAddTab, className, size = 'default' }, ref) => {
     // Convert old format to new format
     const convertedTabs: TabCell[] = tabs.map((tab) => {

@@ -3,8 +3,13 @@ import * as React from 'react';
 import { cn } from '../../../lib/utils';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+export type EndpointBadgeSize = 'sm' | 'md';
 
-const endpointBadgeVariants = cva(
+const endpointBadgeVariants: (props?: {
+  method?: HttpMethod | null;
+  size?: EndpointBadgeSize | null;
+  className?: string;
+}) => string = cva(
   'inline-flex items-center justify-center font-mono font-bold uppercase tracking-wide rounded shrink-0',
   {
     variants: {
@@ -27,13 +32,14 @@ const endpointBadgeVariants = cva(
   },
 );
 
-export interface EndpointBadgeProps
-  extends React.HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof endpointBadgeVariants> {
+export interface EndpointBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   method: HttpMethod;
+  size?: EndpointBadgeSize | null;
 }
 
-const EndpointBadge = React.forwardRef<HTMLSpanElement, EndpointBadgeProps>(
+const EndpointBadge: React.ForwardRefExoticComponent<
+  EndpointBadgeProps & React.RefAttributes<HTMLSpanElement>
+> = React.forwardRef<HTMLSpanElement, EndpointBadgeProps>(
   ({ className, method, size, ...props }, ref) => {
     return (
       <span ref={ref} className={cn(endpointBadgeVariants({ method, size, className }))} {...props}>

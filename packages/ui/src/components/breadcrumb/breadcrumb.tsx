@@ -19,7 +19,9 @@ interface BreadcrumbProps {
   className?: string;
 }
 
-const Breadcrumb = React.forwardRef<HTMLDivElement, BreadcrumbProps>(
+const Breadcrumb: React.ForwardRefExoticComponent<
+  BreadcrumbProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, BreadcrumbProps>(
   ({ items, separator = '/', className }, ref) => {
     return (
       <nav
@@ -73,7 +75,9 @@ interface BreadcrumbDropdownProps {
   onClick?: () => void;
 }
 
-const BreadcrumbDropdown = React.forwardRef<HTMLButtonElement, BreadcrumbDropdownProps>(
+const BreadcrumbDropdown: React.ForwardRefExoticComponent<
+  BreadcrumbDropdownProps & React.RefAttributes<HTMLButtonElement>
+> = React.forwardRef<HTMLButtonElement, BreadcrumbDropdownProps>(
   ({ label, truncate, maxWidth = 200, className, onClick }, ref) => {
     return (
       <button

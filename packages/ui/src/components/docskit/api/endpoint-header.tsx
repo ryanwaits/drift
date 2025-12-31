@@ -15,7 +15,9 @@ export interface EndpointHeaderProps extends React.HTMLAttributes<HTMLDivElement
   copyable?: boolean;
 }
 
-const EndpointHeader = React.forwardRef<HTMLDivElement, EndpointHeaderProps>(
+const EndpointHeader: React.ForwardRefExoticComponent<
+  EndpointHeaderProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, EndpointHeaderProps>(
   ({ className, method, path, copyable = true, ...props }, ref) => {
     const [copied, setCopied] = useState(false);
 

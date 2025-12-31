@@ -2,11 +2,27 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
+export type TypeColor =
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'null'
+  | 'undefined'
+  | 'object'
+  | 'array'
+  | 'function'
+  | 'union'
+  | 'generic'
+  | 'default';
+
 /**
  * Type coloring for syntax display.
  * Follows Stripe-style: consistent colors for primitives vs complex types.
  */
-const typeBadgeVariants = cva('font-mono text-sm', {
+const typeBadgeVariants: (props?: {
+  typeColor?: TypeColor | null;
+  className?: string;
+}) => string = cva('font-mono text-sm', {
   variants: {
     typeColor: {
       // Primitives
@@ -31,19 +47,17 @@ const typeBadgeVariants = cva('font-mono text-sm', {
   },
 });
 
-export interface TypeBadgeProps
-  extends React.HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof typeBadgeVariants> {
+export interface TypeBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   /** Type string to display */
   type: string;
   /** Override color detection */
-  typeColor?: VariantProps<typeof typeBadgeVariants>['typeColor'];
+  typeColor?: TypeColor | null;
 }
 
 /**
  * Detect the type color from a type string.
  */
-function detectTypeColor(type: string): VariantProps<typeof typeBadgeVariants>['typeColor'] {
+function detectTypeColor(type: string): TypeColor {
   const normalized = type.toLowerCase().trim();
 
   if (normalized === 'string' || normalized.startsWith('"') || normalized.startsWith("'")) {
@@ -88,7 +102,9 @@ function detectTypeColor(type: string): VariantProps<typeof typeBadgeVariants>['
  * Inline type display with syntax coloring.
  * Automatically detects type category and applies appropriate color.
  */
-export const TypeBadge = React.forwardRef<HTMLSpanElement, TypeBadgeProps>(
+export const TypeBadge: React.ForwardRefExoticComponent<
+  TypeBadgeProps & React.RefAttributes<HTMLSpanElement>
+> = React.forwardRef<HTMLSpanElement, TypeBadgeProps>(
   ({ className, type, typeColor, ...props }, ref) => {
     const color = typeColor ?? detectTypeColor(type);
 

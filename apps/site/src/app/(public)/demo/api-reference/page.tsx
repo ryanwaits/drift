@@ -5,7 +5,6 @@ import {
   APISection,
   APIParameterItem,
   ParameterList,
-  ResponseBlock,
   type Language,
   type CodeExample,
   type APIParameterSchema,
@@ -239,19 +238,19 @@ export default function OpenPkgAPIReferenceDemoPage() {
             ))}
           </ParameterList>
 
-          <ResponseBlock
-            description={
-              <span>
-                <span className="font-mono text-sm font-medium">
-                  {greetSig.returns.schema.type as string}
-                </span>
-                <span className="ml-2 text-muted-foreground">
-                  {greetSig.returns.description}
-                </span>
+          <div className="mt-6 p-4 rounded-lg border border-border bg-muted/30">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Returns
+            </span>
+            <div className="mt-2">
+              <span className="font-mono text-sm font-medium">
+                {greetSig.returns.schema.type as string}
               </span>
-            }
-            className="mt-6"
-          />
+              <span className="ml-2 text-muted-foreground">
+                {greetSig.returns.description}
+              </span>
+            </div>
+          </div>
         </APISection>
 
         {/* Logger class */}
@@ -282,7 +281,7 @@ export default function OpenPkgAPIReferenceDemoPage() {
           </ParameterList>
 
           <ParameterList title="Properties" className="mt-6">
-            {loggerExport.members
+            {(loggerExport.members ?? [])
               .filter((m) => m.kind === 'property')
               .map((member) => (
                 <APIParameterItem
@@ -295,7 +294,7 @@ export default function OpenPkgAPIReferenceDemoPage() {
           </ParameterList>
 
           <ParameterList title="Methods" className="mt-6">
-            {loggerExport.members
+            {(loggerExport.members ?? [])
               .filter((m) => m.kind === 'method')
               .map((member) => (
                 <APIParameterItem
