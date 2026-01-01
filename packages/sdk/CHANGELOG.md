@@ -1,5 +1,13 @@
 # @doccov/sdk
 
+## 0.25.2
+
+### Patch Changes
+
+- chore: bump @openpkg-ts/extract dependency
+- Updated dependencies
+  - @openpkg-ts/extract@0.11.4
+
 ## 0.25.1
 
 ### Patch Changes

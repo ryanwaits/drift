@@ -1,6 +1,7 @@
 import type { SpecExport } from '@openpkg-ts/spec';
 import type ts from 'typescript';
 import { getJSDocComment, getSourceLocation } from '../ast/utils';
+import { registerReferencedTypes } from '../types/parameters';
 import type { SerializerContext } from './context';
 
 export function serializeVariable(
@@ -17,6 +18,9 @@ export function serializeVariable(
   const source = getSourceLocation(node, declSourceFile);
   const type = ctx.typeChecker.getTypeAtLocation(node);
   const typeString = ctx.typeChecker.typeToString(type);
+
+  // Register referenced types
+  registerReferencedTypes(type, ctx);
 
   return {
     id: name,

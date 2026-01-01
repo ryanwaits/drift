@@ -8,6 +8,9 @@ export interface SerializerContext {
   maxTypeDepth: number;
   resolveExternalTypes: boolean;
   typeRegistry: TypeRegistry;
+  exportedIds: Set<string>;
+  /** Track visited types to prevent infinite recursion */
+  visitedTypes: Set<ts.Type>;
 }
 
 export function createContext(
@@ -22,5 +25,7 @@ export function createContext(
     maxTypeDepth: options.maxTypeDepth ?? 20,
     resolveExternalTypes: options.resolveExternalTypes ?? true,
     typeRegistry: new TypeRegistry(),
+    exportedIds: new Set<string>(),
+    visitedTypes: new Set<ts.Type>(),
   };
 }

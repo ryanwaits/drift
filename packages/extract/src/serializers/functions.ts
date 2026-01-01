@@ -1,7 +1,7 @@
 import type { SpecExport, SpecSignature } from '@openpkg-ts/spec';
 import type ts from 'typescript';
 import { getJSDocComment, getSourceLocation } from '../ast/utils';
-import { extractParameters } from '../types/parameters';
+import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import type { SerializerContext } from './context';
 
 export function serializeFunctionExport(
@@ -21,8 +21,11 @@ export function serializeFunctionExport(
   const callSignatures = type.getCallSignatures();
 
   const signatures: SpecSignature[] = callSignatures.map((sig) => {
-    const params = extractParameters(sig, ctx.typeChecker);
+    const params = extractParameters(sig, ctx);
     const returnType = ctx.typeChecker.getReturnTypeOfSignature(sig);
+
+    // Register return type references
+    registerReferencedTypes(returnType, ctx);
 
     return {
       parameters: params,

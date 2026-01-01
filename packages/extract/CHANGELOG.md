@@ -1,5 +1,16 @@
 # @openpkg-ts/extract
 
+## 0.11.4
+
+### Patch Changes
+
+- fix: resolve and register referenced types in openpkg spec
+
+  - Add type registration for function parameters, return types, and variables
+  - Support namespace exports (`export * as Foo from './foo'`)
+  - Filter out builtins, enum members, and generic type parameters
+  - Extract JSDoc from namespace export statements
+
 ## 0.11.3
 
 ### Patch Changes

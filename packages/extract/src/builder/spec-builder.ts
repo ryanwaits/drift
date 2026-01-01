@@ -30,7 +30,6 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     };
   }
 
-  const ctx = createContext(program, sourceFile, { maxTypeDepth, resolveExternalTypes });
   const typeChecker = program.getTypeChecker();
 
   // Get module symbol and its exports (handles re-exports properly)
@@ -44,13 +43,23 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
   const exportedSymbols = typeChecker.getExportsOfModule(moduleSymbol);
 
+  // First pass: collect all export names so we can skip them when registering types
+  const exportedIds = new Set<string>();
+  for (const symbol of exportedSymbols) {
+    exportedIds.add(symbol.getName());
+  }
+
+  const ctx = createContext(program, sourceFile, { maxTypeDepth, resolveExternalTypes });
+  ctx.exportedIds = exportedIds;
+
   for (const symbol of exportedSymbols) {
     try {
       const { declaration, targetSymbol } = resolveExportTarget(symbol, typeChecker);
       if (!declaration) continue;
 
       const exportName = symbol.getName();
-      const exp = serializeDeclaration(declaration, targetSymbol, exportName, ctx);
+      // Pass both original symbol (for JSDoc on export) and target symbol
+      const exp = serializeDeclaration(declaration, symbol, targetSymbol, exportName, ctx);
       if (exp) exports.push(exp);
     } catch (err) {
       diagnostics.push({
@@ -105,7 +114,8 @@ function resolveExportTarget(
 
 function serializeDeclaration(
   declaration: ts.Declaration,
-  symbol: ts.Symbol,
+  exportSymbol: ts.Symbol,
+  targetSymbol: ts.Symbol,
   exportName: string,
   ctx: SerializerContext,
 ): SpecExport | null {
@@ -127,6 +137,13 @@ function serializeDeclaration(
     if (varStatement && ts.isVariableStatement(varStatement)) {
       result = serializeVariable(declaration, varStatement, ctx);
     }
+  } else if (ts.isNamespaceExport(declaration) || ts.isModuleDeclaration(declaration)) {
+    // Handle namespace exports like `export * as Foo from './foo'`
+    // Use exportSymbol for JSDoc (it's on the export statement)
+    result = serializeNamespaceExport(exportSymbol, exportName, ctx);
+  } else if (ts.isSourceFile(declaration)) {
+    // Handle namespace exports where the target resolves to a source file
+    result = serializeNamespaceExport(exportSymbol, exportName, ctx);
   }
 
   // Apply export name (handles re-exports with different names)
@@ -135,6 +152,102 @@ function serializeDeclaration(
   }
 
   return result;
+}
+
+function serializeNamespaceExport(
+  symbol: ts.Symbol,
+  exportName: string,
+  ctx: SerializerContext,
+): SpecExport {
+  // Try to get JSDoc from the export declaration statement
+  const { description, tags, examples } = getJSDocFromExportSymbol(symbol);
+
+  return {
+    id: exportName,
+    name: exportName,
+    kind: 'namespace',
+    description,
+    tags,
+    ...(examples.length > 0 ? { examples } : {}),
+  };
+}
+
+function getJSDocFromExportSymbol(symbol: ts.Symbol): {
+  description?: string;
+  tags: Array<{ name: string; text: string }>;
+  examples: string[];
+} {
+  const tags: Array<{ name: string; text: string }> = [];
+  const examples: string[] = [];
+
+  // First try: get from the symbol's declaration's parent (ExportDeclaration)
+  const decl = symbol.declarations?.[0];
+  if (decl) {
+    // For namespace exports, the declaration is NamespaceExport, parent is ExportDeclaration
+    const exportDecl = ts.isNamespaceExport(decl) ? decl.parent : decl;
+    if (exportDecl && ts.isExportDeclaration(exportDecl)) {
+      const jsDocs = ts.getJSDocCommentsAndTags(exportDecl);
+      for (const doc of jsDocs) {
+        if (ts.isJSDoc(doc) && doc.comment) {
+          const commentText =
+            typeof doc.comment === 'string'
+              ? doc.comment
+              : doc.comment.map((c) => ('text' in c ? c.text : '')).join('');
+          if (commentText) {
+            return {
+              description: commentText,
+              tags: extractJSDocTags(doc),
+              examples: extractExamples(doc),
+            };
+          }
+        }
+      }
+    }
+  }
+
+  // Fallback: try symbol's documentation
+  const docComment = symbol.getDocumentationComment(undefined);
+  const description = docComment.map((c) => c.text).join('\n') || undefined;
+
+  const jsTags = symbol.getJsDocTags();
+  for (const tag of jsTags) {
+    const text = tag.text?.map((t) => t.text).join('') ?? '';
+    if (tag.name === 'example') {
+      examples.push(text);
+    } else {
+      tags.push({ name: tag.name, text });
+    }
+  }
+
+  return { description, tags, examples };
+}
+
+function extractJSDocTags(doc: ts.JSDoc): Array<{ name: string; text: string }> {
+  const tags: Array<{ name: string; text: string }> = [];
+  for (const tag of doc.tags ?? []) {
+    if (tag.tagName.text !== 'example') {
+      const text =
+        typeof tag.comment === 'string'
+          ? tag.comment
+          : tag.comment?.map((c) => ('text' in c ? c.text : '')).join('') ?? '';
+      tags.push({ name: tag.tagName.text, text });
+    }
+  }
+  return tags;
+}
+
+function extractExamples(doc: ts.JSDoc): string[] {
+  const examples: string[] = [];
+  for (const tag of doc.tags ?? []) {
+    if (tag.tagName.text === 'example') {
+      const text =
+        typeof tag.comment === 'string'
+          ? tag.comment
+          : tag.comment?.map((c) => ('text' in c ? c.text : '')).join('') ?? '';
+      if (text) examples.push(text);
+    }
+  }
+  return examples;
 }
 
 /**
