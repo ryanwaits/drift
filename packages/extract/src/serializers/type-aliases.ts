@@ -1,6 +1,8 @@
 import type { SpecExport } from '@openpkg-ts/spec';
 import type ts from 'typescript';
 import { getJSDocComment, getSourceLocation } from '../ast/utils';
+import { registerReferencedTypes } from '../types/parameters';
+import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
 
 export function serializeTypeAlias(
@@ -15,7 +17,9 @@ export function serializeTypeAlias(
   const { description, tags, examples } = getJSDocComment(node);
   const source = getSourceLocation(node, declSourceFile);
   const type = ctx.typeChecker.getTypeAtLocation(node);
-  const typeString = ctx.typeChecker.typeToString(type);
+
+  // Register referenced types
+  registerReferencedTypes(type, ctx);
 
   return {
     id: name,
@@ -24,8 +28,7 @@ export function serializeTypeAlias(
     description,
     tags,
     source,
-    // Only include type field if it's not just the name itself
-    ...(typeString !== name ? { type: typeString } : {}),
+    schema: buildSchema(type, ctx.typeChecker, ctx),
     ...(examples.length > 0 ? { examples } : {}),
   };
 }

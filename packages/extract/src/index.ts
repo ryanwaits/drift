@@ -9,6 +9,6 @@ export * from './compiler';
 export * from './schema';
 // Serializers (for advanced use)
 export * from './serializers';
-export type { Diagnostic, ExtractOptions, ExtractResult, SerializerContext } from './types';
+export type { Diagnostic, ExtractOptions, ExtractResult } from './types';
 // Type utilities
 export * from './types/index';

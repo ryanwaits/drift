@@ -2,6 +2,7 @@ import type { SpecExport, SpecSignature } from '@openpkg-ts/spec';
 import type ts from 'typescript';
 import { getJSDocComment, getSourceLocation } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
+import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
 
 export function serializeFunctionExport(
@@ -30,7 +31,7 @@ export function serializeFunctionExport(
     return {
       parameters: params,
       returns: {
-        schema: { type: ctx.typeChecker.typeToString(returnType) },
+        schema: buildSchema(returnType, ctx.typeChecker, ctx),
       },
     };
   });

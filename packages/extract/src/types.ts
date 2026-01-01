@@ -5,6 +5,7 @@ export interface ExtractOptions {
   baseDir?: string;
   content?: string; // For in-memory analysis
   maxTypeDepth?: number;
+  maxExternalTypeDepth?: number;
   resolveExternalTypes?: boolean;
   schemaExtraction?: 'static' | 'hybrid';
 }
@@ -18,12 +19,4 @@ export interface Diagnostic {
   message: string;
   severity: 'error' | 'warning' | 'info';
   location?: { file?: string; line?: number; column?: number };
-}
-
-export interface SerializerContext {
-  typeChecker: import('typescript').TypeChecker;
-  program: import('typescript').Program;
-  sourceFile: import('typescript').SourceFile;
-  maxTypeDepth: number;
-  resolveExternalTypes: boolean;
 }

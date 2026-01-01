@@ -14,7 +14,7 @@ import { serializeVariable } from '../serializers/variables';
 import type { Diagnostic, ExtractOptions, ExtractResult } from '../types';
 
 export async function extract(options: ExtractOptions): Promise<ExtractResult> {
-  const { entryFile, baseDir, content, maxTypeDepth, resolveExternalTypes } = options;
+  const { entryFile, baseDir, content, maxTypeDepth, maxExternalTypeDepth, resolveExternalTypes } = options;
 
   const diagnostics: Diagnostic[] = [];
   const exports: SpecExport[] = [];
@@ -49,7 +49,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     exportedIds.add(symbol.getName());
   }
 
-  const ctx = createContext(program, sourceFile, { maxTypeDepth, resolveExternalTypes });
+  const ctx = createContext(program, sourceFile, { maxTypeDepth, maxExternalTypeDepth, resolveExternalTypes });
   ctx.exportedIds = exportedIds;
 
   for (const symbol of exportedSymbols) {

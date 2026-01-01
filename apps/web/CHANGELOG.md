@@ -1,5 +1,15 @@
 # @doccov/web
 
+## 0.1.9
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies
+  - @openpkg-ts/spec@0.12.0
+  - @doccov/sdk@0.25.3
+  - @doccov/api-shared@0.2.7
+
 ## 0.1.8
 
 ### Patch Changes

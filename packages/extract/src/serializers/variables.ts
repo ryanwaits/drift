@@ -2,6 +2,7 @@ import type { SpecExport } from '@openpkg-ts/spec';
 import type ts from 'typescript';
 import { getJSDocComment, getSourceLocation } from '../ast/utils';
 import { registerReferencedTypes } from '../types/parameters';
+import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
 
 export function serializeVariable(
@@ -17,7 +18,6 @@ export function serializeVariable(
   const { description, tags, examples } = getJSDocComment(statement);
   const source = getSourceLocation(node, declSourceFile);
   const type = ctx.typeChecker.getTypeAtLocation(node);
-  const typeString = ctx.typeChecker.typeToString(type);
 
   // Register referenced types
   registerReferencedTypes(type, ctx);
@@ -29,8 +29,7 @@ export function serializeVariable(
     description,
     tags,
     source,
-    // Only include type if it's meaningful
-    ...(typeString && typeString !== name ? { type: typeString } : {}),
+    schema: buildSchema(type, ctx.typeChecker, ctx),
     ...(examples.length > 0 ? { examples } : {}),
   };
 }

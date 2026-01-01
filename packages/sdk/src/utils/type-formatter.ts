@@ -301,13 +301,98 @@ export function formatTypeReference(
       }
       // Check if this type is in our current package's types
       if (typeRefs.has(symbolName)) {
+        // Handle generic type references with typeArguments
+        const typeArgs = (type as TS.TypeReference).typeArguments;
+        if (typeArgs && typeArgs.length > 0) {
+          return {
+            $ref: `#/types/${symbolName}`,
+            typeArguments: typeArgs.map((arg) =>
+              formatTypeReference(
+                arg,
+                typeChecker,
+                typeRefs,
+                referencedTypes,
+                visited,
+                depth + 1,
+                maxDepth,
+                typeIds,
+              ),
+            ),
+          };
+        }
         return { $ref: `#/types/${symbolName}` };
       }
 
-      // For built-in complex types
-      if (symbolName === 'Array') {
+      // For built-in generic types (Array, Promise, Map, etc.)
+      const typeArgs = (type as TS.TypeReference).typeArguments;
+      if (symbolName === 'Array' || symbolName === 'ReadonlyArray') {
+        if (typeArgs && typeArgs.length > 0) {
+          return {
+            type: 'array',
+            items: formatTypeReference(
+              typeArgs[0],
+              typeChecker,
+              typeRefs,
+              referencedTypes,
+              visited,
+              depth + 1,
+              maxDepth,
+              typeIds,
+            ),
+          };
+        }
         return { type: 'array' };
       }
+
+      // Built-in generics that should use $ref + typeArguments
+      const BUILTIN_GENERICS = new Set([
+        'Promise',
+        'PromiseLike',
+        'Map',
+        'Set',
+        'WeakMap',
+        'WeakSet',
+        'Partial',
+        'Required',
+        'Readonly',
+        'Pick',
+        'Omit',
+        'Record',
+        'Exclude',
+        'Extract',
+        'NonNullable',
+        'Awaited',
+        'Iterable',
+        'Iterator',
+        'IterableIterator',
+        'AsyncIterable',
+        'AsyncIterator',
+        'AsyncIterableIterator',
+        'Generator',
+        'AsyncGenerator',
+      ]);
+
+      if (BUILTIN_GENERICS.has(symbolName)) {
+        if (typeArgs && typeArgs.length > 0) {
+          return {
+            $ref: symbolName,
+            typeArguments: typeArgs.map((arg) =>
+              formatTypeReference(
+                arg,
+                typeChecker,
+                typeRefs,
+                referencedTypes,
+                visited,
+                depth + 1,
+                maxDepth,
+                typeIds,
+              ),
+            ),
+          };
+        }
+        return { $ref: symbolName };
+      }
+
       const builtInSchema = BUILTIN_TYPE_SCHEMAS[symbolName];
       if (builtInSchema) {
         return { ...builtInSchema };

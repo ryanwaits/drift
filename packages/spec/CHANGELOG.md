@@ -1,5 +1,19 @@
 # @openpkg-ts/spec
 
+## 0.12.0
+
+### Patch Changes
+
+- feat(extract): rich type schema extraction with generics, unions, intersections, and object literals
+
+  - Rewrite schema-builder to produce structured SpecSchema with proper type discrimination
+  - Handle generic types with typeArguments ($ref + typeArguments for user types, expanded for builtins)
+  - Support union/intersection types with $union/$intersection arrays
+  - Expand object literal types with properties schema
+  - Extract function signatures with parameters and returnType
+  - Handle tuple types with prefixItems
+  - Add expandBindingPattern for destructured params with JSDoc description inheritance
+
 ## 0.11.1
 
 ### Patch Changes

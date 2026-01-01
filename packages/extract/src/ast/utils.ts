@@ -70,3 +70,40 @@ export function getSourceLocation(node: ts.Node, sourceFile: ts.SourceFile): Spe
     line: line + 1,
   };
 }
+
+/**
+ * Get description for a destructured parameter property from JSDoc @param tags.
+ * Matches patterns like:
+ * - @param paramName - exact match
+ * - @param opts.paramName - dotted notation with alias
+ * - @param {type} paramName - type annotation format
+ */
+export function getParamDescription(
+  propertyName: string,
+  jsdocTags: readonly ts.JSDocTag[],
+  inferredAlias?: string,
+): string | undefined {
+  for (const tag of jsdocTags) {
+    if (tag.tagName.text !== 'param') continue;
+
+    const paramTag = tag as ts.JSDocParameterTag;
+    const tagParamName = paramTag.name?.getText() ?? '';
+
+    // Try matching strategies:
+    // 1. Exact match: @param propertyName
+    // 2. With alias: @param alias.propertyName
+    // 3. Any dotted ending: @param *.propertyName (fallback for __0 cases)
+    const isMatch =
+      tagParamName === propertyName ||
+      (inferredAlias && tagParamName === `${inferredAlias}.${propertyName}`) ||
+      tagParamName.endsWith(`.${propertyName}`);
+
+    if (isMatch) {
+      const comment =
+        typeof tag.comment === 'string' ? tag.comment : ts.getTextOfJSDocComment(tag.comment);
+      return comment?.trim() || undefined;
+    }
+  }
+
+  return undefined;
+}

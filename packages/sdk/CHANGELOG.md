@@ -1,5 +1,19 @@
 # @doccov/sdk
 
+## 0.25.3
+
+### Patch Changes
+
+- fix(sdk): handle generic type references with typeArguments in formatTypeReference
+
+  - Support $ref + typeArguments for user-defined generic types
+  - Expand builtin generics (Promise, Map, Set, etc.) with proper typeArguments
+  - Add tests for generic type formatting
+
+- Updated dependencies
+  - @openpkg-ts/extract@0.12.0
+  - @openpkg-ts/spec@0.12.0
+
 ## 0.25.2
 
 ### Patch Changes

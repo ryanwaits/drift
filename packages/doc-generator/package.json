@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/doc-generator",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "description": "API doc generator consuming OpenPkg specs. TypeDoc alternative for modern doc frameworks.",
   "keywords": [
     "openpkg",
@@ -56,7 +56,7 @@
   },
   "dependencies": {
     "@openpkg-ts/ui": "^0.1.1",
-    "@openpkg-ts/spec": "^0.11.1",
+    "@openpkg-ts/spec": "^0.12.0",
     "commander": "^14.0.0"
   },
   "peerDependencies": {

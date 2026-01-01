@@ -1,4 +1,6 @@
-import type { SpecType, SpecTypeKind } from '@openpkg-ts/spec';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import type { SpecSource, SpecType, SpecTypeKind } from '@openpkg-ts/spec';
 import ts from 'typescript';
 
 const PRIMITIVES = new Set([
@@ -95,6 +97,76 @@ function isGenericTypeParameter(name: string): boolean {
   return false;
 }
 
+/**
+ * Check if a declaration is from an external package (node_modules).
+ */
+function isExternalType(decl: ts.Declaration): boolean {
+  const sourceFile = decl.getSourceFile();
+  if (!sourceFile) return false;
+  return sourceFile.fileName.includes('node_modules');
+}
+
+/**
+ * Extract package name from a node_modules path.
+ * Handles scoped packages like @scope/pkg.
+ */
+function extractPackageName(filePath: string): string | undefined {
+  const nmIndex = filePath.lastIndexOf('node_modules');
+  if (nmIndex === -1) return undefined;
+
+  const afterNm = filePath.slice(nmIndex + 'node_modules/'.length);
+  const parts = afterNm.split('/');
+
+  if (parts[0].startsWith('@') && parts.length >= 2) {
+    // Scoped package: @scope/pkg
+    return `${parts[0]}/${parts[1]}`;
+  }
+  return parts[0];
+}
+
+/**
+ * Get package version from package.json in node_modules.
+ */
+function getPackageVersion(filePath: string, packageName: string): string | undefined {
+  const nmIndex = filePath.lastIndexOf('node_modules');
+  if (nmIndex === -1) return undefined;
+
+  const nmDir = filePath.slice(0, nmIndex + 'node_modules'.length);
+  const pkgJsonPath = path.join(nmDir, packageName, 'package.json');
+
+  try {
+    if (fs.existsSync(pkgJsonPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
+      return pkg.version;
+    }
+  } catch {
+    // Ignore errors
+  }
+  return undefined;
+}
+
+/**
+ * Build SpecSource with external package info if applicable.
+ */
+function buildExternalSource(decl: ts.Declaration): SpecSource | undefined {
+  const sourceFile = decl.getSourceFile();
+  if (!sourceFile) return undefined;
+
+  const filePath = sourceFile.fileName;
+  if (!filePath.includes('node_modules')) return undefined;
+
+  const packageName = extractPackageName(filePath);
+  if (!packageName) return undefined;
+
+  const version = getPackageVersion(filePath, packageName);
+
+  return {
+    file: filePath,
+    package: packageName,
+    version,
+  };
+}
+
 export class TypeRegistry {
   private types = new Map<string, SpecType>();
   private processing = new Set<string>();
@@ -167,19 +239,31 @@ export class TypeRegistry {
     const decl = symbol.declarations?.[0];
 
     let kind: SpecTypeKind = 'type';
+    const external = decl ? isExternalType(decl) : false;
+
     if (decl) {
       if (ts.isClassDeclaration(decl)) kind = 'class';
       else if (ts.isInterfaceDeclaration(decl)) kind = 'interface';
       else if (ts.isEnumDeclaration(decl)) kind = 'enum';
     }
 
+    // Mark external types with 'external' kind if they're from node_modules
+    if (external) {
+      kind = 'external';
+    }
+
     const typeString = checker.typeToString(type);
+
+    // Build source with package info for external types
+    const source = decl ? buildExternalSource(decl) : undefined;
 
     return {
       id: name,
       name,
       kind,
       type: typeString !== name ? typeString : undefined,
+      ...(external ? { external: true } : {}),
+      ...(source ? { source } : {}),
     };
   }
 

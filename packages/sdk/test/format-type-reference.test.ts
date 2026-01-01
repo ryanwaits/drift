@@ -254,11 +254,11 @@ describe('formatTypeReference', () => {
       expect(result).toEqual({ type: 'string', format: 'date-time' });
     });
 
-    test('formats Array as array', () => {
+    test('formats Array as array with items', () => {
       const { type, typeChecker } = getFirstVarType('const x: Array<string> = [];');
       const result = formatTypeReference(type, typeChecker, new Map());
 
-      expect(result).toEqual({ type: 'array' });
+      expect(result).toEqual({ type: 'array', items: { type: 'string' } });
     });
   });
 

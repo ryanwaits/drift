@@ -38,6 +38,10 @@ export type SpecSource = {
   file?: string;
   line?: number;
   url?: string;
+  /** Package name for external types (e.g., "@stacks/common") */
+  package?: string;
+  /** Package version for external types (e.g., "7.0.0") */
+  version?: string;
 };
 
 // Priority 3: SpecSchema DSL - Proper discriminated union for type schemas
@@ -74,8 +78,8 @@ export type SpecSchemaCombinator =
   | { allOf: SpecSchema[] }
   | { oneOf: SpecSchema[] };
 
-// Reference
-export type SpecSchemaRef = { $ref: string };
+// Reference with optional type arguments for generics
+export type SpecSchemaRef = { $ref: string; typeArguments?: SpecSchema[] };
 
 // Fallback for complex TS types that can't be fully represented in JSON Schema
 export type SpecSchemaFallback = { type: string };
@@ -221,6 +225,8 @@ export type SpecType = {
   typeAliasKind?: SpecTypeAliasKind;
   conditionalType?: SpecConditionalType;
   mappedType?: SpecMappedType;
+  /** Whether this type is from an external package (node_modules) */
+  external?: boolean;
 };
 
 export type OpenPkgMeta = {
