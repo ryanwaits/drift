@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.6.5
+
+### Patch Changes
+
+- fix: replace workspace:\* with hardcoded versions for npm compatibility
+
 ## 0.6.4
 
 ### Patch Changes

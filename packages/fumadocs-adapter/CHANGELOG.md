@@ -1,5 +1,13 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.6.8
+
+### Patch Changes
+
+- fix: replace workspace:\* with hardcoded versions for npm compatibility
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.6.5
+
 ## 0.6.7
 
 ### Patch Changes

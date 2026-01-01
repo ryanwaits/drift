@@ -1,5 +1,12 @@
 # @doccov/api-shared
 
+## 0.2.5
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/sdk@0.25.1
+
 ## 0.2.4
 
 ### Patch Changes

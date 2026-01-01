@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.11.3
+
+### Patch Changes
+
+- fix: replace workspace:\* with hardcoded versions for npm compatibility
+
 ## 0.11.2
 
 ### Patch Changes

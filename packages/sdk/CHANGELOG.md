@@ -1,5 +1,13 @@
 # @doccov/sdk
 
+## 0.25.1
+
+### Patch Changes
+
+- fix: replace workspace:\* with hardcoded versions for npm compatibility
+- Updated dependencies
+  - @openpkg-ts/extract@0.11.3
+
 ## 0.25.0
 
 ### Minor Changes

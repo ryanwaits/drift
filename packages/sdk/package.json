@@ -1,6 +1,6 @@
 {
   "name": "@doccov/sdk",
-  "version": "0.25.0",
+  "version": "0.25.1",
   "description": "DocCov SDK - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",
@@ -47,9 +47,9 @@
     "dist"
   ],
   "dependencies": {
-    "@doccov/spec": "workspace:*",
-    "@openpkg-ts/extract": "workspace:*",
-    "@openpkg-ts/spec": "workspace:*",
+    "@doccov/spec": "^0.24.1",
+    "@openpkg-ts/extract": "^0.11.3",
+    "@openpkg-ts/spec": "^0.11.1",
     "@vercel/sandbox": "^1.0.3",
     "mdast": "^3.0.0",
     "minimatch": "^10.1.1",
