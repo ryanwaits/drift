@@ -1,7 +1,7 @@
 // Styled components - pre-styled with Tailwind v4
 
-// Re-export from @doccov/ui
-export { CodeTabs, ImportSection, type CodeTab, type CodeTabsProps, type ImportSectionProps } from '@doccov/ui/api';
+// Re-export from @openpkg-ts/ui
+export { CodeTabs, ImportSection, type CodeTab, type CodeTabsProps, type ImportSectionProps } from '@openpkg-ts/ui/api';
 
 // Local components (spec-specific)
 export type { APIPageProps } from './APIPage';
@@ -21,7 +21,7 @@ export { FunctionPage } from './FunctionPage';
 export type { InterfacePageProps } from './InterfacePage';
 export { InterfacePage } from './InterfacePage';
 export type { NestedPropertyItemProps, ParameterItemProps } from './ParameterItem';
-/** @deprecated Use APIParameterItem from @doccov/ui with specParamToAPIParam adapter */
+/** @deprecated Use APIParameterItem from @openpkg-ts/ui with specParamToAPIParam adapter */
 export { ParameterItem } from './ParameterItem';
 export type { VariablePageProps } from './VariablePage';
 export { VariablePage } from './VariablePage';

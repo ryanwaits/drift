@@ -1,10 +1,6 @@
-import type {
-  EnrichedOpenPkg,
-  ExampleTypeError,
-  ExampleValidation,
-  ExampleValidationResult,
-} from '@doccov/sdk';
+import type { ExampleTypeError, ExampleValidation, ExampleValidationResult } from '@doccov/sdk';
 import { validateExamples } from '@doccov/sdk';
+import type { OpenPkg } from '@openpkg-ts/spec';
 import type { CollectedDrift, StaleReference } from './types';
 import { loadMarkdownFiles } from './utils';
 
@@ -25,7 +21,7 @@ export interface ExampleValidationOutput {
  * Run example validation using unified SDK function
  */
 export async function runExampleValidation(
-  spec: EnrichedOpenPkg,
+  openpkg: OpenPkg,
   options: ExampleValidationOptions,
 ): Promise<ExampleValidationOutput> {
   const { validations, targetDir, timeout = 5000, installTimeout = 60000 } = options;
@@ -33,10 +29,10 @@ export async function runExampleValidation(
   const typecheckErrors: Array<{ exportName: string; error: ExampleTypeError }> = [];
   const runtimeDrifts: CollectedDrift[] = [];
 
-  const result = await validateExamples(spec.exports ?? [], {
+  const result = await validateExamples(openpkg.exports ?? [], {
     validations,
     packagePath: targetDir,
-    exportNames: (spec.exports ?? []).map((e) => e.name),
+    exportNames: (openpkg.exports ?? []).map((e) => e.name),
     timeout,
     installTimeout,
   });

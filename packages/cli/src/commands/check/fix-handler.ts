@@ -4,18 +4,18 @@ import {
   applyEdits,
   categorizeDrifts,
   createSourceFile,
-  type EnrichedExport,
-  type EnrichedOpenPkg,
   type FixSuggestion,
   findJSDocLocation,
   generateFixesForExport,
+  getExportDrift,
   type JSDocEdit,
   type JSDocPatch,
   mergeFixes,
   parseJSDocToPatch,
   serializeJSDoc,
 } from '@doccov/sdk';
-import type { SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
+import type { DocCovDrift, DocCovSpec } from '@doccov/spec';
+import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import { collectDriftsFromExports, groupByExport } from './utils';
 
@@ -39,7 +39,8 @@ export interface FixResult {
  * Handle --fix / --write: auto-fix drift issues
  */
 export async function handleFixes(
-  spec: EnrichedOpenPkg,
+  openpkg: OpenPkg,
+  doccov: DocCovSpec,
   options: FixHandlerOptions,
   deps: FixHandlerDeps,
 ): Promise<FixResult> {
@@ -47,7 +48,7 @@ export async function handleFixes(
   const { log, error } = deps;
 
   const fixedDriftKeys = new Set<string>();
-  const allDrifts = collectDriftsFromExports(spec.exports ?? []);
+  const allDrifts = collectDriftsFromExports(openpkg.exports ?? [], doccov);
 
   if (allDrifts.length === 0) {
     return { fixedDriftKeys, editsApplied: 0, filesModified: 0 };
@@ -74,7 +75,7 @@ export async function handleFixes(
   const editsByFile = new Map<
     string,
     Array<{
-      export: EnrichedExport;
+      export: SpecExport;
       edit: JSDocEdit;
       fixes: FixSuggestion[];
       existingPatch: JSDocPatch;
@@ -151,8 +152,8 @@ interface GeneratedEdit {
 }
 
 function generateEditForExport(
-  exp: EnrichedExport,
-  drifts: SpecDocDrift[],
+  exp: SpecExport,
+  drifts: DocCovDrift[],
   targetDir: string,
   log: typeof console.log,
 ): GeneratedEdit | null {
@@ -191,9 +192,8 @@ function generateEditForExport(
     existingPatch = parseJSDocToPatch(location.existingJSDoc);
   }
 
-  // Generate fixes
-  const expWithDrift = { ...exp, docs: { ...exp.docs, drift: drifts } };
-  const fixes = generateFixesForExport(expWithDrift as unknown as SpecExport, existingPatch);
+  // Generate fixes - drifts are already from DocCovSpec, pass export and drifts directly
+  const fixes = generateFixesForExport(exp, existingPatch, drifts);
 
   if (fixes.length === 0) return null;
 
@@ -221,7 +221,7 @@ function displayPreview(
   editsByFile: Map<
     string,
     Array<{
-      export: EnrichedExport;
+      export: SpecExport;
       edit: JSDocEdit;
       fixes: FixSuggestion[];
     }>

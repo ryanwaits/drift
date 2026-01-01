@@ -14,7 +14,7 @@ import type {
   APIParameterSchema,
   CodeExample,
   Language,
-} from '@doccov/ui/docskit';
+} from '@openpkg-ts/ui/docskit';
 import { formatSchema } from '../core/query';
 
 /**

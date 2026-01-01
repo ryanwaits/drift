@@ -1,11 +1,13 @@
 import {
+  buildDocCovSpec,
   DocCov,
   type ExampleValidation,
-  enrichSpec,
   NodeFileSystem,
   parseExamplesFlag,
   resolveTarget,
 } from '@doccov/sdk';
+import type { DocCovSpec } from '@doccov/spec';
+import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { loadDocCovConfig } from '../../config';
@@ -143,7 +145,7 @@ export function registerCheckCommand(
 
         const resolveExternalTypes = !options.skipResolve;
 
-        const doccov = createDocCov({
+        const analyzer = createDocCov({
           resolveExternalTypes,
           maxDepth: options.maxTypeDepth,
           useCache: options.cache !== false,
@@ -155,15 +157,20 @@ export function registerCheckCommand(
           ? { filters: { visibility: resolvedFilters.visibility } }
           : {};
 
-        const specResult = await doccov.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
+        const specResult = await analyzer.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
 
         if (!specResult) {
           throw new Error('Failed to analyze documentation coverage.');
         }
         steps.next();
 
-        // Enrich the spec with coverage data
-        const spec = enrichSpec(specResult.spec);
+        // Build DocCov spec with coverage data (composition pattern)
+        const openpkg = specResult.spec as OpenPkg;
+        const doccov = buildDocCovSpec({
+          openpkg,
+          openpkgPath: entryFile,
+          packagePath: targetDir,
+        });
         const format = (options.format ?? 'text') as OutputFormat;
         steps.next();
 
@@ -184,7 +191,7 @@ export function registerCheckCommand(
         let runtimeDrifts: CollectedDrift[] = [];
 
         if (hasExamples) {
-          const validation = await runExampleValidation(spec, {
+          const validation = await runExampleValidation(openpkg, {
             validations,
             targetDir,
           });
@@ -203,20 +210,28 @@ export function registerCheckCommand(
         const staleRefs = await validateMarkdownDocs({
           docsPatterns,
           targetDir,
-          exportNames: (spec.exports ?? []).map((e) => e.name),
+          exportNames: (openpkg.exports ?? []).map((e) => e.name),
         });
 
-        const coverageScore = spec.docs?.coverageScore ?? 0;
+        const coverageScore = doccov.summary.score;
 
         // Collect drift issues - exclude example-category drifts unless --examples is used
-        const allDriftExports = [...collectDrift(spec.exports ?? []), ...runtimeDrifts];
+        const allDriftExports = [
+          ...collectDrift(openpkg.exports ?? [], doccov),
+          ...runtimeDrifts,
+        ];
         let driftExports = hasExamples
           ? allDriftExports
           : allDriftExports.filter((d) => d.category !== 'example');
 
         // Handle --fix / --preview: auto-fix drift issues
         if (shouldFix && driftExports.length > 0) {
-          const fixResult = await handleFixes(spec, { isPreview, targetDir }, { log, error });
+          const fixResult = await handleFixes(
+            openpkg,
+            doccov,
+            { isPreview, targetDir },
+            { log, error },
+          );
 
           // Filter out fixed drifts from the evaluation (only when actually applying)
           if (!isPreview) {
@@ -233,8 +248,8 @@ export function registerCheckCommand(
           const passed = handleNonTextOutput(
             {
               format,
-              spec,
-              rawSpec: specResult.spec,
+              openpkg,
+              doccov,
               coverageScore,
               minCoverage,
               maxDrift,
@@ -257,7 +272,8 @@ export function registerCheckCommand(
         // Display text output
         const passed = displayTextOutput(
           {
-            spec,
+            openpkg,
+            doccov,
             coverageScore,
             minCoverage,
             maxDrift,

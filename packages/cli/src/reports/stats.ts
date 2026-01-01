@@ -1,12 +1,6 @@
-import {
-  DRIFT_CATEGORIES,
-  type DriftCategory,
-  type DriftType,
-  type EnrichedOpenPkg,
-  isFixableDrift,
-  type SpecDocDrift,
-} from '@doccov/sdk';
-import type { SpecExportKind } from '@openpkg-ts/spec';
+import { getExportAnalysis, getExportDrift, isFixableDrift } from '@doccov/sdk';
+import { DRIFT_CATEGORIES, type DocCovSpec, type DriftCategory, type DriftType } from '@doccov/spec';
+import type { OpenPkg, SpecExportKind } from '@openpkg-ts/spec';
 
 export type SignalStats = { covered: number; total: number; pct: number };
 
@@ -42,11 +36,10 @@ export type ReportStats = {
 };
 
 /**
- * Compute report statistics from an enriched OpenPkg spec.
- * The spec must be enriched with coverage data via enrichSpec() first.
+ * Compute report statistics from an OpenPkg spec and DocCov spec.
  */
-export function computeStats(spec: EnrichedOpenPkg): ReportStats {
-  const exports = spec.exports ?? [];
+export function computeStats(openpkg: OpenPkg, doccov: DocCovSpec): ReportStats {
+  const exports = openpkg.exports ?? [];
   const signals = {
     description: { covered: 0, total: 0 },
     params: { covered: 0, total: 0 },
@@ -65,8 +58,9 @@ export function computeStats(spec: EnrichedOpenPkg): ReportStats {
   let undocumented = 0;
 
   for (const exp of exports) {
-    const score = exp.docs?.coverageScore ?? 0;
-    const missing = exp.docs?.missing ?? [];
+    const analysis = getExportAnalysis(exp, doccov);
+    const score = analysis?.coverageScore ?? 0;
+    const missing = analysis?.missing ?? [];
 
     // Tally signals
     for (const sig of ['description', 'params', 'returns', 'examples'] as const) {
@@ -86,7 +80,7 @@ export function computeStats(spec: EnrichedOpenPkg): ReportStats {
     else undocumented++;
 
     // Collect drift and categorize
-    for (const d of exp.docs?.drift ?? []) {
+    for (const d of getExportDrift(exp, doccov)) {
       const item: DriftIssueItem = {
         exportName: exp.name,
         type: d.type,
@@ -117,12 +111,15 @@ export function computeStats(spec: EnrichedOpenPkg): ReportStats {
     .sort((a, b) => b.count - a.count);
 
   const sortedExports = exports
-    .map((e) => ({
-      name: e.name,
-      kind: e.kind,
-      score: e.docs?.coverageScore ?? 0,
-      missing: e.docs?.missing ?? [],
-    }))
+    .map((e) => {
+      const analysis = getExportAnalysis(e, doccov);
+      return {
+        name: e.name,
+        kind: e.kind,
+        score: analysis?.coverageScore ?? 0,
+        missing: analysis?.missing ?? [],
+      };
+    })
     .sort((a, b) => a.score - b.score);
 
   // Compute drift summary
@@ -144,9 +141,9 @@ export function computeStats(spec: EnrichedOpenPkg): ReportStats {
     exports.length === 0 ? 0 : Math.round((exportsWithDrift / exports.length) * 100);
 
   return {
-    packageName: spec.meta.name ?? 'unknown',
-    version: spec.meta.version ?? '0.0.0',
-    coverageScore: spec.docs?.coverageScore ?? 0,
+    packageName: openpkg.meta.name ?? 'unknown',
+    version: openpkg.meta.version ?? '0.0.0',
+    coverageScore: doccov.summary.score,
     driftScore,
     totalExports: exports.length,
     fullyDocumented,

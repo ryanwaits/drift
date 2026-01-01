@@ -1,5 +1,13 @@
 # @doccov/cli
 
+## 0.25.0
+
+### Patch Changes
+
+- Remove unused enrichment/diff code from SDK, delete unused UI components (drift-command-center, fix-workflow, pr-coverage)
+- Updated dependencies
+  - @doccov/sdk@0.25.0
+
 ## 0.24.1
 
 ### Patch Changes

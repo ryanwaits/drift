@@ -129,13 +129,14 @@ interface EnrichOptions {
 ## Report Generation
 
 ```typescript
-import { generateReport, generateReportFromEnriched } from '@doccov/sdk';
+import { generateReport, generateReportFromDocCov, buildDocCovSpec } from '@doccov/sdk';
 
 // From raw spec
 const report = generateReport(spec);
 
-// From enriched spec (faster)
-const report = generateReportFromEnriched(enriched);
+// From OpenPkg + DocCov specs (composition pattern)
+const doccov = buildDocCovSpec({ openpkg, openpkgPath: 'openpkg.json' });
+const report = generateReportFromDocCov(openpkg, doccov);
 ```
 
 ### Report Structure

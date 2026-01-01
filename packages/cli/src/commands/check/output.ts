@@ -1,11 +1,7 @@
-import type {
-  Diagnostic,
-  EnrichedOpenPkg,
-  ExampleTypeError,
-  ExampleValidationResult,
-} from '@doccov/sdk';
-import { generateReport } from '@doccov/sdk';
-import type { OpenPkgSpec } from '@openpkg-ts/spec';
+import type { Diagnostic, ExampleTypeError, ExampleValidationResult } from '@doccov/sdk';
+import { generateReportFromDocCov } from '@doccov/sdk';
+import type { DocCovSpec } from '@doccov/spec';
+import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import {
   computeStats,
@@ -17,7 +13,8 @@ import {
 import type { CollectedDrift, OutputFormat, StaleReference } from './types';
 
 export interface TextOutputOptions {
-  spec: EnrichedOpenPkg;
+  openpkg: OpenPkg;
+  doccov: DocCovSpec;
   coverageScore: number;
   minCoverage: number;
   maxDrift: number | undefined;
@@ -38,7 +35,8 @@ export interface TextOutputDeps {
  */
 export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDeps): boolean {
   const {
-    spec,
+    openpkg,
+    doccov,
     coverageScore,
     minCoverage,
     maxDrift,
@@ -52,7 +50,7 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
   const { log } = deps;
 
   // Calculate drift percentage
-  const totalExportsForDrift = spec.exports?.length ?? 0;
+  const totalExportsForDrift = openpkg.exports?.length ?? 0;
   const exportsWithDrift = new Set(driftExports.map((d) => d.name)).size;
   const driftScore =
     totalExportsForDrift === 0 ? 0 : Math.round((exportsWithDrift / totalExportsForDrift) * 100);
@@ -79,9 +77,9 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
   }
 
   // Render concise summary output
-  const pkgName = spec.meta?.name ?? 'unknown';
-  const pkgVersion = spec.meta?.version ?? '';
-  const totalExports = spec.exports?.length ?? 0;
+  const pkgName = openpkg.meta?.name ?? 'unknown';
+  const pkgVersion = openpkg.meta?.version ?? '';
+  const totalExports = openpkg.exports?.length ?? 0;
 
   log('');
   log(chalk.bold(`${pkgName}${pkgVersion ? `@${pkgVersion}` : ''}`));
@@ -169,8 +167,8 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
 
 export interface NonTextOutputOptions {
   format: OutputFormat;
-  spec: EnrichedOpenPkg;
-  rawSpec: OpenPkgSpec;
+  openpkg: OpenPkg;
+  doccov: DocCovSpec;
   coverageScore: number;
   minCoverage: number;
   maxDrift: number | undefined;
@@ -196,8 +194,8 @@ export function handleNonTextOutput(
 ): boolean {
   const {
     format,
-    spec,
-    rawSpec,
+    openpkg,
+    doccov,
     coverageScore,
     minCoverage,
     maxDrift,
@@ -210,10 +208,10 @@ export function handleNonTextOutput(
   } = options;
   const { log } = deps;
 
-  const stats = computeStats(spec);
+  const stats = computeStats(openpkg, doccov);
 
   // Generate JSON report (always needed for cache)
-  const report = generateReport(rawSpec);
+  const report = generateReportFromDocCov(openpkg, doccov);
   const jsonContent = JSON.stringify(report, null, 2);
 
   // Generate requested format content
@@ -252,7 +250,7 @@ export function handleNonTextOutput(
   }
 
   // Calculate drift percentage
-  const totalExportsForDrift = spec.exports?.length ?? 0;
+  const totalExportsForDrift = openpkg.exports?.length ?? 0;
   const exportsWithDrift = new Set(driftExports.map((d) => d.name)).size;
   const driftScore =
     totalExportsForDrift === 0 ? 0 : Math.round((exportsWithDrift / totalExportsForDrift) * 100);

@@ -227,7 +227,7 @@ export function buildOpenPkgSpec(
     }
   }
 
-  // Note: Coverage is computed during enrichment via enrichSpec(), not during spec building
+  // Note: Coverage is computed separately via buildDocCovSpec(), not during spec building
   return spec;
 }
 

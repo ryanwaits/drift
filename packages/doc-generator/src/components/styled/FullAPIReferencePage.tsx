@@ -1,8 +1,8 @@
 'use client';
 
 import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
-import { APIReferencePage } from '@doccov/ui/docskit';
-import { cn } from '@doccov/ui/lib/utils';
+import { APIReferencePage } from '@openpkg-ts/ui/docskit';
+import { cn } from '@openpkg-ts/ui/lib/utils';
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { ExportSection } from './sections/ExportSection';
 

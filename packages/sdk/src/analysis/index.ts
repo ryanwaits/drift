@@ -3,7 +3,7 @@
  *
  * @example
  * ```ts
- * import { computeDrift, enrichSpec, generateReport } from '@doccov/sdk/analysis';
+ * import { computeDrift, buildDocCovSpec, generateReport } from '@doccov/sdk/analysis';
  * ```
  *
  * @module analysis
@@ -11,11 +11,8 @@
 
 // Context types
 export type { DetectedSchemaEntry } from './context';
-// Enriched diff (doccov-specific coverage tracking)
-export {
-  diffEnrichedSpec,
-  type EnrichedSpecDiff,
-} from './diff-enriched';
+// DocCov spec builder
+export { type BuildDocCovOptions, buildDocCovSpec } from './doccov-builder';
 // Drift detection and categorization
 export {
   buildExportRegistry,
@@ -36,14 +33,14 @@ export {
   hasNonAssertionComments,
   parseAssertions,
 } from './docs-coverage';
-// Enrichment
+// Lookup helpers for composition pattern
 export {
-  type EnrichedDocsMetadata,
-  type EnrichedExport,
-  type EnrichedOpenPkg,
-  type EnrichOptions,
-  enrichSpec,
-} from './enrich';
+  getExportAnalysis,
+  getExportDrift,
+  getExportMissing,
+  getExportScore,
+  isExportFullyDocumented,
+} from './lookup';
 
 // History and trends
 export {
@@ -70,7 +67,7 @@ export {
 // Report generation
 export {
   generateReport,
-  generateReportFromEnriched,
+  generateReportFromDocCov,
   isCachedReportValid,
   loadCachedReport,
   renderApiSurface,

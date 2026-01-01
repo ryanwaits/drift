@@ -4,7 +4,8 @@
  * Generates actionable markdown optimized for PR comments
  */
 
-import type { SpecDiffWithDocs } from '@doccov/sdk';
+import { getExportDrift, type SpecDiffWithDocs } from '@doccov/sdk';
+import type { DocCovSpec } from '@doccov/spec';
 import type { OpenPkg, SemverBump, SpecDocDrift, SpecExport, SpecSchema } from '@openpkg-ts/spec';
 
 /**
@@ -49,13 +50,15 @@ export interface PRCommentData {
   headName: string;
   /** Head spec for detailed export/drift info */
   headSpec?: OpenPkg;
+  /** DocCov spec for drift/coverage lookup */
+  doccov?: DocCovSpec;
 }
 
 /**
  * Render a PR comment from diff data
  */
 export function renderPRComment(data: PRCommentData, opts: PRCommentOptions = {}): string {
-  const { diff, headSpec } = data;
+  const { diff, headSpec, doccov } = data;
   const limit = opts.limit ?? 10;
   const lines: string[] = [];
 
@@ -115,7 +118,7 @@ export function renderPRComment(data: PRCommentData, opts: PRCommentOptions = {}
     lines.push('');
     lines.push('### Doc drift detected');
     lines.push('');
-    renderDriftIssues(lines, diff.newUndocumented, headSpec, opts, limit);
+    renderDriftIssues(lines, diff.newUndocumented, headSpec, doccov, opts, limit);
   }
 
   // Stale docs references section
@@ -230,28 +233,27 @@ function renderUndocumentedExports(
 }
 
 /**
- * Render drift issues from head spec
+ * Render drift issues from head spec using doccov lookup
  */
 function renderDriftIssues(
   lines: string[],
   _undocumented: string[],
   headSpec: OpenPkg,
+  doccov: DocCovSpec | undefined,
   opts: PRCommentOptions,
   limit: number,
 ): void {
   const driftIssues: { exportName: string; file?: string; drift: SpecDocDrift }[] = [];
 
-  // Collect drift from all exports
+  // Collect drift from all exports using doccov lookup
   for (const exp of headSpec.exports) {
-    const drifts = (exp as { docs?: { drift?: SpecDocDrift[] } }).docs?.drift;
-    if (drifts) {
-      for (const d of drifts) {
-        driftIssues.push({
-          exportName: exp.name,
-          file: exp.source?.file,
-          drift: d,
-        });
-      }
+    const drifts = doccov ? getExportDrift(exp, doccov) : [];
+    for (const d of drifts) {
+      driftIssues.push({
+        exportName: exp.name,
+        file: exp.source?.file,
+        drift: d as SpecDocDrift,
+      });
     }
   }
 

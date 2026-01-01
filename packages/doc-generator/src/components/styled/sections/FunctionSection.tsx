@@ -6,7 +6,7 @@ import {
   APISection,
   ParameterList,
   ResponseBlock,
-} from '@doccov/ui/docskit';
+} from '@openpkg-ts/ui/docskit';
 import type { ReactNode } from 'react';
 import {
   buildImportStatement,

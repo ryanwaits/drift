@@ -22,11 +22,6 @@ export type { MethodCallInfo } from './ast-extractor';
 export { extractFunctionCalls, extractImports, extractMethodCalls } from './ast-extractor';
 
 /**
- * @deprecated Use MethodCallInfo instead
- */
-export type MethodCall = MethodCallInfo;
-
-/**
  * Default set of languages that can be executed.
  * Extended to cover more modern JS/TS conventions.
  */

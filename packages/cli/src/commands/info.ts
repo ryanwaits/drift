@@ -1,4 +1,5 @@
-import { DocCov, enrichSpec, NodeFileSystem, resolveTarget } from '@doccov/sdk';
+import { buildDocCovSpec, DocCov, NodeFileSystem, resolveTarget } from '@doccov/sdk';
+import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { computeStats } from '../reports';
@@ -20,22 +21,27 @@ export function registerInfoCommand(program: Command): void {
           entry: entry as string | undefined,
         });
 
-        const { entryFile } = resolved;
+        const { entryFile, targetDir } = resolved;
         const resolveExternalTypes = !options.skipResolve;
 
         // Run analysis
-        const doccov = new DocCov({
+        const analyzer = new DocCov({
           resolveExternalTypes,
         });
-        const specResult = await doccov.analyzeFileWithDiagnostics(entryFile);
+        const specResult = await analyzer.analyzeFileWithDiagnostics(entryFile);
 
         if (!specResult) {
           throw new Error('Failed to analyze documentation coverage.');
         }
 
-        // Enrich and compute stats
-        const spec = enrichSpec(specResult.spec);
-        const stats = computeStats(spec);
+        // Build DocCov spec and compute stats
+        const openpkg = specResult.spec as OpenPkg;
+        const doccov = buildDocCovSpec({
+          openpkg,
+          openpkgPath: entryFile,
+          packagePath: targetDir,
+        });
+        const stats = computeStats(openpkg, doccov);
 
         // Output summary
         console.log('');

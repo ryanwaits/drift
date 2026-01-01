@@ -5,7 +5,7 @@ import {
   APIParameterItem,
   APISection,
   ParameterList,
-} from '@doccov/ui/docskit';
+} from '@openpkg-ts/ui/docskit';
 import type { ReactNode } from 'react';
 import {
   buildImportStatement,

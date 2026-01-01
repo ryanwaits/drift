@@ -1,4 +1,4 @@
-import { KindBadge as UIKindBadge, type KindBadgeKind } from '@doccov/ui/badge';
+import { KindBadge as UIKindBadge, type KindBadgeKind } from '@openpkg-ts/ui/badge';
 import type { SpecExportKind } from '@openpkg-ts/doc-generator';
 import { createElement, type ReactNode } from 'react';
 
@@ -22,7 +22,7 @@ export interface SidebarKindBadgeProps {
 
 /**
  * Sidebar badge component for fumadocs page tree.
- * Wraps @doccov/ui KindBadge with size="sm" for sidebar use.
+ * Wraps @openpkg-ts/ui KindBadge with size="sm" for sidebar use.
  *
  * Uses createElement instead of JSX for compatibility with
  * fumadocs transformPageTree server context.

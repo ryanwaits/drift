@@ -1,5 +1,12 @@
 # @openpkg-ts/doc-generator
 
+## 0.6.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/ui@0.1.1
+
 ## 0.6.3
 
 ### Patch Changes

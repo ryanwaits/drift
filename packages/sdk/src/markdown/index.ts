@@ -27,7 +27,7 @@ export {
   hasRemovedMembers,
 } from './member-diff';
 // Parser functions
-export type { MethodCall } from './parser';
+export type { MethodCallInfo } from './ast-extractor';
 export {
   blockReferencesExport,
   extractFunctionCalls,

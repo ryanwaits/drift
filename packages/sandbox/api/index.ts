@@ -16,10 +16,10 @@ import type {
   BuildPlanStep,
   BuildPlanStepResult,
   BuildPlanTarget,
-  EnrichedOpenPkg,
   GitHubProjectContext,
 } from '@doccov/sdk';
-import { enrichSpec, fetchGitHubContext, parseScanGitHubUrl } from '@doccov/sdk';
+import { buildDocCovSpec, fetchGitHubContext, getExportDrift, parseScanGitHubUrl } from '@doccov/sdk';
+import type { DocCovSpec } from '@doccov/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Sandbox } from '@vercel/sandbox';
@@ -120,23 +120,21 @@ interface SpecSummary {
   topDrift: Array<{ name: string; issue: string }>;
 }
 
-function createSpecSummary(spec: OpenPkg): SpecSummary {
-  const enriched = enrichSpec(spec) as EnrichedOpenPkg;
-
-  const totalExports = enriched.exports?.length ?? 0;
-  const types = enriched.types?.length ?? 0;
-  const coverageScore = enriched.docs?.coverageScore ?? 0;
-  const documented = enriched.docs?.documented ?? 0;
+function createSpecSummary(spec: OpenPkg, doccov: DocCovSpec): SpecSummary {
+  const totalExports = spec.exports?.length ?? 0;
+  const types = spec.types?.length ?? 0;
+  const coverageScore = doccov.summary.score;
+  const documented = doccov.summary.documentedExports;
   const undocumented = totalExports - documented;
 
   const driftItems: Array<{ name: string; issue: string }> = [];
   const undocumentedNames: string[] = [];
 
-  for (const exp of enriched.exports ?? []) {
+  for (const exp of spec.exports ?? []) {
     if (!exp.description || exp.description.trim().length === 0) {
       undocumentedNames.push(exp.name);
     }
-    for (const drift of exp.docs?.drift ?? []) {
+    for (const drift of getExportDrift(exp, doccov)) {
       driftItems.push({
         name: exp.name,
         issue: drift.issue ?? 'Documentation drift detected',
@@ -145,8 +143,8 @@ function createSpecSummary(spec: OpenPkg): SpecSummary {
   }
 
   return {
-    name: enriched.meta?.name ?? 'unknown',
-    version: enriched.meta?.version ?? '0.0.0',
+    name: spec.meta?.name ?? 'unknown',
+    version: spec.meta?.version ?? '0.0.0',
     coverage: coverageScore,
     exports: totalExports,
     types,
@@ -566,7 +564,8 @@ async function handleExecute(req: VercelRequest, res: VercelResponse): Promise<v
         `Failed to read spec file (${specFilePath}): ${readError instanceof Error ? readError.message : 'Unknown error'}`,
       );
     }
-    const summary = createSpecSummary(spec);
+    const doccov = buildDocCovSpec({ openpkg: spec, openpkgPath: specFilePath });
+    const summary = createSpecSummary(spec, doccov);
 
     const result = {
       success: true,
@@ -755,7 +754,8 @@ async function handleExecuteStream(req: VercelRequest, res: VercelResponse): Pro
         `Failed to read spec file (${specFilePath}): ${readError instanceof Error ? readError.message : 'Unknown error'}`,
       );
     }
-    const summary = createSpecSummary(spec);
+    const doccov = buildDocCovSpec({ openpkg: spec, openpkgPath: specFilePath });
+    const summary = createSpecSummary(spec, doccov);
 
     const result = {
       success: true,
@@ -908,14 +908,6 @@ async function handleDiff(req: VercelRequest, res: VercelResponse): Promise<void
         breaking: diff.breaking,
         nonBreaking: diff.nonBreaking,
         docsOnly: diff.docsOnly,
-        coverageDelta: diff.coverageDelta,
-        oldCoverage: diff.oldCoverage,
-        newCoverage: diff.newCoverage,
-        driftIntroduced: diff.driftIntroduced,
-        driftResolved: diff.driftResolved,
-        newUndocumented: diff.newUndocumented,
-        improvedExports: diff.improvedExports,
-        regressedExports: diff.regressedExports,
         memberChanges: diff.memberChanges,
         categorizedBreaking: diff.categorizedBreaking,
         docsImpact: diff.docsImpact,
@@ -959,26 +951,14 @@ async function handleDiff(req: VercelRequest, res: VercelResponse): Promise<void
         return;
       }
 
-      const { diffSpecWithDocs, enrichSpec } = await import('@doccov/sdk');
+      const { diffSpecWithDocs } = await import('@doccov/sdk');
 
-      // Enrich specs
-      const enrichedBase = enrichSpec(baseSpec) as OpenPkg;
-      const enrichedHead = enrichSpec(headSpec) as OpenPkg;
-
-      const diff = diffSpecWithDocs(enrichedBase, enrichedHead, {});
+      const diff = diffSpecWithDocs(baseSpec, headSpec, {});
 
       json(res, {
         breaking: diff.breaking,
         nonBreaking: diff.nonBreaking,
         docsOnly: diff.docsOnly,
-        coverageDelta: diff.coverageDelta,
-        oldCoverage: diff.oldCoverage,
-        newCoverage: diff.newCoverage,
-        driftIntroduced: diff.driftIntroduced,
-        driftResolved: diff.driftResolved,
-        newUndocumented: diff.newUndocumented,
-        improvedExports: diff.improvedExports,
-        regressedExports: diff.regressedExports,
         memberChanges: diff.memberChanges,
         categorizedBreaking: diff.categorizedBreaking,
         docsImpact: diff.docsImpact,

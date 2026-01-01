@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@doccov/ui/lib/utils';
+import { cn } from '@openpkg-ts/ui/lib/utils';
 import Link from 'next/link';
 
 export interface ExportCardProps {

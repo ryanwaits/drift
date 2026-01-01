@@ -100,16 +100,21 @@ export function generateFix(
 }
 
 /**
- * Generate all fixes for an export's drift issues
+ * Generate all fixes for an export's drift issues.
+ *
+ * @param exportEntry - The export to generate fixes for
+ * @param existingPatch - Optional existing JSDoc patch to merge with
+ * @param driftList - Optional drift list from DocCovSpec (if not provided, reads from exportEntry.docs?.drift for backward compat)
  */
 export function generateFixesForExport(
   exportEntry: SpecExport,
   existingPatch?: JSDocPatch,
+  driftList?: SpecDocDrift[],
 ): FixSuggestion[] {
   const fixes: FixSuggestion[] = [];
-  const driftList = exportEntry.docs?.drift ?? [];
+  const drifts = driftList ?? (exportEntry as unknown as { docs?: { drift?: SpecDocDrift[] } }).docs?.drift ?? [];
 
-  for (const drift of driftList) {
+  for (const drift of drifts) {
     const fix = generateFix(drift, exportEntry, existingPatch);
     if (fix) {
       fixes.push(fix);

@@ -1,24 +1,21 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import {
-  DRIFT_CATEGORIES,
-  type EnrichedExport,
-  type MarkdownDocFile,
-  parseMarkdownFiles,
-  type SpecDocDrift,
-} from '@doccov/sdk';
+import { getExportDrift, type MarkdownDocFile, parseMarkdownFiles } from '@doccov/sdk';
+import { DRIFT_CATEGORIES, type DocCovDrift, type DocCovSpec } from '@doccov/spec';
+import type { SpecExport } from '@openpkg-ts/spec';
 import { glob } from 'glob';
 import type { CollectedDrift } from './types';
 
 /**
- * Collect all drift issues from enriched exports
+ * Collect all drift issues from exports using DocCovSpec lookup
  */
 export function collectDriftsFromExports(
-  exports: EnrichedExport[],
-): Array<{ export: EnrichedExport; drift: SpecDocDrift }> {
-  const results: Array<{ export: EnrichedExport; drift: SpecDocDrift }> = [];
+  exports: SpecExport[],
+  doccov: DocCovSpec,
+): Array<{ export: SpecExport; drift: DocCovDrift }> {
+  const results: Array<{ export: SpecExport; drift: DocCovDrift }> = [];
   for (const exp of exports) {
-    for (const drift of exp.docs?.drift ?? []) {
+    for (const drift of getExportDrift(exp, doccov)) {
       results.push({ export: exp, drift });
     }
   }
@@ -29,9 +26,9 @@ export function collectDriftsFromExports(
  * Group drifts by export
  */
 export function groupByExport(
-  drifts: Array<{ export: EnrichedExport; drift: SpecDocDrift }>,
-): Map<EnrichedExport, SpecDocDrift[]> {
-  const map = new Map<EnrichedExport, SpecDocDrift[]>();
+  drifts: Array<{ export: SpecExport; drift: DocCovDrift }>,
+): Map<SpecExport, DocCovDrift[]> {
+  const map = new Map<SpecExport, DocCovDrift[]>();
   for (const { export: exp, drift } of drifts) {
     const existing = map.get(exp) ?? [];
     existing.push(drift);
@@ -41,24 +38,19 @@ export function groupByExport(
 }
 
 /**
- * Collect drift from exports list
+ * Collect drift from exports list using DocCovSpec lookup
  */
-export function collectDrift(
-  exportsList: Array<{
-    name: string;
-    docs?: { drift?: SpecDocDrift[] };
-  }>,
-): CollectedDrift[] {
+export function collectDrift(exports: SpecExport[], doccov: DocCovSpec): CollectedDrift[] {
   const drifts: CollectedDrift[] = [];
-  for (const entry of exportsList) {
-    const drift = entry.docs?.drift;
-    if (!drift || drift.length === 0) {
+  for (const exp of exports) {
+    const exportDrifts = getExportDrift(exp, doccov);
+    if (exportDrifts.length === 0) {
       continue;
     }
 
-    for (const d of drift) {
+    for (const d of exportDrifts) {
       drifts.push({
-        name: entry.name,
+        name: exp.name,
         type: d.type,
         issue: d.issue ?? 'Documentation drift detected.',
         suggestion: d.suggestion,

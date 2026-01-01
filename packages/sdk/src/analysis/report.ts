@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import type { DocCovSpec } from '@doccov/spec';
 import type { OpenPkg, SpecExport, SpecSignature, SpecType } from '@openpkg-ts/spec';
 import {
   type CoverageSummary,
@@ -8,13 +9,14 @@ import {
   type ExportCoverageData,
   REPORT_VERSION,
 } from '../types/report';
-import { getDriftSummary } from './docs-coverage';
-import { type EnrichedOpenPkg, enrichSpec } from './enrich';
+import { buildDocCovSpec } from './doccov-builder';
+import { getExportAnalysis } from './lookup';
 
 /**
  * Generate a DocCov report from an OpenPkg spec.
  *
  * @param spec - The pure OpenPkg spec to analyze
+ * @param openpkgPath - Path to the openpkg spec file (for source tracking)
  * @returns A DocCov report with coverage analysis
  *
  * @example
@@ -28,21 +30,22 @@ import { type EnrichedOpenPkg, enrichSpec } from './enrich';
  * console.log(`Coverage: ${report.coverage.score}%`);
  * ```
  */
-export function generateReport(spec: OpenPkg): DocCovReport {
-  const enriched = enrichSpec(spec);
-  return generateReportFromEnriched(enriched);
+export function generateReport(spec: OpenPkg, openpkgPath = 'openpkg.json'): DocCovReport {
+  const doccov = buildDocCovSpec({ openpkg: spec, openpkgPath });
+  return generateReportFromDocCov(spec, doccov);
 }
 
 /**
- * Generate a DocCov report from an already-enriched spec.
+ * Generate a DocCov report from OpenPkg spec + DocCov spec composition.
  *
- * Use this when you've already called enrichSpec() and want to avoid
+ * Use this when you've already called buildDocCovSpec() and want to avoid
  * recomputing coverage data.
  *
- * @param enriched - The enriched OpenPkg spec
+ * @param openpkg - The pure OpenPkg spec
+ * @param doccov - The DocCov spec with analysis data
  * @returns A DocCov report with coverage analysis
  */
-export function generateReportFromEnriched(enriched: EnrichedOpenPkg): DocCovReport {
+export function generateReportFromDocCov(openpkg: OpenPkg, doccov: DocCovSpec): DocCovReport {
   // Build per-export coverage data
   const exportsData: Record<string, ExportCoverageData> = {};
   const missingByRule: Record<string, number> = {};
@@ -50,41 +53,45 @@ export function generateReportFromEnriched(enriched: EnrichedOpenPkg): DocCovRep
   let documentedExports = 0;
   let totalDrift = 0;
 
-  for (const exp of enriched.exports) {
+  for (const exp of openpkg.exports ?? []) {
+    const analysis = getExportAnalysis(exp, doccov);
     const data: ExportCoverageData = {
       name: exp.name,
       kind: exp.kind,
-      coverageScore: exp.docs?.coverageScore ?? 100,
+      coverageScore: analysis?.coverageScore ?? 100,
     };
 
-    if (exp.docs?.missing && exp.docs.missing.length > 0) {
-      data.missing = exp.docs.missing;
-      for (const ruleId of exp.docs.missing) {
+    if (analysis?.missing && analysis.missing.length > 0) {
+      data.missing = analysis.missing;
+      for (const ruleId of analysis.missing) {
         missingByRule[ruleId] = (missingByRule[ruleId] ?? 0) + 1;
       }
     } else {
       documentedExports++;
     }
 
-    if (exp.docs?.drift && exp.docs.drift.length > 0) {
-      data.drift = exp.docs.drift;
-      totalDrift += exp.docs.drift.length;
+    if (analysis?.drift && analysis.drift.length > 0) {
+      data.drift = analysis.drift;
+      totalDrift += analysis.drift.length;
     }
 
-    exportsData[exp.id] = data;
+    const exportId = exp.id ?? exp.name;
+    exportsData[exportId] = data;
   }
 
-  // Compute drift summary with category breakdown
-  const allDrifts = enriched.exports.flatMap((exp) => exp.docs?.drift ?? []);
-  const driftSummary = allDrifts.length > 0 ? getDriftSummary(allDrifts) : undefined;
-
   const coverage: CoverageSummary = {
-    score: enriched.docs?.coverageScore ?? 100,
-    totalExports: enriched.exports.length,
+    score: doccov.summary.score,
+    totalExports: doccov.summary.totalExports,
     documentedExports,
     missingByRule,
     driftCount: totalDrift,
-    driftSummary,
+    driftSummary: doccov.summary.drift.total > 0
+      ? {
+          total: doccov.summary.drift.total,
+          fixable: doccov.summary.drift.fixable,
+          byCategory: doccov.summary.drift.byCategory,
+        }
+      : undefined,
   };
 
   return {
@@ -92,8 +99,8 @@ export function generateReportFromEnriched(enriched: EnrichedOpenPkg): DocCovRep
     version: REPORT_VERSION,
     generatedAt: new Date().toISOString(),
     spec: {
-      name: enriched.meta.name,
-      version: enriched.meta.version,
+      name: openpkg.meta.name,
+      version: openpkg.meta.version,
     },
     coverage,
     exports: exportsData,

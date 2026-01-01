@@ -1,7 +1,7 @@
 'use client';
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import { cn } from '@doccov/ui/lib/utils';
+import { cn } from '@openpkg-ts/ui/lib/utils';
 import { Search } from 'lucide-react';
 import { useState, useMemo, type ReactNode } from 'react';
 import { ExportCard } from './ExportCard';

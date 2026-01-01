@@ -1,7 +1,7 @@
 'use client';
 
 import type { SpecSchema, SpecSignatureParameter } from '@openpkg-ts/spec';
-import { cn } from '@doccov/ui/lib/utils';
+import { cn } from '@openpkg-ts/ui/lib/utils';
 import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { formatSchema } from '../../core/query';
@@ -145,7 +145,7 @@ function NestedPropertyItem({
  * Single parameter with expand capability for nested objects.
  * Features expandable nested params, type annotations, and required/optional badges.
  *
- * @deprecated Use APIParameterItem from @doccov/ui with specParamToAPIParam adapter.
+ * @deprecated Use APIParameterItem from @openpkg-ts/ui with specParamToAPIParam adapter.
  * Will be removed in next major version.
  */
 export function ParameterItem({

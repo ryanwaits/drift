@@ -7,7 +7,7 @@
  * @example
  * ```ts
  * // Core API (this module)
- * import { DocCov, enrichSpec, computeDrift } from '@doccov/sdk';
+ * import { DocCov, buildDocCovSpec, computeDrift } from '@doccov/sdk';
  *
  * // Analysis utilities
  * import { generateReport, computeSnapshot } from '@doccov/sdk/analysis';
@@ -43,9 +43,14 @@ export {
   DRIFT_CATEGORY_DESCRIPTIONS,
   DRIFT_CATEGORY_LABELS,
 } from './analysis/docs-coverage';
-export type { EnrichedExport, EnrichedOpenPkg, EnrichOptions } from './analysis/enrich';
-// Enrichment (most commonly used)
-export { enrichSpec } from './analysis/enrich';
+// Lookup helpers (for composition pattern)
+export {
+  getExportAnalysis,
+  getExportDrift,
+  getExportMissing,
+  getExportScore,
+  isExportFullyDocumented,
+} from './analysis/lookup';
 // Report generation
 export { generateReport, renderApiSurface } from './analysis/report';
 // Spec types
@@ -125,8 +130,7 @@ export type { ExampleTypeError, TypecheckResult } from './typecheck';
 export { typecheckExamples } from './typecheck';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Legacy exports (for backward compatibility)
-// Consider migrating to subpath imports: @doccov/sdk/analysis, @doccov/sdk/types
+// Additional Exports (re-exported from submodules for convenience)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Context types
@@ -145,7 +149,6 @@ export {
   hasNonAssertionComments,
   parseAssertions,
 } from './analysis/docs-coverage';
-export type { EnrichedDocsMetadata } from './analysis/enrich';
 export type {
   CoverageSnapshot,
   CoverageTrend,
@@ -165,7 +168,7 @@ export {
   renderSparkline,
   saveSnapshot,
 } from './analysis/history';
-export { generateReportFromEnriched, loadCachedReport, saveReport } from './analysis/report';
+export { generateReportFromDocCov, loadCachedReport, saveReport } from './analysis/report';
 export type { SchemaDetectionContext, SchemaDetectionResult } from './analysis/schema-detection';
 // Schema detection
 export { detectRuntimeSchemas } from './analysis/schema-detection';

@@ -8,8 +8,7 @@ import {
   diffSpec,
   recommendSemverBump,
 } from '@openpkg-ts/spec';
-import { diffEnrichedSpec } from '../src/analysis/diff-enriched';
-import { createDrift, createEnrichedSpec, createExport, createSpec } from './test-helpers';
+import { createEnrichedSpec, createExport, createSpec } from './test-helpers';
 
 describe('diffSpec', () => {
   describe('structural changes', () => {
@@ -122,121 +121,6 @@ describe('diffSpec', () => {
     });
   });
 
-  describe('coverage tracking', () => {
-    test('calculates coverage delta', () => {
-      const oldSpec = createEnrichedSpec({ coverageScore: 50 });
-      const newSpec = createEnrichedSpec({ coverageScore: 75 });
-
-      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
-
-      expect(diff.oldCoverage).toBe(50);
-      expect(diff.newCoverage).toBe(75);
-      expect(diff.coverageDelta).toBe(25);
-    });
-
-    test('handles negative coverage delta', () => {
-      const oldSpec = createEnrichedSpec({ coverageScore: 80 });
-      const newSpec = createEnrichedSpec({ coverageScore: 60 });
-
-      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
-
-      expect(diff.coverageDelta).toBe(-20);
-    });
-
-    test('handles specs without coverage metadata', () => {
-      const oldSpec = createSpec({ exports: [] });
-      const newSpec = createSpec({ exports: [] });
-
-      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
-
-      expect(diff.oldCoverage).toBe(0);
-      expect(diff.newCoverage).toBe(0);
-      expect(diff.coverageDelta).toBe(0);
-    });
-
-    test('tracks newly undocumented exports', () => {
-      const oldSpec = createEnrichedSpec({ exports: [] });
-      const newSpec = createEnrichedSpec({
-        coverageScore: 50,
-        exports: [
-          {
-            ...createExport({ name: 'foo' }),
-            docs: { coverageScore: 50, missing: ['has-description'] },
-          } as any,
-        ],
-      });
-
-      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
-
-      expect(diff.newUndocumented).toContain('foo');
-    });
-  });
-
-  describe('drift tracking', () => {
-    test('tracks introduced drift', () => {
-      const oldSpec = createEnrichedSpec({
-        exports: [{ ...createExport({ name: 'foo' }), docs: { coverageScore: 100 } } as any],
-      });
-      const newSpec = createEnrichedSpec({
-        exports: [
-          {
-            ...createExport({ name: 'foo' }),
-            docs: { coverageScore: 100, drift: [createDrift()] },
-          } as any,
-        ],
-      });
-
-      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
-
-      expect(diff.driftIntroduced).toBe(1);
-    });
-
-    test('tracks resolved drift', () => {
-      const oldSpec = createEnrichedSpec({
-        exports: [
-          {
-            ...createExport({ name: 'foo' }),
-            docs: { coverageScore: 100, drift: [createDrift(), createDrift()] },
-          } as any,
-        ],
-      });
-      const newSpec = createEnrichedSpec({
-        exports: [{ ...createExport({ name: 'foo' }), docs: { coverageScore: 100 } } as any],
-      });
-
-      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
-
-      expect(diff.driftResolved).toBe(2);
-    });
-  });
-
-  describe('improved/regressed exports', () => {
-    test('tracks improved coverage per export', () => {
-      const oldSpec = createEnrichedSpec({
-        exports: [{ ...createExport({ name: 'foo' }), docs: { coverageScore: 50 } } as any],
-      });
-      const newSpec = createEnrichedSpec({
-        exports: [{ ...createExport({ name: 'foo' }), docs: { coverageScore: 100 } } as any],
-      });
-
-      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
-
-      expect(diff.improvedExports).toContain('foo');
-    });
-
-    test('tracks regressed coverage per export', () => {
-      const oldSpec = createEnrichedSpec({
-        exports: [{ ...createExport({ name: 'foo' }), docs: { coverageScore: 100 } } as any],
-      });
-      const newSpec = createEnrichedSpec({
-        exports: [{ ...createExport({ name: 'foo' }), docs: { coverageScore: 50 } } as any],
-      });
-
-      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
-
-      expect(diff.regressedExports).toContain('foo');
-    });
-  });
 });
 
 describe('categorizeBreakingChanges', () => {
