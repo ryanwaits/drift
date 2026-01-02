@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { spinner } from 'cli-utils';
 import {
   diffSpecWithDocs,
   ensureSpecCoverage,
@@ -114,6 +115,8 @@ export function registerDiffCommand(
           );
         }
 
+        const spin = spinner('Comparing specs...');
+
         const baseSpec = loadSpec(baseFile, readFileSync);
         const headSpec = loadSpec(headFile, readFileSync);
 
@@ -154,6 +157,7 @@ export function registerDiffCommand(
 
         // Handle --recommend-version flag
         if (options.recommendVersion) {
+          spin.success('Comparison complete');
           const recommendation = recommendSemverBump(diff);
           const currentVersion = headSpec.meta?.version ?? '0.0.0';
           const nextVersion = calculateNextVersion(currentVersion, recommendation.bump);
@@ -201,6 +205,8 @@ export function registerDiffCommand(
           headName,
           ...diff,
         };
+
+        spin.success('Comparison complete');
 
         // Output based on format
         switch (format) {

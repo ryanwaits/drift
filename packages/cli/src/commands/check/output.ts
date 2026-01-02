@@ -1,8 +1,8 @@
+import { colors, summary as createSummary, getSymbols, supportsUnicode } from 'cli-utils';
 import type { Diagnostic, ExampleTypeError, ExampleValidationResult } from '@doccov/sdk';
 import { generateReportFromDocCov } from '@doccov/sdk';
 import type { DocCovSpec } from '@doccov/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
-import chalk from 'chalk';
 import {
   computeStats,
   renderGithubSummary,
@@ -48,6 +48,8 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
   } = options;
   const { log } = deps;
 
+  const sym = getSymbols(supportsUnicode());
+
   // Calculate drift percentage
   const totalExportsForDrift = openpkg.exports?.length ?? 0;
   const exportsWithDrift = new Set(driftExports.map((d) => d.name)).size;
@@ -62,75 +64,78 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
   if (specWarnings.length > 0 || specInfos.length > 0) {
     log('');
     for (const diag of specWarnings) {
-      log(chalk.yellow(`⚠ ${diag.message}`));
+      log(colors.warning(`${sym.warning} ${diag.message}`));
       if (diag.suggestion) {
-        log(chalk.gray(`  ${diag.suggestion}`));
+        log(colors.muted(`  ${diag.suggestion}`));
       }
     }
     for (const diag of specInfos) {
-      log(chalk.cyan(`ℹ ${diag.message}`));
+      log(colors.info(`${sym.info} ${diag.message}`));
       if (diag.suggestion) {
-        log(chalk.gray(`  ${diag.suggestion}`));
+        log(colors.muted(`  ${diag.suggestion}`));
       }
     }
   }
 
-  // Render concise summary output
+  // Render concise summary output using Summary component
   const pkgName = openpkg.meta?.name ?? 'unknown';
   const pkgVersion = openpkg.meta?.version ?? '';
   const totalExports = openpkg.exports?.length ?? 0;
 
   log('');
-  log(chalk.bold(`${pkgName}${pkgVersion ? `@${pkgVersion}` : ''}`));
+  log(colors.bold(`${pkgName}${pkgVersion ? `@${pkgVersion}` : ''}`));
   log('');
-  log(`  Exports:    ${totalExports}`);
 
-  // Coverage with pass/fail indicator
-  if (coverageFailed) {
-    log(chalk.red(`  Coverage:   ✗ ${coverageScore}%`) + chalk.dim(` (min ${minCoverage}%)`));
-  } else {
-    log(chalk.green(`  Coverage:   ✓ ${coverageScore}%`) + chalk.dim(` (min ${minCoverage}%)`));
-  }
+  // Build summary with key metrics
+  const summaryBuilder = createSummary({ keyWidth: 10 });
 
-  // Drift with pass/fail indicator when threshold is set
+  summaryBuilder.addKeyValue('Exports', totalExports);
+  summaryBuilder.addKeyValue('Coverage', `${coverageScore}%`, coverageFailed ? 'fail' : 'pass');
+
   if (maxDrift !== undefined) {
-    if (driftFailed) {
-      log(chalk.red(`  Drift:      ✗ ${driftScore}%`) + chalk.dim(` (max ${maxDrift}%)`));
-    } else {
-      log(chalk.green(`  Drift:      ✓ ${driftScore}%`) + chalk.dim(` (max ${maxDrift}%)`));
-    }
+    summaryBuilder.addKeyValue('Drift', `${driftScore}%`, driftFailed ? 'fail' : 'pass');
   } else {
-    log(`  Drift:      ${driftScore}%`);
+    summaryBuilder.addKeyValue('Drift', `${driftScore}%`);
   }
 
-  // Show example validation results (typecheck errors only - runtime errors are in Drift)
+  // Show example validation status
   if (exampleResult) {
     const typecheckCount = exampleResult.typecheck?.errors.length ?? 0;
     if (typecheckCount > 0) {
-      log(chalk.yellow(`  Examples:   ${typecheckCount} type error(s)`));
-      // Show first few errors with details
-      for (const err of typecheckErrors.slice(0, 5)) {
-        const loc = `example[${err.error.exampleIndex}]:${err.error.line}:${err.error.column}`;
-        log(chalk.dim(`              ${err.exportName} ${loc}`));
-        log(chalk.red(`                ${err.error.message}`));
-      }
-      if (typecheckErrors.length > 5) {
-        log(chalk.dim(`              ... and ${typecheckErrors.length - 5} more`));
-      }
+      summaryBuilder.addKeyValue('Examples', `${typecheckCount} type error(s)`, 'warn');
     } else {
-      log(chalk.green(`  Examples:   ✓ validated`));
+      summaryBuilder.addKeyValue('Examples', 'validated', 'pass');
     }
   }
 
-  // Show stale docs references
+  // Show stale docs status
   const hasStaleRefs = staleRefs.length > 0;
   if (hasStaleRefs) {
-    log(chalk.yellow(`  Docs:       ${staleRefs.length} stale ref(s)`));
+    summaryBuilder.addKeyValue('Docs', `${staleRefs.length} stale ref(s)`, 'warn');
+  }
+
+  summaryBuilder.print();
+
+  // Show details for errors
+  if (hasTypecheckErrors) {
+    log('');
+    for (const err of typecheckErrors.slice(0, 5)) {
+      const loc = `example[${err.error.exampleIndex}]:${err.error.line}:${err.error.column}`;
+      log(colors.muted(`  ${err.exportName} ${loc}`));
+      log(colors.error(`    ${err.error.message}`));
+    }
+    if (typecheckErrors.length > 5) {
+      log(colors.muted(`  ... and ${typecheckErrors.length - 5} more`));
+    }
+  }
+
+  if (hasStaleRefs) {
+    log('');
     for (const ref of staleRefs.slice(0, 5)) {
-      log(chalk.dim(`              ${ref.file}:${ref.line} - "${ref.exportName}"`));
+      log(colors.muted(`  ${ref.file}:${ref.line} - "${ref.exportName}"`));
     }
     if (staleRefs.length > 5) {
-      log(chalk.dim(`              ... and ${staleRefs.length - 5} more`));
+      log(colors.muted(`  ... and ${staleRefs.length - 5} more`));
     }
   }
 
@@ -146,20 +151,26 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
       thresholdParts.push(`drift ${driftScore}% ≤ ${maxDrift}%`);
     }
 
-    log(chalk.green(`✓ Check passed (${thresholdParts.join(', ')})`));
+    log(colors.success(`${sym.success} Check passed (${thresholdParts.join(', ')})`));
     return true; // passed
   }
 
   // Show failure reasons
+  if (coverageFailed) {
+    log(colors.error(`${sym.error} Coverage ${coverageScore}% below minimum ${minCoverage}%`));
+  }
+  if (driftFailed) {
+    log(colors.error(`${sym.error} Drift ${driftScore}% exceeds maximum ${maxDrift}%`));
+  }
   if (hasTypecheckErrors) {
-    log(chalk.red(`✗ ${typecheckErrors.length} example type errors`));
+    log(colors.error(`${sym.error} ${typecheckErrors.length} example type errors`));
   }
   if (hasStaleRefs) {
-    log(chalk.red(`✗ ${staleRefs.length} stale references in docs`));
+    log(colors.error(`${sym.error} ${staleRefs.length} stale references in docs`));
   }
 
   log('');
-  log(chalk.dim('Use --format json or --format markdown for detailed reports'));
+  log(colors.muted('Use --format json or --format markdown for detailed reports'));
 
   return false; // failed
 }

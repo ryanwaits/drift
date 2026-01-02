@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { spinner } from 'cli-utils';
 import {
   buildDocCovSpec,
   DocCov,
@@ -21,7 +22,6 @@ import {
   parseListFlag,
   parseVisibilityFlag,
 } from '../utils/filter-options';
-import { StepProgress } from '../utils/progress';
 
 export type SpecFormat = 'json' | 'api-surface';
 
@@ -147,18 +147,7 @@ export function registerSpecCommand(
 
     .action(async (entry: string | undefined, options: SpecOptions) => {
       try {
-        const stepsList = [
-          { label: 'Resolved target', activeLabel: 'Resolving target' },
-          { label: 'Loaded config', activeLabel: 'Loading config' },
-          { label: 'Generated spec', activeLabel: 'Generating spec' },
-          { label: 'Validated schema', activeLabel: 'Validating schema' },
-        ];
-        if (!options.openpkgOnly) {
-          stepsList.push({ label: 'Built coverage analysis', activeLabel: 'Building coverage' });
-        }
-        stepsList.push({ label: 'Wrote output', activeLabel: 'Writing output' });
-        const steps = new StepProgress(stepsList);
-        steps.start();
+        const spin = spinner('Generating spec...');
 
         // Resolve target directory and entry point
         const fileSystem = new NodeFileSystem(options.cwd);
@@ -169,20 +158,19 @@ export function registerSpecCommand(
         });
 
         const { targetDir, entryFile, packageInfo, entryPointInfo } = resolved;
-        steps.next();
 
         // Load config
         let config: LoadedDocCovConfig | null = null;
         try {
           config = await loadDocCovConfig(targetDir);
         } catch (configError) {
+          spin.fail('Failed to load config');
           error(
             chalk.red('Failed to load DocCov config:'),
             configError instanceof Error ? configError.message : configError,
           );
           process.exit(1);
         }
-        steps.next();
 
         // Merge filter options
         const cliFilters: CliFilterOptions = {
@@ -230,22 +218,22 @@ export function registerSpecCommand(
         const result = await doccov.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
 
         if (!result) {
+          spin.fail('Generation failed');
           throw new Error('Failed to produce an OpenPkg spec.');
         }
-        steps.next();
 
         // Normalize and validate
         const normalized = normalize(result.spec as OpenPkgSpec);
         const validation = validateSpec(normalized);
 
         if (!validation.ok) {
+          spin.fail('Validation failed');
           error(chalk.red('Spec failed schema validation'));
           for (const err of validation.errors) {
             error(chalk.red(`schema: ${err.instancePath || '/'} ${err.message}`));
           }
           process.exit(1);
         }
-        steps.next();
 
         // Build DocCov spec (unless --openpkg-only)
         let doccovSpec = null;
@@ -259,13 +247,13 @@ export function registerSpecCommand(
           // Validate doccov spec
           const doccovValidation = validateDocCovSpec(doccovSpec);
           if (!doccovValidation.ok) {
+            spin.fail('DocCov validation failed');
             error(chalk.red('DocCov spec failed schema validation'));
             for (const err of doccovValidation.errors) {
               error(chalk.red(`doccov: ${err.instancePath || '/'} ${err.message}`));
             }
             process.exit(1);
           }
-          steps.next();
         }
 
         // Write output based on format
@@ -279,7 +267,7 @@ export function registerSpecCommand(
           const apiSurface = renderApiSurface(normalized);
           const apiSurfacePath = path.join(outputDir, 'api-surface.txt');
           writeFileSync(apiSurfacePath, apiSurface);
-          steps.complete(`Generated ${options.output}/ (API surface)`);
+          spin.success(`Generated ${options.output}/ (API surface)`);
         } else {
           // Write openpkg.json
           const openpkgPath = path.join(outputDir, 'openpkg.json');
@@ -289,7 +277,7 @@ export function registerSpecCommand(
           if (doccovSpec) {
             const doccovPath = path.join(outputDir, 'doccov.json');
             writeFileSync(doccovPath, JSON.stringify(doccovSpec, null, 2));
-            steps.complete(`Generated ${options.output}/`);
+            spin.success(`Generated ${options.output}/`);
             log(chalk.gray(`  openpkg.json: ${getArrayLength(normalized.exports)} exports`));
             log(
               chalk.gray(
@@ -297,7 +285,7 @@ export function registerSpecCommand(
               ),
             );
           } else {
-            steps.complete(`Generated ${options.output}/openpkg.json`);
+            spin.success(`Generated ${options.output}/openpkg.json`);
             log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
             log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
           }

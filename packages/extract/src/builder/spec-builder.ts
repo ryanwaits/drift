@@ -140,16 +140,17 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   ctx.exportedIds = exportedIds;
 
   for (const symbol of exportedSymbols) {
+    const exportName = symbol.getName();
+
     try {
       const { declaration, targetSymbol } = resolveExportTarget(symbol, typeChecker);
       if (!declaration) continue;
 
-      const exportName = symbol.getName();
       const exp = serializeDeclaration(declaration, symbol, targetSymbol, exportName, ctx);
       if (exp) exports.push(exp);
     } catch (err) {
       diagnostics.push({
-        message: `Failed to serialize ${symbol.getName()}: ${err}`,
+        message: `Failed to serialize ${exportName}: ${err}`,
         severity: 'warning',
       });
     }
@@ -233,8 +234,7 @@ function collectDanglingRefs(exports: SpecExport[], types: SpecType[]): string[]
   collectAllRefs(types, referencedTypes);
 
   return Array.from(referencedTypes).filter(
-    (ref) =>
-      !definedTypes.has(ref) && !BUILTIN_TYPES.has(ref) && !shouldSkipDanglingRef(ref),
+    (ref) => !definedTypes.has(ref) && !BUILTIN_TYPES.has(ref) && !shouldSkipDanglingRef(ref),
   );
 }
 

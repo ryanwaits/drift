@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { colors, getSymbols, supportsUnicode } from 'cli-utils';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { DOCCOV_CONFIG_FILENAMES } from '../config';
@@ -65,10 +66,12 @@ export function registerInitCommand(
         return;
       }
 
+      const sym = getSymbols(supportsUnicode());
+
       // 1. Create config
       const template = buildConfigTemplate();
       writeFileSync(outputPath, template, { encoding: 'utf8' });
-      log(chalk.green(`✓ Created ${fileName}`));
+      log(colors.success(`${sym.success} Created ${fileName}`));
 
       // 2. Create GitHub Action workflow (unless skipped)
       if (!options.skipAction) {
@@ -78,9 +81,11 @@ export function registerInitCommand(
         if (!fileExists(workflowPath)) {
           mkdirSync(workflowDir, { recursive: true });
           writeFileSync(workflowPath, buildWorkflowTemplate(), { encoding: 'utf8' });
-          log(chalk.green(`✓ Created .github/workflows/doccov.yml`));
+          log(colors.success(`${sym.success} Created .github/workflows/doccov.yml`));
         } else {
-          log(chalk.yellow(`  Skipped .github/workflows/doccov.yml (already exists)`));
+          log(
+            colors.warning(`${sym.bullet} Skipped .github/workflows/doccov.yml (already exists)`),
+          );
         }
       }
 

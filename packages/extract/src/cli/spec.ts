@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { spinner, summary } from 'cli-utils';
 import { normalize, validateSpec } from '@openpkg-ts/spec';
 import { Command } from 'commander';
 import { extract } from '../builder';
@@ -12,6 +13,7 @@ export function createProgram(): Command {
     .option('--max-depth <n>', 'Max type depth (default: 4)')
     .option('--skip-resolve', 'Skip external type resolution')
     .option('--runtime', 'Enable Standard Schema runtime extraction')
+    .option('-v, --verbose', 'Show detailed output')
     .action(async (entry, options) => {
       const entryFile = entry || findEntryPoint(process.cwd());
 
@@ -20,7 +22,7 @@ export function createProgram(): Command {
         process.exit(1);
       }
 
-      console.log(`Extracting from: ${entryFile}`);
+      const spin = spinner('Extracting...');
 
       const result = await extract({
         entryFile: path.resolve(entryFile),
@@ -29,17 +31,12 @@ export function createProgram(): Command {
         schemaExtraction: options.runtime ? 'hybrid' : 'static',
       });
 
-      // Report diagnostics
-      for (const diag of result.diagnostics) {
-        const prefix = diag.severity === 'error' ? '✗' : diag.severity === 'warning' ? '⚠' : 'ℹ';
-        console.log(`${prefix} ${diag.message}`);
-      }
-
       const normalized = normalize(result.spec);
       const validation = validateSpec(normalized);
 
       if (!validation.ok) {
-        console.error('Validation failed:');
+        spin.fail('Extraction failed');
+        console.error('Validation errors:');
         for (const err of validation.errors) {
           console.error(`  - ${err.instancePath}: ${err.message}`);
         }
@@ -47,9 +44,20 @@ export function createProgram(): Command {
       }
 
       fs.writeFileSync(options.output, JSON.stringify(normalized, null, 2));
-      console.log(`Generated ${options.output}`);
-      console.log(`  ${normalized.exports.length} exports`);
-      console.log(`  ${normalized.types?.length || 0} types`);
+      spin.success(`Extracted to ${options.output}`);
+
+      // Report diagnostics (info only with --verbose)
+      for (const diag of result.diagnostics) {
+        if (diag.severity === 'info' && !options.verbose) continue;
+        const prefix = diag.severity === 'error' ? '✗' : diag.severity === 'warning' ? '⚠' : 'ℹ';
+        console.log(`${prefix} ${diag.message}`);
+      }
+
+      // Render summary
+      summary()
+        .addKeyValue('Exports', normalized.exports.length)
+        .addKeyValue('Types', normalized.types?.length || 0)
+        .print();
     });
 
   return program;

@@ -1,3 +1,4 @@
+import { spinner } from 'cli-utils';
 import { buildDocCovSpec, DocCov, NodeFileSystem, resolveTarget } from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
@@ -12,6 +13,8 @@ export function registerInfoCommand(program: Command): void {
     .option('--package <name>', 'Target package name (for monorepos)')
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .action(async (entry, options) => {
+      const spin = spinner('Analyzing documentation coverage');
+
       try {
         // Resolve target directory and entry point
         const fileSystem = new NodeFileSystem(options.cwd);
@@ -31,6 +34,7 @@ export function registerInfoCommand(program: Command): void {
         const specResult = await analyzer.analyzeFileWithDiagnostics(entryFile);
 
         if (!specResult) {
+          spin.fail('Failed to analyze');
           throw new Error('Failed to analyze documentation coverage.');
         }
 
@@ -43,6 +47,8 @@ export function registerInfoCommand(program: Command): void {
         });
         const stats = computeStats(openpkg, doccov);
 
+        spin.success('Analysis complete');
+
         // Output summary
         console.log('');
         console.log(chalk.bold(`${stats.packageName}@${stats.version}`));
@@ -52,6 +58,7 @@ export function registerInfoCommand(program: Command): void {
         console.log(`  Drift:      ${chalk.bold(`${stats.driftScore}%`)}`);
         console.log('');
       } catch (err) {
+        spin.fail('Analysis failed');
         console.error(chalk.red('Error:'), err instanceof Error ? err.message : err);
         process.exit(1);
       }

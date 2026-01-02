@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/extract",
-  "version": "0.14.2",
+  "version": "0.14.3",
   "description": "TypeScript export extraction to OpenPkg spec",
   "keywords": [
     "openpkg",
@@ -46,6 +46,7 @@
     "typescript": "^5.0.0"
   },
   "devDependencies": {
+    "cli-utils": "workspace:*",
     "@types/bun": "latest",
     "@types/node": "^20.0.0",
     "bunup": "latest"

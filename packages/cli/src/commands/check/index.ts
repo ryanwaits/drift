@@ -1,3 +1,4 @@
+import { spinner } from 'cli-utils';
 import {
   buildDocCovSpec,
   DocCov,
@@ -12,7 +13,6 @@ import chalk from 'chalk';
 import type { Command } from 'commander';
 import { loadDocCovConfig } from '../../config';
 import { mergeFilterOptions, parseVisibilityFlag } from '../../utils/filter-options';
-import { StepProgress } from '../../utils/progress';
 import { clampPercentage } from '../../utils/validation';
 import { handleFixes } from './fix-handler';
 import { displayTextOutput, handleNonTextOutput } from './output';
@@ -76,23 +76,11 @@ export function registerCheckCommand(
     )
     .action(async (entry, options) => {
       try {
+        const spin = spinner('Analyzing...');
+
         // Parse --examples flag (may be overridden by config later)
         let validations = parseExamplesFlag(options.examples);
         let hasExamples = validations.length > 0;
-
-        // Initial step list (may be updated after config load)
-        const stepList = [
-          { label: 'Resolved target', activeLabel: 'Resolving target' },
-          { label: 'Loaded config', activeLabel: 'Loading config' },
-          { label: 'Generated spec', activeLabel: 'Generating spec' },
-          { label: 'Enriched spec', activeLabel: 'Enriching spec' },
-          ...(hasExamples
-            ? [{ label: 'Validated examples', activeLabel: 'Validating examples' }]
-            : []),
-          { label: 'Processed results', activeLabel: 'Processing results' },
-        ];
-        const steps = new StepProgress(stepList);
-        steps.start();
 
         // Resolve target directory and entry point
         const fileSystem = new NodeFileSystem(options.cwd);
@@ -103,7 +91,6 @@ export function registerCheckCommand(
         });
 
         const { targetDir, entryFile } = resolved;
-        steps.next();
 
         // Load config to get minCoverage threshold
         const config = await loadDocCovConfig(targetDir);
@@ -141,7 +128,6 @@ export function registerCheckCommand(
         if (resolvedFilters.visibility) {
           log(chalk.dim(`Filtering by visibility: ${resolvedFilters.visibility.join(', ')}`));
         }
-        steps.next();
 
         const resolveExternalTypes = !options.skipResolve;
 
@@ -160,9 +146,9 @@ export function registerCheckCommand(
         const specResult = await analyzer.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
 
         if (!specResult) {
+          spin.fail('Analysis failed');
           throw new Error('Failed to analyze documentation coverage.');
         }
-        steps.next();
 
         // Build DocCov spec with coverage data (composition pattern)
         const openpkg = specResult.spec as OpenPkg;
@@ -172,7 +158,6 @@ export function registerCheckCommand(
           packagePath: targetDir,
         });
         const format = (options.format ?? 'text') as OutputFormat;
-        steps.next();
 
         // Collect spec diagnostics for later display
         const specWarnings = specResult.diagnostics.filter((d) => d.severity === 'warning');
@@ -198,7 +183,6 @@ export function registerCheckCommand(
           exampleResult = validation.result;
           typecheckErrors = validation.typecheckErrors;
           runtimeDrifts = validation.runtimeDrifts;
-          steps.next();
         }
 
         // Markdown docs analysis: detect stale references
@@ -238,7 +222,7 @@ export function registerCheckCommand(
           }
         }
 
-        steps.complete('Check complete');
+        spin.success('Analysis complete');
 
         // Handle --format output for non-text formats
         if (format !== 'text') {

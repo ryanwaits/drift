@@ -1,5 +1,18 @@
 # @openpkg-ts/extract
 
+## 0.14.3
+
+### Patch Changes
+
+- refactor: extract shared CLI utilities to cli-utils package
+
+  - Move progress, spinner, and output formatting utilities to new cli-utils package
+  - Update CLI commands to use shared cli-utils (colors, symbols, summary component)
+  - Update extract CLI to use shared cli-utils
+  - Remove deprecated progress.ts from CLI
+  - Remove outdated doc-generator examples
+  - Update package READMEs
+
 ## 0.14.2
 
 ### Patch Changes

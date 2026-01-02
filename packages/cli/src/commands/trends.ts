@@ -5,6 +5,7 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { spinner } from 'cli-utils';
 import {
   type CoverageSnapshot,
   type CoverageTrend,
@@ -117,6 +118,7 @@ export function registerTrendsCommand(program: Command): void {
           process.exit(1);
         }
 
+        const spin = spinner('Recording coverage snapshot');
         try {
           const specContent = fs.readFileSync(specPath, 'utf-8');
           const spec = JSON.parse(specContent) as OpenPkg;
@@ -124,7 +126,7 @@ export function registerTrendsCommand(program: Command): void {
           const trend = getTrend(spec, cwd);
           saveSnapshot(trend.current, cwd);
 
-          console.log(chalk.green('Recorded coverage snapshot:'));
+          spin.success('Recorded coverage snapshot');
           console.log(formatSnapshot(trend.current));
 
           if (trend.delta !== undefined) {
@@ -135,6 +137,7 @@ export function registerTrendsCommand(program: Command): void {
           }
           return;
         } catch (error) {
+          spin.fail('Failed to record snapshot');
           console.error(
             chalk.red('Failed to read openpkg.json:'),
             error instanceof Error ? error.message : error,
