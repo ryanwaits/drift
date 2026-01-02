@@ -1,3 +1,11 @@
+// Spec-to-DocsKit conversion utilities
+export {
+  buildImportStatement,
+  getLanguagesFromExamples,
+  specExamplesToCodeExamples,
+  specParamToAPIParam,
+  specSchemaToAPISchema,
+} from './spec-to-docskit';
 export {
   type AdapterComponents,
   type AdapterRegistry,
@@ -15,12 +23,3 @@ export {
   type PageGeneratorOptions,
   type SearchGeneratorOptions,
 } from './types';
-
-// Spec-to-DocsKit conversion utilities
-export {
-  buildImportStatement,
-  getLanguagesFromExamples,
-  specExamplesToCodeExamples,
-  specParamToAPIParam,
-  specSchemaToAPISchema,
-} from './spec-to-docskit';

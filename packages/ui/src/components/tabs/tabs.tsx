@@ -253,60 +253,59 @@ interface TabsProps {
   size?: 'default' | 'lg';
 }
 
-const Tabs: React.ForwardRefExoticComponent<
-  TabsProps & React.RefAttributes<HTMLDivElement>
-> = React.forwardRef<HTMLDivElement, TabsProps>(
-  ({ tabs, activeTab, onTabChange, onTabClose, onAddTab, className, size = 'default' }, ref) => {
-    // Convert old format to new format
-    const convertedTabs: TabCell[] = tabs.map((tab) => {
-      if (tab.count !== undefined) {
+const Tabs: React.ForwardRefExoticComponent<TabsProps & React.RefAttributes<HTMLDivElement>> =
+  React.forwardRef<HTMLDivElement, TabsProps>(
+    ({ tabs, activeTab, onTabChange, onTabClose, onAddTab, className, size = 'default' }, ref) => {
+      // Convert old format to new format
+      const convertedTabs: TabCell[] = tabs.map((tab) => {
+        if (tab.count !== undefined) {
+          return {
+            id: tab.id,
+            type: 'count' as const,
+            label: tab.label,
+            count: tab.count,
+          };
+        }
+        if (tab.closeable) {
+          return {
+            id: tab.id,
+            type: 'file' as const,
+            label: tab.label,
+            closeable: true,
+          };
+        }
         return {
           id: tab.id,
-          type: 'count' as const,
+          type: 'text' as const,
           label: tab.label,
-          count: tab.count,
         };
-      }
-      if (tab.closeable) {
-        return {
-          id: tab.id,
-          type: 'file' as const,
-          label: tab.label,
-          closeable: true,
-        };
-      }
-      return {
-        id: tab.id,
-        type: 'text' as const,
-        label: tab.label,
-      };
-    });
-
-    if (onAddTab) {
-      convertedTabs.push({
-        id: '__add__',
-        type: 'action',
-        icon: <Plus className="size-4" />,
       });
-    }
 
-    return (
-      <SegmentedTabs
-        ref={ref}
-        tabs={convertedTabs}
-        activeTab={activeTab}
-        onTabChange={onTabChange}
-        onTabClose={onTabClose}
-        onAction={(id) => {
-          if (id === '__add__' && onAddTab) {
-            onAddTab();
-          }
-        }}
-        className={cn(size === 'lg' && '[&_button]:px-4 [&_button]:py-3', className)}
-      />
-    );
-  },
-);
+      if (onAddTab) {
+        convertedTabs.push({
+          id: '__add__',
+          type: 'action',
+          icon: <Plus className="size-4" />,
+        });
+      }
+
+      return (
+        <SegmentedTabs
+          ref={ref}
+          tabs={convertedTabs}
+          activeTab={activeTab}
+          onTabChange={onTabChange}
+          onTabClose={onTabClose}
+          onAction={(id) => {
+            if (id === '__add__' && onAddTab) {
+              onAddTab();
+            }
+          }}
+          className={cn(size === 'lg' && '[&_button]:px-4 [&_button]:py-3', className)}
+        />
+      );
+    },
+  );
 Tabs.displayName = 'Tabs';
 
 export { SegmentedTabs, Tabs, type TabCell, type TabItem, type SegmentedTabsProps, type TabsProps };

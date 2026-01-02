@@ -36,7 +36,7 @@ export function serializeClass(
       if (propMember) members.push(propMember);
     } else if (ts.isMethodDeclaration(member)) {
       const methodMember = serializeMethod(member, ctx);
-      if (methodMember && methodMember.name) {
+      if (methodMember?.name) {
         // Dedupe methods by name - only first declaration captures all overloads
         if (!methodsByName.has(methodMember.name)) {
           methodsByName.set(methodMember.name, methodMember);
@@ -151,10 +151,7 @@ function serializeProperty(
   };
 }
 
-function serializeMethod(
-  node: ts.MethodDeclaration,
-  ctx: SerializerContext,
-): SpecMember | null {
+function serializeMethod(node: ts.MethodDeclaration, ctx: SerializerContext): SpecMember | null {
   const { typeChecker: checker } = ctx;
   const name = getMemberName(node);
   if (!name) return null;
@@ -249,10 +246,7 @@ function serializeAccessor(
   };
 }
 
-function getExtendsClause(
-  node: ts.ClassDeclaration,
-  checker: ts.TypeChecker,
-): string | undefined {
+function getExtendsClause(node: ts.ClassDeclaration, checker: ts.TypeChecker): string | undefined {
   if (!node.heritageClauses) return undefined;
 
   for (const clause of node.heritageClauses) {

@@ -1,6 +1,6 @@
-import type { Source, VirtualFile } from 'fumadocs-core/source';
 import type { DocsInstance, OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/doc-generator';
 import { createDocs } from '@openpkg-ts/doc-generator';
+import type { Source, VirtualFile } from 'fumadocs-core/source';
 
 export interface OpenPkgSourceOptions {
   /** OpenPkg spec or DocsInstance */
@@ -51,14 +51,7 @@ export interface OpenPkgMetaData {
   defaultOpen?: boolean;
 }
 
-const KIND_ORDER: SpecExportKind[] = [
-  'function',
-  'class',
-  'interface',
-  'type',
-  'enum',
-  'variable',
-];
+const KIND_ORDER: SpecExportKind[] = ['function', 'class', 'interface', 'type', 'enum', 'variable'];
 
 const KIND_LABELS: Partial<Record<SpecExportKind, string>> = {
   function: 'Functions',
@@ -118,9 +111,10 @@ function pluralizeKind(kind: SpecExportKind): string {
  * });
  * ```
  */
-export function openpkgSource(
-  options: OpenPkgSourceOptions
-): Source<{ pageData: OpenPkgPageData | OpenPkgIndexPageData | OpenPkgSinglePageData; metaData: OpenPkgMetaData }> {
+export function openpkgSource(options: OpenPkgSourceOptions): Source<{
+  pageData: OpenPkgPageData | OpenPkgIndexPageData | OpenPkgSinglePageData;
+  metaData: OpenPkgMetaData;
+}> {
   const { baseDir = 'api', indexPage = true, mode = 'pages' } = options;
 
   // Normalize to DocsInstance
@@ -130,7 +124,10 @@ export function openpkgSource(
   const spec = docs.spec;
   const exports = docs.getAllExports();
 
-  const files: VirtualFile<{ pageData: OpenPkgPageData | OpenPkgIndexPageData | OpenPkgSinglePageData; metaData: OpenPkgMetaData }>[] = [];
+  const files: VirtualFile<{
+    pageData: OpenPkgPageData | OpenPkgIndexPageData | OpenPkgSinglePageData;
+    metaData: OpenPkgMetaData;
+  }>[] = [];
 
   // Single-page mode: generate only one page entry
   if (mode === 'single') {
@@ -221,9 +218,7 @@ export function openpkgSource(
     const label = KIND_LABELS[kind] || kindSlug;
 
     // Sort exports alphabetically
-    const sortedExports = [...kindExports].sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
+    const sortedExports = [...kindExports].sort((a, b) => a.name.localeCompare(b.name));
 
     // Create meta for this kind folder
     files.push({

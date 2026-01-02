@@ -1,7 +1,13 @@
 // Styled components - pre-styled with Tailwind v4
 
 // Re-export from @openpkg-ts/ui
-export { CodeTabs, ImportSection, type CodeTab, type CodeTabsProps, type ImportSectionProps } from '@openpkg-ts/ui/api';
+export {
+  type CodeTab,
+  CodeTabs,
+  type CodeTabsProps,
+  ImportSection,
+  type ImportSectionProps,
+} from '@openpkg-ts/ui/api';
 
 // Local components (spec-specific)
 export type { APIPageProps } from './APIPage';
@@ -23,9 +29,6 @@ export { InterfacePage } from './InterfacePage';
 export type { NestedPropertyItemProps, ParameterItemProps } from './ParameterItem';
 /** @deprecated Use APIParameterItem from @openpkg-ts/ui with specParamToAPIParam adapter */
 export { ParameterItem } from './ParameterItem';
-export type { VariablePageProps } from './VariablePage';
-export { VariablePage } from './VariablePage';
-
 // Section components (for composing custom layouts)
 export {
   ClassSection,
@@ -41,3 +44,5 @@ export {
   VariableSection,
   type VariableSectionProps,
 } from './sections';
+export type { VariablePageProps } from './VariablePage';
+export { VariablePage } from './VariablePage';

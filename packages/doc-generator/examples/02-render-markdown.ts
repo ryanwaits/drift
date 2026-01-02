@@ -4,7 +4,7 @@
  * Run: bun examples/02-render-markdown.ts
  */
 
-import { createDocs, exportToMarkdown, toMarkdown } from '../src/index';
+import { createDocs, exportToMarkdown } from '../src/index';
 import spec from './sample-spec.json';
 
 console.log('=== Markdown Rendering Example ===\n');
@@ -14,7 +14,7 @@ const docs = createDocs(spec as any);
 // Render full spec to markdown
 console.log('--- Full Spec Markdown (first 1000 chars) ---\n');
 const fullMd = docs.toMarkdown();
-console.log(fullMd.slice(0, 1000) + '...\n');
+console.log(`${fullMd.slice(0, 1000)}...\n`);
 
 // Render single export
 console.log('--- Single Export: greet ---\n');

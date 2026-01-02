@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
+import type { OpenPkg } from '@openpkg-ts/spec';
 import { exportToMarkdown, toMarkdown } from './markdown';
 
 const sampleSpec: OpenPkg = {

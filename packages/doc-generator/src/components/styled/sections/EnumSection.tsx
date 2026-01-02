@@ -1,11 +1,7 @@
 'use client';
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import {
-  APIParameterItem,
-  APISection,
-  ParameterList,
-} from '@openpkg-ts/ui/docskit';
+import { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';
 import type { ReactNode } from 'react';
 import {
   buildImportStatement,
@@ -31,24 +27,35 @@ export function EnumSection({ export: exp, spec }: EnumSectionProps): ReactNode 
   const importStatement = buildImportStatement(exp, spec);
 
   // Build enum definition for fallback example
-  const enumDefinition = members.length > 0
-    ? `enum ${exp.name} {\n${members.map(m => {
-        const value = m.schema !== undefined
-          ? typeof m.schema === 'object' && m.schema !== null
-            ? ((m.schema as Record<string, unknown>).const ?? (m.schema as Record<string, unknown>).default)
-            : m.schema
-          : undefined;
-        return `  ${m.name}${value !== undefined ? ` = ${JSON.stringify(value)}` : ''},`;
-      }).join('\n')}\n}`
-    : `enum ${exp.name} { }`;
+  const enumDefinition =
+    members.length > 0
+      ? `enum ${exp.name} {\n${members
+          .map((m) => {
+            const value =
+              m.schema !== undefined
+                ? typeof m.schema === 'object' && m.schema !== null
+                  ? ((m.schema as Record<string, unknown>).const ??
+                    (m.schema as Record<string, unknown>).default)
+                  : m.schema
+                : undefined;
+            return `  ${m.name}${value !== undefined ? ` = ${JSON.stringify(value)}` : ''},`;
+          })
+          .join('\n')}\n}`
+      : `enum ${exp.name} { }`;
 
-  const displayExamples = examples.length > 0 ? examples : [{
-    languageId: 'typescript',
-    code: `${importStatement}\n\n${enumDefinition}`,
-    highlightLang: 'ts',
-  }];
+  const displayExamples =
+    examples.length > 0
+      ? examples
+      : [
+          {
+            languageId: 'typescript',
+            code: `${importStatement}\n\n${enumDefinition}`,
+            highlightLang: 'ts',
+          },
+        ];
 
-  const displayLanguages = languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
+  const displayLanguages =
+    languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
 
   return (
     <APISection
@@ -75,13 +82,14 @@ export function EnumSection({ export: exp, spec }: EnumSectionProps): ReactNode 
       {members.length > 0 && (
         <ParameterList title="Members">
           {members.map((member, index) => {
-            const value = member.schema !== undefined
-              ? typeof member.schema === 'object' && member.schema !== null
-                ? ((member.schema as Record<string, unknown>).const ??
-                  (member.schema as Record<string, unknown>).default ??
-                  undefined)
-                : member.schema
-              : undefined;
+            const value =
+              member.schema !== undefined
+                ? typeof member.schema === 'object' && member.schema !== null
+                  ? ((member.schema as Record<string, unknown>).const ??
+                    (member.schema as Record<string, unknown>).default ??
+                    undefined)
+                  : member.schema
+                : undefined;
 
             return (
               <APIParameterItem

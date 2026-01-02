@@ -1,11 +1,7 @@
 'use client';
 
 import type { OpenPkg, SpecExport, SpecMember } from '@openpkg-ts/spec';
-import {
-  APIParameterItem,
-  APISection,
-  ParameterList,
-} from '@openpkg-ts/ui/docskit';
+import { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';
 import type { ReactNode } from 'react';
 import {
   buildImportStatement,
@@ -57,7 +53,9 @@ export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNod
 
   // Separate static and instance members
   const staticProperties = properties.filter((m) => (m.flags as Record<string, boolean>)?.static);
-  const instanceProperties = properties.filter((m) => !(m.flags as Record<string, boolean>)?.static);
+  const instanceProperties = properties.filter(
+    (m) => !(m.flags as Record<string, boolean>)?.static,
+  );
   const staticMethods = methods.filter((m) => (m.flags as Record<string, boolean>)?.static);
   const instanceMethods = methods.filter((m) => !(m.flags as Record<string, boolean>)?.static);
 
@@ -70,19 +68,27 @@ export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNod
   const importStatement = buildImportStatement(exp, spec);
 
   // Fallback example
-  const displayExamples = examples.length > 0 ? examples : [{
-    languageId: 'typescript',
-    code: `${importStatement}\n\nconst instance = new ${exp.name}(${constructorParams.map(p => p.name).join(', ')});`,
-    highlightLang: 'ts',
-  }];
+  const displayExamples =
+    examples.length > 0
+      ? examples
+      : [
+          {
+            languageId: 'typescript',
+            code: `${importStatement}\n\nconst instance = new ${exp.name}(${constructorParams.map((p) => p.name).join(', ')});`,
+            highlightLang: 'ts',
+          },
+        ];
 
-  const displayLanguages = languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
+  const displayLanguages =
+    languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
 
   // Build extends/implements description
   const inheritance = [
     exp.extends && `extends ${exp.extends}`,
     exp.implements?.length && `implements ${exp.implements.join(', ')}`,
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <APISection
@@ -90,9 +96,7 @@ export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNod
       title={`class ${exp.name}`}
       description={
         <div className="space-y-3">
-          {inheritance && (
-            <p className="font-mono text-sm text-muted-foreground">{inheritance}</p>
-          )}
+          {inheritance && <p className="font-mono text-sm text-muted-foreground">{inheritance}</p>}
           {exp.description && <p>{exp.description}</p>}
           <code className="text-sm font-mono bg-muted px-2 py-1 rounded inline-block">
             {importStatement}

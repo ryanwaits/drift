@@ -374,4 +374,3 @@ describe('sortByName', () => {
     expect(sorted).not.toBe(items);
   });
 });
-

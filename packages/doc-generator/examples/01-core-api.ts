@@ -4,7 +4,7 @@
  * Run: bun examples/01-core-api.ts
  */
 
-import { createDocs, loadSpec } from '../src/index';
+import { loadSpec } from '../src/index';
 import spec from './sample-spec.json';
 
 console.log('=== Core API Example ===\n');
@@ -37,7 +37,7 @@ const greet = docs.getExport('greet');
 if (greet) {
   console.log('Name:', greet.name);
   console.log('Kind:', greet.kind);
-  console.log('Description:', greet.description?.slice(0, 50) + '...');
+  console.log('Description:', `${greet.description?.slice(0, 50)}...`);
   console.log('Parameters:', greet.signatures?.[0]?.parameters?.map((p) => p.name).join(', '));
 }
 

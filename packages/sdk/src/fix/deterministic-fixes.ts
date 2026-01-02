@@ -112,7 +112,10 @@ export function generateFixesForExport(
   driftList?: SpecDocDrift[],
 ): FixSuggestion[] {
   const fixes: FixSuggestion[] = [];
-  const drifts = driftList ?? (exportEntry as unknown as { docs?: { drift?: SpecDocDrift[] } }).docs?.drift ?? [];
+  const drifts =
+    driftList ??
+    (exportEntry as unknown as { docs?: { drift?: SpecDocDrift[] } }).docs?.drift ??
+    [];
 
   for (const drift of drifts) {
     const fix = generateFix(drift, exportEntry, existingPatch);

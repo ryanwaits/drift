@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.14.0
+
+### Minor Changes
+
+- Consolidate type extraction logic into @openpkg-ts/extract package. Removes duplicate serializers from SDK, adds rich type schema extraction with class/interface members and generics support.
+
 ## 0.13.0
 
 ### Minor Changes

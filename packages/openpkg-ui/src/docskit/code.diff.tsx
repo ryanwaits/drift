@@ -9,8 +9,8 @@ import {
 } from 'codehike/code';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/collapsible';
+import { cn } from '@/lib/utils';
 import { flagsToOptions, theme } from './code.config';
 import { CopyButton } from './code.copy';
 import { getHandlers } from './code.handlers';

@@ -4,7 +4,14 @@ const sharedConfig = {
   dts: true,
   format: ['esm'] as const,
   target: 'browser' as const,
-  external: ['react', 'react-dom', 'clsx', 'tailwind-merge', 'class-variance-authority', 'lucide-react'],
+  external: [
+    'react',
+    'react-dom',
+    'clsx',
+    'tailwind-merge',
+    'class-variance-authority',
+    'lucide-react',
+  ],
   define: {
     'process.env.NODE_ENV': '"production"',
   },

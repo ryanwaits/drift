@@ -4,7 +4,7 @@
  * Run: bun examples/03-navigation.ts
  */
 
-import { createDocs, toDocusaurusSidebarJS, toFumadocsMetaJSON, toNavigation } from '../src/index';
+import { createDocs, toDocusaurusSidebarJS, toFumadocsMetaJSON } from '../src/index';
 import spec from './sample-spec.json';
 
 console.log('=== Navigation Generation Example ===\n');

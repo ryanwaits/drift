@@ -2,6 +2,35 @@ import type { SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import type { SerializerContext } from '../serializers/context';
 
+/**
+ * Built-in type schemas with JSON Schema format hints.
+ * Used for types that have specific serialization formats.
+ */
+export const BUILTIN_TYPE_SCHEMAS: Record<string, SpecSchema> = {
+  Date: { type: 'string', format: 'date-time' },
+  RegExp: { type: 'object', description: 'RegExp' },
+  Error: { type: 'object' },
+  Promise: { type: 'object' },
+  Map: { type: 'object' },
+  Set: { type: 'object' },
+  WeakMap: { type: 'object' },
+  WeakSet: { type: 'object' },
+  Function: { type: 'object' },
+  ArrayBuffer: { type: 'string', format: 'binary' },
+  ArrayBufferLike: { type: 'string', format: 'binary' },
+  DataView: { type: 'string', format: 'binary' },
+  Uint8Array: { type: 'string', format: 'byte' },
+  Uint16Array: { type: 'string', format: 'byte' },
+  Uint32Array: { type: 'string', format: 'byte' },
+  Int8Array: { type: 'string', format: 'byte' },
+  Int16Array: { type: 'string', format: 'byte' },
+  Int32Array: { type: 'string', format: 'byte' },
+  Float32Array: { type: 'string', format: 'byte' },
+  Float64Array: { type: 'string', format: 'byte' },
+  BigInt64Array: { type: 'string', format: 'byte' },
+  BigUint64Array: { type: 'string', format: 'byte' },
+};
+
 // Primitive type names
 const PRIMITIVES = new Set([
   'string',
@@ -133,10 +162,10 @@ export function buildSchema(
   }
 
   // Check for circular references
-  if (ctx && ctx.visitedTypes.has(type)) {
+  if (ctx?.visitedTypes.has(type)) {
     const symbol = type.getSymbol() || type.aliasSymbol;
     if (symbol) {
-      return { $ref: symbol.getName() };
+      return { $ref: `#/types/${symbol.getName()}` };
     }
     return { type: checker.typeToString(type) };
   }
@@ -251,18 +280,18 @@ export function buildSchema(
 
     // Skip typeArguments for built-in non-generic types (like Uint8Array has internal T)
     if (name && BUILTIN_TYPES.has(name)) {
-      return { $ref: name };
+      return { $ref: `#/types/${name}` };
     }
 
     if (name && (isBuiltinGeneric(name) || !isAnonymous(typeRef.target))) {
       if (ctx) {
         return withDepth(ctx, () => ({
-          $ref: name,
+          $ref: `#/types/${name}`,
           typeArguments: typeRef.typeArguments!.map((t) => buildSchema(t, checker, ctx)),
         }));
       }
       return {
-        $ref: name,
+        $ref: `#/types/${name}`,
         typeArguments: typeRef.typeArguments.map((t) => buildSchema(t, checker, ctx)),
       };
     }
@@ -280,12 +309,12 @@ export function buildSchema(
 
     // Built-in types without generics
     if (BUILTIN_TYPES.has(name)) {
-      return { $ref: name };
+      return { $ref: `#/types/${name}` };
     }
 
     // Named type → $ref
     if (!name.startsWith('__')) {
-      return { $ref: name };
+      return { $ref: `#/types/${name}` };
     }
   }
 
@@ -383,4 +412,158 @@ function buildObjectSchema(
     return withDepth(ctx, buildProps);
   }
   return buildProps();
+}
+
+// ============================================================================
+// Schema Utilities (ported from SDK)
+// ============================================================================
+
+/**
+ * Check if a schema is a pure $ref (only has $ref property)
+ */
+export function isPureRefSchema(schema: SpecSchema): schema is { $ref: string } {
+  return typeof schema === 'object' && Object.keys(schema).length === 1 && '$ref' in schema;
+}
+
+/**
+ * Add description to a schema, handling $ref properly.
+ * For pure $ref schemas, wraps in allOf to preserve the reference.
+ */
+export function withDescription(schema: SpecSchema, description: string): SpecSchema {
+  if (isPureRefSchema(schema)) {
+    return {
+      allOf: [schema],
+      description,
+    };
+  }
+  return { ...schema, description };
+}
+
+/**
+ * Check if a schema represents the 'any' type
+ */
+export function schemaIsAny(schema: SpecSchema): boolean {
+  if (typeof schema === 'string') {
+    return schema === 'any';
+  }
+  if ('type' in schema && schema.type === 'any' && Object.keys(schema).length === 1) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Deep equality comparison for schemas
+ */
+export function schemasAreEqual(left: SpecSchema, right: SpecSchema): boolean {
+  if (typeof left !== typeof right) {
+    return false;
+  }
+  if (typeof left === 'string' && typeof right === 'string') {
+    return left === right;
+  }
+  if (left == null || right == null) {
+    return left === right;
+  }
+
+  const normalize = (value: unknown): unknown => {
+    if (Array.isArray(value)) {
+      return value.map((item) => normalize(item));
+    }
+    if (value && typeof value === 'object') {
+      const sortedEntries = Object.entries(value)
+        .map(([key, val]) => [key, normalize(val)] as const)
+        .sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
+      return Object.fromEntries(sortedEntries);
+    }
+    return value;
+  };
+
+  return JSON.stringify(normalize(left)) === JSON.stringify(normalize(right));
+}
+
+/**
+ * Remove duplicate schemas from an array while preserving order.
+ */
+export function deduplicateSchemas(schemas: SpecSchema[]): SpecSchema[] {
+  const result: SpecSchema[] = [];
+  for (const schema of schemas) {
+    const isDuplicate = result.some((existing) => schemasAreEqual(existing, schema));
+    if (!isDuplicate) {
+      result.push(schema);
+    }
+  }
+  return result;
+}
+
+/**
+ * Find a discriminator property in a union of object types (tagged union pattern).
+ * A valid discriminator has a unique literal value in each union member.
+ */
+export function findDiscriminatorProperty(
+  unionTypes: ts.Type[],
+  checker: ts.TypeChecker,
+): string | undefined {
+  const memberProps: Map<string, string | number>[] = [];
+
+  for (const t of unionTypes) {
+    // Skip null/undefined in unions
+    if (t.flags & (ts.TypeFlags.Null | ts.TypeFlags.Undefined)) {
+      continue;
+    }
+
+    const props = t.getProperties();
+    if (!props || props.length === 0) {
+      return undefined; // Not an object type
+    }
+
+    const propValues = new Map<string, string | number>();
+    for (const prop of props) {
+      const declaration = prop.valueDeclaration ?? prop.declarations?.[0];
+      if (!declaration) continue;
+
+      try {
+        const propType = checker.getTypeOfSymbolAtLocation(prop, declaration);
+        if (propType.isStringLiteral()) {
+          propValues.set(prop.getName(), propType.value);
+        } else if (propType.isNumberLiteral()) {
+          propValues.set(prop.getName(), propType.value);
+        }
+      } catch {
+        // Ignore errors
+      }
+    }
+    memberProps.push(propValues);
+  }
+
+  if (memberProps.length < 2) {
+    return undefined; // Need at least 2 object members
+  }
+
+  // Find property that exists in all members with unique literal values
+  const firstMember = memberProps[0];
+  for (const [propName, firstValue] of firstMember) {
+    const values = new Set<string | number>([firstValue]);
+    let isDiscriminator = true;
+
+    for (let i = 1; i < memberProps.length; i++) {
+      const value = memberProps[i].get(propName);
+      if (value === undefined) {
+        isDiscriminator = false;
+        break;
+      }
+      if (values.has(value)) {
+        // Duplicate value - not a valid discriminator
+        isDiscriminator = false;
+        break;
+      }
+      values.add(value);
+    }
+
+    if (isDiscriminator) {
+      return propName;
+    }
+  }
+
+  return undefined;
 }

@@ -1,5 +1,5 @@
-import type { OpenPkg, SpecExport, SpecExportKind, SpecMember } from '@openpkg-ts/spec';
-import { buildSignatureString, formatSchema, getMethods, getProperties } from './query';
+import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
+import { buildSignatureString, getMethods, getProperties } from './query';
 
 export interface SearchOptions {
   /** Base URL for search result links */
@@ -202,7 +202,7 @@ function buildContent(exp: SpecExport, options: SearchOptions = {}): string {
  */
 function createSearchRecord(
   exp: SpecExport,
-  packageName: string,
+  _packageName: string,
   options: SearchOptions = {},
 ): SearchRecord {
   const { baseUrl = '/api', slugify = defaultSlugify } = options;

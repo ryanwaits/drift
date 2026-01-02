@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import { SCHEMA_VERSION } from '@openpkg-ts/spec';
+import type { OpenPkg, SpecExport, SpecType } from '@openpkg-ts/spec';
+import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { createProgram } from '../compiler/program';
 import { serializeClass } from '../serializers/classes';
@@ -13,8 +13,47 @@ import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
 import type { Diagnostic, ExtractOptions, ExtractResult } from '../types';
 
+/** Built-in types that shouldn't be tracked as dangling refs */
+const BUILTIN_TYPES = new Set([
+  'Array',
+  'Promise',
+  'Map',
+  'Set',
+  'Record',
+  'Partial',
+  'Required',
+  'Pick',
+  'Omit',
+  'Exclude',
+  'Extract',
+  'NonNullable',
+  'Parameters',
+  'ReturnType',
+  'Readonly',
+  'ReadonlyArray',
+  'Awaited',
+  'Date',
+  'RegExp',
+  'Error',
+  'Function',
+  'Object',
+  'String',
+  'Number',
+  'Boolean',
+  'Symbol',
+  'BigInt',
+]);
+
 export async function extract(options: ExtractOptions): Promise<ExtractResult> {
-  const { entryFile, baseDir, content, maxTypeDepth, maxExternalTypeDepth, resolveExternalTypes } = options;
+  const {
+    entryFile,
+    baseDir,
+    content,
+    maxTypeDepth,
+    maxExternalTypeDepth,
+    resolveExternalTypes,
+    includeSchema,
+  } = options;
 
   const diagnostics: Diagnostic[] = [];
   const exports: SpecExport[] = [];
@@ -25,7 +64,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
   if (!sourceFile) {
     return {
-      spec: createEmptySpec(entryFile),
+      spec: createEmptySpec(entryFile, includeSchema),
       diagnostics: [{ message: `Could not load source file: ${entryFile}`, severity: 'error' }],
     };
   }
@@ -36,7 +75,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   const moduleSymbol = typeChecker.getSymbolAtLocation(sourceFile);
   if (!moduleSymbol) {
     return {
-      spec: createEmptySpec(entryFile),
+      spec: createEmptySpec(entryFile, includeSchema),
       diagnostics: [{ message: 'Could not get module symbol', severity: 'warning' }],
     };
   }
@@ -49,7 +88,11 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     exportedIds.add(symbol.getName());
   }
 
-  const ctx = createContext(program, sourceFile, { maxTypeDepth, maxExternalTypeDepth, resolveExternalTypes });
+  const ctx = createContext(program, sourceFile, {
+    maxTypeDepth,
+    maxExternalTypeDepth,
+    resolveExternalTypes,
+  });
   ctx.exportedIds = exportedIds;
 
   for (const symbol of exportedSymbols) {
@@ -58,7 +101,6 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       if (!declaration) continue;
 
       const exportName = symbol.getName();
-      // Pass both original symbol (for JSDoc on export) and target symbol
       const exp = serializeDeclaration(declaration, symbol, targetSymbol, exportName, ctx);
       if (exp) exports.push(exp);
     } catch (err) {
@@ -71,12 +113,39 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
   // Get package metadata
   const meta = await getPackageMeta(entryFile, baseDir);
+  const types = ctx.typeRegistry.getAll();
+
+  // Check for dangling $refs (refs to types not defined)
+  const danglingRefs = collectDanglingRefs(exports, types);
+  for (const ref of danglingRefs) {
+    diagnostics.push({
+      message: `Type '${ref}' is referenced but not defined in types[].`,
+      severity: 'warning',
+      code: 'DANGLING_REF',
+      suggestion: 'The type may be from an external package. Check import paths.',
+    });
+  }
+
+  // Check for external type stubs
+  const externalTypes = types.filter((t) => t.kind === 'external');
+  if (externalTypes.length > 0) {
+    diagnostics.push({
+      message: `${externalTypes.length} external type(s) could not be fully resolved: ${externalTypes
+        .slice(0, 5)
+        .map((t) => t.id)
+        .join(', ')}${externalTypes.length > 5 ? '...' : ''}`,
+      severity: 'warning',
+      code: 'EXTERNAL_TYPE_STUBS',
+      suggestion: 'Types are from external packages. Full resolution requires type declarations.',
+    });
+  }
 
   const spec: OpenPkg = {
+    ...(includeSchema ? { $schema: SCHEMA_URL } : {}),
     openpkg: SCHEMA_VERSION,
     meta,
     exports,
-    types: ctx.typeRegistry.getAll(),
+    types,
     generation: {
       generator: '@openpkg-ts/extract',
       timestamp: new Date().toISOString(),
@@ -84,6 +153,45 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   };
 
   return { spec, diagnostics };
+}
+
+/**
+ * Collect all $ref values from a nested object/array structure
+ */
+function collectAllRefs(obj: unknown, refs: Set<string>): void {
+  if (obj === null || obj === undefined) return;
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      collectAllRefs(item, refs);
+    }
+    return;
+  }
+
+  if (typeof obj === 'object') {
+    const record = obj as Record<string, unknown>;
+    if (typeof record.$ref === 'string' && record.$ref.startsWith('#/types/')) {
+      refs.add(record.$ref.slice('#/types/'.length));
+    }
+    for (const value of Object.values(record)) {
+      collectAllRefs(value, refs);
+    }
+  }
+}
+
+/**
+ * Find all dangling $ref references (refs to types not in types[])
+ */
+function collectDanglingRefs(exports: SpecExport[], types: SpecType[]): string[] {
+  const definedTypes = new Set(types.map((t) => t.id));
+  const referencedTypes = new Set<string>();
+
+  collectAllRefs(exports, referencedTypes);
+  collectAllRefs(types, referencedTypes);
+
+  return Array.from(referencedTypes).filter(
+    (ref) => !definedTypes.has(ref) && !BUILTIN_TYPES.has(ref),
+  );
 }
 
 /**
@@ -95,7 +203,6 @@ function resolveExportTarget(
 ): { declaration?: ts.Declaration; targetSymbol: ts.Symbol } {
   let targetSymbol = symbol;
 
-  // Use getAliasedSymbol to follow the full alias chain (handles re-exports)
   if (symbol.flags & ts.SymbolFlags.Alias) {
     const aliasTarget = checker.getAliasedSymbol(symbol);
     if (aliasTarget && aliasTarget !== symbol) {
@@ -115,7 +222,7 @@ function resolveExportTarget(
 function serializeDeclaration(
   declaration: ts.Declaration,
   exportSymbol: ts.Symbol,
-  targetSymbol: ts.Symbol,
+  _targetSymbol: ts.Symbol,
   exportName: string,
   ctx: SerializerContext,
 ): SpecExport | null {
@@ -132,21 +239,16 @@ function serializeDeclaration(
   } else if (ts.isEnumDeclaration(declaration)) {
     result = serializeEnum(declaration, ctx);
   } else if (ts.isVariableDeclaration(declaration)) {
-    // Find the parent variable statement for JSDoc
     const varStatement = declaration.parent?.parent as ts.VariableStatement | undefined;
     if (varStatement && ts.isVariableStatement(varStatement)) {
       result = serializeVariable(declaration, varStatement, ctx);
     }
   } else if (ts.isNamespaceExport(declaration) || ts.isModuleDeclaration(declaration)) {
-    // Handle namespace exports like `export * as Foo from './foo'`
-    // Use exportSymbol for JSDoc (it's on the export statement)
-    result = serializeNamespaceExport(exportSymbol, exportName, ctx);
+    result = serializeNamespaceExport(exportSymbol, exportName);
   } else if (ts.isSourceFile(declaration)) {
-    // Handle namespace exports where the target resolves to a source file
-    result = serializeNamespaceExport(exportSymbol, exportName, ctx);
+    result = serializeNamespaceExport(exportSymbol, exportName);
   }
 
-  // Apply export name (handles re-exports with different names)
   if (result) {
     result = withExportName(result, exportName);
   }
@@ -154,12 +256,7 @@ function serializeDeclaration(
   return result;
 }
 
-function serializeNamespaceExport(
-  symbol: ts.Symbol,
-  exportName: string,
-  ctx: SerializerContext,
-): SpecExport {
-  // Try to get JSDoc from the export declaration statement
+function serializeNamespaceExport(symbol: ts.Symbol, exportName: string): SpecExport {
   const { description, tags, examples } = getJSDocFromExportSymbol(symbol);
 
   return {
@@ -180,10 +277,8 @@ function getJSDocFromExportSymbol(symbol: ts.Symbol): {
   const tags: Array<{ name: string; text: string }> = [];
   const examples: string[] = [];
 
-  // First try: get from the symbol's declaration's parent (ExportDeclaration)
   const decl = symbol.declarations?.[0];
   if (decl) {
-    // For namespace exports, the declaration is NamespaceExport, parent is ExportDeclaration
     const exportDecl = ts.isNamespaceExport(decl) ? decl.parent : decl;
     if (exportDecl && ts.isExportDeclaration(exportDecl)) {
       const jsDocs = ts.getJSDocCommentsAndTags(exportDecl);
@@ -205,7 +300,6 @@ function getJSDocFromExportSymbol(symbol: ts.Symbol): {
     }
   }
 
-  // Fallback: try symbol's documentation
   const docComment = symbol.getDocumentationComment(undefined);
   const description = docComment.map((c) => c.text).join('\n') || undefined;
 
@@ -229,7 +323,7 @@ function extractJSDocTags(doc: ts.JSDoc): Array<{ name: string; text: string }> 
       const text =
         typeof tag.comment === 'string'
           ? tag.comment
-          : tag.comment?.map((c) => ('text' in c ? c.text : '')).join('') ?? '';
+          : (tag.comment?.map((c) => ('text' in c ? c.text : '')).join('') ?? '');
       tags.push({ name: tag.tagName.text, text });
     }
   }
@@ -243,30 +337,27 @@ function extractExamples(doc: ts.JSDoc): string[] {
       const text =
         typeof tag.comment === 'string'
           ? tag.comment
-          : tag.comment?.map((c) => ('text' in c ? c.text : '')).join('') ?? '';
+          : (tag.comment?.map((c) => ('text' in c ? c.text : '')).join('') ?? '');
       if (text) examples.push(text);
     }
   }
   return examples;
 }
 
-/**
- * Rewrite entry to use the public export name when re-exported.
- */
 function withExportName(entry: SpecExport, exportName: string): SpecExport {
   if (entry.name === exportName) {
     return entry;
   }
-  // Keep original name in the entry but use exportName as id
   return {
     ...entry,
     id: exportName,
-    name: entry.name, // Original declaration name
+    name: entry.name,
   };
 }
 
-function createEmptySpec(entryFile: string): OpenPkg {
+function createEmptySpec(entryFile: string, includeSchema?: boolean): OpenPkg {
   return {
+    ...(includeSchema ? { $schema: SCHEMA_URL } : {}),
     openpkg: SCHEMA_VERSION,
     meta: { name: path.basename(entryFile, path.extname(entryFile)) },
     exports: [],

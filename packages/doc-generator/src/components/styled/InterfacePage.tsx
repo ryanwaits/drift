@@ -13,10 +13,7 @@ export interface InterfacePageProps {
  * Stripe-style interface/type page with two-column layout.
  * Left: properties, methods. Right: sticky code examples.
  */
-export function InterfacePage({
-  export: exp,
-  spec,
-}: InterfacePageProps): ReactNode {
+export function InterfacePage({ export: exp, spec }: InterfacePageProps): ReactNode {
   return (
     <div className="doccov-interface-page not-prose">
       <InterfaceSection export={exp} spec={spec} />

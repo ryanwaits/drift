@@ -79,13 +79,7 @@ export function APIPage({
 
   // Index mode: show all exports
   if (!id) {
-    return (
-      <ExportIndexPage
-        spec={resolvedSpec}
-        baseHref={baseHref}
-        description={description}
-      />
-    );
+    return <ExportIndexPage spec={resolvedSpec} baseHref={baseHref} description={description} />;
   }
 
   // Detail mode: find and render specific export

@@ -85,13 +85,14 @@ export function generateReportFromDocCov(openpkg: OpenPkg, doccov: DocCovSpec): 
     documentedExports,
     missingByRule,
     driftCount: totalDrift,
-    driftSummary: doccov.summary.drift.total > 0
-      ? {
-          total: doccov.summary.drift.total,
-          fixable: doccov.summary.drift.fixable,
-          byCategory: doccov.summary.drift.byCategory,
-        }
-      : undefined,
+    driftSummary:
+      doccov.summary.drift.total > 0
+        ? {
+            total: doccov.summary.drift.total,
+            fixable: doccov.summary.drift.fixable,
+            byCategory: doccov.summary.drift.byCategory,
+          }
+        : undefined,
   };
 
   return {

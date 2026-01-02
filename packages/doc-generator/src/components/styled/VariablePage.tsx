@@ -12,10 +12,7 @@ export interface VariablePageProps {
 /**
  * Stripe-style variable/constant page with two-column layout.
  */
-export function VariablePage({
-  export: exp,
-  spec,
-}: VariablePageProps): ReactNode {
+export function VariablePage({ export: exp, spec }: VariablePageProps): ReactNode {
   return (
     <div className="doccov-variable-page not-prose">
       <VariableSection export={exp} spec={spec} />

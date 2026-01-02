@@ -18,7 +18,12 @@ import type {
   BuildPlanTarget,
   GitHubProjectContext,
 } from '@doccov/sdk';
-import { buildDocCovSpec, fetchGitHubContext, getExportDrift, parseScanGitHubUrl } from '@doccov/sdk';
+import {
+  buildDocCovSpec,
+  fetchGitHubContext,
+  getExportDrift,
+  parseScanGitHubUrl,
+} from '@doccov/sdk';
 import type { DocCovSpec } from '@doccov/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import type { VercelRequest, VercelResponse } from '@vercel/node';

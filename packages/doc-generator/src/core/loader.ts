@@ -6,21 +6,13 @@ import {
   type SimplifiedExport,
   type SimplifiedSpec,
   toJSON,
-  toJSONString,
 } from '../render/json';
-import {
-  type ExportMarkdownOptions,
-  type MarkdownOptions,
-  exportToMarkdown,
-  toMarkdown,
-} from '../render/markdown';
+import { type ExportMarkdownOptions, toMarkdown } from '../render/markdown';
 import {
   type DocusaurusSidebar,
   type FumadocsMeta,
   type GenericNav,
   type NavOptions,
-  toDocusaurusSidebarJS,
-  toFumadocsMetaJSON,
   toNavigation,
 } from '../render/nav';
 import {

@@ -319,7 +319,7 @@ export class TypeRegistry {
             return { type: checker.typeToString(t) };
           }
           if (sym && !sym.getName().startsWith('__')) {
-            return { $ref: sym.getName() };
+            return { $ref: `#/types/${sym.getName()}` };
           }
           // Literal or primitive
           if (t.flags & ts.TypeFlags.StringLiteral) {
@@ -339,7 +339,7 @@ export class TypeRegistry {
         allOf: type.types.map((t) => {
           const sym = t.getSymbol() || t.aliasSymbol;
           if (sym && !sym.getName().startsWith('__')) {
-            return { $ref: sym.getName() };
+            return { $ref: `#/types/${sym.getName()}` };
           }
           return { type: checker.typeToString(t) };
         }),
@@ -370,7 +370,7 @@ export class TypeRegistry {
 
           // Only use $ref for named types, not for method names or anonymous
           if (propSym && symName && !symName.startsWith('__') && symName !== propName) {
-            properties[propName] = { $ref: symName };
+            properties[propName] = { $ref: `#/types/${symName}` };
           } else {
             properties[propName] = { type: checker.typeToString(propType) };
           }
@@ -415,7 +415,7 @@ export class TypeRegistry {
           kind: 'property',
           schema:
             sym && !sym.getName().startsWith('__')
-              ? { $ref: sym.getName() }
+              ? { $ref: `#/types/${sym.getName()}` }
               : { type: checker.typeToString(type) },
         });
       } else if (ts.isMethodDeclaration(member) || ts.isMethodSignature(member)) {

@@ -1,5 +1,13 @@
 # @doccov/sdk
 
+## 0.25.5
+
+### Patch Changes
+
+- Consolidate type extraction logic into @openpkg-ts/extract package. Removes duplicate serializers from SDK, adds rich type schema extraction with class/interface members and generics support.
+- Updated dependencies
+  - @openpkg-ts/extract@0.14.0
+
 ## 0.25.4
 
 ### Patch Changes

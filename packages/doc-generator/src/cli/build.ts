@@ -90,7 +90,7 @@ export function registerBuildCommand(program: Command): void {
               cwd: process.cwd(),
             });
             console.log('Search index created');
-          } catch (err) {
+          } catch (_err) {
             // Pagefind not available, generate search.json fallback
             if (options.verbose) {
               console.log('Pagefind not available, generating search.json fallback');

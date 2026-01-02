@@ -1,5 +1,5 @@
-import { KindBadge as UIKindBadge, type KindBadgeKind } from '@openpkg-ts/ui/badge';
 import type { SpecExportKind } from '@openpkg-ts/doc-generator';
+import { type KindBadgeKind, KindBadge as UIKindBadge } from '@openpkg-ts/ui/badge';
 import { createElement, type ReactNode } from 'react';
 
 const SUPPORTED_KINDS: Set<string> = new Set([

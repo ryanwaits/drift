@@ -36,7 +36,6 @@ export interface TextOutputDeps {
 export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDeps): boolean {
   const {
     openpkg,
-    doccov,
     coverageScore,
     minCoverage,
     maxDrift,

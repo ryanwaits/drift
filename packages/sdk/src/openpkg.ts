@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import type * as TS from 'typescript';
 import type { DetectedSchemaEntry } from './analysis/context';
 import { createProgram } from './analysis/program';
-import type { AnalysisMetadataInternal, GenerationInput } from './analysis/run-analysis';
+import type { AnalysisMetadataInternal } from './analysis/run-analysis';
 import { runAnalysis } from './analysis/run-analysis';
 import { detectRuntimeSchemas } from './analysis/schema-detection';
 import type { OpenPkgSpec } from './analysis/spec-types';
@@ -21,9 +21,6 @@ import type { FilterOptions } from './filtering/types';
 import type { DocCovOptions, NormalizedDocCovOptions } from './options';
 import { normalizeDocCovOptions } from './options';
 import { ts } from './ts-module';
-
-// Re-export GenerationInput for CLI/API consumers
-export type { GenerationInput } from './analysis/run-analysis';
 
 export interface Diagnostic {
   message: string;
@@ -58,8 +55,6 @@ export interface AnalysisMetadata {
 
 export interface AnalyzeOptions {
   filters?: FilterOptions;
-  /** Generation metadata input (entry point info, tool version, etc.) */
-  generationInput?: GenerationInput;
 }
 
 export class DocCov {
@@ -110,16 +105,13 @@ export class DocCov {
       ? await this.detectSchemas(resolvedFileName, packageDir)
       : undefined;
 
-    const analysis = runAnalysis(
-      {
-        entryFile: resolvedFileName,
-        packageDir,
-        content: code,
-        options: this.options,
-        detectedSchemas,
-      },
-      analyzeOptions.generationInput,
-    );
+    const analysis = await runAnalysis({
+      entryFile: resolvedFileName,
+      packageDir,
+      content: code,
+      options: this.options,
+      detectedSchemas,
+    });
 
     const filterOutcome = this.applySpecFilters(analysis.spec, analyzeOptions.filters);
 
@@ -164,16 +156,13 @@ export class DocCov {
     // Opportunistically detect Standard Schema exports (Zod, ArkType, Valibot)
     const detectedSchemas = await this.detectSchemas(resolvedPath, packageDir);
 
-    const analysis = runAnalysis(
-      {
-        entryFile: resolvedPath,
-        packageDir,
-        content,
-        options: this.options,
-        detectedSchemas,
-      },
-      analyzeOptions.generationInput,
-    );
+    const analysis = await runAnalysis({
+      entryFile: resolvedPath,
+      packageDir,
+      content,
+      options: this.options,
+      detectedSchemas,
+    });
 
     const filterOutcome = this.applySpecFilters(analysis.spec, analyzeOptions.filters);
     const metadata = this.normalizeMetadata(analysis.metadata);

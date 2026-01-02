@@ -10,17 +10,15 @@ import type {
   SpecSchema,
   SpecSignatureParameter,
 } from '@openpkg-ts/spec';
-import type {
-  APIParameterSchema,
-  CodeExample,
-  Language,
-} from '@openpkg-ts/ui/docskit';
+import type { APIParameterSchema, CodeExample, Language } from '@openpkg-ts/ui/docskit';
 import { formatSchema } from '../core/query';
 
 /**
  * Convert SpecSchema to APIParameterSchema for nested object display.
  */
-export function specSchemaToAPISchema(schema: SpecSchema | undefined): APIParameterSchema | undefined {
+export function specSchemaToAPISchema(
+  schema: SpecSchema | undefined,
+): APIParameterSchema | undefined {
   if (!schema || typeof schema !== 'object') return undefined;
 
   const s = schema as Record<string, unknown>;
@@ -137,7 +135,7 @@ export function getLanguagesFromExamples(examples: SpecExample[] | undefined): L
   const languages: Language[] = [];
 
   for (const example of examples) {
-    const lang = typeof example === 'string' ? 'typescript' : (example.language || 'typescript');
+    const lang = typeof example === 'string' ? 'typescript' : example.language || 'typescript';
     if (!langSet.has(lang)) {
       langSet.add(lang);
       languages.push({
@@ -192,4 +190,3 @@ export function buildImportStatement(exp: SpecExport, spec: OpenPkg): string {
   }
   return `import { ${alias} } from '${importPath}'`;
 }
-

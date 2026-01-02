@@ -8,7 +8,7 @@ import {
   diffSpec,
   recommendSemverBump,
 } from '@openpkg-ts/spec';
-import { createEnrichedSpec, createExport, createSpec } from './test-helpers';
+import { createEnrichedSpec, createExport } from './test-helpers';
 
 describe('diffSpec', () => {
   describe('structural changes', () => {
@@ -120,7 +120,6 @@ describe('diffSpec', () => {
       expect(diff.breaking).toHaveLength(0);
     });
   });
-
 });
 
 describe('categorizeBreakingChanges', () => {

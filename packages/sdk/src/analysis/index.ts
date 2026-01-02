@@ -33,15 +33,6 @@ export {
   hasNonAssertionComments,
   parseAssertions,
 } from './docs-coverage';
-// Lookup helpers for composition pattern
-export {
-  getExportAnalysis,
-  getExportDrift,
-  getExportMissing,
-  getExportScore,
-  isExportFullyDocumented,
-} from './lookup';
-
 // History and trends
 export {
   type CoverageSnapshot,
@@ -63,6 +54,14 @@ export {
   saveSnapshot,
   type WeeklySummary,
 } from './history';
+// Lookup helpers for composition pattern
+export {
+  getExportAnalysis,
+  getExportDrift,
+  getExportMissing,
+  getExportScore,
+  isExportFullyDocumented,
+} from './lookup';
 
 // Report generation
 export {

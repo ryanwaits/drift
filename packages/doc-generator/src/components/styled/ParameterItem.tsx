@@ -68,9 +68,7 @@ function NestedPropertyItem({
   const description = schemaObj?.description as string | undefined;
 
   return (
-    <div
-      className={cn('border-t border-border first:border-t-0', depth > 0 && 'ml-4')}
-    >
+    <div className={cn('border-t border-border first:border-t-0', depth > 0 && 'ml-4')}>
       <div className="py-3">
         <div className="flex items-start gap-2">
           {/* Expand button */}
@@ -83,10 +81,7 @@ function NestedPropertyItem({
             >
               <ChevronRight
                 size={14}
-                className={cn(
-                  'transition-transform duration-200',
-                  expanded && 'rotate-90',
-                )}
+                className={cn('transition-transform duration-200', expanded && 'rotate-90')}
               />
             </button>
           )}
@@ -97,9 +92,7 @@ function NestedPropertyItem({
             <div className="flex items-baseline gap-2 flex-wrap">
               <span className="font-mono text-sm text-foreground">
                 {name}
-                {!required && (
-                  <span className="text-muted-foreground">?</span>
-                )}
+                {!required && <span className="text-muted-foreground">?</span>}
               </span>
               <span className="font-mono text-sm text-muted-foreground">
                 {hasNested ? 'object' : type}
@@ -116,9 +109,7 @@ function NestedPropertyItem({
             </div>
 
             {/* Description */}
-            {description && (
-              <p className="text-sm text-muted-foreground mt-1">{description}</p>
-            )}
+            {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
           </div>
         </div>
       </div>
@@ -174,10 +165,7 @@ export function ParameterItem({
             >
               <ChevronRight
                 size={14}
-                className={cn(
-                  'transition-transform duration-200',
-                  expanded && 'rotate-90',
-                )}
+                className={cn('transition-transform duration-200', expanded && 'rotate-90')}
               />
             </button>
           )}
@@ -186,9 +174,7 @@ export function ParameterItem({
           <div className="flex-1 min-w-0">
             {/* Name + badges + type */}
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="font-mono text-sm font-medium text-foreground">
-                {param.name}
-              </span>
+              <span className="font-mono text-sm font-medium text-foreground">{param.name}</span>
               {isRequired && (
                 <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-border bg-muted text-muted-foreground uppercase tracking-wide">
                   Required

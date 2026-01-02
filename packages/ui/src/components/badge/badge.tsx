@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
@@ -90,27 +90,24 @@ const statusBadgeVariants: (props?: {
   status?: StatusBadgeStatus | null;
   size?: StatusBadgeSize | null;
   className?: string;
-}) => string = cva(
-  'inline-flex items-center justify-center gap-1 font-medium rounded-full',
-  {
-    variants: {
-      status: {
-        success: 'bg-success-light text-success',
-        warning: 'bg-warning-light text-warning',
-        error: 'bg-destructive-light text-destructive',
-        neutral: 'bg-muted text-muted-foreground',
-      },
-      size: {
-        sm: 'h-5 px-2 text-xs',
-        md: 'h-6 px-2.5 text-sm',
-      },
+}) => string = cva('inline-flex items-center justify-center gap-1 font-medium rounded-full', {
+  variants: {
+    status: {
+      success: 'bg-success-light text-success',
+      warning: 'bg-warning-light text-warning',
+      error: 'bg-destructive-light text-destructive',
+      neutral: 'bg-muted text-muted-foreground',
     },
-    defaultVariants: {
-      status: 'neutral',
-      size: 'md',
+    size: {
+      sm: 'h-5 px-2 text-xs',
+      md: 'h-6 px-2.5 text-sm',
     },
   },
-);
+  defaultVariants: {
+    status: 'neutral',
+    size: 'md',
+  },
+});
 
 export interface StatusBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   status?: StatusBadgeStatus | null;
@@ -133,9 +130,4 @@ const StatusBadge: React.ForwardRefExoticComponent<
 );
 StatusBadge.displayName = 'StatusBadge';
 
-export {
-  KindBadge,
-  kindBadgeVariants,
-  StatusBadge,
-  statusBadgeVariants,
-};
+export { KindBadge, kindBadgeVariants, StatusBadge, statusBadgeVariants };

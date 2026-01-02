@@ -1,13 +1,13 @@
 'use client';
 
 import {
+  APIParameterItem,
+  type APIParameterSchema,
   APIReferencePage,
   APISection,
-  APIParameterItem,
-  ParameterList,
-  type Language,
   type CodeExample,
-  type APIParameterSchema,
+  type Language,
+  ParameterList,
 } from '@doccov/ui/docskit';
 
 // Sample OpenPkg spec data (from packages/doc-generator/examples/sample-spec.json)
@@ -74,7 +74,8 @@ console.log(message); // "Good day, Alice."`,
       id: 'Logger',
       name: 'Logger',
       kind: 'class',
-      description: 'A simple logging utility class.\n\nProvides methods for logging at different levels.',
+      description:
+        'A simple logging utility class.\n\nProvides methods for logging at different levels.',
       signatures: [
         {
           parameters: [
@@ -153,7 +154,9 @@ function toAPISchema(schema: Record<string, unknown> | undefined): APIParameterS
 
   if (schema.type === 'object' && schema.properties) {
     result.properties = {};
-    for (const [key, value] of Object.entries(schema.properties as Record<string, Record<string, unknown>>)) {
+    for (const [key, value] of Object.entries(
+      schema.properties as Record<string, Record<string, unknown>>,
+    )) {
       result.properties[key] = {
         type: value.type as string,
         typeString: value.type as string,
@@ -166,7 +169,9 @@ function toAPISchema(schema: Record<string, unknown> | undefined): APIParameterS
 }
 
 // Convert spec examples to CodeExample format
-function toCodeExamples(examples: Array<{ code: string; language?: string; title?: string }>): CodeExample[] {
+function toCodeExamples(
+  examples: Array<{ code: string; language?: string; title?: string }>,
+): CodeExample[] {
   return examples.map((ex) => ({
     languageId: ex.language || 'typescript',
     code: ex.code,
@@ -246,9 +251,7 @@ export default function OpenPkgAPIReferenceDemoPage() {
               <span className="font-mono text-sm font-medium">
                 {greetSig.returns.schema.type as string}
               </span>
-              <span className="ml-2 text-muted-foreground">
-                {greetSig.returns.description}
-              </span>
+              <span className="ml-2 text-muted-foreground">{greetSig.returns.description}</span>
             </div>
           </div>
         </APISection>

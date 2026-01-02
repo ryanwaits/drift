@@ -2,7 +2,7 @@
   "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!**/dist", "!**/.vercel", "!**/.next", "!**/node_modules"]
+    "includes": ["packages/**", "apps/**", "!**/dist", "!**/.vercel", "!**/.next", "!**/node_modules", "!**/.doccov"]
   },
   "linter": {
     "enabled": true,
@@ -14,7 +14,11 @@
         "useTemplate": "error"
       },
       "suspicious": {
-        "noExplicitAny": "warn"
+        "noExplicitAny": "warn",
+        "noArrayIndexKey": "warn"
+      },
+      "correctness": {
+        "noChildrenProp": "off"
       },
       "complexity": {
         "noBannedTypes": "error"

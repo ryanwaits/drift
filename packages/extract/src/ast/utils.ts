@@ -157,3 +157,27 @@ export function extractTypeParameters(
     };
   });
 }
+
+/**
+ * Check if a symbol is marked as deprecated via @deprecated JSDoc tag.
+ */
+export function isSymbolDeprecated(symbol: ts.Symbol | undefined): boolean {
+  if (!symbol) {
+    return false;
+  }
+
+  // Check JSDoc tags on the symbol
+  const jsDocTags = symbol.getJsDocTags();
+  if (jsDocTags.some((tag) => tag.name.toLowerCase() === 'deprecated')) {
+    return true;
+  }
+
+  // Check declarations for @deprecated tag
+  for (const declaration of symbol.getDeclarations() ?? []) {
+    if (ts.getJSDocDeprecatedTag(declaration)) {
+      return true;
+    }
+  }
+
+  return false;
+}

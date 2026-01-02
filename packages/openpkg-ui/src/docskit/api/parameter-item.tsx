@@ -1,7 +1,7 @@
 'use client';
 
-import { ChevronRight, Copy, Check } from 'lucide-react';
-import * as React from 'react';
+import { Check, ChevronRight, Copy } from 'lucide-react';
+import type * as React from 'react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -50,7 +50,7 @@ function NestedProperty({
   const [copied, setCopied] = useState(false);
   const type = schema.typeString ?? schema.type ?? 'unknown';
   const hasNested = schema.properties && Object.keys(schema.properties).length > 0;
-  const nestedCount = hasNested ? Object.keys(schema.properties!).length : 0;
+  const _nestedCount = hasNested ? Object.keys(schema.properties!).length : 0;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(name);
@@ -149,7 +149,7 @@ export function APIParameterItem({
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const hasNested = children?.properties && Object.keys(children.properties).length > 0;
-  const nestedCount = hasNested ? Object.keys(children!.properties!).length : 0;
+  const _nestedCount = hasNested ? Object.keys(children!.properties!).length : 0;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(name);

@@ -1,11 +1,7 @@
 'use client';
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import {
-  APIParameterItem,
-  APISection,
-  ParameterList,
-} from '@openpkg-ts/ui/docskit';
+import { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';
 import type { ReactNode } from 'react';
 import {
   buildImportStatement,
@@ -23,10 +19,7 @@ export interface VariableSectionProps {
  * Variable/constant section for use in single-page API reference.
  * Renders an APISection with type information.
  */
-export function VariableSection({
-  export: exp,
-  spec,
-}: VariableSectionProps): ReactNode {
+export function VariableSection({ export: exp, spec }: VariableSectionProps): ReactNode {
   const typeValue = typeof exp.type === 'string' ? exp.type : formatSchema(exp.schema);
 
   // Convert spec data to DocsKit format
@@ -35,17 +28,24 @@ export function VariableSection({
   const importStatement = buildImportStatement(exp, spec);
 
   // Get const value if available
-  const constValue = exp.schema && typeof exp.schema === 'object'
-    ? (exp.schema as Record<string, unknown>).const
-    : undefined;
+  const constValue =
+    exp.schema && typeof exp.schema === 'object'
+      ? (exp.schema as Record<string, unknown>).const
+      : undefined;
 
-  const displayExamples = examples.length > 0 ? examples : [{
-    languageId: 'typescript',
-    code: `${importStatement}\n\nconsole.log(${exp.name}); // ${constValue !== undefined ? JSON.stringify(constValue) : typeValue}`,
-    highlightLang: 'ts',
-  }];
+  const displayExamples =
+    examples.length > 0
+      ? examples
+      : [
+          {
+            languageId: 'typescript',
+            code: `${importStatement}\n\nconsole.log(${exp.name}); // ${constValue !== undefined ? JSON.stringify(constValue) : typeValue}`,
+            highlightLang: 'ts',
+          },
+        ];
 
-  const displayLanguages = languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
+  const displayLanguages =
+    languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
 
   return (
     <APISection
@@ -72,7 +72,9 @@ export function VariableSection({
         <APIParameterItem
           name={exp.name}
           type={typeValue}
-          description={constValue !== undefined ? `Value: ${JSON.stringify(constValue)}` : undefined}
+          description={
+            constValue !== undefined ? `Value: ${JSON.stringify(constValue)}` : undefined
+          }
         />
       </ParameterList>
     </APISection>

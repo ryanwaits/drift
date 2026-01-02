@@ -30,10 +30,7 @@ export function ResponseBlock({ data, title, className }: ResponseBlockProps): R
 
   return (
     <div
-      className={cn(
-        'group rounded-lg border border-border overflow-hidden bg-muted/30',
-        className,
-      )}
+      className={cn('group rounded-lg border border-border overflow-hidden bg-muted/30', className)}
     >
       {title && (
         <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/50">

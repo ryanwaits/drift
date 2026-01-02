@@ -9,14 +9,8 @@ import {
   // Core API (re-exported from doc-generator)
   createDocs,
   createOpenPkg, // backward compat alias
-  // Query utilities
-  formatSchema,
-  getMethods,
   getProperties,
   toFumadocsMetaJSON,
-  // Render utilities
-  toMarkdown,
-  toNavigation,
   // Search
   toSearchIndex,
 } from '../src/index';

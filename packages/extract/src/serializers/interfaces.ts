@@ -31,7 +31,7 @@ export function serializeInterface(
       if (propMember) members.push(propMember);
     } else if (ts.isMethodSignature(member)) {
       const methodMember = serializeMethodSignature(member, ctx);
-      if (methodMember && methodMember.name) {
+      if (methodMember?.name) {
         // Dedupe methods by name
         if (!methodsByName.has(methodMember.name)) {
           methodsByName.set(methodMember.name, methodMember);
@@ -179,7 +179,9 @@ function serializeIndexSignature(
 
   // Get the key type (usually string or number)
   const keyParam = node.parameters[0];
-  const keyType = keyParam?.type ? checker.getTypeAtLocation(keyParam.type) : checker.getStringType();
+  const keyType = keyParam?.type
+    ? checker.getTypeAtLocation(keyParam.type)
+    : checker.getStringType();
   const keyTypeName = checker.typeToString(keyType);
 
   return {

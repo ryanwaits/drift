@@ -1,11 +1,7 @@
 'use client';
 
 import type { OpenPkg, SpecExport, SpecMember } from '@openpkg-ts/spec';
-import {
-  APIParameterItem,
-  APISection,
-  ParameterList,
-} from '@openpkg-ts/ui/docskit';
+import { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';
 import type { ReactNode } from 'react';
 import {
   buildImportStatement,
@@ -35,16 +31,10 @@ function formatMethodSignature(member: SpecMember): string {
  * Interface/type section for use in single-page API reference.
  * Renders an APISection with properties and methods.
  */
-export function InterfaceSection({
-  export: exp,
-  spec,
-}: InterfaceSectionProps): ReactNode {
-  const properties = exp.members?.filter(
-    (m) => m.kind === 'property' || m.kind === 'field' || !m.kind,
-  ) ?? [];
-  const methods = exp.members?.filter(
-    (m) => m.kind === 'method' || m.kind === 'function',
-  ) ?? [];
+export function InterfaceSection({ export: exp, spec }: InterfaceSectionProps): ReactNode {
+  const properties =
+    exp.members?.filter((m) => m.kind === 'property' || m.kind === 'field' || !m.kind) ?? [];
+  const methods = exp.members?.filter((m) => m.kind === 'method' || m.kind === 'function') ?? [];
 
   // Convert spec data to DocsKit format
   const languages = getLanguagesFromExamples(exp.examples);
@@ -52,17 +42,24 @@ export function InterfaceSection({
   const importStatement = buildImportStatement(exp, spec);
 
   // Build type definition for fallback example
-  const typeDefinition = properties.length > 0
-    ? `${exp.kind === 'type' ? 'type' : 'interface'} ${exp.name} {\n${properties.map(p => `  ${p.name}${p.required === false ? '?' : ''}: ${formatSchema(p.schema)};`).join('\n')}\n}`
-    : `${exp.kind === 'type' ? 'type' : 'interface'} ${exp.name} { }`;
+  const typeDefinition =
+    properties.length > 0
+      ? `${exp.kind === 'type' ? 'type' : 'interface'} ${exp.name} {\n${properties.map((p) => `  ${p.name}${p.required === false ? '?' : ''}: ${formatSchema(p.schema)};`).join('\n')}\n}`
+      : `${exp.kind === 'type' ? 'type' : 'interface'} ${exp.name} { }`;
 
-  const displayExamples = examples.length > 0 ? examples : [{
-    languageId: 'typescript',
-    code: `${importStatement}\n\n${typeDefinition}`,
-    highlightLang: 'ts',
-  }];
+  const displayExamples =
+    examples.length > 0
+      ? examples
+      : [
+          {
+            languageId: 'typescript',
+            code: `${importStatement}\n\n${typeDefinition}`,
+            highlightLang: 'ts',
+          },
+        ];
 
-  const displayLanguages = languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
+  const displayLanguages =
+    languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
 
   const kindLabel = exp.kind === 'type' ? 'type' : 'interface';
 
@@ -73,9 +70,7 @@ export function InterfaceSection({
       description={
         <div className="space-y-3">
           {exp.extends && (
-            <p className="font-mono text-sm text-muted-foreground">
-              extends {exp.extends}
-            </p>
+            <p className="font-mono text-sm text-muted-foreground">extends {exp.extends}</p>
           )}
           {exp.description && <p>{exp.description}</p>}
           {exp.deprecated && (
@@ -98,7 +93,8 @@ export function InterfaceSection({
           {properties.map((prop, index) => {
             const type = formatSchema(prop.schema);
             const children = specSchemaToAPISchema(prop.schema);
-            const hasNestedProperties = children?.properties && Object.keys(children.properties).length > 0;
+            const hasNestedProperties =
+              children?.properties && Object.keys(children.properties).length > 0;
 
             return (
               <APIParameterItem

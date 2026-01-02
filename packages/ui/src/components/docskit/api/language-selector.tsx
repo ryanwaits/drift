@@ -58,10 +58,7 @@ export function LanguageSelector({
         )}
       >
         {selectedLanguage?.label ?? value}
-        <ChevronDown
-          size={14}
-          className={cn('transition-transform', open && 'rotate-180')}
-        />
+        <ChevronDown size={14} className={cn('transition-transform', open && 'rotate-180')} />
       </button>
 
       {open && (
@@ -81,9 +78,7 @@ export function LanguageSelector({
               }}
               className={cn(
                 'w-full px-3 py-2 text-sm text-left transition-colors cursor-pointer',
-                lang.id === value
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-foreground hover:bg-muted',
+                lang.id === value ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted',
               )}
             >
               {lang.label}

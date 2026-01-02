@@ -1,3 +1,29 @@
+// Stripe-style API reference components
+export {
+  APICodePanel,
+  type APICodePanelProps,
+  APIParameterItem,
+  type APIParameterItemProps,
+  type APIParameterSchema,
+  APIReferencePage,
+  type APIReferencePageProps,
+  APISection,
+  type APISectionProps,
+  type CodeExample,
+  EndpointBadge,
+  type EndpointBadgeProps,
+  EndpointHeader,
+  type EndpointHeaderProps,
+  endpointBadgeVariants,
+  type HttpMethod,
+  type Language,
+  LanguageSelector,
+  type LanguageSelectorProps,
+  ParameterList,
+  type ParameterListProps,
+  ResponseBlock,
+  type ResponseBlockProps,
+} from './api';
 export { callout } from './callout';
 export { DocsKitCode, SingleCode, toCodeGroup } from './code';
 export { MultiCode } from './code.client';
@@ -34,30 +60,3 @@ export { WithNotes } from './notes';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 export { TooltipLink, tooltip } from './tooltip';
 export { wordWrap } from './word-wrap';
-
-// Stripe-style API reference components
-export {
-  EndpointBadge,
-  endpointBadgeVariants,
-  type EndpointBadgeProps,
-  type HttpMethod,
-  EndpointHeader,
-  type EndpointHeaderProps,
-  APIParameterItem,
-  type APIParameterItemProps,
-  type APIParameterSchema,
-  ParameterList,
-  type ParameterListProps,
-  ResponseBlock,
-  type ResponseBlockProps,
-  LanguageSelector,
-  type LanguageSelectorProps,
-  type Language,
-  APICodePanel,
-  type APICodePanelProps,
-  type CodeExample,
-  APISection,
-  type APISectionProps,
-  APIReferencePage,
-  type APIReferencePageProps,
-} from './api';

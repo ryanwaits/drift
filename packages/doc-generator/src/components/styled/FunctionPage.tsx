@@ -13,10 +13,7 @@ export interface FunctionPageProps {
  * Stripe-style function page with two-column layout.
  * Left: parameters, returns. Right: sticky code examples.
  */
-export function FunctionPage({
-  export: exp,
-  spec,
-}: FunctionPageProps): ReactNode {
+export function FunctionPage({ export: exp, spec }: FunctionPageProps): ReactNode {
   return (
     <div className="doccov-function-page not-prose">
       <FunctionSection export={exp} spec={spec} />

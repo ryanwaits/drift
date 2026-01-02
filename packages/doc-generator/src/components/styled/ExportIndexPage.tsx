@@ -3,7 +3,7 @@
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import { cn } from '@openpkg-ts/ui/lib/utils';
 import { Search } from 'lucide-react';
-import { useState, useMemo, type ReactNode } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { ExportCard } from './ExportCard';
 
 export interface ExportIndexPageProps {
@@ -58,13 +58,11 @@ function groupByKind(exports: SpecExport[]): CategoryGroup[] {
     groups.set(normalizedKind, list);
   }
 
-  return KIND_ORDER
-    .filter((kind) => groups.has(kind))
-    .map((kind) => ({
-      kind,
-      label: KIND_LABELS[kind],
-      exports: groups.get(kind)!.sort((a, b) => a.name.localeCompare(b.name)),
-    }));
+  return KIND_ORDER.filter((kind) => groups.has(kind)).map((kind) => ({
+    kind,
+    label: KIND_LABELS[kind],
+    exports: groups.get(kind)!.sort((a, b) => a.name.localeCompare(b.name)),
+  }));
 }
 
 /**
@@ -99,8 +97,7 @@ export function ExportIndexPage({
         exports: group.exports.filter((exp) => {
           if (!query) return true;
           return (
-            exp.name.toLowerCase().includes(query) ||
-            exp.description?.toLowerCase().includes(query)
+            exp.name.toLowerCase().includes(query) || exp.description?.toLowerCase().includes(query)
           );
         }),
       }))
@@ -108,10 +105,7 @@ export function ExportIndexPage({
   }, [allGroups, searchQuery, activeFilter]);
 
   // Get available categories for filter buttons
-  const availableKinds = useMemo(
-    () => allGroups.map((g) => g.kind),
-    [allGroups],
-  );
+  const availableKinds = useMemo(() => allGroups.map((g) => g.kind), [allGroups]);
 
   const totalExports = filteredGroups.reduce((sum, g) => sum + g.exports.length, 0);
 

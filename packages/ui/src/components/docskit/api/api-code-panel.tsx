@@ -1,14 +1,14 @@
 'use client';
 
-import { type HighlightedCode, Pre, highlight } from 'codehike/code';
+import { type HighlightedCode, highlight, Pre } from 'codehike/code';
 import { Check, Copy, ExternalLink } from 'lucide-react';
-import * as React from 'react';
+import type * as React from 'react';
 import { useEffect, useState } from 'react';
 import { cn } from '../../../lib/utils';
 import { theme } from '../code.config';
 import { getHandlers } from '../code.handlers';
 import { CodeBlockSkeleton } from '../code.skeleton';
-import { LanguageSelector, type Language } from './language-selector';
+import { type Language, LanguageSelector } from './language-selector';
 
 export interface CodeExample {
   /** Language identifier */

@@ -14,4 +14,9 @@ export {
 } from './diff';
 export { normalize } from './normalize';
 export * from './types';
-export { assertSpec, getValidationErrors, validateSpec } from './validate';
+export {
+  assertSpec,
+  getAvailableVersions,
+  getValidationErrors,
+  validateSpec,
+} from './validate';

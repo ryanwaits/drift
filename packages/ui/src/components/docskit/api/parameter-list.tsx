@@ -29,13 +29,16 @@ export function ParameterList({
   const childArray = React.Children.toArray(children);
 
   const shouldCollapse = collapseAfter !== undefined && childArray.length > collapseAfter;
-  const visibleChildren = shouldCollapse && !expanded ? childArray.slice(0, collapseAfter) : childArray;
+  const visibleChildren =
+    shouldCollapse && !expanded ? childArray.slice(0, collapseAfter) : childArray;
   const hiddenCount = shouldCollapse ? childArray.length - collapseAfter : 0;
 
   return (
     <div className={cn('', className)}>
       {title && (
-        <h3 className="text-sm font-medium text-foreground mb-3 uppercase tracking-wide">{title}</h3>
+        <h3 className="text-sm font-medium text-foreground mb-3 uppercase tracking-wide">
+          {title}
+        </h3>
       )}
       <div className="divide-y divide-border border-t border-b border-border">
         {visibleChildren}

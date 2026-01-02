@@ -4,7 +4,7 @@
  * Run: bun examples/04-search-index.ts
  */
 
-import { createDocs, toAlgoliaRecords, toPagefindRecords, toSearchIndex } from '../src/index';
+import { createDocs, toAlgoliaRecords, toPagefindRecords } from '../src/index';
 import spec from './sample-spec.json';
 
 console.log('=== Search Index Generation Example ===\n');

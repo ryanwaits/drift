@@ -7,7 +7,6 @@ import {
   type FixSuggestion,
   findJSDocLocation,
   generateFixesForExport,
-  getExportDrift,
   type JSDocEdit,
   type JSDocPatch,
   mergeFixes,

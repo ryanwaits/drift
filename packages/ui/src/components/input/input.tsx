@@ -1,6 +1,6 @@
 'use client';
 
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
@@ -60,52 +60,51 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
   leftIcon?: React.ReactNode;
 }
 
-const Input: React.ForwardRefExoticComponent<
-  InputProps & React.RefAttributes<HTMLInputElement>
-> = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, inputSize, variant, label, helperText, error, leftIcon, id, ...props }, ref) => {
-    const generatedId = React.useId();
-    const inputId = id || `input-${generatedId}`;
-    const hasError = !!error;
+const Input: React.ForwardRefExoticComponent<InputProps & React.RefAttributes<HTMLInputElement>> =
+  React.forwardRef<HTMLInputElement, InputProps>(
+    ({ className, inputSize, variant, label, helperText, error, leftIcon, id, ...props }, ref) => {
+      const generatedId = React.useId();
+      const inputId = id || `input-${generatedId}`;
+      const hasError = !!error;
 
-    return (
-      <div className="w-full space-y-2">
-        {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-[var(--input-text)]">
-            {label}
-          </label>
-        )}
-        <div className="relative">
-          {leftIcon && (
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--input-placeholder)] [&_svg]:size-5">
-              {leftIcon}
-            </div>
+      return (
+        <div className="w-full space-y-2">
+          {label && (
+            <label htmlFor={inputId} className="text-sm font-medium text-[var(--input-text)]">
+              {label}
+            </label>
           )}
-          <input
-            id={inputId}
-            ref={ref}
-            className={cn(
-              inputVariants({ inputSize, variant: hasError ? 'error' : variant }),
-              leftIcon && 'pl-12',
-              className,
+          <div className="relative">
+            {leftIcon && (
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--input-placeholder)] [&_svg]:size-5">
+                {leftIcon}
+              </div>
             )}
-            {...props}
-          />
+            <input
+              id={inputId}
+              ref={ref}
+              className={cn(
+                inputVariants({ inputSize, variant: hasError ? 'error' : variant }),
+                leftIcon && 'pl-12',
+                className,
+              )}
+              {...props}
+            />
+          </div>
+          {(helperText || error) && (
+            <p
+              className={cn(
+                'text-sm font-mono',
+                hasError ? 'text-destructive' : 'text-[var(--input-placeholder)]',
+              )}
+            >
+              {error || helperText}
+            </p>
+          )}
         </div>
-        {(helperText || error) && (
-          <p
-            className={cn(
-              'text-sm font-mono',
-              hasError ? 'text-destructive' : 'text-[var(--input-placeholder)]',
-            )}
-          >
-            {error || helperText}
-          </p>
-        )}
-      </div>
-    );
-  },
-);
+      );
+    },
+  );
 Input.displayName = 'Input';
 
 export interface InputWithButtonProps extends Omit<InputProps, 'rightIcon' | 'onSubmit'> {

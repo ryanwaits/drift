@@ -1,5 +1,10 @@
 import { getExportAnalysis, getExportDrift, isFixableDrift } from '@doccov/sdk';
-import { DRIFT_CATEGORIES, type DocCovSpec, type DriftCategory, type DriftType } from '@doccov/spec';
+import {
+  type DocCovSpec,
+  DRIFT_CATEGORIES,
+  type DriftCategory,
+  type DriftType,
+} from '@doccov/spec';
 import type { OpenPkg, SpecExportKind } from '@openpkg-ts/spec';
 
 export type SignalStats = { covered: number; total: number; pct: number };

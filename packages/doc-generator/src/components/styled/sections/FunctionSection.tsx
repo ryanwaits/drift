@@ -1,12 +1,7 @@
 'use client';
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import {
-  APIParameterItem,
-  APISection,
-  ParameterList,
-  ResponseBlock,
-} from '@openpkg-ts/ui/docskit';
+import { APIParameterItem, APISection, ParameterList, ResponseBlock } from '@openpkg-ts/ui/docskit';
 import type { ReactNode } from 'react';
 import {
   buildImportStatement,
@@ -25,10 +20,7 @@ export interface FunctionSectionProps {
  * Function section for use in single-page API reference.
  * Renders an APISection with parameters and returns.
  */
-export function FunctionSection({
-  export: exp,
-  spec,
-}: FunctionSectionProps): ReactNode {
+export function FunctionSection({ export: exp, spec }: FunctionSectionProps): ReactNode {
   const sig = exp.signatures?.[0];
   const hasParams = sig?.parameters && sig.parameters.length > 0;
 
@@ -38,13 +30,19 @@ export function FunctionSection({
   const importStatement = buildImportStatement(exp, spec);
 
   // Fallback example if none provided
-  const displayExamples = examples.length > 0 ? examples : [{
-    languageId: 'typescript',
-    code: `${importStatement}\n\n// Usage\n${exp.name}(${sig?.parameters?.map(p => p.name).join(', ') || ''})`,
-    highlightLang: 'ts',
-  }];
+  const displayExamples =
+    examples.length > 0
+      ? examples
+      : [
+          {
+            languageId: 'typescript',
+            code: `${importStatement}\n\n// Usage\n${exp.name}(${sig?.parameters?.map((p) => p.name).join(', ') || ''})`,
+            highlightLang: 'ts',
+          },
+        ];
 
-  const displayLanguages = languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
+  const displayLanguages =
+    languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
 
   return (
     <APISection
@@ -90,9 +88,7 @@ export function FunctionSection({
                 {formatSchema(sig.returns.schema)}
               </span>
               {sig.returns.description && (
-                <span className="ml-2 text-muted-foreground">
-                  {sig.returns.description}
-                </span>
+                <span className="ml-2 text-muted-foreground">{sig.returns.description}</span>
               )}
             </span>
           }

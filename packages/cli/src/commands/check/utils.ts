@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { getExportDrift, type MarkdownDocFile, parseMarkdownFiles } from '@doccov/sdk';
-import { DRIFT_CATEGORIES, type DocCovDrift, type DocCovSpec } from '@doccov/spec';
+import { type DocCovDrift, type DocCovSpec, DRIFT_CATEGORIES } from '@doccov/spec';
 import type { SpecExport } from '@openpkg-ts/spec';
 import { glob } from 'glob';
 import type { CollectedDrift } from './types';

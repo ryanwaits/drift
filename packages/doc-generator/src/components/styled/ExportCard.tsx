@@ -62,19 +62,16 @@ export function ExportCard({
       )}
     >
       <div className="flex items-center gap-2 mb-2">
-        <span className={cn(
-          'font-mono text-base font-medium text-foreground transition-colors duration-200',
-          hoverColor,
-        )}>
+        <span
+          className={cn(
+            'font-mono text-base font-medium text-foreground transition-colors duration-200',
+            hoverColor,
+          )}
+        >
           {name}
         </span>
-        {isFunction && (
-          <span className="font-mono text-base text-muted-foreground">()</span>
-        )}
-        <span className={cn(
-          'ml-auto text-xs px-2 py-0.5 rounded-full font-medium',
-          badgeColor,
-        )}>
+        {isFunction && <span className="font-mono text-base text-muted-foreground">()</span>}
+        <span className={cn('ml-auto text-xs px-2 py-0.5 rounded-full font-medium', badgeColor)}>
           {kind}
         </span>
       </div>

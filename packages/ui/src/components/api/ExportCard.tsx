@@ -1,6 +1,6 @@
 'use client';
 
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
@@ -9,10 +9,7 @@ export type ExportKind = 'function' | 'type' | 'variable' | 'class' | 'interface
 /**
  * Kind badge variants for export cards.
  */
-const kindBadgeVariants: (props?: {
-  kind?: ExportKind | null;
-  className?: string;
-}) => string = cva(
+const kindBadgeVariants: (props?: { kind?: ExportKind | null; className?: string }) => string = cva(
   'inline-flex items-center justify-center font-mono font-medium rounded shrink-0 h-5 px-1.5 text-xs',
   {
     variants: {
@@ -60,7 +57,10 @@ export interface ExportCardProps extends React.AnchorHTMLAttributes<HTMLAnchorEl
 export const ExportCard: React.ForwardRefExoticComponent<
   ExportCardProps & React.RefAttributes<HTMLAnchorElement>
 > = React.forwardRef<HTMLAnchorElement, ExportCardProps>(
-  ({ name, description, href, kind = 'function', as: Component = 'a', className, ...props }, ref) => {
+  (
+    { name, description, href, kind = 'function', as: Component = 'a', className, ...props },
+    ref,
+  ) => {
     const isFunction = kind === 'function';
 
     return (
@@ -84,7 +84,9 @@ export const ExportCard: React.ForwardRefExoticComponent<
           {isFunction && <span className="font-mono text-base text-muted-foreground">()</span>}
         </div>
         {description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {description}
+          </p>
         )}
       </Component>
     );

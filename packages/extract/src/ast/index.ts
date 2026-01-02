@@ -1,2 +1,8 @@
 export { TypeRegistry } from './registry';
-export { getJSDocComment, getSourceLocation } from './utils';
+export {
+  extractTypeParameters,
+  getJSDocComment,
+  getParamDescription,
+  getSourceLocation,
+  isSymbolDeprecated,
+} from './utils';

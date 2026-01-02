@@ -26,7 +26,8 @@ console.log(`Coverage delta: ${diff.coverageDelta}%`);
 
 ## Exports
 
-- `validateSpec` / `assertSpec` - Schema validation
+- `validateSpec` / `assertSpec` / `getValidationErrors` - Schema validation
+- `getAvailableVersions` - List supported schema versions
 - `normalize` - Ensure consistent structure
 - `dereference` - Resolve `$ref` pointers
 - `diffSpec` - Compare specs

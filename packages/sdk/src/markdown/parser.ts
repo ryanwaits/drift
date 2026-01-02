@@ -9,12 +9,7 @@ import remarkMdx from 'remark-mdx';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 import { visit } from 'unist-util-visit';
-import {
-  extractFunctionCalls,
-  extractImports,
-  hasInstantiationAST,
-  type MethodCallInfo,
-} from './ast-extractor';
+import { extractFunctionCalls, extractImports, hasInstantiationAST } from './ast-extractor';
 import type { ExportReference, MarkdownCodeBlock, MarkdownDocFile } from './types';
 
 export type { MethodCallInfo } from './ast-extractor';

@@ -14,10 +14,7 @@ import type { SpecExport } from '@openpkg-ts/spec';
  * @param doccov - The DocCov spec containing analysis data
  * @returns Export analysis or undefined if not found
  */
-export function getExportAnalysis(
-  exp: SpecExport,
-  doccov: DocCovSpec,
-): ExportAnalysis | undefined {
+export function getExportAnalysis(exp: SpecExport, doccov: DocCovSpec): ExportAnalysis | undefined {
   const id = exp.id ?? exp.name;
   return doccov.exports[id];
 }

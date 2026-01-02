@@ -3,7 +3,7 @@
 import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
 import { APIReferencePage } from '@openpkg-ts/ui/docskit';
 import { cn } from '@openpkg-ts/ui/lib/utils';
-import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ExportSection } from './sections/ExportSection';
 
 export interface FullAPIReferencePageProps {
@@ -90,7 +90,7 @@ export function FullAPIReferencePage({
         kindSet.add(kind);
       }
     }
-    return KIND_ORDER.filter(k => kindSet.has(k));
+    return KIND_ORDER.filter((k) => kindSet.has(k));
   }, [spec.exports]);
 
   // Filter exports
@@ -99,12 +99,12 @@ export function FullAPIReferencePage({
 
     // Filter by allowed kinds prop
     if (kinds?.length) {
-      exports = exports.filter(e => kinds.includes(e.kind as SpecExportKind));
+      exports = exports.filter((e) => kinds.includes(e.kind as SpecExportKind));
     }
 
     // Filter by active filter button
     if (activeFilter !== 'all') {
-      exports = exports.filter(e => e.kind === activeFilter);
+      exports = exports.filter((e) => e.kind === activeFilter);
     }
 
     // Sort by kind order, then alphabetically
@@ -157,8 +157,8 @@ export function FullAPIReferencePage({
   useEffect(() => {
     if (!showTOC || typeof window === 'undefined') return;
 
-    const sectionIds = filteredExports.map(exp => exp.id || exp.name);
-    const observers: IntersectionObserver[] = [];
+    const sectionIds = filteredExports.map((exp) => exp.id || exp.name);
+    const _observers: IntersectionObserver[] = [];
 
     // Create observer for each section
     const handleIntersect = (entries: IntersectionObserverEntry[]) => {
@@ -214,9 +214,7 @@ export function FullAPIReferencePage({
     <div>
       {spec.meta.description && <p>{spec.meta.description}</p>}
       {spec.meta.version && (
-        <p className="text-sm text-muted-foreground mt-2">
-          Version {spec.meta.version}
-        </p>
+        <p className="text-sm text-muted-foreground mt-2">Version {spec.meta.version}</p>
       )}
     </div>
   );
@@ -225,7 +223,13 @@ export function FullAPIReferencePage({
   const shouldShowFilters = showFilters && !kinds?.length && availableKinds.length > 1;
 
   return (
-    <div className={cn('doccov-full-reference-page not-prose', showTOC && 'lg:grid lg:grid-cols-[220px_1fr] lg:gap-8', className)}>
+    <div
+      className={cn(
+        'doccov-full-reference-page not-prose',
+        showTOC && 'lg:grid lg:grid-cols-[220px_1fr] lg:gap-8',
+        className,
+      )}
+    >
       {/* TOC Sidebar */}
       {showTOC && (
         <aside className="hidden lg:block">

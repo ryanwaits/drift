@@ -33,10 +33,10 @@ export {
   type PageGeneratorOptions,
   type SearchGeneratorOptions,
 } from './adapters';
-export type { DocsInstance, LoadOptions } from './core/loader';
-export { createDocs, loadSpec } from './core/loader';
 // Format utilities
 export { formatBadges, getMemberBadges } from './core/format';
+export type { DocsInstance, LoadOptions } from './core/loader';
+export { createDocs, loadSpec } from './core/loader';
 // Query utilities
 export {
   buildSignatureString,

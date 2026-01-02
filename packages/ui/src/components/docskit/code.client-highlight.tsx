@@ -292,8 +292,6 @@ export function ClientCode(props: { codeblocks: RawCode[]; flags?: string; stora
     return () => {
       cancelled = true;
     };
-    // Only depend on primitive values to avoid infinite re-renders
-    // biome-ignore lint/correctness/useExhaustiveDependencies: groupOptions is derived from groupFlags
   }, [codeblocks.map, groupOptions]);
 
   if (!highlighted) {

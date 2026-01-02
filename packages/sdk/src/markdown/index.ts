@@ -11,6 +11,8 @@ export {
   getUndocumentedExports,
   hasDocsForExport,
 } from './analyzer';
+// Parser functions
+export type { MethodCallInfo } from './ast-extractor';
 // Diff with docs impact
 export type { DiffWithDocsOptions, SpecDiffWithDocs } from './diff-with-docs';
 export {
@@ -26,8 +28,6 @@ export {
   hasAddedMembers,
   hasRemovedMembers,
 } from './member-diff';
-// Parser functions
-export type { MethodCallInfo } from './ast-extractor';
 export {
   blockReferencesExport,
   extractFunctionCalls,

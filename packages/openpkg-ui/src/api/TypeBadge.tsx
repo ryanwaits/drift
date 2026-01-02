@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
@@ -19,33 +19,31 @@ export type TypeColor =
  * Type coloring for syntax display.
  * Follows Stripe-style: consistent colors for primitives vs complex types.
  */
-const typeBadgeVariants: (props?: {
-  typeColor?: TypeColor | null;
-  className?: string;
-}) => string = cva('font-mono text-sm', {
-  variants: {
-    typeColor: {
-      // Primitives
-      string: 'text-emerald-600 dark:text-emerald-400',
-      number: 'text-blue-600 dark:text-blue-400',
-      boolean: 'text-amber-600 dark:text-amber-400',
-      null: 'text-gray-500 dark:text-gray-400',
-      undefined: 'text-gray-500 dark:text-gray-400',
-      // Complex types
-      object: 'text-purple-600 dark:text-purple-400',
-      array: 'text-cyan-600 dark:text-cyan-400',
-      function: 'text-fuchsia-600 dark:text-fuchsia-400',
-      // Special
-      union: 'text-orange-600 dark:text-orange-400',
-      generic: 'text-rose-600 dark:text-rose-400',
-      // Default
-      default: 'text-muted-foreground',
+const typeBadgeVariants: (props?: { typeColor?: TypeColor | null; className?: string }) => string =
+  cva('font-mono text-sm', {
+    variants: {
+      typeColor: {
+        // Primitives
+        string: 'text-emerald-600 dark:text-emerald-400',
+        number: 'text-blue-600 dark:text-blue-400',
+        boolean: 'text-amber-600 dark:text-amber-400',
+        null: 'text-gray-500 dark:text-gray-400',
+        undefined: 'text-gray-500 dark:text-gray-400',
+        // Complex types
+        object: 'text-purple-600 dark:text-purple-400',
+        array: 'text-cyan-600 dark:text-cyan-400',
+        function: 'text-fuchsia-600 dark:text-fuchsia-400',
+        // Special
+        union: 'text-orange-600 dark:text-orange-400',
+        generic: 'text-rose-600 dark:text-rose-400',
+        // Default
+        default: 'text-muted-foreground',
+      },
     },
-  },
-  defaultVariants: {
-    typeColor: 'default',
-  },
-});
+    defaultVariants: {
+      typeColor: 'default',
+    },
+  });
 
 export interface TypeBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   /** Type string to display */

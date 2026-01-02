@@ -2,11 +2,11 @@ import {
   buildDocCovSpec,
   DocCov,
   type ExampleValidation,
+  type ExampleValidationResult,
   NodeFileSystem,
   parseExamplesFlag,
   resolveTarget,
 } from '@doccov/sdk';
-import type { DocCovSpec } from '@doccov/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
@@ -183,7 +183,7 @@ export function registerCheckCommand(
         const shouldFix = options.fix || isPreview;
 
         // Run example validation
-        let exampleResult;
+        let exampleResult: ExampleValidationResult | undefined;
         let typecheckErrors: Array<{
           exportName: string;
           error: import('@doccov/sdk').ExampleTypeError;
@@ -216,10 +216,7 @@ export function registerCheckCommand(
         const coverageScore = doccov.summary.score;
 
         // Collect drift issues - exclude example-category drifts unless --examples is used
-        const allDriftExports = [
-          ...collectDrift(openpkg.exports ?? [], doccov),
-          ...runtimeDrifts,
-        ];
+        const allDriftExports = [...collectDrift(openpkg.exports ?? [], doccov), ...runtimeDrifts];
         let driftExports = hasExamples
           ? allDriftExports
           : allDriftExports.filter((d) => d.category !== 'example');

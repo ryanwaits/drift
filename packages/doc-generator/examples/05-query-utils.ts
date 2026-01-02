@@ -12,7 +12,6 @@ import {
   formatSchema,
   getMethods,
   getProperties,
-  groupByVisibility,
   isMethod,
   isProperty,
   sortByName,

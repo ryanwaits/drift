@@ -14,7 +14,7 @@ const docs = createDocs(spec as any);
 // Full spec as simplified JSON
 console.log('--- Simplified Spec JSON ---\n');
 const simplifiedSpec = docs.toJSON();
-console.log(JSON.stringify(simplifiedSpec, null, 2).slice(0, 1500) + '...\n');
+console.log(`${JSON.stringify(simplifiedSpec, null, 2).slice(0, 1500)}...\n`);
 
 // Single export as JSON
 console.log('--- Single Export JSON: greet ---\n');
