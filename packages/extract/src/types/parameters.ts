@@ -198,7 +198,27 @@ function extractDefaultValue(initializer: ts.Expression): unknown {
 export function registerReferencedTypes(type: ts.Type, ctx: SerializerContext): void {
   // Prevent infinite recursion on circular types
   if (ctx.visitedTypes.has(type)) return;
-  ctx.visitedTypes.add(type);
+
+  // Only add complex types to visitedTypes (not primitives/literals which can't be circular)
+  // This prevents shared literal instances from polluting the set
+  const isPrimitive =
+    type.flags &
+    (ts.TypeFlags.String |
+      ts.TypeFlags.Number |
+      ts.TypeFlags.Boolean |
+      ts.TypeFlags.Void |
+      ts.TypeFlags.Undefined |
+      ts.TypeFlags.Null |
+      ts.TypeFlags.Any |
+      ts.TypeFlags.Unknown |
+      ts.TypeFlags.Never |
+      ts.TypeFlags.StringLiteral |
+      ts.TypeFlags.NumberLiteral |
+      ts.TypeFlags.BooleanLiteral);
+
+  if (!isPrimitive) {
+    ctx.visitedTypes.add(type);
+  }
 
   const { typeChecker: checker, typeRegistry, exportedIds } = ctx;
 

@@ -1,6 +1,6 @@
 import type { SpecExport } from '@openpkg-ts/spec';
 import type ts from 'typescript';
-import { getJSDocComment, getSourceLocation } from '../ast/utils';
+import { extractTypeParameters, getJSDocComment, getSourceLocation } from '../ast/utils';
 import { registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
@@ -16,9 +16,16 @@ export function serializeTypeAlias(
   const declSourceFile = node.getSourceFile();
   const { description, tags, examples } = getJSDocComment(node);
   const source = getSourceLocation(node, declSourceFile);
+
+  // Extract type parameters like <T, K extends Base>
+  const typeParameters = extractTypeParameters(node, ctx.typeChecker);
+
   const type = ctx.typeChecker.getTypeAtLocation(node);
 
-  // Register referenced types
+  // Build schema FIRST (before registerReferencedTypes adds to visitedTypes)
+  const schema = buildSchema(type, ctx.typeChecker, ctx);
+
+  // Then register referenced types for the type registry
   registerReferencedTypes(type, ctx);
 
   return {
@@ -28,7 +35,8 @@ export function serializeTypeAlias(
     description,
     tags,
     source,
-    schema: buildSchema(type, ctx.typeChecker, ctx),
+    typeParameters,
+    schema,
     ...(examples.length > 0 ? { examples } : {}),
   };
 }

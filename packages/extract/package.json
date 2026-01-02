@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/extract",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "TypeScript export extraction to OpenPkg spec",
   "keywords": [
     "openpkg",
@@ -42,6 +42,7 @@
   "dependencies": {
     "@openpkg-ts/spec": "^0.12.0",
     "commander": "^12.0.0",
+    "tree-sitter-wasms": "^0.1.13",
     "typescript": "^5.0.0"
   },
   "devDependencies": {

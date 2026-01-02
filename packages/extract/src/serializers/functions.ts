@@ -1,6 +1,6 @@
 import type { SpecExport, SpecSignature } from '@openpkg-ts/spec';
 import type ts from 'typescript';
-import { getJSDocComment, getSourceLocation } from '../ast/utils';
+import { extractTypeParameters, getJSDocComment, getSourceLocation } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
@@ -17,6 +17,9 @@ export function serializeFunctionExport(
   const declSourceFile = node.getSourceFile();
   const { description, tags, examples } = getJSDocComment(node);
   const source = getSourceLocation(node, declSourceFile);
+
+  // Extract type parameters like <T, K extends Base>
+  const typeParameters = extractTypeParameters(node, ctx.typeChecker);
 
   const type = ctx.typeChecker.getTypeAtLocation(node);
   const callSignatures = type.getCallSignatures();
@@ -43,6 +46,7 @@ export function serializeFunctionExport(
     description,
     tags,
     source,
+    typeParameters,
     signatures,
     ...(examples.length > 0 ? { examples } : {}),
   };

@@ -1,5 +1,18 @@
 # @openpkg-ts/extract
 
+## 0.13.0
+
+### Minor Changes
+
+- Add rich type schema extraction with generics and structured output
+
+  - registry.ts: Build shallow schemas for types with $refs, anyOf, generics
+  - classes.ts: Extract full class structure (constructors, methods, properties, generics)
+  - interfaces.ts: Extract interface members with property/method schemas
+  - enums.ts: Build proper enum schemas with values
+  - schema-builder.ts: Enhanced schema building with generic type params
+  - parameters.ts: Updated parameter extraction for richer schemas
+
 ## 0.12.0
 
 ### Minor Changes

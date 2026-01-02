@@ -223,21 +223,21 @@ export function buildSchema(
     return { type: 'array' };
   }
 
-  // Tuple type
+  // Tuple type - uses prefixedItems per JSON Schema 2020-12
   if (checker.isTupleType(type)) {
     const typeRef = type as ts.TypeReference;
     const elementTypes = typeRef.typeArguments ?? [];
     if (ctx) {
       return withDepth(ctx, () => ({
-        type: 'tuple',
-        items: elementTypes.map((t) => buildSchema(t, checker, ctx)),
+        type: 'array',
+        prefixedItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
         minItems: elementTypes.length,
         maxItems: elementTypes.length,
       }));
     }
     return {
-      type: 'tuple',
-      items: elementTypes.map((t) => buildSchema(t, checker, ctx)),
+      type: 'array',
+      prefixedItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
       minItems: elementTypes.length,
       maxItems: elementTypes.length,
     };
@@ -248,6 +248,11 @@ export function buildSchema(
   if (typeRef.target && typeRef.typeArguments && typeRef.typeArguments.length > 0) {
     const symbol = typeRef.target.getSymbol();
     const name = symbol?.getName();
+
+    // Skip typeArguments for built-in non-generic types (like Uint8Array has internal T)
+    if (name && BUILTIN_TYPES.has(name)) {
+      return { $ref: name };
+    }
 
     if (name && (isBuiltinGeneric(name) || !isAnonymous(typeRef.target))) {
       if (ctx) {

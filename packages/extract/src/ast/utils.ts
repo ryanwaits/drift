@@ -1,4 +1,10 @@
-import type { SpecExample, SpecExampleLanguage, SpecSource, SpecTag } from '@openpkg-ts/spec';
+import type {
+  SpecExample,
+  SpecExampleLanguage,
+  SpecSource,
+  SpecTag,
+  SpecTypeParameter,
+} from '@openpkg-ts/spec';
 import ts from 'typescript';
 
 /**
@@ -106,4 +112,48 @@ export function getParamDescription(
   }
 
   return undefined;
+}
+
+type DeclarationWithTypeParams =
+  | ts.FunctionDeclaration
+  | ts.ClassDeclaration
+  | ts.InterfaceDeclaration
+  | ts.TypeAliasDeclaration
+  | ts.MethodDeclaration
+  | ts.ArrowFunction;
+
+/**
+ * Extract type parameters from declarations like `<T extends Base, K = Default>`
+ */
+export function extractTypeParameters(
+  node: DeclarationWithTypeParams,
+  checker: ts.TypeChecker,
+): SpecTypeParameter[] | undefined {
+  if (!node.typeParameters || node.typeParameters.length === 0) {
+    return undefined;
+  }
+
+  return node.typeParameters.map((tp) => {
+    const name = tp.name.text;
+
+    // Get constraint (T extends SomeType)
+    let constraint: string | undefined;
+    if (tp.constraint) {
+      const constraintType = checker.getTypeAtLocation(tp.constraint);
+      constraint = checker.typeToString(constraintType);
+    }
+
+    // Get default (T = DefaultType)
+    let defaultType: string | undefined;
+    if (tp.default) {
+      const defType = checker.getTypeAtLocation(tp.default);
+      defaultType = checker.typeToString(defType);
+    }
+
+    return {
+      name,
+      ...(constraint ? { constraint } : {}),
+      ...(defaultType ? { default: defaultType } : {}),
+    };
+  });
 }
