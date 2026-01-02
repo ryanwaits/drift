@@ -1,5 +1,12 @@
 # @openpkg-ts/extract
 
+## 0.14.5
+
+### Patch Changes
+
+- feat(extract): serialize namespace members into spec output
+  feat(sdk): include namespace members in drift export registry
+
 ## 0.14.4
 
 ### Patch Changes

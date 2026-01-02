@@ -1,5 +1,14 @@
 # @doccov/sdk
 
+## 0.25.10
+
+### Patch Changes
+
+- feat(extract): serialize namespace members into spec output
+  feat(sdk): include namespace members in drift export registry
+- Updated dependencies
+  - @openpkg-ts/extract@0.14.5
+
 ## 0.25.9
 
 ### Patch Changes

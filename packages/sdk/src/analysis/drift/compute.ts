@@ -33,6 +33,20 @@ export function buildExportRegistry(spec: OpenPkgSpec): ExportRegistry {
     if (entry.id) exports.set(entry.id, info);
     all.add(entry.name);
     if (entry.id) all.add(entry.id);
+
+    // Include namespace members in registry
+    if (entry.kind === 'namespace' && entry.members) {
+      for (const member of entry.members) {
+        if (!member.name) continue;
+        const memberInfo: ExportInfo = {
+          name: member.name,
+          kind: member.kind ?? 'unknown',
+          isCallable: ['function', 'class'].includes(member.kind ?? ''),
+        };
+        exports.set(member.name, memberInfo);
+        all.add(member.name);
+      }
+    }
   }
 
   for (const type of spec.types ?? []) {

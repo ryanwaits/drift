@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { OpenPkg, SpecExport, SpecType } from '@openpkg-ts/spec';
+import type { OpenPkg, SpecExport, SpecMember, SpecType } from '@openpkg-ts/spec';
 import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { createProgram } from '../compiler/program';
@@ -288,9 +288,9 @@ function serializeDeclaration(
       result = serializeVariable(declaration, varStatement, ctx);
     }
   } else if (ts.isNamespaceExport(declaration) || ts.isModuleDeclaration(declaration)) {
-    result = serializeNamespaceExport(exportSymbol, exportName);
+    result = serializeNamespaceExport(exportSymbol, exportName, ctx);
   } else if (ts.isSourceFile(declaration)) {
-    result = serializeNamespaceExport(exportSymbol, exportName);
+    result = serializeNamespaceExport(exportSymbol, exportName, ctx);
   }
 
   if (result) {
@@ -300,8 +300,36 @@ function serializeDeclaration(
   return result;
 }
 
-function serializeNamespaceExport(symbol: ts.Symbol, exportName: string): SpecExport {
+function serializeNamespaceExport(
+  symbol: ts.Symbol,
+  exportName: string,
+  ctx: SerializerContext,
+): SpecExport {
   const { description, tags, examples } = getJSDocFromExportSymbol(symbol);
+
+  // Extract namespace members
+  const members: SpecMember[] = [];
+  const checker = ctx.program.getTypeChecker();
+
+  // Resolve alias to get the actual module symbol
+  let targetSymbol = symbol;
+  if (symbol.flags & ts.SymbolFlags.Alias) {
+    const aliased = checker.getAliasedSymbol(symbol);
+    if (aliased && aliased !== symbol) {
+      targetSymbol = aliased;
+    }
+  }
+
+  // Get exports from the namespace module
+  const nsExports = checker.getExportsOfModule(targetSymbol);
+
+  for (const memberSymbol of nsExports) {
+    const memberName = memberSymbol.getName();
+    const member = serializeNamespaceMember(memberSymbol, memberName, ctx);
+    if (member) {
+      members.push(member);
+    }
+  }
 
   return {
     id: exportName,
@@ -310,6 +338,63 @@ function serializeNamespaceExport(symbol: ts.Symbol, exportName: string): SpecEx
     description,
     tags,
     ...(examples.length > 0 ? { examples } : {}),
+    ...(members.length > 0 ? { members } : {}),
+  };
+}
+
+function serializeNamespaceMember(
+  symbol: ts.Symbol,
+  memberName: string,
+  ctx: SerializerContext,
+): SpecMember | null {
+  const checker = ctx.program.getTypeChecker();
+
+  // Resolve alias if needed
+  let targetSymbol = symbol;
+  if (symbol.flags & ts.SymbolFlags.Alias) {
+    const aliased = checker.getAliasedSymbol(symbol);
+    if (aliased && aliased !== symbol) {
+      targetSymbol = aliased;
+    }
+  }
+
+  const declarations = targetSymbol.declarations ?? [];
+  const declaration =
+    targetSymbol.valueDeclaration ||
+    declarations.find((d) => d.kind !== ts.SyntaxKind.ExportSpecifier) ||
+    declarations[0];
+
+  if (!declaration) return null;
+
+  // Determine kind
+  let kind: string = 'variable';
+  if (ts.isFunctionDeclaration(declaration) || ts.isFunctionExpression(declaration)) {
+    kind = 'function';
+  } else if (ts.isClassDeclaration(declaration)) {
+    kind = 'class';
+  } else if (ts.isInterfaceDeclaration(declaration)) {
+    kind = 'interface';
+  } else if (ts.isTypeAliasDeclaration(declaration)) {
+    kind = 'type';
+  } else if (ts.isEnumDeclaration(declaration)) {
+    kind = 'enum';
+  } else if (ts.isVariableDeclaration(declaration)) {
+    // Check if it's a function assigned to a variable
+    const type = checker.getTypeAtLocation(declaration);
+    const callSignatures = type.getCallSignatures();
+    if (callSignatures.length > 0) {
+      kind = 'function';
+    }
+  }
+
+  // Get description from JSDoc
+  const docComment = targetSymbol.getDocumentationComment(checker);
+  const description = docComment.map((c) => c.text).join('\n') || undefined;
+
+  return {
+    name: memberName,
+    kind,
+    ...(description ? { description } : {}),
   };
 }
 
