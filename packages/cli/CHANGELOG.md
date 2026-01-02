@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.25.6
+
+### Patch Changes
+
+- Bump SDK dependency with consolidated type extraction.
+
 ## 0.25.3
 
 ### Patch Changes
