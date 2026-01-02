@@ -16,9 +16,14 @@ import type { Diagnostic, ExtractOptions, ExtractResult } from '../types';
 /** Built-in types that shouldn't be tracked as dangling refs */
 const BUILTIN_TYPES = new Set([
   'Array',
+  'ArrayBuffer',
+  'ArrayBufferLike',
+  'ArrayLike',
   'Promise',
   'Map',
   'Set',
+  'WeakMap',
+  'WeakSet',
   'Record',
   'Partial',
   'Required',
@@ -32,6 +37,15 @@ const BUILTIN_TYPES = new Set([
   'Readonly',
   'ReadonlyArray',
   'Awaited',
+  'PromiseLike',
+  'Iterable',
+  'Iterator',
+  'IterableIterator',
+  'Generator',
+  'AsyncGenerator',
+  'AsyncIterable',
+  'AsyncIterator',
+  'AsyncIterableIterator',
   'Date',
   'RegExp',
   'Error',
@@ -42,7 +56,37 @@ const BUILTIN_TYPES = new Set([
   'Boolean',
   'Symbol',
   'BigInt',
+  'Uint8Array',
+  'Int8Array',
+  'Uint16Array',
+  'Int16Array',
+  'Uint32Array',
+  'Int32Array',
+  'Float32Array',
+  'Float64Array',
+  'BigInt64Array',
+  'BigUint64Array',
+  'DataView',
+  'SharedArrayBuffer',
+  'ConstructorParameters',
+  'InstanceType',
+  'ThisType',
 ]);
+
+/**
+ * Check if a type name should be skipped (anonymous, generic param, etc.)
+ */
+function shouldSkipDanglingRef(name: string): boolean {
+  // Anonymous types
+  if (name.startsWith('__')) return true;
+  // Single uppercase letter (generic params)
+  if (/^[A-Z]$/.test(name)) return true;
+  // Starts with T followed by uppercase (TType, TValue, TWire, etc.)
+  if (/^T[A-Z]/.test(name)) return true;
+  // Common generic names
+  if (['Key', 'Value', 'Item', 'Element'].includes(name)) return true;
+  return false;
+}
 
 export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   const {
@@ -126,17 +170,16 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     });
   }
 
-  // Check for external type stubs
+  // Check for external type stubs (info only - external stubs are expected)
   const externalTypes = types.filter((t) => t.kind === 'external');
   if (externalTypes.length > 0) {
     diagnostics.push({
-      message: `${externalTypes.length} external type(s) could not be fully resolved: ${externalTypes
+      message: `${externalTypes.length} external type(s) from dependencies: ${externalTypes
         .slice(0, 5)
         .map((t) => t.id)
         .join(', ')}${externalTypes.length > 5 ? '...' : ''}`,
-      severity: 'warning',
-      code: 'EXTERNAL_TYPE_STUBS',
-      suggestion: 'Types are from external packages. Full resolution requires type declarations.',
+      severity: 'info',
+      code: 'EXTERNAL_TYPES',
     });
   }
 
@@ -190,7 +233,8 @@ function collectDanglingRefs(exports: SpecExport[], types: SpecType[]): string[]
   collectAllRefs(types, referencedTypes);
 
   return Array.from(referencedTypes).filter(
-    (ref) => !definedTypes.has(ref) && !BUILTIN_TYPES.has(ref),
+    (ref) =>
+      !definedTypes.has(ref) && !BUILTIN_TYPES.has(ref) && !shouldSkipDanglingRef(ref),
   );
 }
 

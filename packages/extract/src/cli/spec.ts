@@ -9,7 +9,7 @@ export function createProgram(): Command {
     .description('Extract TypeScript package API to OpenPkg spec')
     .argument('[entry]', 'Entry point file')
     .option('-o, --output <file>', 'Output file', 'openpkg.json')
-    .option('--max-depth <n>', 'Max type depth', '20')
+    .option('--max-depth <n>', 'Max type depth (default: 4)')
     .option('--skip-resolve', 'Skip external type resolution')
     .option('--runtime', 'Enable Standard Schema runtime extraction')
     .action(async (entry, options) => {
@@ -24,7 +24,7 @@ export function createProgram(): Command {
 
       const result = await extract({
         entryFile: path.resolve(entryFile),
-        maxTypeDepth: parseInt(options.maxDepth),
+        ...(options.maxDepth ? { maxTypeDepth: parseInt(options.maxDepth) } : {}),
         resolveExternalTypes: !options.skipResolve,
         schemaExtraction: options.runtime ? 'hybrid' : 'static',
       });

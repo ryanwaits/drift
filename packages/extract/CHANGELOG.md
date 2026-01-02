@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.14.1
+
+### Patch Changes
+
+- Reduce type explosion: add depth limits to recursive type traversal, expand builtin types set, filter generic params from dangling refs
+
 ## 0.14.0
 
 ### Minor Changes

@@ -161,13 +161,24 @@ export function buildSchema(
     return { type: checker.typeToString(type) };
   }
 
-  // Check for circular references
+  // Check for circular references - but not for function types
   if (ctx?.visitedTypes.has(type)) {
+    // Function types should be inlined, not ref'd
+    const callSignatures = type.getCallSignatures();
+    if (callSignatures.length > 0) {
+      return buildFunctionSchema(callSignatures, checker, ctx);
+    }
     const symbol = type.getSymbol() || type.aliasSymbol;
     if (symbol) {
       return { $ref: `#/types/${symbol.getName()}` };
     }
     return { type: checker.typeToString(type) };
+  }
+
+  // Add current type to visited set BEFORE recursing to prevent infinite loops
+  // Only add object types (primitives can't cause circular refs)
+  if (ctx && type.flags & ts.TypeFlags.Object) {
+    ctx.visitedTypes.add(type);
   }
 
   // Handle primitives via type flags
@@ -297,6 +308,14 @@ export function buildSchema(
     }
   }
 
+  // Function types - check BEFORE named types to avoid $ref to function names
+  if (type.flags & ts.TypeFlags.Object) {
+    const callSignatures = type.getCallSignatures();
+    if (callSignatures.length > 0) {
+      return buildFunctionSchema(callSignatures, checker, ctx);
+    }
+  }
+
   // Named types (classes, interfaces, type aliases)
   const symbol = type.getSymbol() || type.aliasSymbol;
   if (symbol && !isAnonymous(type)) {
@@ -321,12 +340,6 @@ export function buildSchema(
   // Object type (inline object literal)
   if (type.flags & ts.TypeFlags.Object) {
     const objectType = type as ts.ObjectType;
-
-    // Function type
-    const callSignatures = type.getCallSignatures();
-    if (callSignatures.length > 0) {
-      return buildFunctionSchema(callSignatures, checker, ctx);
-    }
 
     // Object with properties
     const properties = type.getProperties();

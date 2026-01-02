@@ -195,12 +195,14 @@ function extractDefaultValue(initializer: ts.Expression): unknown {
  * Recursively register types referenced by a ts.Type.
  * Uses ctx.visitedTypes to prevent infinite recursion on circular types.
  */
-export function registerReferencedTypes(type: ts.Type, ctx: SerializerContext): void {
+export function registerReferencedTypes(type: ts.Type, ctx: SerializerContext, depth = 0): void {
+  // Limit traversal depth to prevent explosion
+  if (depth > ctx.maxTypeDepth) return;
+
   // Prevent infinite recursion on circular types
   if (ctx.visitedTypes.has(type)) return;
 
   // Only add complex types to visitedTypes (not primitives/literals which can't be circular)
-  // This prevents shared literal instances from polluting the set
   const isPrimitive =
     type.flags &
     (ts.TypeFlags.String |
@@ -229,21 +231,31 @@ export function registerReferencedTypes(type: ts.Type, ctx: SerializerContext): 
   const typeArgs = (type as ts.TypeReference).typeArguments;
   if (typeArgs) {
     for (const arg of typeArgs) {
-      registerReferencedTypes(arg, ctx);
+      registerReferencedTypes(arg, ctx, depth + 1);
     }
   }
 
   // Handle union types
   if (type.isUnion()) {
     for (const t of type.types) {
-      registerReferencedTypes(t, ctx);
+      registerReferencedTypes(t, ctx, depth + 1);
     }
   }
 
   // Handle intersection types
   if (type.isIntersection()) {
     for (const t of type.types) {
-      registerReferencedTypes(t, ctx);
+      registerReferencedTypes(t, ctx, depth + 1);
+    }
+  }
+
+  // Handle object properties (traverse into object members)
+  if (type.flags & ts.TypeFlags.Object) {
+    const props = type.getProperties();
+    for (const prop of props.slice(0, 20)) {
+      // Limit to 20 properties
+      const propType = checker.getTypeOfSymbol(prop);
+      registerReferencedTypes(propType, ctx, depth + 1);
     }
   }
 }

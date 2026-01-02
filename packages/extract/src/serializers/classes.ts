@@ -129,11 +129,11 @@ function serializeProperty(
   // Get property type
   const type = checker.getTypeAtLocation(node);
 
-  // Build schema FIRST (before registerReferencedTypes adds to visitedTypes)
-  const schema = buildSchema(type, checker, ctx);
-
-  // Then register referenced types for the type registry
+  // Register referenced types FIRST (before buildSchema adds to visitedTypes)
   registerReferencedTypes(type, ctx);
+
+  // Then build the schema
+  const schema = buildSchema(type, checker, ctx);
 
   const flags: Record<string, unknown> = {};
   if (isStatic(node)) flags.static = true;

@@ -19,11 +19,11 @@ export function serializeVariable(
   const source = getSourceLocation(node, declSourceFile);
   const type = ctx.typeChecker.getTypeAtLocation(node);
 
-  // Build schema FIRST (before registerReferencedTypes adds to visitedTypes)
-  const schema = buildSchema(type, ctx.typeChecker, ctx);
-
-  // Then register referenced types for the type registry
+  // Register referenced types FIRST (before buildSchema adds to visitedTypes)
   registerReferencedTypes(type, ctx);
+
+  // Then build the schema
+  const schema = buildSchema(type, ctx.typeChecker, ctx);
 
   return {
     id: name,
