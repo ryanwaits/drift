@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.14.4
+
+### Patch Changes
+
+- Prefer source entry files over .d.ts, warn when using .d.ts (TSDoc comments may be missing)
+
 ## 0.14.3
 
 ### Patch Changes

@@ -15,11 +15,25 @@ export function createProgram(): Command {
     .option('--runtime', 'Enable Standard Schema runtime extraction')
     .option('-v, --verbose', 'Show detailed output')
     .action(async (entry, options) => {
-      const entryFile = entry || findEntryPoint(process.cwd());
+      let entryFile: string;
+      let fromDts = false;
 
-      if (!entryFile) {
-        console.error('No entry point found. Please specify an entry file.');
-        process.exit(1);
+      if (entry) {
+        entryFile = entry;
+        fromDts = entry.endsWith('.d.ts');
+      } else {
+        const found = findEntryPoint(process.cwd());
+        if (!found) {
+          console.error('No entry point found. Please specify an entry file.');
+          process.exit(1);
+        }
+        entryFile = found.path;
+        fromDts = found.fromDts;
+      }
+
+      if (fromDts) {
+        console.warn('⚠ Using .d.ts file. TSDoc comments may be missing.');
+        console.warn('  Consider: tspec src/index.ts\n');
       }
 
       const spin = spinner('Extracting...');
@@ -63,35 +77,51 @@ export function createProgram(): Command {
   return program;
 }
 
-function findEntryPoint(cwd: string): string | null {
-  // Try to find entry point from package.json
+interface EntryPointResult {
+  path: string;
+  fromDts: boolean;
+}
+
+function findEntryPoint(cwd: string): EntryPointResult | null {
+  // Prefer source files first (convention over configuration)
+  // Doc generation needs TSDoc comments which exist in source, not .d.ts
+  const sourceEntries = ['src/index.ts', 'index.ts', 'lib/index.ts'];
+  for (const entry of sourceEntries) {
+    const fullPath = path.join(cwd, entry);
+    if (fs.existsSync(fullPath)) return { path: fullPath, fromDts: false };
+  }
+
+  // Fallback to package.json fields (may be .d.ts)
   const pkgPath = path.join(cwd, 'package.json');
   if (fs.existsSync(pkgPath)) {
     try {
       const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
 
       // Check types/typings field
-      if (pkg.types) return path.join(cwd, pkg.types);
-      if (pkg.typings) return path.join(cwd, pkg.typings);
+      if (pkg.types) {
+        const p = path.join(cwd, pkg.types);
+        return { path: p, fromDts: pkg.types.endsWith('.d.ts') };
+      }
+      if (pkg.typings) {
+        const p = path.join(cwd, pkg.typings);
+        return { path: p, fromDts: pkg.typings.endsWith('.d.ts') };
+      }
 
       // Check exports field
-      if (pkg.exports?.['.']?.types) return path.join(cwd, pkg.exports['.'].types);
+      if (pkg.exports?.['.']?.types) {
+        const p = path.join(cwd, pkg.exports['.'].types);
+        return { path: p, fromDts: pkg.exports['.'].types.endsWith('.d.ts') };
+      }
 
       // Check main field with .ts extension
       if (pkg.main) {
         const mainTs = pkg.main.replace(/\.js$/, '.ts');
-        if (fs.existsSync(path.join(cwd, mainTs))) return path.join(cwd, mainTs);
+        const fullPath = path.join(cwd, mainTs);
+        if (fs.existsSync(fullPath)) return { path: fullPath, fromDts: false };
       }
     } catch {
       // Ignore parse errors
     }
-  }
-
-  // Fallback to common entry points
-  const fallbacks = ['src/index.ts', 'index.ts', 'lib/index.ts'];
-  for (const fallback of fallbacks) {
-    const fullPath = path.join(cwd, fallback);
-    if (fs.existsSync(fullPath)) return fullPath;
   }
 
   return null;
