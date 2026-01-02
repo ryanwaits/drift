@@ -1,5 +1,13 @@
 # @doccov/sdk
 
+## 0.25.8
+
+### Patch Changes
+
+- fix(extract): correct package.json exports path (dist/index.js -> dist/src/index.js)
+- Updated dependencies
+  - @openpkg-ts/extract@0.14.2
+
 ## 0.25.7
 
 ### Patch Changes

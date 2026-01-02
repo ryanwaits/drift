@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/extract",
-  "version": "0.14.1",
+  "version": "0.14.2",
   "description": "TypeScript export extraction to OpenPkg spec",
   "keywords": [
     "openpkg",
@@ -18,15 +18,15 @@
   "license": "MIT",
   "author": "Ryan Waits",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "bin": {
     "tspec": "./dist/bin/tspec.js"
   },
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
     }
   },
   "files": [

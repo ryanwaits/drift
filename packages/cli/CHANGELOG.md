@@ -1,5 +1,13 @@
 # @doccov/cli
 
+## 0.25.8
+
+### Patch Changes
+
+- fix(extract): correct package.json exports path (dist/index.js -> dist/src/index.js)
+- Updated dependencies
+  - @doccov/sdk@0.25.8
+
 ## 0.25.7
 
 ### Patch Changes

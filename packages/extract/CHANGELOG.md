@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.14.2
+
+### Patch Changes
+
+- fix(extract): correct package.json exports path (dist/index.js -> dist/src/index.js)
+
 ## 0.14.1
 
 ### Patch Changes
