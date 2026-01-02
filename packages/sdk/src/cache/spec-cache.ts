@@ -3,8 +3,8 @@ import * as path from 'node:path';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { diffHashes, hashFile, hashFiles } from './hash';
 
-/** Current cache format version */
-export const CACHE_VERSION = '1.0.0';
+/** Current cache format version - bump when spec extraction logic changes */
+export const CACHE_VERSION = '1.1.0';
 
 /** Default cache file path */
 export const SPEC_CACHE_FILE = '.doccov/spec.cache.json';

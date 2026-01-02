@@ -59,6 +59,10 @@ function isIdentifierReference(node: ts.Identifier): boolean {
   if (ts.isMethodDeclaration(parent) && parent.name === node) return false;
   if (ts.isPropertyDeclaration(parent) && parent.name === node) return false;
 
+  // Skip: property access names (Cl.standardPrincipal - don't check standardPrincipal)
+  // The property is accessed on an object, not referenced as a standalone export
+  if (ts.isPropertyAccessExpression(parent) && parent.name === node) return false;
+
   // Import specifiers and type references ARE valid references:
   // - import { Foo } from 'pkg' - Foo should exist
   // - const x: Foo = ... - Foo should exist

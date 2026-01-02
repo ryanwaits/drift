@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.25.11
+
+### Patch Changes
+
+- fix(drift): skip property access names in identifier reference check
+
 ## 0.25.10
 
 ### Patch Changes

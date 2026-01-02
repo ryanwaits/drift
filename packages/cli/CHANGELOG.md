@@ -1,5 +1,13 @@
 # @doccov/cli
 
+## 0.25.11
+
+### Patch Changes
+
+- chore: bump @doccov/sdk dependency
+- Updated dependencies
+  - @doccov/sdk@0.25.11
+
 ## 0.25.9
 
 ### Patch Changes
