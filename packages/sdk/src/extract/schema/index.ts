@@ -1,42 +1,78 @@
 /**
  * Schema Type Extraction Module
  *
- * Provides schema extraction from validation libraries:
- * - Zod
- * - Valibot
- * - TypeBox
- * - ArkType
- *
- * Two extraction modes:
- * 1. Static (TypeScript Compiler API) - no runtime, always available
- * 2. Standard Schema (runtime) - richer output when available
+ * Re-exports from @openpkg-ts/extract with SDK-specific convenience wrappers.
  */
+import type * as TS from 'typescript';
 
-export { arktypeAdapter } from './adapters/arktype';
-export { typeboxAdapter } from './adapters/typebox';
-export { valibotAdapter } from './adapters/valibot';
-// Individual adapters (for extension/testing)
-export { zodAdapter } from './adapters/zod';
-// Registry (main API - static extraction)
+// Re-export everything from @openpkg-ts/extract
 export {
-  extractSchemaOutputType,
+  // Adapters
+  arktypeAdapter,
+  typeboxAdapter,
+  valibotAdapter,
+  zodAdapter,
+  // Registry functions
   extractSchemaType,
   findAdapter,
-  getRegisteredAdapters,
-  getSupportedLibraries,
   isSchemaType,
-} from './registry';
-// Standard Schema (runtime extraction)
-export {
-  type ExtractStandardSchemasOptions,
+  // Standard Schema
   extractStandardSchemas,
   extractStandardSchemasFromProject,
   isStandardJSONSchema,
   resolveCompiledPath,
+  // Types
+  getNonNullableType,
+  isTypeReference,
+  type ExtractStandardSchemasOptions,
+  type SchemaAdapter,
+  type SchemaExtractionResult,
   type StandardJSONSchemaV1,
   type StandardSchemaExtractionOutput,
   type StandardSchemaExtractionResult,
-} from './standard-schema';
-// Types
-export type { SchemaAdapter, SchemaExtractionResult } from './types';
-export { getNonNullableType, isTypeReference } from './types';
+} from '@openpkg-ts/extract';
+
+import {
+  arktypeAdapter,
+  findAdapter,
+  typeboxAdapter,
+  valibotAdapter,
+  zodAdapter,
+  type SchemaAdapter,
+} from '@openpkg-ts/extract';
+
+// SDK-specific convenience wrappers
+
+/** Static list of adapters in check priority order */
+const adapters: readonly SchemaAdapter[] = [
+  zodAdapter,
+  arktypeAdapter,
+  typeboxAdapter,
+  valibotAdapter,
+];
+
+/**
+ * Extract the output type from a schema type.
+ * Convenience wrapper that returns just the type.
+ */
+export function extractSchemaOutputType(type: TS.Type, checker: TS.TypeChecker): TS.Type | null {
+  const adapter = findAdapter(type, checker);
+  if (!adapter) {
+    return null;
+  }
+  return adapter.extractOutputType(type, checker);
+}
+
+/**
+ * Get all registered adapters.
+ */
+export function getRegisteredAdapters(): readonly SchemaAdapter[] {
+  return adapters;
+}
+
+/**
+ * Get supported library names.
+ */
+export function getSupportedLibraries(): readonly string[] {
+  return adapters.flatMap((a) => a.packages);
+}

@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.27.3
+
+### Patch Changes
+
+- refactor(sdk): replace local schema adapters with @openpkg-ts/extract re-exports
+
 ## 0.27.2
 
 ### Patch Changes

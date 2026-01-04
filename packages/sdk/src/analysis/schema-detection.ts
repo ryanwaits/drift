@@ -8,7 +8,7 @@
 import {
   extractStandardSchemasFromProject,
   resolveCompiledPath,
-} from '../extract/schema/standard-schema';
+} from '../extract/schema';
 
 export interface SchemaDetectionContext {
   baseDir: string;
