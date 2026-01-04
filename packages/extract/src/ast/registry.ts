@@ -1,5 +1,7 @@
 import type { SpecType, SpecTypeKind } from '@openpkg-ts/spec';
 import ts from 'typescript';
+import type { SerializerContext } from '../serializers/context';
+import { buildSchema } from '../types/schema-builder';
 
 const PRIMITIVES = new Set([
   'string',
@@ -125,14 +127,10 @@ export class TypeRegistry {
   }
 
   /**
-   * Register a type from a ts.Type (lightweight stub).
+   * Register a type from a ts.Type with structured schema.
    * Returns the type ID if registered, undefined if skipped.
    */
-  registerType(
-    type: ts.Type,
-    checker: ts.TypeChecker,
-    exportedIds: Set<string>,
-  ): string | undefined {
+  registerType(type: ts.Type, ctx: SerializerContext): string | undefined {
     const symbol = type.getSymbol() || type.aliasSymbol;
     if (!symbol) return undefined;
 
@@ -155,7 +153,7 @@ export class TypeRegistry {
     this.processing.add(name);
 
     try {
-      const specType = this.buildStubType(symbol, checker);
+      const specType = this.buildSpecType(type, symbol, ctx);
       if (specType) {
         this.add(specType);
         return specType.id;
@@ -168,11 +166,16 @@ export class TypeRegistry {
   }
 
   /**
-   * Build a lightweight stub type (no deep schema extraction).
+   * Build a SpecType with structured schema using buildSchema.
    */
-  private buildStubType(symbol: ts.Symbol, checker: ts.TypeChecker): SpecType | undefined {
+  private buildSpecType(
+    type: ts.Type,
+    symbol: ts.Symbol,
+    ctx: SerializerContext,
+  ): SpecType | undefined {
     const name = symbol.getName();
     const decl = symbol.declarations?.[0];
+    const checker = ctx.typeChecker;
 
     let kind: SpecTypeKind = 'type';
     const external = decl ? isExternalType(decl) : false;
@@ -187,28 +190,69 @@ export class TypeRegistry {
       kind = 'external';
     }
 
-    // Get the type string representation (lightweight)
-    const type = checker.getDeclaredTypeOfSymbol(symbol);
-    const typeString = checker.typeToString(type);
+    // Build structured schema - but avoid self-referential $ref
+    let schema = buildSchema(type, checker, ctx);
+
+    // If schema is just a self-ref, build object schema from properties
+    if (this.isSelfRef(schema, name)) {
+      schema = this.buildObjectSchemaFromType(type, checker, ctx);
+    }
 
     return {
       id: name,
       name,
       kind,
-      schema: { type: typeString },
+      schema,
       ...(external ? { external: true } : {}),
     };
   }
 
-  registerFromSymbol(symbol: ts.Symbol, checker: ts.TypeChecker): SpecType | undefined {
-    const name = symbol.getName();
-    if (this.has(name)) return this.get(name);
-
-    const specType = this.buildStubType(symbol, checker);
-    if (specType) {
-      this.add(specType);
-      return specType;
-    }
-    return undefined;
+  /**
+   * Check if schema is a self-referential $ref
+   */
+  private isSelfRef(schema: unknown, typeName: string): boolean {
+    if (typeof schema !== 'object' || schema === null) return false;
+    const obj = schema as Record<string, unknown>;
+    return obj.$ref === `#/types/${typeName}`;
   }
+
+  /**
+   * Build object schema from type properties (for interfaces/classes)
+   */
+  private buildObjectSchemaFromType(
+    type: ts.Type,
+    checker: ts.TypeChecker,
+    ctx: SerializerContext,
+  ): Record<string, unknown> {
+    const properties = type.getProperties();
+    if (properties.length === 0) {
+      return { type: checker.typeToString(type) };
+    }
+
+    const props: Record<string, unknown> = {};
+    const required: string[] = [];
+
+    for (const prop of properties.slice(0, 20)) {
+      const propName = prop.getName();
+      if (propName.startsWith('_')) continue;
+
+      const propType = checker.getTypeOfSymbol(prop);
+
+      // Register referenced type so it appears in types[]
+      this.registerType(propType, ctx);
+
+      props[propName] = buildSchema(propType, checker, ctx);
+
+      if (!(prop.flags & ts.SymbolFlags.Optional)) {
+        required.push(propName);
+      }
+    }
+
+    return {
+      type: 'object',
+      properties: props,
+      ...(required.length > 0 ? { required } : {}),
+    };
+  }
+
 }

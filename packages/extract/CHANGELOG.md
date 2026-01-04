@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.15.0
+
+### Minor Changes
+
+- Build structured schemas for registered types using buildSchema instead of type strings
+
 ## 0.14.5
 
 ### Patch Changes

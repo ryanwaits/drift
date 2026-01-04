@@ -222,10 +222,10 @@ export function registerReferencedTypes(type: ts.Type, ctx: SerializerContext, d
     ctx.visitedTypes.add(type);
   }
 
-  const { typeChecker: checker, typeRegistry, exportedIds } = ctx;
+  const { typeChecker: checker, typeRegistry } = ctx;
 
   // Register the type itself
-  typeRegistry.registerType(type, checker, exportedIds);
+  typeRegistry.registerType(type, ctx);
 
   // Handle type arguments (generics like Array<T>, Promise<T>)
   const typeArgs = (type as ts.TypeReference).typeArguments;
