@@ -265,7 +265,7 @@ export function extractMethodCallsAST(code: string): MethodCallInfo[] {
             if (ts.isIdentifier(objectExpr.expression)) {
               objectName = objectExpr.expression.text;
             }
-          } else if (ts.isThisKeyword(objectExpr)) {
+          } else if (objectExpr.kind === ts.SyntaxKind.ThisKeyword) {
             objectName = 'this';
           }
 

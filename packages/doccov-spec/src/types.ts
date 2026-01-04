@@ -87,10 +87,58 @@ export type ExampleAnalysis = {
 export type MissingDocRule = 'description' | 'params' | 'returns' | 'examples' | 'throws';
 
 // ============================================================================
+// Documentation Health Types
+// ============================================================================
+
+/**
+ * Unified documentation health score combining completeness and accuracy.
+ */
+export type DocumentationHealth = {
+  /** Overall health score (0-100), weighted combination of completeness + accuracy */
+  score: number;
+
+  /** Completeness (coverage) metrics */
+  completeness: {
+    /** Completeness score (0-100) */
+    score: number;
+    /** Number of documented exports */
+    documented: number;
+    /** Total exports analyzed */
+    total: number;
+    /** Missing docs by rule */
+    missing: Record<MissingDocRule, number>;
+  };
+
+  /** Accuracy (drift) metrics */
+  accuracy: {
+    /** Accuracy score (0-100) - penalized by drift issues */
+    score: number;
+    /** Total drift issues found */
+    issues: number;
+    /** Issues that can be auto-fixed */
+    fixable: number;
+    /** Issues by category */
+    byCategory: Record<DriftCategory, number>;
+  };
+
+  /** Example validation metrics (if run) */
+  examples?: {
+    /** Example score (0-100) */
+    score: number;
+    /** Examples that passed validation */
+    passed: number;
+    /** Examples that failed validation */
+    failed: number;
+    /** Total examples analyzed */
+    total: number;
+  };
+};
+
+// ============================================================================
 // DocCov Spec (doccov.json schema)
 // ============================================================================
 
-export type DocCovSpecVersion = '0.1.0';
+export type DocCovSpecVersion = '0.1.0' | '1.0.0';
 
 export type DocCovSpec = {
   $schema?: string;
@@ -117,26 +165,44 @@ export type DocCovSpec = {
 };
 
 export type DocCovSummary = {
-  /** Overall coverage score (0-100) */
+  /**
+   * Overall coverage score (0-100)
+   * @deprecated Use `health.completeness.score` instead. Will be removed in next major.
+   */
   score: number;
 
-  /** Total exports analyzed */
+  /**
+   * Total exports analyzed
+   * @deprecated Use `health.completeness.total` instead. Will be removed in next major.
+   */
   totalExports: number;
 
-  /** Exports with complete documentation */
+  /**
+   * Exports with complete documentation
+   * @deprecated Use `health.completeness.documented` instead. Will be removed in next major.
+   */
   documentedExports: number;
 
-  /** Missing documentation by rule */
+  /**
+   * Missing documentation by rule
+   * @deprecated Use `health.completeness.missing` instead. Will be removed in next major.
+   */
   missingByRule: Record<MissingDocRule, number>;
 
-  /** Drift summary */
+  /**
+   * Drift summary
+   * @deprecated Use `health.accuracy` instead. Will be removed in next major.
+   */
   drift: {
     total: number;
     fixable: number;
     byCategory: Record<DriftCategory, number>;
   };
 
-  /** Example validation summary (if run) */
+  /**
+   * Example validation summary (if run)
+   * @deprecated Use `health.examples` instead. Will be removed in next major.
+   */
   examples?: {
     total: number;
     withExamples: number;
@@ -145,6 +211,9 @@ export type DocCovSummary = {
     runtimePassed?: number;
     runtimeFailed?: number;
   };
+
+  /** Unified documentation health metrics */
+  health?: DocumentationHealth;
 };
 
 export type ExportAnalysis = {

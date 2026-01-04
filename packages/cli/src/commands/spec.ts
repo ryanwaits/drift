@@ -5,13 +5,17 @@ import {
   buildDocCovSpec,
   DocCov,
   detectPackageManager,
-  type GenerationInput,
   NodeFileSystem,
   renderApiSurface,
   resolveTarget,
 } from '@doccov/sdk';
 import { validateDocCovSpec } from '@doccov/spec';
-import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-ts/spec';
+import {
+  normalize,
+  type OpenPkg as OpenPkgSpec,
+  type SpecGenerationInfo,
+  validateSpec,
+} from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { version as cliVersion } from '../../package.json';
@@ -191,18 +195,6 @@ export function registerSpecCommand(
           schemaExtraction: options.runtime ? 'hybrid' : 'static',
         });
 
-        // Build generation input for spec metadata
-        const generationInput: GenerationInput = {
-          entryPoint: path.relative(targetDir, entryFile),
-          entryPointSource: entryPointInfo.source,
-          isDeclarationOnly: entryPointInfo.isDeclarationOnly ?? false,
-          generatorName: '@doccov/cli',
-          generatorVersion: cliVersion,
-          packageManager: packageInfo?.packageManager,
-          isMonorepo: resolved.isMonorepo,
-          targetPackage: packageInfo?.name,
-        };
-
         const analyzeOptions =
           resolvedFilters.include || resolvedFilters.exclude || resolvedFilters.visibility
             ? {
@@ -211,9 +203,8 @@ export function registerSpecCommand(
                   exclude: resolvedFilters.exclude,
                   visibility: resolvedFilters.visibility,
                 },
-                generationInput,
               }
-            : { generationInput };
+            : {};
 
         const result = await doccov.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
 
@@ -292,8 +283,18 @@ export function registerSpecCommand(
           }
         }
 
+        // Helper to check if generation is full SpecGenerationInfo (not minimal SpecGenerationMeta)
+        const isFullGenerationInfo = (
+          gen: OpenPkgSpec['generation'],
+        ): gen is SpecGenerationInfo => {
+          return gen !== undefined && 'analysis' in gen && 'environment' in gen;
+        };
+
         // Warn if --runtime was requested but no runtime schemas were extracted
-        const schemaExtraction = normalized.generation?.analysis?.schemaExtraction;
+        const fullGen = isFullGenerationInfo(normalized.generation)
+          ? normalized.generation
+          : undefined;
+        const schemaExtraction = fullGen?.analysis?.schemaExtraction;
         if (
           options.runtime &&
           (!schemaExtraction?.runtimeCount || schemaExtraction.runtimeCount === 0)
@@ -306,25 +307,30 @@ export function registerSpecCommand(
         }
 
         // Show verbose generation metadata if requested
-        if (options.verbose && normalized.generation) {
-          const gen = normalized.generation;
+        if (options.verbose && fullGen) {
           log('');
           log(chalk.bold('Generation Info'));
-          log(chalk.gray(`  Timestamp:        ${gen.timestamp}`));
-          log(chalk.gray(`  Generator:        ${gen.generator.name}@${gen.generator.version}`));
-          log(chalk.gray(`  Entry point:      ${gen.analysis.entryPoint}`));
-          log(chalk.gray(`  Detected via:     ${gen.analysis.entryPointSource}`));
-          log(chalk.gray(`  Declaration only: ${gen.analysis.isDeclarationOnly ? 'yes' : 'no'}`));
+          log(chalk.gray(`  Timestamp:        ${fullGen.timestamp}`));
+          log(
+            chalk.gray(`  Generator:        ${fullGen.generator.name}@${fullGen.generator.version}`),
+          );
+          log(chalk.gray(`  Entry point:      ${fullGen.analysis.entryPoint}`));
+          log(chalk.gray(`  Detected via:     ${fullGen.analysis.entryPointSource}`));
           log(
             chalk.gray(
-              `  External types:   ${gen.analysis.resolvedExternalTypes ? 'resolved' : 'skipped'}`,
+              `  Declaration only: ${fullGen.analysis.isDeclarationOnly ? 'yes' : 'no'}`,
             ),
           );
-          if (gen.analysis.maxTypeDepth) {
-            log(chalk.gray(`  Max type depth:   ${gen.analysis.maxTypeDepth}`));
+          log(
+            chalk.gray(
+              `  External types:   ${fullGen.analysis.resolvedExternalTypes ? 'resolved' : 'skipped'}`,
+            ),
+          );
+          if (fullGen.analysis.maxTypeDepth) {
+            log(chalk.gray(`  Max type depth:   ${fullGen.analysis.maxTypeDepth}`));
           }
-          if (gen.analysis.schemaExtraction) {
-            const se = gen.analysis.schemaExtraction;
+          if (fullGen.analysis.schemaExtraction) {
+            const se = fullGen.analysis.schemaExtraction;
             log(chalk.gray(`  Schema extraction: ${se.method}`));
             if (se.runtimeCount) {
               log(
@@ -336,23 +342,23 @@ export function registerSpecCommand(
           log(chalk.bold('Environment'));
           log(
             chalk.gray(
-              `  node_modules:     ${gen.environment.hasNodeModules ? 'found' : 'not found'}`,
+              `  node_modules:     ${fullGen.environment.hasNodeModules ? 'found' : 'not found'}`,
             ),
           );
-          if (gen.environment.packageManager) {
-            log(chalk.gray(`  Package manager:  ${gen.environment.packageManager}`));
+          if (fullGen.environment.packageManager) {
+            log(chalk.gray(`  Package manager:  ${fullGen.environment.packageManager}`));
           }
-          if (gen.environment.isMonorepo) {
+          if (fullGen.environment.isMonorepo) {
             log(chalk.gray(`  Monorepo:         yes`));
           }
-          if (gen.environment.targetPackage) {
-            log(chalk.gray(`  Target package:   ${gen.environment.targetPackage}`));
+          if (fullGen.environment.targetPackage) {
+            log(chalk.gray(`  Target package:   ${fullGen.environment.targetPackage}`));
           }
 
-          if (gen.issues.length > 0) {
+          if (fullGen.issues.length > 0) {
             log('');
             log(chalk.bold('Issues'));
-            for (const issue of gen.issues) {
+            for (const issue of fullGen.issues) {
               const prefix =
                 issue.severity === 'error'
                   ? chalk.red('>')

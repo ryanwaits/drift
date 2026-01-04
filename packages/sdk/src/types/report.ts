@@ -1,5 +1,5 @@
 import type { CategorizedDrift, DriftCategory, SpecDocDrift } from '../analysis/drift/types';
-import type { ApiSurfaceResult } from '@doccov/spec';
+import type { ApiSurfaceResult, DocumentationHealth } from '@doccov/spec';
 
 /**
  * DocCov report schema version.
@@ -226,4 +226,9 @@ export interface DocCovReport {
    * API surface analysis (forgotten exports).
    */
   apiSurface?: ApiSurfaceResult;
+
+  /**
+   * Unified documentation health score.
+   */
+  health?: DocumentationHealth;
 }

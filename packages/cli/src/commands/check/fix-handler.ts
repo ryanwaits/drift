@@ -26,6 +26,8 @@ export interface FixHandlerOptions {
   isPreview: boolean;
   targetDir: string;
   entryFile?: string;
+  /** Current health score before fixes (for before/after display) */
+  healthScore?: number;
 }
 
 export interface FixHandlerDeps {
@@ -140,6 +142,12 @@ export async function handleFixes(
     const relativePath = path.relative(targetDir, filePath);
     const fixCount = fileEdits.reduce((s, e) => s + e.fixes.length, 0);
     log(chalk.dim(`  ${relativePath} (${fixCount} fixes)`));
+  }
+
+  // Show health score note if provided
+  if (options.healthScore !== undefined) {
+    log('');
+    log(chalk.cyan('Run doccov check again to see updated health score'));
   }
 
   return {

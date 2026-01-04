@@ -12,6 +12,26 @@ export function renderMarkdown(stats: ReportStats, options: { limit?: number } =
 
   lines.push(`# DocCov Report: ${stats.packageName}@${stats.version}`);
   lines.push('');
+
+  // Health score (if available)
+  if (stats.health) {
+    const h = stats.health;
+    lines.push(`## Documentation Health: ${h.score}%`);
+    lines.push('');
+    lines.push('| Metric | Score | Details |');
+    lines.push('|--------|-------|---------|');
+    lines.push(
+      `| Completeness | ${h.completeness.score}% | ${h.completeness.total - h.completeness.documented} missing docs |`,
+    );
+    lines.push(`| Accuracy | ${h.accuracy.score}% | ${h.accuracy.issues} drift issues |`);
+    if (h.examples) {
+      lines.push(
+        `| Examples | ${h.examples.score}% | ${h.examples.passed}/${h.examples.total} passed |`,
+      );
+    }
+    lines.push('');
+  }
+
   lines.push(`**Coverage: ${stats.coverageScore}%** \`${bar(stats.coverageScore)}\``);
   lines.push('');
   lines.push('| Metric | Value |');

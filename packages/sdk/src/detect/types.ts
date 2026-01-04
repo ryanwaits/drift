@@ -70,7 +70,7 @@ export interface WorkspacePackage {
 }
 
 /** Entry point source - where the entry was detected from */
-export type EntryPointSource = 'types' | 'exports' | 'main' | 'module' | 'fallback';
+export type EntryPointSource = 'types' | 'exports' | 'main' | 'module' | 'fallback' | 'explicit';
 
 /** Entry point detection result */
 export interface EntryPointInfo {

@@ -1,3 +1,4 @@
+import type * as TS from 'typescript';
 import { ts } from '../ts-module';
 import { isBuiltInTypeName } from './builtin-detection';
 
@@ -7,7 +8,7 @@ export { isBuiltInTypeName as isBuiltInType } from './builtin-detection';
 /**
  * Check if a parameter is using object destructuring
  */
-export function isDestructuredParameter(param: ts.ParameterDeclaration): boolean {
+export function isDestructuredParameter(param: TS.ParameterDeclaration): boolean {
   return param.name && ts.isObjectBindingPattern(param.name);
 }
 
@@ -15,8 +16,8 @@ export function isDestructuredParameter(param: ts.ParameterDeclaration): boolean
  * Get the properties from a destructured parameter
  */
 export function getDestructuredProperties(
-  param: ts.ParameterDeclaration,
-  typeChecker: ts.TypeChecker,
+  param: TS.ParameterDeclaration,
+  typeChecker: TS.TypeChecker,
 ): Array<{ name: string; type: string; optional: boolean }> {
   if (!param.name || !ts.isObjectBindingPattern(param.name)) {
     return [];
@@ -48,7 +49,7 @@ export function getDestructuredProperties(
  * Get a stable identifier for a type to avoid infinite recursion.
  * Uses TypeScript's internal type ID when available, falls back to type string.
  */
-function getTypeId(type: ts.Type, typeChecker: ts.TypeChecker): string {
+function getTypeId(type: TS.Type, typeChecker: TS.TypeChecker): string {
   // TypeScript types have an internal `id` property
   const internalId = (type as { id?: number }).id;
   if (internalId !== undefined) {
@@ -62,8 +63,8 @@ function getTypeId(type: ts.Type, typeChecker: ts.TypeChecker): string {
  * Collect all referenced types from a type and add them to the tracking set
  */
 export function collectReferencedTypes(
-  type: ts.Type,
-  typeChecker: ts.TypeChecker,
+  type: TS.Type,
+  typeChecker: TS.TypeChecker,
   referencedTypes: Set<string>,
   visitedTypeIds: Set<string> = new Set(),
 ): void {
@@ -85,23 +86,23 @@ export function collectReferencedTypes(
 
   // Handle intersection types (A & B)
   if (type.isIntersection()) {
-    for (const intersectionType of (type as ts.IntersectionType).types) {
+    for (const intersectionType of (type as TS.IntersectionType).types) {
       collectReferencedTypes(intersectionType, typeChecker, referencedTypes, visitedTypeIds);
     }
   }
 
   // Handle union types (A | B)
   if (type.isUnion()) {
-    for (const unionType of (type as ts.UnionType).types) {
+    for (const unionType of (type as TS.UnionType).types) {
       collectReferencedTypes(unionType, typeChecker, referencedTypes, visitedTypeIds);
     }
   }
 
   // Handle generic type references
   if (type.flags & ts.TypeFlags.Object) {
-    const objectType = type as ts.ObjectType;
+    const objectType = type as TS.ObjectType;
     if (objectType.objectFlags & ts.ObjectFlags.Reference) {
-      const typeRef = objectType as ts.TypeReference;
+      const typeRef = objectType as TS.TypeReference;
       if (typeRef.typeArguments) {
         for (const typeArg of typeRef.typeArguments) {
           collectReferencedTypes(typeArg, typeChecker, referencedTypes, visitedTypeIds);
@@ -117,8 +118,8 @@ export function collectReferencedTypes(
  * and may omit aliases that get flattened during type resolution.
  */
 export function collectReferencedTypesFromNode(
-  node: ts.TypeNode,
-  typeChecker: ts.TypeChecker,
+  node: TS.TypeNode,
+  typeChecker: TS.TypeChecker,
   referencedTypes: Set<string>,
 ): void {
   if (ts.isTypeReferenceNode(node)) {
@@ -208,7 +209,7 @@ export function collectReferencedTypesFromNode(
     return;
   }
 
-  node.forEachChild((child) => {
+  node.forEachChild((child: TS.Node) => {
     if (ts.isTypeNode(child)) {
       collectReferencedTypesFromNode(child, typeChecker, referencedTypes);
     }

@@ -527,8 +527,11 @@ function validateDiff(
 
   // === Threshold validation (applied to HEAD spec) ===
   // Calculate HEAD spec's drift score
+  type EnrichedExport = { docs?: { drift?: unknown[] }; name: string };
   const headExportsWithDrift = new Set(
-    (headSpec.exports ?? []).filter((e) => e.docs?.drift?.length).map((e) => e.name),
+    (headSpec.exports ?? [])
+      .filter((e) => (e as EnrichedExport).docs?.drift?.length)
+      .map((e) => e.name),
   ).size;
   const headDriftScore = headSpec.exports?.length
     ? Math.round((headExportsWithDrift / headSpec.exports.length) * 100)

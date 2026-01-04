@@ -13,6 +13,7 @@ import { DRIFT_CATEGORIES } from '@doccov/spec';
 import type { SpecExport } from '@openpkg-ts/spec';
 import { isFixableDrift } from '../fix';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';
+import { computeHealth } from './health';
 import type { OpenPkgSpec } from './spec-types';
 
 /** Forgotten export from extract package (different shape than spec type) */
@@ -94,8 +95,21 @@ export function buildDocCovSpec(options: BuildDocCovOptions): DocCovSpec {
   }
 
   const exportCount = openpkg.exports?.length ?? 0;
+  const coverageScore = exportCount > 0 ? Math.round(totalScore / exportCount) : 100;
+
+  // Compute health score
+  const health = computeHealth({
+    coverageScore,
+    documentedExports: documentedCount,
+    totalExports: exportCount,
+    missingByRule,
+    driftIssues: totalDrift,
+    fixableDrift,
+    driftByCategory,
+  });
+
   const summary: DocCovSummary = {
-    score: exportCount > 0 ? Math.round(totalScore / exportCount) : 100,
+    score: coverageScore,
     totalExports: exportCount,
     documentedExports: documentedCount,
     missingByRule,
@@ -104,6 +118,7 @@ export function buildDocCovSpec(options: BuildDocCovOptions): DocCovSpec {
       fixable: fixableDrift,
       byCategory: driftByCategory,
     },
+    health,
   };
 
   // Compute API surface if forgotten exports provided
@@ -251,12 +266,13 @@ function toCategorizedDrift(drift: {
   suggestion?: string;
 }): DocCovDrift {
   const driftType = drift.type as DocCovDrift['type'];
+  const specDrift = { ...drift, type: driftType };
   return {
     type: driftType,
     target: drift.target,
     issue: drift.issue,
     suggestion: drift.suggestion,
     category: DRIFT_CATEGORIES[driftType],
-    fixable: isFixableDrift(drift as { type: string }),
+    fixable: isFixableDrift(specDrift),
   };
 }

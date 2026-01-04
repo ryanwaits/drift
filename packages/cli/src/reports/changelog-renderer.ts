@@ -3,7 +3,8 @@
  *
  * Generates conventional changelog format from spec diffs.
  */
-import type { CategorizedBreaking, SpecDiff } from '@openpkg-ts/spec';
+import type { SpecDiffWithDocs } from '@doccov/sdk';
+import type { CategorizedBreaking } from '@openpkg-ts/spec';
 
 export interface ChangelogOptions {
   /** Version number for the changelog entry */
@@ -15,7 +16,7 @@ export interface ChangelogOptions {
 }
 
 export interface ChangelogData {
-  diff: SpecDiff;
+  diff: SpecDiffWithDocs;
   categorizedBreaking?: CategorizedBreaking[];
   version?: string;
 }

@@ -1,5 +1,5 @@
 import type { DocCov } from '@doccov/sdk';
-import type { DriftCategory, DriftType } from '@openpkg-ts/spec';
+import type { DriftCategory, DriftType } from '@doccov/spec';
 
 export type OutputFormat = 'text' | 'json' | 'markdown' | 'html' | 'github';
 

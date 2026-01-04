@@ -1,5 +1,11 @@
 # @doccov/spec
 
+## 0.27.0
+
+### Minor Changes
+
+- Add unified documentation health score combining completeness + accuracy metrics
+
 ## 0.26.0
 
 ### Minor Changes

@@ -7,6 +7,7 @@ export type {
   DocCovSpec,
   DocCovSpecVersion,
   DocCovSummary,
+  DocumentationHealth,
   DriftCategory,
   DriftType,
   ExampleAnalysis,

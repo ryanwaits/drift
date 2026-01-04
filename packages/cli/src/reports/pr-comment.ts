@@ -4,9 +4,9 @@
  * Generates actionable markdown optimized for PR comments
  */
 
-import { getExportDrift, type SpecDiffWithDocs } from '@doccov/sdk';
+import { getExportDrift, type SpecDiffWithDocs, type SpecDocDrift } from '@doccov/sdk';
 import type { DocCovSpec } from '@doccov/spec';
-import type { OpenPkg, SemverBump, SpecDocDrift, SpecExport, SpecSchema } from '@openpkg-ts/spec';
+import type { OpenPkg, SemverBump, SpecExport, SpecSchema } from '@openpkg-ts/spec';
 
 /**
  * Extract type string from schema for display

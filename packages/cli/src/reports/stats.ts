@@ -1,7 +1,8 @@
-import { getExportAnalysis, getExportDrift, isFixableDrift } from '@doccov/sdk';
+import { getExportAnalysis, getExportDrift, isFixableDrift, type SpecDocDrift } from '@doccov/sdk';
 import {
   type ApiSurfaceResult,
   type DocCovSpec,
+  type DocumentationHealth,
   DRIFT_CATEGORIES,
   type DriftCategory,
   type DriftType,
@@ -40,6 +41,7 @@ export type ReportStats = {
   driftByCategory: Record<DriftCategory, DriftIssueItem[]>;
   driftSummary: DriftSummaryStats;
   apiSurface?: ApiSurfaceResult;
+  health?: DocumentationHealth;
 };
 
 /**
@@ -164,5 +166,6 @@ export function computeStats(openpkg: OpenPkg, doccov: DocCovSpec): ReportStats 
     driftByCategory,
     driftSummary,
     apiSurface: doccov.apiSurface,
+    health: doccov.summary.health,
   };
 }

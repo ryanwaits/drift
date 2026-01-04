@@ -1,5 +1,14 @@
 # @doccov/cli
 
+## 0.27.0
+
+### Patch Changes
+
+- Add unified documentation health score combining completeness + accuracy metrics
+- Updated dependencies
+  - @doccov/spec@0.27.0
+  - @doccov/sdk@0.27.0
+
 ## 0.26.0
 
 ### Minor Changes

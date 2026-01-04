@@ -23,6 +23,10 @@
 // Core Analysis API
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Health computation
+export type { HealthInput } from './analysis/health';
+export { computeHealth } from './analysis/health';
+
 export type { BuildDocCovOptions } from './analysis/doccov-builder';
 // DocCov spec builder
 export { buildDocCovSpec } from './analysis/doccov-builder';

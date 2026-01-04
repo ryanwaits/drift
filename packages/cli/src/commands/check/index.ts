@@ -40,11 +40,16 @@ export function registerCheckCommand(
     .description('Check documentation coverage and output reports')
     .option('--cwd <dir>', 'Working directory', process.cwd())
     .option('--package <name>', 'Target package name (for monorepos)')
-    .option('--min-coverage <percentage>', 'Minimum docs coverage percentage (0-100)', (value) =>
-      Number(value),
+    .option('--min-health <percentage>', 'Minimum health score (0-100)', (value) => Number(value))
+    .option(
+      '--min-coverage <percentage>',
+      '[deprecated] Use --min-health instead',
+      (value) => Number(value),
     )
-    .option('--max-drift <percentage>', 'Maximum drift percentage allowed (0-100)', (value) =>
-      Number(value),
+    .option(
+      '--max-drift <percentage>',
+      '[deprecated] Use --min-health instead',
+      (value) => Number(value),
     )
     .option(
       '--examples [mode]',
@@ -113,13 +118,30 @@ export function registerCheckCommand(
           hasExamples = validations.length > 0;
         }
 
-        // CLI option takes precedence, then config, then sensible defaults
-        const DEFAULT_MIN_COVERAGE = 80;
-        const minCoverageRaw =
-          options.minCoverage ?? config?.check?.minCoverage ?? DEFAULT_MIN_COVERAGE;
-        const minCoverage = clampPercentage(minCoverageRaw);
+        // Deprecation warnings for legacy flags
+        if (options.minCoverage !== undefined) {
+          log(chalk.yellow('Warning: --min-coverage is deprecated. Use --min-health instead.'));
+        }
+        if (options.maxDrift !== undefined) {
+          log(chalk.yellow('Warning: --max-drift is deprecated. Use --min-health instead.'));
+        }
+        if (config?.check?.minCoverage !== undefined) {
+          log(chalk.yellow('Warning: config.check.minCoverage is deprecated. Use minHealth.'));
+        }
+        if (config?.check?.maxDrift !== undefined) {
+          log(chalk.yellow('Warning: config.check.maxDrift is deprecated. Use minHealth.'));
+        }
 
-        // maxDrift has no default - drift is shown but doesn't fail unless configured
+        // CLI option takes precedence, then config, then sensible defaults
+        const DEFAULT_MIN_HEALTH = 80;
+        const minHealthRaw =
+          options.minHealth ?? config?.check?.minHealth ?? DEFAULT_MIN_HEALTH;
+        const minHealth = clampPercentage(minHealthRaw);
+
+        // Legacy: still read minCoverage/maxDrift for backwards compat display
+        const minCoverageRaw =
+          options.minCoverage ?? config?.check?.minCoverage ?? DEFAULT_MIN_HEALTH;
+        const minCoverage = clampPercentage(minCoverageRaw);
         const maxDriftRaw = options.maxDrift ?? config?.check?.maxDrift;
         const maxDrift = maxDriftRaw !== undefined ? clampPercentage(maxDriftRaw) : undefined;
 
@@ -228,11 +250,12 @@ export function registerCheckCommand(
           : allDriftExports.filter((d) => d.category !== 'example');
 
         // Handle --fix / --preview: auto-fix drift issues
+        const healthScore = doccov.summary.health?.score ?? coverageScore;
         if (shouldFix && driftExports.length > 0) {
           const fixResult = await handleFixes(
             openpkg,
             doccov,
-            { isPreview, targetDir, entryFile },
+            { isPreview, targetDir, entryFile, healthScore },
             { log, error },
           );
 
@@ -273,8 +296,7 @@ export function registerCheckCommand(
               openpkg,
               doccov,
               coverageScore,
-              minCoverage,
-              maxDrift,
+              minHealth,
               minApiSurface,
               driftExports,
               typecheckErrors,
@@ -298,8 +320,7 @@ export function registerCheckCommand(
             openpkg,
             doccov,
             coverageScore,
-            minCoverage,
-            maxDrift,
+            minHealth,
             minApiSurface,
             warnBelowApiSurface,
             driftExports,

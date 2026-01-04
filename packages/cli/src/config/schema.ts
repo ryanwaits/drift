@@ -55,6 +55,7 @@ const apiSurfaceConfigSchema: z.ZodObject<{
  */
 const checkConfigSchema: z.ZodObject<{
   examples: z.ZodOptional<typeof exampleModesSchema>;
+  minHealth: z.ZodOptional<z.ZodNumber>;
   minCoverage: z.ZodOptional<z.ZodNumber>;
   maxDrift: z.ZodOptional<z.ZodNumber>;
   minApiSurface: z.ZodOptional<z.ZodNumber>;
@@ -65,9 +66,11 @@ const checkConfigSchema: z.ZodObject<{
    * Can be single value, array, or comma-separated string
    */
   examples: exampleModesSchema.optional(),
-  /** Minimum coverage percentage required (0-100) */
+  /** Minimum health score required (0-100). Unified metric combining coverage + accuracy. */
+  minHealth: z.number().min(0).max(100).optional(),
+  /** @deprecated Use minHealth instead */
   minCoverage: z.number().min(0).max(100).optional(),
-  /** Maximum drift percentage allowed (0-100) */
+  /** @deprecated Use minHealth instead */
   maxDrift: z.number().min(0).max(100).optional(),
   /** Minimum API surface completeness percentage (0-100) - deprecated, use apiSurface.minCompleteness */
   minApiSurface: z.number().min(0).max(100).optional(),
@@ -132,6 +135,7 @@ export const normalizeConfig = (input: DocCovConfigInput): NormalizedDocCovConfi
   if (input.check) {
     check = {
       examples: input.check.examples,
+      minHealth: input.check.minHealth,
       minCoverage: input.check.minCoverage,
       maxDrift: input.check.maxDrift,
       minApiSurface: input.check.minApiSurface,

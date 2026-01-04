@@ -37,7 +37,7 @@ export async function extractPackageSpec(
     }
   }
 
-  const result = runAnalysis({
+  const result = await runAnalysis({
     entryFile,
     packageDir,
     content,

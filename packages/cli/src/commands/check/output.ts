@@ -16,8 +16,7 @@ export interface TextOutputOptions {
   openpkg: OpenPkg;
   doccov: DocCovSpec;
   coverageScore: number;
-  minCoverage: number;
-  maxDrift: number | undefined;
+  minHealth: number;
   minApiSurface: number | undefined;
   warnBelowApiSurface: number | undefined;
   driftExports: CollectedDrift[];
@@ -34,6 +33,114 @@ export interface TextOutputDeps {
 }
 
 /**
+ * Get color status for health score (green 80+, yellow 60-79, red <60)
+ */
+function getHealthStatus(score: number): 'pass' | 'warn' | 'fail' {
+  if (score >= 80) return 'pass';
+  if (score >= 60) return 'warn';
+  return 'fail';
+}
+
+/**
+ * Get color function for health status
+ */
+function getHealthColor(status: 'pass' | 'warn' | 'fail'): (s: string) => string {
+  switch (status) {
+    case 'pass':
+      return colors.success;
+    case 'warn':
+      return colors.warning;
+    case 'fail':
+      return colors.error;
+  }
+}
+
+/**
+ * Display health tree view with completeness/accuracy breakdown
+ */
+function displayHealthTree(
+  health: import('@doccov/spec').DocumentationHealth,
+  log: typeof console.log,
+): void {
+  const tree = supportsUnicode()
+    ? { branch: '├─', corner: '└─' }
+    : { branch: '|-', corner: '\\-' };
+
+  // Completeness line
+  const missingTotal = Object.values(health.completeness.missing).reduce((a, b) => a + b, 0);
+  const completenessLabel = missingTotal > 0
+    ? `${health.completeness.score}%  (${missingTotal} missing docs)`
+    : `${health.completeness.score}%`;
+  const completenessColor = getHealthColor(getHealthStatus(health.completeness.score));
+  log(`${tree.branch} ${colors.muted('completeness')}  ${completenessColor(completenessLabel)}`);
+
+  // Accuracy line
+  const accuracyLabel = health.accuracy.issues > 0
+    ? `${health.accuracy.score}%  (${health.accuracy.issues} drift issues${health.accuracy.fixable > 0 ? `, ${health.accuracy.fixable} fixable` : ''})`
+    : `${health.accuracy.score}%`;
+  const accuracyColor = getHealthColor(getHealthStatus(health.accuracy.score));
+  const lastBranch = !health.examples ? tree.corner : tree.branch;
+  log(`${lastBranch} ${colors.muted('accuracy')}      ${accuracyColor(accuracyLabel)}`);
+
+  // Examples line (if present)
+  if (health.examples) {
+    const examplesLabel = health.examples.failed > 0
+      ? `${health.examples.score}%  (${health.examples.failed} failed)`
+      : `${health.examples.score}%`;
+    const examplesColor = getHealthColor(getHealthStatus(health.examples.score));
+    log(`${tree.corner} ${colors.muted('examples')}      ${examplesColor(examplesLabel)}`);
+  }
+}
+
+/**
+ * Display verbose health breakdown with detailed per-category metrics
+ */
+export function displayHealthVerbose(
+  health: import('@doccov/spec').DocumentationHealth,
+  log: typeof console.log,
+): void {
+  const tree = supportsUnicode()
+    ? { branch: '├─', corner: '└─' }
+    : { branch: '|-', corner: '\\-' };
+
+  // COMPLETENESS section
+  log(colors.bold('COMPLETENESS') + `  ${health.completeness.score}%`);
+  const missingRules = Object.entries(health.completeness.missing) as Array<[string, number]>;
+
+  for (let i = 0; i < missingRules.length; i++) {
+    const [rule, count] = missingRules[i];
+    const isLast = i === missingRules.length - 1;
+    const prefix = isLast ? tree.corner : tree.branch;
+    const label = count > 0 ? `(${count} missing)` : '';
+    const pct = health.completeness.total > 0
+      ? Math.round(((health.completeness.total - count) / health.completeness.total) * 100)
+      : 100;
+    const color = getHealthColor(getHealthStatus(pct));
+    log(`${prefix} ${colors.muted(rule.padEnd(12))} ${color(`${pct}%`)}  ${colors.muted(label)}`);
+  }
+
+  log('');
+
+  // ACCURACY section
+  log(colors.bold('ACCURACY') + `  ${health.accuracy.score}%  ${colors.muted(`(${health.accuracy.issues} issues)`)}`);
+  const categories = Object.entries(health.accuracy.byCategory) as Array<[string, number]>;
+  for (let i = 0; i < categories.length; i++) {
+    const [category, count] = categories[i];
+    const isLast = i === categories.length - 1;
+    const prefix = isLast ? tree.corner : tree.branch;
+    log(`${prefix} ${colors.muted(category.padEnd(12))} ${count}`);
+  }
+
+  // EXAMPLES section (if present)
+  if (health.examples) {
+    log('');
+    log(colors.bold('EXAMPLES') + `  ${health.examples.score}%`);
+    log(`${tree.branch} ${colors.muted('passed'.padEnd(12))} ${health.examples.passed}`);
+    log(`${tree.corner} ${colors.muted('failed'.padEnd(12))} ${health.examples.failed}`);
+  }
+}
+
+/**
  * Display text summary output
  */
 export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDeps): boolean {
@@ -41,8 +148,7 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
     openpkg,
     doccov,
     coverageScore,
-    minCoverage,
-    maxDrift,
+    minHealth,
     minApiSurface,
     warnBelowApiSurface,
     driftExports,
@@ -57,7 +163,11 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
 
   const sym = getSymbols(supportsUnicode());
 
-  // Calculate drift percentage
+  // Get health score from doccov
+  const health = doccov.summary.health;
+  const healthScore = health?.score ?? coverageScore;
+
+  // Calculate drift percentage for display
   const totalExportsForDrift = openpkg.exports?.length ?? 0;
   const exportsWithDrift = new Set(driftExports.map((d) => d.name)).size;
   const driftScore =
@@ -68,8 +178,8 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
   const apiSurfaceScore = apiSurface?.completeness ?? 100;
   const forgottenCount = apiSurface?.forgotten?.length ?? 0;
 
-  const coverageFailed = coverageScore < minCoverage;
-  const driftFailed = maxDrift !== undefined && driftScore > maxDrift;
+  // Check thresholds using health score
+  const healthFailed = healthScore < minHealth;
   const apiSurfaceFailed = minApiSurface !== undefined && apiSurfaceScore < minApiSurface;
   const apiSurfaceWarn =
     warnBelowApiSurface !== undefined && apiSurfaceScore < warnBelowApiSurface && !apiSurfaceFailed;
@@ -92,26 +202,40 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
     }
   }
 
-  // Render concise summary output using Summary component
+  // Render package header
   const pkgName = openpkg.meta?.name ?? 'unknown';
   const pkgVersion = openpkg.meta?.version ?? '';
-  const totalExports = openpkg.exports?.length ?? 0;
 
   log('');
-  log(colors.bold(`${pkgName}${pkgVersion ? `@${pkgVersion}` : ''}`));
+  log(colors.bold(`${pkgName}${pkgVersion ? ` v${pkgVersion}` : ''}`));
   log('');
 
-  // Build summary with key metrics
-  const summaryBuilder = createSummary({ keyWidth: 10 });
+  // Show stale refs status
+  const hasStaleRefs = staleRefs.length > 0;
 
-  summaryBuilder.addKeyValue('Exports', totalExports);
-  summaryBuilder.addKeyValue('Coverage', `${coverageScore}%`, coverageFailed ? 'fail' : 'pass');
+  // Display health score prominently with tree breakdown
+  if (health) {
+    const healthColor = getHealthColor(getHealthStatus(health.score));
+    log(`${colors.muted('Health')}   ${healthColor(`${health.score}%`)}`);
 
-  if (maxDrift !== undefined) {
-    summaryBuilder.addKeyValue('Drift', `${driftScore}%`, driftFailed ? 'fail' : 'pass');
+    if (verbose) {
+      // Verbose mode: detailed per-category breakdown
+      log('');
+      displayHealthVerbose(health, log);
+    } else {
+      // Compact mode: tree view with completeness/accuracy
+      displayHealthTree(health, log);
+    }
   } else {
+    // Fallback to legacy summary if no health data
+    const summaryBuilder = createSummary({ keyWidth: 10 });
+    summaryBuilder.addKeyValue('Exports', openpkg.exports?.length ?? 0);
+    summaryBuilder.addKeyValue('Coverage', `${coverageScore}%`);
     summaryBuilder.addKeyValue('Drift', `${driftScore}%`);
+    summaryBuilder.print();
   }
+
+  log('');
 
   // Show API Surface status (only if there are forgotten exports or threshold is set)
   if (forgottenCount > 0 || minApiSurface !== undefined || warnBelowApiSurface !== undefined) {
@@ -119,38 +243,18 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
       forgottenCount > 0
         ? `${apiSurfaceScore}% (${forgottenCount} forgotten)`
         : `${apiSurfaceScore}%`;
-    if (apiSurfaceFailed) {
-      summaryBuilder.addKeyValue('API Surface', surfaceLabel, 'fail');
-    } else if (apiSurfaceWarn) {
-      summaryBuilder.addKeyValue('API Surface', surfaceLabel, 'warn');
-    } else if (minApiSurface !== undefined) {
-      summaryBuilder.addKeyValue('API Surface', surfaceLabel, 'pass');
-    } else {
-      summaryBuilder.addKeyValue(
-        'API Surface',
-        surfaceLabel,
-        forgottenCount > 0 ? 'warn' : undefined,
-      );
-    }
-  }
-
-  // Show example validation status
-  if (exampleResult) {
-    const typecheckCount = exampleResult.typecheck?.errors.length ?? 0;
-    if (typecheckCount > 0) {
-      summaryBuilder.addKeyValue('Examples', `${typecheckCount} type error(s)`, 'warn');
-    } else {
-      summaryBuilder.addKeyValue('Examples', 'validated', 'pass');
-    }
+    const surfaceColor = apiSurfaceFailed
+      ? colors.error
+      : apiSurfaceWarn || forgottenCount > 0
+        ? colors.warning
+        : colors.success;
+    log(`${colors.muted('API Surface')}  ${surfaceColor(surfaceLabel)}`);
   }
 
   // Show stale docs status
-  const hasStaleRefs = staleRefs.length > 0;
   if (hasStaleRefs) {
-    summaryBuilder.addKeyValue('Docs', `${staleRefs.length} stale ref(s)`, 'warn');
+    log(`${colors.muted('Stale refs')}   ${colors.warning(`${staleRefs.length} found`)}`);
   }
-
-  summaryBuilder.print();
 
   // Show details for errors
   if (hasTypecheckErrors) {
@@ -211,15 +315,11 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
   log('');
 
   // Show pass/fail status
-  const failed =
-    coverageFailed || driftFailed || apiSurfaceFailed || hasTypecheckErrors || hasStaleRefs;
+  const failed = healthFailed || apiSurfaceFailed || hasTypecheckErrors || hasStaleRefs;
 
   if (!failed) {
     const thresholdParts: string[] = [];
-    thresholdParts.push(`coverage ${coverageScore}% ≥ ${minCoverage}%`);
-    if (maxDrift !== undefined) {
-      thresholdParts.push(`drift ${driftScore}% ≤ ${maxDrift}%`);
-    }
+    thresholdParts.push(`health ${healthScore}% ≥ ${minHealth}%`);
     if (minApiSurface !== undefined) {
       thresholdParts.push(`api-surface ${apiSurfaceScore}% ≥ ${minApiSurface}%`);
     }
@@ -235,15 +335,17 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
       );
     }
 
+    // Hint about --verbose if not already verbose and health data available
+    if (!verbose && health) {
+      log(colors.muted('Use --verbose for detailed breakdown'));
+    }
+
     return true; // passed
   }
 
   // Show failure reasons
-  if (coverageFailed) {
-    log(colors.error(`${sym.error} Coverage ${coverageScore}% below minimum ${minCoverage}%`));
-  }
-  if (driftFailed) {
-    log(colors.error(`${sym.error} Drift ${driftScore}% exceeds maximum ${maxDrift}%`));
+  if (healthFailed) {
+    log(colors.error(`${sym.error} Health ${healthScore}% below minimum ${minHealth}%`));
   }
   if (apiSurfaceFailed) {
     log(
@@ -257,8 +359,11 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
     log(colors.error(`${sym.error} ${staleRefs.length} stale references in docs`));
   }
 
-  log('');
-  log(colors.muted('Use --format json or --format markdown for detailed reports'));
+  // Hint about --fix if there are fixable drift issues
+  if (health && health.accuracy.fixable > 0) {
+    log('');
+    log(colors.muted(`Use --fix to auto-fix ${health.accuracy.fixable} drift issue(s)`));
+  }
 
   return false; // failed
 }
@@ -268,8 +373,7 @@ export interface NonTextOutputOptions {
   openpkg: OpenPkg;
   doccov: DocCovSpec;
   coverageScore: number;
-  minCoverage: number;
-  maxDrift: number | undefined;
+  minHealth: number;
   minApiSurface: number | undefined;
   driftExports: CollectedDrift[];
   typecheckErrors: Array<{ exportName: string; error: ExampleTypeError }>;
@@ -296,8 +400,7 @@ export function handleNonTextOutput(
     openpkg,
     doccov,
     coverageScore,
-    minCoverage,
-    maxDrift,
+    minHealth,
     minApiSurface,
     driftExports,
     typecheckErrors,
@@ -313,6 +416,9 @@ export function handleNonTextOutput(
   // Generate JSON report (always needed for cache)
   const report = generateReportFromDocCov(openpkg, doccov);
   const jsonContent = JSON.stringify(report, null, 2);
+
+  // Get health score
+  const healthScore = doccov.summary.health?.score ?? coverageScore;
 
   // Generate requested format content
   let formatContent: string;
@@ -349,20 +455,13 @@ export function handleNonTextOutput(
     });
   }
 
-  // Calculate drift percentage
-  const totalExportsForDrift = openpkg.exports?.length ?? 0;
-  const exportsWithDrift = new Set(driftExports.map((d) => d.name)).size;
-  const driftScore =
-    totalExportsForDrift === 0 ? 0 : Math.round((exportsWithDrift / totalExportsForDrift) * 100);
-
-  // Check thresholds
-  const coverageFailed = coverageScore < minCoverage;
-  const driftFailed = maxDrift !== undefined && driftScore > maxDrift;
+  // Check thresholds using health score
+  const healthFailed = healthScore < minHealth;
   const apiSurfaceScore = doccov.apiSurface?.completeness ?? 100;
   const apiSurfaceFailed = minApiSurface !== undefined && apiSurfaceScore < minApiSurface;
   const hasTypecheckErrors = typecheckErrors.length > 0;
 
-  return !(coverageFailed || driftFailed || apiSurfaceFailed || hasTypecheckErrors);
+  return !(healthFailed || apiSurfaceFailed || hasTypecheckErrors);
 }
 
 /**
