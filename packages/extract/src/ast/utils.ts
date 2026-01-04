@@ -38,17 +38,50 @@ function parseExamplesFromTags(tags: SpecTag[]): SpecExample[] {
   return examples;
 }
 
+/**
+ * Strip TSDoc hyphen separator from description text.
+ * TSDoc format: `@param name - description` -> TS extracts `- description`
+ * We want just `description`.
+ */
+function stripParamSeparator(text: string | undefined): string | undefined {
+  if (!text) return undefined;
+  const stripped = text.replace(/^-\s*/, '').trim();
+  return stripped || undefined;
+}
+
+/**
+ * Strip TSDoc hyphen separator from @typeParam text.
+ * TSDoc format: `@typeParam T - description` -> TS extracts `T - description`
+ * We want just `description`.
+ */
+function stripTypeParamSeparator(text: string | undefined): string | undefined {
+  if (!text) return undefined;
+  // Match: TypeParamName - description (captures just description)
+  const match = text.match(/^\w+\s+-\s*(.*)$/s);
+  if (match) {
+    return match[1].trim() || undefined;
+  }
+  return text.trim() || undefined;
+}
+
 export function getJSDocComment(node: ts.Node): {
   description?: string;
   tags: SpecTag[];
   examples: SpecExample[];
 } {
   const jsDocTags = ts.getJSDocTags(node);
-  const tags: SpecTag[] = jsDocTags.map((tag) => ({
-    name: tag.tagName.text,
-    text:
-      typeof tag.comment === 'string' ? tag.comment : (ts.getTextOfJSDocComment(tag.comment) ?? ''),
-  }));
+  const tags: SpecTag[] = jsDocTags.map((tag) => {
+    const rawText =
+      typeof tag.comment === 'string' ? tag.comment : (ts.getTextOfJSDocComment(tag.comment) ?? '');
+    // Strip TSDoc hyphen separator for @param and @typeParam tags
+    let text = rawText;
+    if (tag.tagName.text === 'param') {
+      text = stripParamSeparator(rawText) ?? '';
+    } else if (tag.tagName.text === 'typeParam') {
+      text = stripTypeParamSeparator(rawText) ?? '';
+    }
+    return { name: tag.tagName.text, text };
+  });
 
   // Get description from first JSDoc comment
   const jsDocComments = (node as ts.HasJSDoc).jsDoc;
@@ -107,7 +140,7 @@ export function getParamDescription(
     if (isMatch) {
       const comment =
         typeof tag.comment === 'string' ? tag.comment : ts.getTextOfJSDocComment(tag.comment);
-      return comment?.trim() || undefined;
+      return stripParamSeparator(comment);
     }
   }
 

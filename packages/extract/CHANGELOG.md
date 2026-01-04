@@ -1,5 +1,12 @@
 # @openpkg-ts/extract
 
+## 0.16.1
+
+### Patch Changes
+
+- fix(extract): strip TSDoc hyphen separator from @param/@typeParam descriptions
+  feat(sdk): add @throws tag support to JSDoc writer
+
 ## 0.16.0
 
 ### Minor Changes

@@ -36,10 +36,19 @@ export interface JSDocTag {
 /**
  * A patchable representation of a JSDoc comment
  */
+/**
+ * Represents a @throws tag in a JSDoc patch
+ */
+export interface JSDocThrows {
+  type?: string;
+  description?: string;
+}
+
 export interface JSDocPatch {
   description?: string;
   params?: JSDocParam[];
   returns?: JSDocReturn;
+  throws?: JSDocThrows[];
   examples?: string[];
   deprecated?: string | false;
   async?: boolean;
@@ -136,6 +145,21 @@ export function parseJSDocToPatch(jsDocText: string): JSDocPatch {
         patch.deprecated = content || 'Deprecated';
         break;
       }
+      case 'throws':
+      case 'throw': {
+        // Parse: {@link Error} description OR {Error} description OR just description
+        if (!patch.throws) patch.throws = [];
+        const throwsMatch = content.match(/^(?:\{@?link\s+([^}]+)\}|\{([^}]+)\})?\s*(.*)$/s);
+        if (throwsMatch) {
+          patch.throws.push({
+            type: (throwsMatch[1] || throwsMatch[2])?.trim(),
+            description: throwsMatch[3]?.trim(),
+          });
+        } else {
+          patch.throws.push({ description: content.trim() });
+        }
+        break;
+      }
       case 'async': {
         patch.async = true;
         break;
@@ -224,6 +248,10 @@ export function applyPatchToJSDoc(existing: JSDocPatch, updates: Partial<JSDocPa
     };
   }
 
+  if (updates.throws !== undefined) {
+    result.throws = updates.throws;
+  }
+
   if (updates.examples !== undefined) {
     result.examples = updates.examples;
   }
@@ -261,6 +289,7 @@ export function serializeJSDoc(patch: JSDocPatch, indent = ''): string {
   const hasTags =
     patch.params?.length ||
     patch.returns ||
+    patch.throws?.length ||
     patch.examples?.length ||
     patch.deprecated ||
     patch.async ||
@@ -322,6 +351,20 @@ export function serializeJSDoc(patch: JSDocPatch, indent = ''): string {
       tagLine += ` ${patch.returns.description}`;
     }
     lines.push(tagLine);
+  }
+
+  // Throws (one block per exception type per TSDoc)
+  if (patch.throws) {
+    for (const t of patch.throws) {
+      let tagLine = '@throws';
+      if (t.type) {
+        tagLine += ` {${t.type}}`;
+      }
+      if (t.description) {
+        tagLine += ` ${t.description}`;
+      }
+      lines.push(tagLine);
+    }
   }
 
   // Deprecated (only if truthy string, not false)

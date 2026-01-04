@@ -1,5 +1,14 @@
 # @doccov/sdk
 
+## 0.27.2
+
+### Patch Changes
+
+- fix(extract): strip TSDoc hyphen separator from @param/@typeParam descriptions
+  feat(sdk): add @throws tag support to JSDoc writer
+- Updated dependencies
+  - @openpkg-ts/extract@0.16.1
+
 ## 0.27.0
 
 ### Minor Changes
