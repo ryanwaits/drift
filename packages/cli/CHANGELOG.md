@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.27.1
+
+### Patch Changes
+
+- fix: use resolved targetDir for cwd in check command instead of raw options.cwd
+
 ## 0.27.0
 
 ### Patch Changes

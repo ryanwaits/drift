@@ -177,7 +177,7 @@ export function registerCheckCommand(
           resolveExternalTypes,
           maxDepth: options.maxTypeDepth,
           useCache: options.cache !== false,
-          cwd: options.cwd,
+          cwd: targetDir, // Use resolved target dir for consistent caching
         });
 
         // Build analysis options with visibility filters
@@ -303,7 +303,7 @@ export function registerCheckCommand(
               limit: parseInt(options.limit, 10) || 20,
               stdout: options.stdout,
               outputPath: options.output,
-              cwd: options.cwd,
+              cwd: targetDir,
             },
             { log },
           );
