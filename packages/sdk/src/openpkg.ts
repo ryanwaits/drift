@@ -41,6 +41,21 @@ export interface AnalysisResult {
   fromCache?: boolean;
   /** Cache validation details (if cache was checked) */
   cacheStatus?: CacheValidationResult;
+  /** Forgotten exports (types referenced but not exported) */
+  forgottenExports?: ForgottenExportResult[];
+}
+
+export interface ForgottenExportResult {
+  name: string;
+  definedIn?: string;
+  referencedBy: Array<{
+    typeName: string;
+    exportName: string;
+    location: 'return' | 'parameter' | 'property' | 'extends' | 'type-parameter';
+    path?: string;
+  }>;
+  isExternal: boolean;
+  fix?: string;
 }
 
 export interface AnalysisMetadata {
@@ -123,6 +138,7 @@ export class DocCov {
         ...filterOutcome.diagnostics,
       ],
       metadata: this.normalizeMetadata(analysis.metadata),
+      forgottenExports: analysis.forgottenExports,
     };
   }
 
@@ -176,6 +192,7 @@ export class DocCov {
       ],
       metadata,
       fromCache: false,
+      forgottenExports: analysis.forgottenExports,
     };
 
     // Save to cache if enabled

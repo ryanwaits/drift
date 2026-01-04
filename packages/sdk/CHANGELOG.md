@@ -1,5 +1,17 @@
 # @doccov/sdk
 
+## 0.26.0
+
+### Minor Changes
+
+- Add API surface completeness analysis for forgotten exports detection
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/spec@0.26.0
+  - @openpkg-ts/extract@0.16.0
+
 ## 0.25.12
 
 ### Patch Changes

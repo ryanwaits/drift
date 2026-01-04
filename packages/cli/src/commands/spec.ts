@@ -242,6 +242,7 @@ export function registerSpecCommand(
             openpkgPath: 'openpkg.json',
             openpkg: normalized,
             packagePath: targetDir,
+            forgottenExports: result.forgottenExports,
           });
 
           // Validate doccov spec

@@ -11,7 +11,13 @@ import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface } from '../serializers/interfaces';
 import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
-import type { Diagnostic, ExtractOptions, ExtractResult } from '../types';
+import type {
+  Diagnostic,
+  ExtractOptions,
+  ExtractResult,
+  ForgottenExport,
+  TypeReference,
+} from '../types';
 
 /** Built-in types that shouldn't be tracked as dangling refs */
 const BUILTIN_TYPES = new Set([
@@ -160,15 +166,34 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   const meta = await getPackageMeta(entryFile, baseDir);
   const types = ctx.typeRegistry.getAll();
 
-  // Check for dangling $refs (refs to types not defined)
-  const danglingRefs = collectDanglingRefs(exports, types);
-  for (const ref of danglingRefs) {
-    diagnostics.push({
-      message: `Type '${ref}' is referenced but not defined in types[].`,
-      severity: 'warning',
-      code: 'DANGLING_REF',
-      suggestion: 'The type may be from an external package. Check import paths.',
-    });
+  // Check for forgotten exports (refs to types not defined)
+  const forgottenExports = collectForgottenExports(exports, types, program, sourceFile);
+  for (const forgotten of forgottenExports) {
+    const refSummary = forgotten.referencedBy
+      .slice(0, 3)
+      .map((r) => `${r.exportName} (${r.location})`)
+      .join(', ');
+    const moreRefs =
+      forgotten.referencedBy.length > 3 ? ` +${forgotten.referencedBy.length - 3} more` : '';
+
+    if (forgotten.isExternal) {
+      diagnostics.push({
+        message: `External type '${forgotten.name}' referenced by: ${refSummary}${moreRefs}`,
+        severity: 'info',
+        code: 'EXTERNAL_TYPE_REF',
+        suggestion: forgotten.definedIn
+          ? `Type is from: ${forgotten.definedIn}`
+          : 'Type is from an external package',
+      });
+    } else {
+      diagnostics.push({
+        message: `Forgotten export: '${forgotten.name}' referenced by: ${refSummary}${moreRefs}`,
+        severity: 'warning',
+        code: 'FORGOTTEN_EXPORT',
+        suggestion: forgotten.fix ?? `Export this type from your public API`,
+        location: forgotten.definedIn ? { file: forgotten.definedIn } : undefined,
+      });
+    }
   }
 
   // Check for external type stubs (info only - external stubs are expected)
@@ -196,18 +221,42 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     },
   };
 
-  return { spec, diagnostics };
+  // Filter to only internal forgotten exports (for fix generation)
+  const internalForgotten = forgottenExports.filter((f) => !f.isExternal);
+
+  return {
+    spec,
+    diagnostics,
+    ...(internalForgotten.length > 0 ? { forgottenExports: internalForgotten } : {}),
+  };
+}
+
+/** Location context for type reference tracking */
+type RefLocation = TypeReference['location'];
+
+/** State for tracking reference context during traversal */
+interface RefTraversalState {
+  exportName: string;
+  location: RefLocation;
+  path: string[];
 }
 
 /**
- * Collect all $ref values from a nested object/array structure
+ * Collect all $ref values with context (which export, location type, path)
  */
-function collectAllRefs(obj: unknown, refs: Set<string>): void {
+function collectAllRefsWithContext(
+  obj: unknown,
+  refs: Map<string, TypeReference[]>,
+  state: RefTraversalState,
+): void {
   if (obj === null || obj === undefined) return;
 
   if (Array.isArray(obj)) {
-    for (const item of obj) {
-      collectAllRefs(item, refs);
+    for (let i = 0; i < obj.length; i++) {
+      collectAllRefsWithContext(obj[i], refs, {
+        ...state,
+        path: [...state.path, `[${i}]`],
+      });
     }
     return;
   }
@@ -215,27 +264,158 @@ function collectAllRefs(obj: unknown, refs: Set<string>): void {
   if (typeof obj === 'object') {
     const record = obj as Record<string, unknown>;
     if (typeof record.$ref === 'string' && record.$ref.startsWith('#/types/')) {
-      refs.add(record.$ref.slice('#/types/'.length));
+      const typeName = record.$ref.slice('#/types/'.length);
+      const existing = refs.get(typeName) ?? [];
+      existing.push({
+        typeName,
+        exportName: state.exportName,
+        location: state.location,
+        path: state.path.join('.') || undefined,
+      });
+      refs.set(typeName, existing);
     }
-    for (const value of Object.values(record)) {
-      collectAllRefs(value, refs);
+
+    for (const [key, value] of Object.entries(record)) {
+      // Infer location from property name
+      let newLocation = state.location;
+      if (key === 'returnType' || key === 'returns') newLocation = 'return';
+      else if (key === 'parameters' || key === 'params') newLocation = 'parameter';
+      else if (key === 'properties' || key === 'members') newLocation = 'property';
+      else if (key === 'extends' || key === 'implements') newLocation = 'extends';
+      else if (key === 'typeParameters' || key === 'typeParams') newLocation = 'type-parameter';
+
+      collectAllRefsWithContext(value, refs, {
+        ...state,
+        location: newLocation,
+        path: [...state.path, key],
+      });
     }
   }
 }
 
 /**
- * Find all dangling $ref references (refs to types not in types[])
+ * Find where a type is defined in the source files
  */
-function collectDanglingRefs(exports: SpecExport[], types: SpecType[]): string[] {
+function findTypeDefinition(
+  typeName: string,
+  program: ts.Program,
+  sourceFile: ts.SourceFile,
+): string | undefined {
+  const checker = program.getTypeChecker();
+
+  // Search in the entry source file first
+  const findInNode = (node: ts.Node): string | undefined => {
+    if (
+      (ts.isInterfaceDeclaration(node) ||
+        ts.isTypeAliasDeclaration(node) ||
+        ts.isClassDeclaration(node) ||
+        ts.isEnumDeclaration(node)) &&
+      node.name?.text === typeName
+    ) {
+      const sf = node.getSourceFile();
+      return sf.fileName;
+    }
+
+    return ts.forEachChild(node, findInNode);
+  };
+
+  // Check entry file
+  const entryResult = findInNode(sourceFile);
+  if (entryResult) return entryResult;
+
+  // Check all source files in program
+  for (const sf of program.getSourceFiles()) {
+    if (sf.isDeclarationFile && !sf.fileName.includes('node_modules')) {
+      const result = findInNode(sf);
+      if (result) return result;
+    }
+  }
+
+  // Try to find via type checker symbol lookup
+  const symbol = checker.resolveName(typeName, sourceFile, ts.SymbolFlags.Type, false);
+  if (symbol?.declarations?.[0]) {
+    return symbol.declarations[0].getSourceFile().fileName;
+  }
+
+  return undefined;
+}
+
+/**
+ * Determine if a type is external (from node_modules/dependencies)
+ */
+function isExternalType(definedIn: string | undefined): boolean {
+  if (!definedIn) return true;
+  return definedIn.includes('node_modules');
+}
+
+/**
+ * Check if a type has @internal JSDoc tag
+ */
+function hasInternalTag(typeName: string, program: ts.Program, sourceFile: ts.SourceFile): boolean {
+  const checker = program.getTypeChecker();
+
+  // Try to find the symbol for this type
+  const symbol = checker.resolveName(typeName, sourceFile, ts.SymbolFlags.Type, false);
+  if (!symbol) return false;
+
+  // Check JSDoc tags on the symbol
+  const jsTags = symbol.getJsDocTags();
+  return jsTags.some((tag) => tag.name === 'internal');
+}
+
+/**
+ * Find all dangling $ref references with enhanced context
+ */
+function collectForgottenExports(
+  exports: SpecExport[],
+  types: SpecType[],
+  program: ts.Program,
+  sourceFile: ts.SourceFile,
+): ForgottenExport[] {
   const definedTypes = new Set(types.map((t) => t.id));
-  const referencedTypes = new Set<string>();
+  const referencedTypes = new Map<string, TypeReference[]>();
 
-  collectAllRefs(exports, referencedTypes);
-  collectAllRefs(types, referencedTypes);
+  // Collect refs from exports with context
+  for (const exp of exports) {
+    collectAllRefsWithContext(exp, referencedTypes, {
+      exportName: exp.id || exp.name,
+      location: 'property',
+      path: [],
+    });
+  }
 
-  return Array.from(referencedTypes).filter(
-    (ref) => !definedTypes.has(ref) && !BUILTIN_TYPES.has(ref) && !shouldSkipDanglingRef(ref),
-  );
+  // Collect refs from types themselves (for nested refs)
+  for (const type of types) {
+    collectAllRefsWithContext(type, referencedTypes, {
+      exportName: type.id,
+      location: 'property',
+      path: [],
+    });
+  }
+
+  const forgottenExports: ForgottenExport[] = [];
+
+  for (const [typeName, references] of referencedTypes) {
+    // Skip if already defined, builtin, or should be skipped
+    if (definedTypes.has(typeName)) continue;
+    if (BUILTIN_TYPES.has(typeName)) continue;
+    if (shouldSkipDanglingRef(typeName)) continue;
+    // Skip types marked @internal - intentionally not exported
+    if (hasInternalTag(typeName, program, sourceFile)) continue;
+
+    const definedIn = findTypeDefinition(typeName, program, sourceFile);
+    const isExternal = isExternalType(definedIn);
+
+    forgottenExports.push({
+      name: typeName,
+      definedIn,
+      referencedBy: references,
+      isExternal,
+      fix: isExternal ? undefined : `export { ${typeName} } from '${definedIn ?? './types'}'`,
+    });
+  }
+
+  return forgottenExports;
 }
 
 /**

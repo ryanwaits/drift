@@ -105,6 +105,7 @@ export function generateReportFromDocCov(openpkg: OpenPkg, doccov: DocCovSpec): 
     },
     coverage,
     exports: exportsData,
+    apiSurface: doccov.apiSurface,
   };
 }
 

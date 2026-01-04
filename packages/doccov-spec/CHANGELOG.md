@@ -1,5 +1,11 @@
 # @doccov/spec
 
+## 0.26.0
+
+### Minor Changes
+
+- Add API surface completeness analysis for forgotten exports detection
+
 ## 0.24.1
 
 ### Patch Changes

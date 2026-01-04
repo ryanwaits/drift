@@ -111,6 +111,9 @@ export type DocCovSpec = {
 
   /** Per-export analysis, keyed by openpkg export ID */
   exports: Record<string, ExportAnalysis>;
+
+  /** API surface completeness analysis */
+  apiSurface?: ApiSurfaceResult;
 };
 
 export type DocCovSummary = {
@@ -156,4 +159,49 @@ export type ExportAnalysis = {
 
   /** Example validation results */
   examples?: ExampleAnalysis;
+};
+
+// ============================================================================
+// API Surface Types (Forgotten Exports)
+// ============================================================================
+
+/** Location context for where a type is referenced */
+export type TypeReferenceLocation =
+  | 'return'
+  | 'parameter'
+  | 'property'
+  | 'extends'
+  | 'type-parameter';
+
+/** A type referenced in public API but not exported */
+export type ForgottenExport = {
+  /** Name of the forgotten type */
+  name: string;
+
+  /** Where the type is defined (file path) */
+  definedIn?: { file: string; line?: number };
+
+  /** Which exports reference this type */
+  referencedBy: Array<{ exportName: string; location: TypeReferenceLocation }>;
+
+  /** Whether type is from external package */
+  isExternal: boolean;
+
+  /** Suggested fix if applicable */
+  fix?: { targetFile: string; exportStatement: string };
+};
+
+/** API Surface analysis result */
+export type ApiSurfaceResult = {
+  /** Total types referenced in public API */
+  totalReferenced: number;
+
+  /** Types that are properly exported */
+  exported: number;
+
+  /** Types referenced but not exported */
+  forgotten: ForgottenExport[];
+
+  /** Completeness percentage (exported / totalReferenced * 100) */
+  completeness: number;
 };

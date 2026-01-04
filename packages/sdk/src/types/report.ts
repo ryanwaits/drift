@@ -1,4 +1,5 @@
 import type { CategorizedDrift, DriftCategory, SpecDocDrift } from '../analysis/drift/types';
+import type { ApiSurfaceResult } from '@doccov/spec';
 
 /**
  * DocCov report schema version.
@@ -220,4 +221,9 @@ export interface DocCovReport {
    * Per-export coverage data, keyed by export ID.
    */
   exports: Record<string, ExportCoverageData>;
+
+  /**
+   * API surface analysis (forgotten exports).
+   */
+  apiSurface?: ApiSurfaceResult;
 }

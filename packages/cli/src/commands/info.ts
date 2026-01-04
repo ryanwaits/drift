@@ -44,6 +44,7 @@ export function registerInfoCommand(program: Command): void {
           openpkg,
           openpkgPath: entryFile,
           packagePath: targetDir,
+          forgottenExports: specResult.forgottenExports,
         });
         const stats = computeStats(openpkg, doccov);
 

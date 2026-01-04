@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.16.0
+
+### Minor Changes
+
+- Add API surface completeness analysis for forgotten exports detection
+
 ## 0.15.0
 
 ### Minor Changes

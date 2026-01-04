@@ -2,15 +2,19 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
   applyEdits,
+  applyForgottenExportFixes,
   categorizeDrifts,
   createSourceFile,
   type FixSuggestion,
+  type ForgottenExportFix,
   findJSDocLocation,
   generateFixesForExport,
+  generateForgottenExportFixes,
   type JSDocEdit,
   type JSDocPatch,
   mergeFixes,
   parseJSDocToPatch,
+  previewForgottenExportFixes,
   serializeJSDoc,
 } from '@doccov/sdk';
 import type { DocCovDrift, DocCovSpec } from '@doccov/spec';
@@ -21,6 +25,7 @@ import { collectDriftsFromExports, groupByExport } from './utils';
 export interface FixHandlerOptions {
   isPreview: boolean;
   targetDir: string;
+  entryFile?: string;
 }
 
 export interface FixHandlerDeps {
@@ -32,6 +37,7 @@ export interface FixResult {
   fixedDriftKeys: Set<string>;
   editsApplied: number;
   filesModified: number;
+  forgottenExportsFixed: number;
 }
 
 /**
@@ -50,14 +56,14 @@ export async function handleFixes(
   const allDrifts = collectDriftsFromExports(openpkg.exports ?? [], doccov);
 
   if (allDrifts.length === 0) {
-    return { fixedDriftKeys, editsApplied: 0, filesModified: 0 };
+    return { fixedDriftKeys, editsApplied: 0, filesModified: 0, forgottenExportsFixed: 0 };
   }
 
   const { fixable, nonFixable } = categorizeDrifts(allDrifts.map((d) => d.drift));
 
   if (fixable.length === 0) {
     log(chalk.yellow(`Found ${nonFixable.length} drift issue(s), but none are auto-fixable.`));
-    return { fixedDriftKeys, editsApplied: 0, filesModified: 0 };
+    return { fixedDriftKeys, editsApplied: 0, filesModified: 0, forgottenExportsFixed: 0 };
   }
 
   log('');
@@ -104,12 +110,12 @@ export async function handleFixes(
   }
 
   if (edits.length === 0) {
-    return { fixedDriftKeys, editsApplied: 0, filesModified: 0 };
+    return { fixedDriftKeys, editsApplied: 0, filesModified: 0, forgottenExportsFixed: 0 };
   }
 
   if (isPreview) {
     displayPreview(editsByFile, targetDir, log);
-    return { fixedDriftKeys, editsApplied: 0, filesModified: 0 };
+    return { fixedDriftKeys, editsApplied: 0, filesModified: 0, forgottenExportsFixed: 0 };
   }
 
   // Apply fixes
@@ -140,7 +146,111 @@ export async function handleFixes(
     fixedDriftKeys,
     editsApplied: totalFixes,
     filesModified: applyResult.filesModified,
+    forgottenExportsFixed: 0,
   };
+}
+
+/**
+ * Handle --fix for forgotten exports (types referenced but not exported)
+ */
+export async function handleForgottenExportFixes(
+  doccov: DocCovSpec,
+  options: FixHandlerOptions,
+  deps: FixHandlerDeps,
+): Promise<{ fixesApplied: number; filesModified: number }> {
+  const { isPreview, targetDir, entryFile } = options;
+  const { log, error } = deps;
+
+  // Skip if no API surface data or no forgotten exports
+  if (!doccov.apiSurface || doccov.apiSurface.forgotten.length === 0) {
+    return { fixesApplied: 0, filesModified: 0 };
+  }
+
+  // Filter to fixable forgotten exports (non-external with fix suggestions)
+  const fixable = doccov.apiSurface.forgotten.filter((f) => !f.isExternal && f.fix);
+
+  if (fixable.length === 0) {
+    return { fixesApplied: 0, filesModified: 0 };
+  }
+
+  // Generate fixes
+  const fixes = generateForgottenExportFixes(doccov.apiSurface, {
+    baseDir: targetDir,
+    entryFile: entryFile ?? 'src/index.ts',
+  });
+
+  if (fixes.length === 0) {
+    return { fixesApplied: 0, filesModified: 0 };
+  }
+
+  log('');
+  log(chalk.bold(`Found ${fixes.length} forgotten export(s) to fix`));
+
+  if (isPreview) {
+    displayForgottenExportPreview(fixes, targetDir, log);
+    return { fixesApplied: 0, filesModified: 0 };
+  }
+
+  // Apply fixes
+  const result = await applyForgottenExportFixes(fixes);
+
+  if (result.errors.length > 0) {
+    for (const err of result.errors) {
+      error(chalk.red(`  ${err.file}: ${err.error}`));
+    }
+  }
+
+  if (result.fixesApplied > 0) {
+    log('');
+    log(
+      chalk.green(
+        `✓ Added ${result.fixesApplied} export(s) to ${result.filesModified} file(s)`,
+      ),
+    );
+
+    // Show which types were exported
+    const grouped = new Map<string, string[]>();
+    for (const fix of fixes) {
+      const relativePath = path.relative(targetDir, fix.targetFile);
+      const types = grouped.get(relativePath) ?? [];
+      types.push(fix.typeName);
+      grouped.set(relativePath, types);
+    }
+
+    for (const [file, types] of grouped) {
+      log(chalk.dim(`  ${file}: ${types.join(', ')}`));
+    }
+  }
+
+  return { fixesApplied: result.fixesApplied, filesModified: result.filesModified };
+}
+
+/**
+ * Display preview for forgotten export fixes
+ */
+function displayForgottenExportPreview(
+  fixes: ForgottenExportFix[],
+  targetDir: string,
+  log: typeof console.log,
+): void {
+  log(chalk.bold('Preview - forgotten exports that would be added:'));
+  log('');
+
+  const previews = previewForgottenExportFixes(fixes);
+
+  for (const [filePath, preview] of previews) {
+    const relativePath = path.relative(targetDir, filePath);
+    log(chalk.cyan(`${relativePath}:${preview.insertLine + 1}`));
+    log('');
+
+    for (const stmt of preview.statements) {
+      log(chalk.green(`  + ${stmt}`));
+    }
+    log('');
+  }
+
+  log(chalk.yellow(`${fixes.length} export(s) would be added.`));
+  log(chalk.gray('Run with --fix to apply these changes.'));
 }
 
 interface GeneratedEdit {

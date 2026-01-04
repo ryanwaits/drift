@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { extract } from '@openpkg-ts/extract';
+import { extract, type ForgottenExport } from '@openpkg-ts/extract';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import type * as TS from 'typescript';
 import { ts } from '../ts-module';
@@ -28,6 +28,7 @@ export interface RunAnalysisResult {
   metadata: AnalysisMetadataInternal;
   diagnostics: readonly TS.Diagnostic[];
   specDiagnostics: SpecDiagnostic[];
+  forgottenExports?: ForgottenExport[];
 }
 
 function findNearestPackageJson(startDir: string): string | undefined {
@@ -166,5 +167,6 @@ export async function runAnalysis(input: AnalysisContextInput): Promise<RunAnaly
     },
     diagnostics,
     specDiagnostics,
+    forgottenExports: extractResult.forgottenExports,
   };
 }

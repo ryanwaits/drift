@@ -12,7 +12,11 @@
 // Context types
 export type { DetectedSchemaEntry } from './context';
 // DocCov spec builder
-export { type BuildDocCovOptions, buildDocCovSpec } from './doccov-builder';
+export {
+  type BuildDocCovOptions,
+  buildDocCovSpec,
+  type ExtractForgottenExport,
+} from './doccov-builder';
 // Drift detection and categorization
 export {
   buildExportRegistry,

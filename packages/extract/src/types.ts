@@ -15,6 +15,7 @@ export interface ExtractOptions {
 export interface ExtractResult {
   spec: OpenPkg;
   diagnostics: Diagnostic[];
+  forgottenExports?: ForgottenExport[];
 }
 
 export interface Diagnostic {
@@ -23,4 +24,21 @@ export interface Diagnostic {
   code?: string;
   suggestion?: string;
   location?: { file?: string; line?: number; column?: number };
+}
+
+/** Context tracking for type references in public API */
+export interface TypeReference {
+  typeName: string;
+  exportName: string;
+  location: 'return' | 'parameter' | 'property' | 'extends' | 'type-parameter';
+  path?: string;
+}
+
+/** Structured data for forgotten exports */
+export interface ForgottenExport {
+  name: string;
+  definedIn?: string;
+  referencedBy: TypeReference[];
+  isExternal: boolean;
+  fix?: string;
 }

@@ -28,6 +28,18 @@ export type ExampleValidationMode = 'presence' | 'typecheck' | 'run';
 export type SchemaExtractionMode = 'static' | 'runtime' | 'hybrid';
 
 /**
+ * API surface configuration options.
+ */
+export interface ApiSurfaceConfig {
+  /** Minimum completeness percentage to pass (0-100) */
+  minCompleteness?: number;
+  /** Warning threshold - warn when below this (0-100) */
+  warnBelow?: number;
+  /** Type names to ignore (won't be flagged as forgotten exports) */
+  ignore?: string[];
+}
+
+/**
  * Check command configuration options.
  */
 export interface CheckConfig {
@@ -43,6 +55,10 @@ export interface CheckConfig {
   minCoverage?: number;
   /** Maximum drift percentage allowed (0-100) */
   maxDrift?: number;
+  /** Minimum API surface completeness percentage (0-100) - deprecated, use apiSurface.minCompleteness */
+  minApiSurface?: number;
+  /** API surface configuration */
+  apiSurface?: ApiSurfaceConfig;
 }
 
 /**

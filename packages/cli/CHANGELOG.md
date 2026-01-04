@@ -1,5 +1,17 @@
 # @doccov/cli
 
+## 0.26.0
+
+### Minor Changes
+
+- Add API surface completeness analysis for forgotten exports detection
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/spec@0.26.0
+  - @doccov/sdk@0.26.0
+
 ## 0.25.11
 
 ### Patch Changes

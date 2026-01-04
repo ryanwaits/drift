@@ -1,4 +1,3 @@
-import { spinner } from 'cli-utils';
 import {
   buildDocCovSpec,
   DocCov,
@@ -10,12 +9,13 @@ import {
 } from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
+import { spinner } from 'cli-utils';
 import type { Command } from 'commander';
 import { loadDocCovConfig } from '../../config';
 import { mergeFilterOptions, parseVisibilityFlag } from '../../utils/filter-options';
 import { clampPercentage } from '../../utils/validation';
-import { handleFixes } from './fix-handler';
-import { displayTextOutput, handleNonTextOutput } from './output';
+import { handleFixes, handleForgottenExportFixes } from './fix-handler';
+import { displayApiSurfaceOutput, displayTextOutput, handleNonTextOutput } from './output';
 import type { CheckCommandDependencies, CollectedDrift, OutputFormat } from './types';
 import { collect, collectDrift } from './utils';
 import { runExampleValidation, validateMarkdownDocs } from './validation';
@@ -74,6 +74,13 @@ export function registerCheckCommand(
       '--visibility <tags>',
       'Filter by release stage: public,beta,alpha,internal (comma-separated)',
     )
+    .option(
+      '--min-api-surface <percentage>',
+      'Minimum API surface completeness percentage (0-100)',
+      (value) => Number(value),
+    )
+    .option('--api-surface', 'Show only API surface / forgotten exports info')
+    .option('-v, --verbose', 'Show detailed output including forgotten exports')
     .action(async (entry, options) => {
       try {
         const spin = spinner('Analyzing...');
@@ -116,6 +123,19 @@ export function registerCheckCommand(
         const maxDriftRaw = options.maxDrift ?? config?.check?.maxDrift;
         const maxDrift = maxDriftRaw !== undefined ? clampPercentage(maxDriftRaw) : undefined;
 
+        // API surface config: CLI flag takes precedence, then apiSurface.minCompleteness, then legacy minApiSurface
+        const apiSurfaceConfig = config?.check?.apiSurface;
+        const minApiSurfaceRaw =
+          options.minApiSurface ??
+          apiSurfaceConfig?.minCompleteness ??
+          config?.check?.minApiSurface;
+        const minApiSurface =
+          minApiSurfaceRaw !== undefined ? clampPercentage(minApiSurfaceRaw) : undefined;
+        const warnBelowApiSurface = apiSurfaceConfig?.warnBelow
+          ? clampPercentage(apiSurfaceConfig.warnBelow)
+          : undefined;
+        const apiSurfaceIgnore = apiSurfaceConfig?.ignore ?? [];
+
         // Parse and merge visibility filters
         const cliFilters = {
           include: undefined,
@@ -156,6 +176,8 @@ export function registerCheckCommand(
           openpkg,
           openpkgPath: entryFile,
           packagePath: targetDir,
+          forgottenExports: specResult.forgottenExports,
+          apiSurfaceIgnore,
         });
         const format = (options.format ?? 'text') as OutputFormat;
 
@@ -210,7 +232,7 @@ export function registerCheckCommand(
           const fixResult = await handleFixes(
             openpkg,
             doccov,
-            { isPreview, targetDir },
+            { isPreview, targetDir, entryFile },
             { log, error },
           );
 
@@ -222,7 +244,26 @@ export function registerCheckCommand(
           }
         }
 
+        // Handle --fix / --preview: auto-fix forgotten exports
+        if (shouldFix && doccov.apiSurface?.forgotten.length) {
+          await handleForgottenExportFixes(
+            doccov,
+            { isPreview, targetDir, entryFile },
+            { log, error },
+          );
+        }
+
         spin.success('Analysis complete');
+
+        // Handle --api-surface focused view
+        if (options.apiSurface) {
+          displayApiSurfaceOutput(doccov, { log });
+          const apiSurfaceScore = doccov.apiSurface?.completeness ?? 100;
+          if (minApiSurface !== undefined && apiSurfaceScore < minApiSurface) {
+            process.exit(1);
+          }
+          return;
+        }
 
         // Handle --format output for non-text formats
         if (format !== 'text') {
@@ -234,6 +275,7 @@ export function registerCheckCommand(
               coverageScore,
               minCoverage,
               maxDrift,
+              minApiSurface,
               driftExports,
               typecheckErrors,
               limit: parseInt(options.limit, 10) || 20,
@@ -258,12 +300,15 @@ export function registerCheckCommand(
             coverageScore,
             minCoverage,
             maxDrift,
+            minApiSurface,
+            warnBelowApiSurface,
             driftExports,
             typecheckErrors,
             staleRefs,
             exampleResult,
             specWarnings,
             specInfos,
+            verbose: options.verbose ?? false,
           },
           { log },
         );

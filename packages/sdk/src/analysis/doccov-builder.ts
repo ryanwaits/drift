@@ -1,10 +1,13 @@
 import type {
+  ApiSurfaceResult,
   DocCovDrift,
   DocCovSpec,
   DocCovSummary,
   DriftCategory,
   ExportAnalysis,
+  ForgottenExport,
   MissingDocRule,
+  TypeReferenceLocation,
 } from '@doccov/spec';
 import { DRIFT_CATEGORIES } from '@doccov/spec';
 import type { SpecExport } from '@openpkg-ts/spec';
@@ -12,10 +15,28 @@ import { isFixableDrift } from '../fix';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';
 import type { OpenPkgSpec } from './spec-types';
 
+/** Forgotten export from extract package (different shape than spec type) */
+export interface ExtractForgottenExport {
+  name: string;
+  definedIn?: string;
+  referencedBy: Array<{
+    typeName: string;
+    exportName: string;
+    location: TypeReferenceLocation;
+    path?: string;
+  }>;
+  isExternal: boolean;
+  fix?: string;
+}
+
 export interface BuildDocCovOptions {
   openpkgPath: string;
   openpkg: OpenPkgSpec;
   packagePath?: string;
+  /** Forgotten exports from extraction (for API surface calculation) */
+  forgottenExports?: ExtractForgottenExport[];
+  /** Type names to ignore in API surface calculation */
+  apiSurfaceIgnore?: string[];
 }
 
 /**
@@ -25,7 +46,7 @@ export interface BuildDocCovOptions {
  * @returns DocCov specification with coverage analysis
  */
 export function buildDocCovSpec(options: BuildDocCovOptions): DocCovSpec {
-  const { openpkg, openpkgPath } = options;
+  const { openpkg, openpkgPath, forgottenExports, apiSurfaceIgnore } = options;
   const registry = buildExportRegistry(openpkg);
 
   const exports: Record<string, ExportAnalysis> = {};
@@ -85,6 +106,13 @@ export function buildDocCovSpec(options: BuildDocCovOptions): DocCovSpec {
     },
   };
 
+  // Compute API surface if forgotten exports provided
+  const apiSurface = computeApiSurface(
+    forgottenExports,
+    openpkg.types?.length ?? 0,
+    apiSurfaceIgnore,
+  );
+
   return {
     doccov: '1.0.0',
     source: {
@@ -96,6 +124,45 @@ export function buildDocCovSpec(options: BuildDocCovOptions): DocCovSpec {
     generatedAt: new Date().toISOString(),
     summary,
     exports,
+    ...(apiSurface ? { apiSurface } : {}),
+  };
+}
+
+/**
+ * Compute API surface completeness from forgotten exports.
+ */
+function computeApiSurface(
+  forgottenExports: ExtractForgottenExport[] | undefined,
+  exportedTypesCount: number,
+  ignoreList?: string[],
+): ApiSurfaceResult | undefined {
+  if (!forgottenExports) return undefined;
+
+  // Filter out ignored types
+  const ignoreSet = new Set(ignoreList ?? []);
+  const filteredExports = forgottenExports.filter((f) => !ignoreSet.has(f.name));
+
+  const forgotten: ForgottenExport[] = filteredExports.map((f) => ({
+    name: f.name,
+    definedIn: f.definedIn ? { file: f.definedIn } : undefined,
+    referencedBy: f.referencedBy.map((r) => ({
+      exportName: r.exportName,
+      location: r.location,
+    })),
+    isExternal: f.isExternal,
+    fix: f.fix ? { targetFile: f.definedIn ?? 'index.ts', exportStatement: f.fix } : undefined,
+  }));
+
+  const forgottenCount = forgotten.length;
+  const totalReferenced = exportedTypesCount + forgottenCount;
+  const completeness =
+    totalReferenced > 0 ? Math.round((exportedTypesCount / totalReferenced) * 100) : 100;
+
+  return {
+    totalReferenced,
+    exported: exportedTypesCount,
+    forgotten,
+    completeness,
   };
 }
 

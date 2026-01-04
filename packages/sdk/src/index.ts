@@ -55,7 +55,7 @@ export {
 export { generateReport, renderApiSurface } from './analysis/report';
 // Spec types
 export type { OpenPkgSpec } from './analysis/spec-types';
-export type { AnalysisResult, AnalyzeOptions, Diagnostic } from './openpkg';
+export type { AnalysisResult, AnalyzeOptions, Diagnostic, ForgottenExportResult } from './openpkg';
 export { analyze, analyzeFile, DocCov } from './openpkg';
 export type { DocCovOptions } from './options';
 
@@ -90,16 +90,27 @@ export { parseExamplesFlag, validateExamples } from './examples';
 // Fix Utilities
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type { FixSuggestion, JSDocEdit, JSDocPatch } from './fix';
+export type {
+  ApplyForgottenExportResult,
+  FixSuggestion,
+  ForgottenExportFix,
+  GenerateForgottenExportFixesOptions,
+  JSDocEdit,
+  JSDocPatch,
+} from './fix';
 export {
   applyEdits,
+  applyForgottenExportFixes,
   categorizeDrifts,
   createSourceFile,
   findJSDocLocation,
   generateFixesForExport,
+  generateForgottenExportFixes,
+  groupFixesByFile,
   isFixableDrift,
   mergeFixes,
   parseJSDocToPatch,
+  previewForgottenExportFixes,
   serializeJSDoc,
 } from './fix';
 

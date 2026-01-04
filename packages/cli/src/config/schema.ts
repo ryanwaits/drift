@@ -35,12 +35,30 @@ const exampleModesSchema: z.ZodUnion<
 ]);
 
 /**
+ * API surface configuration schema.
+ */
+const apiSurfaceConfigSchema: z.ZodObject<{
+  minCompleteness: z.ZodOptional<z.ZodNumber>;
+  warnBelow: z.ZodOptional<z.ZodNumber>;
+  ignore: z.ZodOptional<z.ZodArray<z.ZodString>>;
+}> = z.object({
+  /** Minimum completeness percentage to pass (0-100) */
+  minCompleteness: z.number().min(0).max(100).optional(),
+  /** Warning threshold - warn when below this (0-100) */
+  warnBelow: z.number().min(0).max(100).optional(),
+  /** Type names to ignore (won't be flagged as forgotten exports) */
+  ignore: z.array(z.string()).optional(),
+});
+
+/**
  * Check command configuration schema.
  */
 const checkConfigSchema: z.ZodObject<{
   examples: z.ZodOptional<typeof exampleModesSchema>;
   minCoverage: z.ZodOptional<z.ZodNumber>;
   maxDrift: z.ZodOptional<z.ZodNumber>;
+  minApiSurface: z.ZodOptional<z.ZodNumber>;
+  apiSurface: z.ZodOptional<typeof apiSurfaceConfigSchema>;
 }> = z.object({
   /**
    * Example validation modes: presence | typecheck | run
@@ -51,6 +69,10 @@ const checkConfigSchema: z.ZodObject<{
   minCoverage: z.number().min(0).max(100).optional(),
   /** Maximum drift percentage allowed (0-100) */
   maxDrift: z.number().min(0).max(100).optional(),
+  /** Minimum API surface completeness percentage (0-100) - deprecated, use apiSurface.minCompleteness */
+  minApiSurface: z.number().min(0).max(100).optional(),
+  /** API surface configuration */
+  apiSurface: apiSurfaceConfigSchema.optional(),
 });
 
 export const docCovConfigSchema: z.ZodObject<{
@@ -112,6 +134,8 @@ export const normalizeConfig = (input: DocCovConfigInput): NormalizedDocCovConfi
       examples: input.check.examples,
       minCoverage: input.check.minCoverage,
       maxDrift: input.check.maxDrift,
+      minApiSurface: input.check.minApiSurface,
+      apiSurface: input.check.apiSurface,
     };
   }
 

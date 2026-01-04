@@ -2,6 +2,7 @@
 
 export { SCHEMA_URL, SCHEMA_VERSION } from './constants';
 export type {
+  ApiSurfaceResult,
   DocCovDrift,
   DocCovSpec,
   DocCovSpecVersion,
@@ -12,7 +13,9 @@ export type {
   ExampleRuntimeDrift,
   ExampleTypecheckError,
   ExportAnalysis,
+  ForgottenExport,
   MissingDocRule,
+  TypeReferenceLocation,
 } from './types';
 // Constants
 export {
