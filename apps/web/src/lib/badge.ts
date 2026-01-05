@@ -137,8 +137,15 @@ const BADGE_COLORS: Record<BadgeColor, string> = {
   lightgrey: '#9f9f9f',
 };
 
+// DocCov logo - JSDoc/TSDoc comment syntax /**
+const DOCCOV_LOGO = `<g>
+  <text x="4" y="14" font-family="monospace" font-size="11" font-weight="bold" fill="#22d3ee">/**</text>
+</g>`;
+
 function generateFlatBadge(label: string, message: string, bgColor: string): string {
-  const labelWidth = label.length * 7 + 10;
+  const logoWidth = 26;
+  const labelTextWidth = label.length * 6.5 + 10;
+  const labelWidth = logoWidth + labelTextWidth;
   const messageWidth = message.length * 7 + 10;
   const totalWidth = labelWidth + messageWidth;
 
@@ -156,9 +163,10 @@ function generateFlatBadge(label: string, message: string, bgColor: string): str
     <rect x="${labelWidth}" width="${messageWidth}" height="20" fill="${bgColor}"/>
     <rect width="${totalWidth}" height="20" fill="url(#s)"/>
   </g>
+  ${DOCCOV_LOGO}
   <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
-    <text aria-hidden="true" x="${labelWidth / 2}" y="15" fill="#010101" fill-opacity=".3">${label}</text>
-    <text x="${labelWidth / 2}" y="14">${label}</text>
+    <text aria-hidden="true" x="${logoWidth + labelTextWidth / 2}" y="15" fill="#010101" fill-opacity=".3">${label}</text>
+    <text x="${logoWidth + labelTextWidth / 2}" y="14">${label}</text>
     <text aria-hidden="true" x="${labelWidth + messageWidth / 2}" y="15" fill="#010101" fill-opacity=".3">${message}</text>
     <text x="${labelWidth + messageWidth / 2}" y="14">${message}</text>
   </g>
@@ -166,7 +174,9 @@ function generateFlatBadge(label: string, message: string, bgColor: string): str
 }
 
 function generateFlatSquareBadge(label: string, message: string, bgColor: string): string {
-  const labelWidth = label.length * 7 + 10;
+  const logoWidth = 26;
+  const labelTextWidth = label.length * 6.5 + 10;
+  const labelWidth = logoWidth + labelTextWidth;
   const messageWidth = message.length * 7 + 10;
   const totalWidth = labelWidth + messageWidth;
 
@@ -176,17 +186,25 @@ function generateFlatSquareBadge(label: string, message: string, bgColor: string
     <rect width="${labelWidth}" height="20" fill="#555"/>
     <rect x="${labelWidth}" width="${messageWidth}" height="20" fill="${bgColor}"/>
   </g>
+  ${DOCCOV_LOGO}
   <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
-    <text x="${labelWidth / 2}" y="14">${label}</text>
+    <text x="${logoWidth + labelTextWidth / 2}" y="14">${label}</text>
     <text x="${labelWidth + messageWidth / 2}" y="14">${message}</text>
   </g>
 </svg>`;
 }
 
+// Larger logo for for-the-badge style
+const DOCCOV_LOGO_LARGE = `<g>
+  <text x="5" y="19" font-family="monospace" font-size="14" font-weight="bold" fill="#22d3ee">/**</text>
+</g>`;
+
 function generateForTheBadge(label: string, message: string, bgColor: string): string {
   const labelUpper = label.toUpperCase();
   const messageUpper = message.toUpperCase();
-  const labelWidth = labelUpper.length * 10 + 20;
+  const logoWidth = 32;
+  const labelTextWidth = labelUpper.length * 9 + 14;
+  const labelWidth = logoWidth + labelTextWidth;
   const messageWidth = messageUpper.length * 10 + 20;
   const totalWidth = labelWidth + messageWidth;
 
@@ -196,8 +214,9 @@ function generateForTheBadge(label: string, message: string, bgColor: string): s
     <rect width="${labelWidth}" height="28" fill="#555"/>
     <rect x="${labelWidth}" width="${messageWidth}" height="28" fill="${bgColor}"/>
   </g>
+  ${DOCCOV_LOGO_LARGE}
   <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="10" font-weight="bold">
-    <text x="${labelWidth / 2}" y="18">${labelUpper}</text>
+    <text x="${logoWidth + labelTextWidth / 2}" y="18">${labelUpper}</text>
     <text x="${labelWidth + messageWidth / 2}" y="18">${messageUpper}</text>
   </g>
 </svg>`;

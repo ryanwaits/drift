@@ -14,22 +14,30 @@ npm install -g @doccov/cli
 ## Usage
 
 ```bash
+# Generate spec (outputs to .doccov/{package}/)
+doccov spec
+
 # Check coverage (fail if below 80%)
 doccov check --min-coverage 80
 
-# Generate spec
-doccov generate -o openpkg.json
+# Auto-fix drift issues
+doccov check --fix
 ```
 
 ## Badges
 
-Add a documentation coverage badge:
+Add a documentation health badge:
 
 ```markdown
-![DocCov](https://api.doccov.com/badge/YOUR_ORG/YOUR_REPO)
+![Docs](https://api.doccov.com/badge/YOUR_ORG/YOUR_REPO?path=.doccov/your-package/doccov.json)
 ```
 
-Requires `openpkg.json` committed to your default branch. See [badges docs](./docs/integrations/badges.md) for options.
+For scoped packages:
+```markdown
+![Docs](https://api.doccov.com/badge/YOUR_ORG/YOUR_REPO?path=.doccov/@your-org/pkg/doccov.json)
+```
+
+Requires `.doccov/{package}/doccov.json` committed to your default branch. See [badge docs](./docs/api/endpoints/badge.md) for options.
 
 ## Documentation
 

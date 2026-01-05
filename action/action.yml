@@ -7,10 +7,18 @@ branding:
   color: 'green'
 
 inputs:
+  package:
+    description: 'Target package name (required for monorepos, e.g., "@myorg/core")'
+    required: false
+    default: ''
   min-coverage:
     description: 'Minimum coverage percentage (0-100)'
     required: false
     default: '80'
+  min-health:
+    description: 'Minimum health score (0-100), combines coverage + drift'
+    required: false
+    default: ''
   require-examples:
     description: 'Require @example blocks on all exports'
     required: false
@@ -39,7 +47,7 @@ inputs:
     required: false
     default: '.'
   skip-spec:
-    description: 'Skip spec generation and use existing openpkg.json'
+    description: 'Skip spec generation and use existing .doccov/ files'
     required: false
     default: 'false'
   github-token:
@@ -47,20 +55,24 @@ inputs:
     required: false
     default: ${{ github.token }}
   auto-commit-spec:
-    description: 'Auto-commit openpkg.json to the branch (PRs only)'
+    description: 'Auto-commit .doccov/ directory to the branch (PRs only)'
     required: false
     default: 'false'
 
 outputs:
   coverage:
     description: 'Current coverage percentage'
+  health:
+    description: 'Current health score (coverage + drift penalty)'
   coverage-delta:
     description: 'Coverage change compared to base (on PRs)'
   drift-count:
     description: 'Number of drift issues detected'
   docs-impact-count:
     description: 'Number of docs files needing updates'
-  
+  spec-path:
+    description: 'Path to generated doccov.json'
+
 runs:
   using: 'composite'
   steps:
@@ -73,19 +85,40 @@ runs:
       shell: bash
       run: npm install -g @doccov/cli
 
+    - name: Resolve package name
+      id: pkg
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ -n "${{ inputs.package }}" ]; then
+          PKG_NAME="${{ inputs.package }}"
+        else
+          # Read from package.json
+          PKG_NAME=$(node -p "require('./package.json').name" 2>/dev/null || echo "unknown")
+        fi
+        echo "name=$PKG_NAME" >> $GITHUB_OUTPUT
+        # Convert package name to path (handles scoped packages)
+        echo "path=.doccov/$PKG_NAME" >> $GITHUB_OUTPUT
+
     - name: Generate spec
       if: inputs.skip-spec != 'true'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: doccov spec --output openpkg.json
+      run: |
+        SPEC_ARGS=""
+        if [ -n "${{ inputs.package }}" ]; then
+          SPEC_ARGS="--package ${{ inputs.package }}"
+        fi
+        doccov spec $SPEC_ARGS
 
     - name: Verify spec exists
       if: inputs.skip-spec == 'true'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        if [ ! -f openpkg.json ]; then
-          echo "Error: openpkg.json not found. Either commit it or set skip-spec to false."
+        SPEC_PATH="${{ steps.pkg.outputs.path }}/doccov.json"
+        if [ ! -f "$SPEC_PATH" ]; then
+          echo "Error: $SPEC_PATH not found. Either commit it or set skip-spec to false."
           exit 1
         fi
 
@@ -93,7 +126,15 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        ARGS="--min-coverage ${{ inputs.min-coverage }}"
+        ARGS=""
+        if [ -n "${{ inputs.package }}" ]; then
+          ARGS="$ARGS --package ${{ inputs.package }}"
+        fi
+        if [ -n "${{ inputs.min-health }}" ]; then
+          ARGS="$ARGS --min-health ${{ inputs.min-health }}"
+        else
+          ARGS="$ARGS --min-coverage ${{ inputs.min-coverage }}"
+        fi
         if [ "${{ inputs.require-examples }}" = "true" ]; then
           ARGS="$ARGS --examples presence"
         fi
@@ -104,14 +145,26 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        if [ -f openpkg.json ]; then
+        SPEC_DIR="${{ steps.pkg.outputs.path }}"
+        if [ -d "$SPEC_DIR" ]; then
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add openpkg.json
+          git add "$SPEC_DIR"
           if ! git diff --cached --quiet; then
-            git commit -m "chore: update openpkg.json [skip ci]"
+            git commit -m "chore: update $SPEC_DIR [skip ci]"
             git push origin HEAD:${{ github.head_ref }}
           fi
+        fi
+
+    - name: Save head spec for diff
+      if: github.event_name == 'pull_request'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        SPEC_PATH="${{ steps.pkg.outputs.path }}"
+        if [ -f "$SPEC_PATH/openpkg.json" ]; then
+          cp "$SPEC_PATH/openpkg.json" /tmp/openpkg-head.json
+          cp "$SPEC_PATH/doccov.json" /tmp/doccov-head.json 2>/dev/null || true
         fi
 
     - name: Generate base spec (PRs only)
@@ -119,14 +172,34 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
+        SPEC_PATH="${{ steps.pkg.outputs.path }}"
         git fetch origin ${{ github.base_ref }}
         git checkout FETCH_HEAD -- . 2>/dev/null || true
-        if [ "${{ inputs.skip-spec }}" = "true" ] && [ -f openpkg.json ]; then
-          cp openpkg.json openpkg-base.json
+
+        if [ "${{ inputs.skip-spec }}" = "true" ] && [ -f "$SPEC_PATH/openpkg.json" ]; then
+          cp "$SPEC_PATH/openpkg.json" /tmp/openpkg-base.json
+          cp "$SPEC_PATH/doccov.json" /tmp/doccov-base.json 2>/dev/null || true
         else
-          doccov spec --output openpkg-base.json 2>/dev/null || echo '{"docs":{"coverageScore":0},"exports":[]}' > openpkg-base.json
+          SPEC_ARGS=""
+          if [ -n "${{ inputs.package }}" ]; then
+            SPEC_ARGS="--package ${{ inputs.package }}"
+          fi
+          doccov spec $SPEC_ARGS 2>/dev/null || true
+          if [ -f "$SPEC_PATH/openpkg.json" ]; then
+            cp "$SPEC_PATH/openpkg.json" /tmp/openpkg-base.json
+            cp "$SPEC_PATH/doccov.json" /tmp/doccov-base.json 2>/dev/null || true
+          else
+            echo '{"openpkg":"0.4.0","exports":[]}' > /tmp/openpkg-base.json
+          fi
         fi
+
         git checkout - -- . 2>/dev/null || true
+        # Restore head spec
+        if [ -f /tmp/openpkg-head.json ]; then
+          mkdir -p "$SPEC_PATH"
+          cp /tmp/openpkg-head.json "$SPEC_PATH/openpkg.json"
+          cp /tmp/doccov-head.json "$SPEC_PATH/doccov.json" 2>/dev/null || true
+        fi
 
     - name: Run diff (PRs only)
       if: github.event_name == 'pull_request'
@@ -134,13 +207,12 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        if [ -f openpkg-base.json ]; then
-          # Get JSON output for PR comment
+        if [ -f /tmp/openpkg-base.json ] && [ -f /tmp/openpkg-head.json ]; then
           DIFF_ARGS="--format json"
           if [ -n "${{ inputs.docs-glob }}" ]; then
             DIFF_ARGS="$DIFF_ARGS --docs '${{ inputs.docs-glob }}'"
           fi
-          DIFF=$(eval "doccov diff openpkg-base.json openpkg.json $DIFF_ARGS")
+          DIFF=$(eval "doccov diff /tmp/openpkg-base.json /tmp/openpkg-head.json $DIFF_ARGS")
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$DIFF" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -151,12 +223,12 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        if [ -f openpkg-base.json ]; then
+        if [ -f /tmp/openpkg-base.json ] && [ -f /tmp/openpkg-head.json ]; then
           DIFF_ARGS="--format github"
           if [ -n "${{ inputs.docs-glob }}" ]; then
             DIFF_ARGS="$DIFF_ARGS --docs '${{ inputs.docs-glob }}'"
           fi
-          eval "doccov diff openpkg-base.json openpkg.json $DIFF_ARGS" || true
+          eval "doccov diff /tmp/openpkg-base.json /tmp/openpkg-head.json $DIFF_ARGS" || true
         fi
 
     - name: Check strict conditions
@@ -164,12 +236,12 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        if [ -f openpkg-base.json ]; then
+        if [ -f /tmp/openpkg-base.json ] && [ -f /tmp/openpkg-head.json ]; then
           DIFF_ARGS="--format text --strict '${{ inputs.strict }}'"
           if [ -n "${{ inputs.docs-glob }}" ]; then
             DIFF_ARGS="$DIFF_ARGS --docs '${{ inputs.docs-glob }}'"
           fi
-          eval "doccov diff openpkg-base.json openpkg.json $DIFF_ARGS"
+          eval "doccov diff /tmp/openpkg-base.json /tmp/openpkg-head.json $DIFF_ARGS"
         fi
 
     - name: Generate PR comment
@@ -178,7 +250,7 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        if [ -f openpkg-base.json ]; then
+        if [ -f /tmp/openpkg-base.json ] && [ -f /tmp/openpkg-head.json ]; then
           COMMENT_ARGS="--format pr-comment"
           COMMENT_ARGS="$COMMENT_ARGS --repo-url https://github.com/${{ github.repository }}"
           COMMENT_ARGS="$COMMENT_ARGS --sha ${{ github.event.pull_request.head.sha }}"
@@ -187,7 +259,7 @@ runs:
             COMMENT_ARGS="$COMMENT_ARGS --docs '${{ inputs.docs-glob }}'"
           fi
 
-          COMMENT=$(eval "doccov diff openpkg-base.json openpkg.json $COMMENT_ARGS")
+          COMMENT=$(eval "doccov diff /tmp/openpkg-base.json /tmp/openpkg-head.json $COMMENT_ARGS")
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$COMMENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT

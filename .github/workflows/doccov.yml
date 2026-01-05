@@ -39,25 +39,39 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Generate spec (head)
+      - name: Generate specs (head)
         run: |
-          bunx @doccov/cli spec --package @doccov/sdk --output openpkg-head.json
+          bunx @doccov/cli spec --package @doccov/sdk
+          bunx @doccov/cli spec --package @doccov/spec
         continue-on-error: true
 
-      - name: Generate spec (base)
+      - name: Save head specs for diff
+        if: github.event_name == 'pull_request'
+        run: |
+          cp .doccov/@doccov/sdk/openpkg.json /tmp/sdk-head.json 2>/dev/null || true
+          cp .doccov/@doccov/spec/openpkg.json /tmp/spec-head.json 2>/dev/null || true
+
+      - name: Generate base specs
         if: github.event_name == 'pull_request'
         run: |
           git checkout ${{ github.event.pull_request.base.sha }}
-          bunx @doccov/cli spec --package @doccov/sdk --output openpkg-base.json || echo '{}' > openpkg-base.json
+          bunx @doccov/cli spec --package @doccov/sdk 2>/dev/null || true
+          bunx @doccov/cli spec --package @doccov/spec 2>/dev/null || true
+          cp .doccov/@doccov/sdk/openpkg.json /tmp/sdk-base.json 2>/dev/null || echo '{"openpkg":"0.4.0","exports":[]}' > /tmp/sdk-base.json
+          cp .doccov/@doccov/spec/openpkg.json /tmp/spec-base.json 2>/dev/null || echo '{"openpkg":"0.4.0","exports":[]}' > /tmp/spec-base.json
           git checkout ${{ github.event.pull_request.head.sha }}
+          # Restore head specs
+          mkdir -p .doccov/@doccov/sdk .doccov/@doccov/spec
+          cp /tmp/sdk-head.json .doccov/@doccov/sdk/openpkg.json 2>/dev/null || true
+          cp /tmp/spec-head.json .doccov/@doccov/spec/openpkg.json 2>/dev/null || true
         continue-on-error: true
 
-      - name: Run diff
+      - name: Run diff (SDK)
         if: github.event_name == 'pull_request'
         id: diff
         run: |
-          if [ -f openpkg-base.json ] && [ -f openpkg-head.json ]; then
-            DIFF_OUTPUT=$(bunx @doccov/cli diff openpkg-base.json openpkg-head.json --format json)
+          if [ -f /tmp/sdk-base.json ] && [ -f /tmp/sdk-head.json ]; then
+            DIFF_OUTPUT=$(bunx @doccov/cli diff /tmp/sdk-base.json /tmp/sdk-head.json --format json)
             echo "diff<<EOF" >> $GITHUB_OUTPUT
             echo "$DIFF_OUTPUT" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
@@ -75,13 +89,13 @@ jobs:
         with:
           script: |
             const diff = JSON.parse(process.env.DIFF_OUTPUT || '{}');
-            
+
             const coverageEmoji = diff.coverageDelta > 0 ? '📈' : diff.coverageDelta < 0 ? '📉' : '➡️';
             const deltaStr = diff.coverageDelta > 0 ? `+${diff.coverageDelta}` : String(diff.coverageDelta);
-            
+
             let body = `## ${coverageEmoji} DocCov Report\n\n`;
             body += `**Coverage:** ${diff.oldCoverage}% → ${diff.newCoverage}% (${deltaStr}%)\n\n`;
-            
+
             if (diff.newUndocumented?.length > 0) {
               body += `### ⚠️ New Undocumented Exports\n`;
               body += diff.newUndocumented.slice(0, 10).map(id => `- \`${id}\``).join('\n');
@@ -90,26 +104,26 @@ jobs:
               }
               body += '\n\n';
             }
-            
+
             if (diff.driftIntroduced > 0) {
               body += `### 🔀 Drift\n`;
               body += `+${diff.driftIntroduced} new drift issue(s)\n\n`;
             }
-            
+
             if (diff.driftResolved > 0) {
               body += `✅ ${diff.driftResolved} drift issue(s) resolved\n\n`;
             }
-            
+
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
-            const botComment = comments.find(c => 
+
+            const botComment = comments.find(c =>
               c.user?.type === 'Bot' && c.body?.includes('DocCov Report')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,

@@ -16,7 +16,7 @@ doccov spec [entry] [options]
 |------|-------------|
 | `--cwd <dir>` | Working directory |
 | `-p, --package <name>` | Target monorepo package |
-| `-o, --output <file>` | Output path (default: `openpkg.json`) |
+| `-o, --output <dir>` | Output directory (default: `.doccov`) |
 | `-f, --format <fmt>` | `json` (default) or `api-surface` |
 | `--include <patterns>` | Include exports (comma-separated) |
 | `--exclude <patterns>` | Exclude exports (comma-separated) |
@@ -33,13 +33,13 @@ doccov spec [entry] [options]
 
 ```bash
 doccov spec
-# Creates openpkg.json
+# Creates .doccov/{package-name}/openpkg.json and doccov.json
 ```
 
 ### Custom entry point
 
 ```bash
-doccov spec src/index.ts -o api-spec.json
+doccov spec src/index.ts
 ```
 
 ### Filter exports
@@ -62,24 +62,40 @@ doccov spec --verbose
 
 ## Output
 
+Output is scoped by package name: `.doccov/{package-name}/`
+
+```
+.doccov/
+└── @myorg/core/
+    ├── openpkg.json   # TypeScript API spec
+    └── doccov.json    # Coverage & drift analysis
+```
+
 ### json (default)
 
-OpenPkg spec with:
+**openpkg.json** - TypeScript API specification:
 
 ```json
 {
   "$schema": "https://openpkg.dev/schemas/v0.4.0/openpkg.schema.json",
   "openpkg": "0.4.0",
-  "meta": {
-    "name": "@myorg/core",
-    "version": "1.0.0"
-  },
+  "meta": { "name": "@myorg/core", "version": "1.0.0" },
   "exports": [...],
-  "types": [...],
-  "generation": {
-    "generator": "@doccov/cli@0.21.0",
-    "timestamp": "2024-01-15T10:00:00Z"
-  }
+  "types": [...]
+}
+```
+
+**doccov.json** - Coverage and drift analysis:
+
+```json
+{
+  "doccov": "1.0.0",
+  "summary": {
+    "score": 75,
+    "health": { "score": 68 },
+    "drift": { "total": 5, "fixable": 5 }
+  },
+  "exports": { ... }
 }
 ```
 
