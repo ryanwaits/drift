@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server';
-import { type BadgeStyle, fetchSpec, generateBadgeSvg, getDriftColor } from '@/lib/badge';
+import { type BadgeStyle, fetchDocCovReport, generateBadgeSvg, getDriftColor } from '@/lib/badge';
 
 const CACHE_HEADERS_SUCCESS = {
   'Content-Type': 'image/svg+xml',
@@ -19,13 +19,13 @@ export async function GET(
   const searchParams = request.nextUrl.searchParams;
 
   const ref = searchParams.get('ref') ?? searchParams.get('branch') ?? 'main';
-  const specPath = searchParams.get('path') ?? searchParams.get('package') ?? 'openpkg.json';
+  const path = searchParams.get('path');
   const style = (searchParams.get('style') ?? 'flat') as BadgeStyle;
 
   try {
-    const spec = await fetchSpec(owner, repo, { ref, path: specPath });
+    const report = await fetchDocCovReport(owner, repo, { ref, path: path ?? undefined });
 
-    if (!spec) {
+    if (!report) {
       const svg = generateBadgeSvg({
         label: 'drift',
         message: 'not found',
@@ -35,13 +35,7 @@ export async function GET(
       return new Response(svg, { status: 404, headers: CACHE_HEADERS_ERROR });
     }
 
-    const exports = spec.exports ?? [];
-    const exportsWithDrift = exports.filter((e) => {
-      const docs = (e as { docs?: { drift?: unknown[] } }).docs;
-      return docs?.drift && Array.isArray(docs.drift) && docs.drift.length > 0;
-    });
-    const driftScore =
-      exports.length === 0 ? 0 : Math.round((exportsWithDrift.length / exports.length) * 100);
+    const driftScore = report.driftScore ?? 0;
 
     const svg = generateBadgeSvg({
       label: 'drift',

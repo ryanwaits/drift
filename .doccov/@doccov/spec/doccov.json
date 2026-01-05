@@ -1,0 +1,250 @@
+{
+  "doccov": "1.0.0",
+  "source": {
+    "file": "openpkg.json",
+    "specVersion": "0.4.0",
+    "packageName": "@doccov/spec",
+    "packageVersion": "0.27.0"
+  },
+  "generatedAt": "2026-01-05T19:35:54.956Z",
+  "summary": {
+    "score": 10,
+    "totalExports": 27,
+    "documentedExports": 0,
+    "missingByRule": {
+      "description": 23,
+      "params": 3,
+      "returns": 4,
+      "examples": 27,
+      "throws": 0
+    },
+    "drift": {
+      "total": 0,
+      "fixable": 0,
+      "byCategory": {
+        "structural": 0,
+        "semantic": 0,
+        "example": 0
+      }
+    },
+    "health": {
+      "score": 10,
+      "completeness": {
+        "score": 10,
+        "documented": 0,
+        "total": 27,
+        "missing": {
+          "description": 23,
+          "params": 3,
+          "returns": 4,
+          "examples": 27,
+          "throws": 0
+        }
+      },
+      "accuracy": {
+        "score": 100,
+        "issues": 0,
+        "fixable": 0,
+        "byCategory": {
+          "structural": 0,
+          "semantic": 0,
+          "example": 0
+        }
+      }
+    }
+  },
+  "exports": {
+    "ApiSurfaceResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "assertDocCovSpec": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "DocCovDrift": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "DocCovSchemaVersion": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "DocCovSpec": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "DocCovSpecError": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "DocCovSpecVersion": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "DocCovSummary": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "DocumentationHealth": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DRIFT_CATEGORIES": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "DRIFT_CATEGORY_DESCRIPTIONS": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "DRIFT_CATEGORY_LABELS": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "DriftCategory": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "DriftType": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "ExampleAnalysis": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "ExampleRuntimeDrift": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "ExampleTypecheckError": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "ExportAnalysis": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "ForgottenExport": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "getAvailableDocCovVersions": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "returns",
+        "examples"
+      ]
+    },
+    "getDocCovValidationErrors": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "LATEST_VERSION": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "MissingDocRule": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "SCHEMA_URL": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "SCHEMA_VERSION": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "TypeReferenceLocation": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "validateDocCovSpec": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "params",
+        "returns",
+        "examples"
+      ]
+    }
+  }
+}

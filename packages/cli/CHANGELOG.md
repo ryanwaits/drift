@@ -1,5 +1,18 @@
 # @doccov/cli
 
+## 0.29.0
+
+### Minor Changes
+
+- feat(badge): use doccov.json report instead of openpkg.json
+
+  Badge endpoints now read health score from `.doccov/doccov.json` instead of computing from `openpkg.json`. Added remote docs fetching to CLI (URL, GitHub patterns) with caching support. Moved spec cache to `.doccov/cache/` subdirectory.
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/sdk@0.29.0
+
 ## 0.28.2
 
 ### Patch Changes

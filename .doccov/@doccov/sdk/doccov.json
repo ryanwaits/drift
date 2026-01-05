@@ -1,0 +1,3058 @@
+{
+  "doccov": "1.0.0",
+  "source": {
+    "file": "openpkg.json",
+    "specVersion": "0.4.0",
+    "packageName": "@doccov/sdk",
+    "packageVersion": "0.28.3"
+  },
+  "generatedAt": "2026-01-05T19:35:34.548Z",
+  "summary": {
+    "score": 45,
+    "totalExports": 259,
+    "documentedExports": 0,
+    "missingByRule": {
+      "description": 31,
+      "params": 125,
+      "returns": 125,
+      "examples": 234,
+      "throws": 0
+    },
+    "drift": {
+      "total": 130,
+      "fixable": 130,
+      "byCategory": {
+        "structural": 128,
+        "semantic": 2,
+        "example": 0
+      }
+    },
+    "health": {
+      "score": 34,
+      "completeness": {
+        "score": 45,
+        "documented": 0,
+        "total": 259,
+        "missing": {
+          "description": 31,
+          "params": 125,
+          "returns": 125,
+          "examples": 234,
+          "throws": 0
+        }
+      },
+      "accuracy": {
+        "score": 75,
+        "issues": 130,
+        "fixable": 130,
+        "byCategory": {
+          "structural": 128,
+          "semantic": 2,
+          "example": 0
+        }
+      }
+    }
+  },
+  "exports": {
+    "ALL_VALIDATIONS": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "AnalysisResult": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "analyze": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "analyzeDocsImpact": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: diff, markdownFiles, newExportNames, memberChanges",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Parsed",
+          "issue": "JSDoc documents parameter \"Parsed\" which is not present in the signature.",
+          "suggestion": "Available parameters: diff, markdownFiles, newExportNames, memberChanges",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "All",
+          "issue": "JSDoc documents parameter \"All\" which is not present in the signature.",
+          "suggestion": "Available parameters: diff, markdownFiles, newExportNames, memberChanges",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Optional",
+          "issue": "JSDoc documents parameter \"Optional\" which is not present in the signature.",
+          "suggestion": "Available parameters: diff, markdownFiles, newExportNames, memberChanges",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "analyzeFile": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "AnalyzeOptions": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "analyzeProject": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "FileSystem",
+          "issue": "JSDoc documents parameter \"FileSystem\" which is not present in the signature.",
+          "suggestion": "Available parameters: fs, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Options",
+          "issue": "JSDoc documents parameter \"Options\" which is not present in the signature.",
+          "suggestion": "Available parameters: fs, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "AnalyzeProjectOptions": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "applyEdits": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "ApplyEditsResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "applyForgottenExportFixes": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "ApplyForgottenExportResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "applyPatchToJSDoc": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "blockReferencesExport": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "buildCloneUrl": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Parsed",
+          "issue": "JSDoc documents parameter \"Parsed\" which is not present in the signature.",
+          "suggestion": "Available parameters: parsed",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "buildDisplayUrl": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Parsed",
+          "issue": "JSDoc documents parameter \"Parsed\" which is not present in the signature.",
+          "suggestion": "Available parameters: parsed",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "BuildDocCovOptions": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "buildDocCovSpec": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Build",
+          "issue": "JSDoc documents parameter \"Build\" which is not present in the signature.",
+          "suggestion": "Available parameters: options",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "buildExportRegistry": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "BuildHints": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "BuildInfo": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "BuildPlan": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "BuildPlanEnvironment": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "BuildPlanExecutionResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "BuildPlanStep": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "BuildPlanStepResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "BuildPlanTarget": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "buildRawUrl": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Parsed",
+          "issue": "JSDoc documents parameter \"Parsed\" which is not present in the signature.",
+          "suggestion": "Available parameters: parsed, filePath",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Path",
+          "issue": "JSDoc documents parameter \"Path\" which is not present in the signature.",
+          "suggestion": "Available parameters: parsed, filePath",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "CACHE_VERSION": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "CacheContext": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "CacheValidationResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "calculateAggregateCoverage": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "CategorizedDrift": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "categorizeDrift": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: drift",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "categorizeDrifts": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "CheckConfig": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "clearSpecCache": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Working",
+          "issue": "JSDoc documents parameter \"Working\" which is not present in the signature.",
+          "suggestion": "Available parameters: cwd",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "CommandResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "CommandRunner": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "computeDrift": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "computeExportDrift": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: entry, registry",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Registry",
+          "issue": "JSDoc documents parameter \"Registry\" which is not present in the signature.",
+          "suggestion": "Available parameters: entry, registry",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "computeHealth": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "computeSnapshot": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "CoverageSnapshot": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "CoverageSummary": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "CoverageTrend": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "createNodeCommandRunner": {
+      "coverageScore": 69,
+      "missing": [
+        "returns"
+      ]
+    },
+    "createSourceFile": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "DEFAULT_REPORT_DIR": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DEFAULT_REPORT_PATH": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "defineConfig": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Configuration",
+          "issue": "JSDoc documents parameter \"Configuration\" which is not present in the signature.",
+          "suggestion": "Available parameters: config",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "detectBuildInfo": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "FileSystem",
+          "issue": "JSDoc documents parameter \"FileSystem\" which is not present in the signature.",
+          "suggestion": "Available parameters: fs, packagePath",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Path",
+          "issue": "JSDoc documents parameter \"Path\" which is not present in the signature.",
+          "suggestion": "Available parameters: fs, packagePath",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "DetectedPackageManager": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DetectedSchemaEntry": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "detectEntryPoint": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "FileSystem",
+          "issue": "JSDoc documents parameter \"FileSystem\" which is not present in the signature.",
+          "suggestion": "Available parameters: fs, packagePath",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Path",
+          "issue": "JSDoc documents parameter \"Path\" which is not present in the signature.",
+          "suggestion": "Available parameters: fs, packagePath",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "detectExampleAssertionFailures": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "detectExampleRuntimeErrors": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ]
+    },
+    "detectMonorepo": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "detectPackageManager": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "detectRuntimeSchemas": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "Diagnostic": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "diffHashes": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Hash",
+          "issue": "JSDoc documents parameter \"Hash\" which is not present in the signature.",
+          "suggestion": "Available parameters: cached, current",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Current",
+          "issue": "JSDoc documents parameter \"Current\" which is not present in the signature.",
+          "suggestion": "Available parameters: cached, current",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "diffSpecWithDocs": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Previous",
+          "issue": "JSDoc documents parameter \"Previous\" which is not present in the signature.",
+          "suggestion": "Available parameters: oldSpec, newSpec, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Current",
+          "issue": "JSDoc documents parameter \"Current\" which is not present in the signature.",
+          "suggestion": "Available parameters: oldSpec, newSpec, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Options",
+          "issue": "JSDoc documents parameter \"Options\" which is not present in the signature.",
+          "suggestion": "Available parameters: oldSpec, newSpec, options",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "DiffWithDocsOptions": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DocCov": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "params",
+        "examples"
+      ]
+    },
+    "DocCovConfig": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DocCovConfigInput": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "docCovConfigSchema": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "DocCovOptions": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "DocCovReport": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DocsChangeType": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DocsConfig": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DocsImpact": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DocsImpactReference": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DocsImpactResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DRIFT_CATEGORIES": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DRIFT_CATEGORY_DESCRIPTIONS": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DRIFT_CATEGORY_LABELS": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DriftCategory": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DriftReport": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DriftReportSummary": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DriftResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DriftSummary": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "DriftType": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ensureSpecCoverage": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "EntryPointInfo": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "EntryPointSource": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ExampleRunResult": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "ExampleTypeError": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "ExampleValidation": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ExampleValidationMode": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ExampleValidationOptions": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ExampleValidationResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ExampleValidationTypeError": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ExportCoverageData": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ExportDriftResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ExportReference": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ExtendedTrendAnalysis": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "extractFunctionCalls": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "deprecated-mismatch",
+          "target": "extractFunctionCalls",
+          "issue": "JSDoc marks \"extractFunctionCalls\" as deprecated but the TypeScript declaration is not.",
+          "suggestion": "Remove the @deprecated tag or deprecate the declaration.",
+          "category": "semantic",
+          "fixable": true
+        }
+      ]
+    },
+    "extractImports": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "deprecated-mismatch",
+          "target": "extractImports",
+          "issue": "JSDoc marks \"extractImports\" as deprecated but the TypeScript declaration is not.",
+          "suggestion": "Remove the @deprecated tag or deprecate the declaration.",
+          "category": "semantic",
+          "fixable": true
+        }
+      ]
+    },
+    "extractPackageSpec": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "extractSchemaOutputType": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "extractSchemaType": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "extractSpecSummary": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: openpkg, doccov",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: openpkg, doccov",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "extractStandardSchemas": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Path",
+          "issue": "JSDoc documents parameter \"Path\" which is not present in the signature.",
+          "suggestion": "Available parameters: compiledJsPath, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Extraction",
+          "issue": "JSDoc documents parameter \"Extraction\" which is not present in the signature.",
+          "suggestion": "Available parameters: compiledJsPath, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "extractStandardSchemasFromProject": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "TypeScript",
+          "issue": "JSDoc documents parameter \"TypeScript\" which is not present in the signature.",
+          "suggestion": "Available parameters: entryFile, baseDir, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Project",
+          "issue": "JSDoc documents parameter \"Project\" which is not present in the signature.",
+          "suggestion": "Available parameters: entryFile, baseDir, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Extraction",
+          "issue": "JSDoc documents parameter \"Extraction\" which is not present in the signature.",
+          "suggestion": "Available parameters: entryFile, baseDir, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "ExtractStandardSchemasOptions": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "fetchGitHubContext": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "FetchGitHubContextOptions": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "fetchSpec": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Repository",
+          "issue": "JSDoc documents parameter \"Repository\" which is not present in the signature.",
+          "suggestion": "Available parameters: owner, repo, branchOrOptions",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Repository",
+          "issue": "JSDoc documents parameter \"Repository\" which is not present in the signature.",
+          "suggestion": "Available parameters: owner, repo, branchOrOptions",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Branch",
+          "issue": "JSDoc documents parameter \"Branch\" which is not present in the signature.",
+          "suggestion": "Available parameters: owner, repo, branchOrOptions",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "fetchSpecFromGitHub": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Parsed",
+          "issue": "JSDoc documents parameter \"Parsed\" which is not present in the signature.",
+          "suggestion": "Available parameters: parsed",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "FileSystem": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "FilterOptions": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "FilterSource": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "findAdapter": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "findDeprecatedReferences": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "findExportReferences": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "findJSDocLocation": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "findPackageByName": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "findRemovedReferences": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "FixSuggestion": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "FixType": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ForgottenExportFix": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ForgottenExportResult": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "formatDelta": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Coverage",
+          "issue": "JSDoc documents parameter \"Coverage\" which is not present in the signature.",
+          "suggestion": "Available parameters: delta",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "formatDriftSummaryLine": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Drift",
+          "issue": "JSDoc documents parameter \"Drift\" which is not present in the signature.",
+          "suggestion": "Available parameters: summary",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "formatPackageList": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "generateFix": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "generateFixesForExport": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: exportEntry, existingPatch, driftList",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Optional",
+          "issue": "JSDoc documents parameter \"Optional\" which is not present in the signature.",
+          "suggestion": "Available parameters: exportEntry, existingPatch, driftList",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Optional",
+          "issue": "JSDoc documents parameter \"Optional\" which is not present in the signature.",
+          "suggestion": "Available parameters: exportEntry, existingPatch, driftList",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "generateForgottenExportFixes": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "GenerateForgottenExportFixesOptions": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "generateReport": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec, openpkgPath",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Path",
+          "issue": "JSDoc documents parameter \"Path\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec, openpkgPath",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "generateReportFromDocCov": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: openpkg, doccov",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: openpkg, doccov",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "getDiffReportPath": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Hash",
+          "issue": "JSDoc documents parameter \"Hash\" which is not present in the signature.",
+          "suggestion": "Available parameters: baseHash, headHash, format, dir",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Hash",
+          "issue": "JSDoc documents parameter \"Hash\" which is not present in the signature.",
+          "suggestion": "Available parameters: baseHash, headHash, format, dir",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: baseHash, headHash, format, dir",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: baseHash, headHash, format, dir",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "getDocsImpactSummary": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "getDocumentedExports": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "getDriftSummary": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Array",
+          "issue": "JSDoc documents parameter \"Array\" which is not present in the signature.",
+          "suggestion": "Available parameters: drifts",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "getExportAnalysis": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: exp, doccov",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: exp, doccov",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "getExportDrift": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: exp, doccov",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: exp, doccov",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "getExportMissing": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: exp, doccov",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: exp, doccov",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "getExportScore": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: exp, doccov",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: exp, doccov",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "getExtendedTrend": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Current",
+          "issue": "JSDoc documents parameter \"Current\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec, cwd, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Working",
+          "issue": "JSDoc documents parameter \"Working\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec, cwd, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Optional",
+          "issue": "JSDoc documents parameter \"Optional\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec, cwd, options",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "getInstallCommand": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "getPrimaryBuildScript": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "getRegisteredAdapters": {
+      "coverageScore": 46,
+      "missing": [
+        "returns",
+        "examples"
+      ]
+    },
+    "getReportPath": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: format, dir",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: format, dir",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "getRunCommand": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "getSpecCachePath": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Working",
+          "issue": "JSDoc documents parameter \"Working\" which is not present in the signature.",
+          "suggestion": "Available parameters: cwd",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "getSupportedLibraries": {
+      "coverageScore": 46,
+      "missing": [
+        "returns",
+        "examples"
+      ]
+    },
+    "getTrend": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Current",
+          "issue": "JSDoc documents parameter \"Current\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec, cwd, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Working",
+          "issue": "JSDoc documents parameter \"Working\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec, cwd, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Optional",
+          "issue": "JSDoc documents parameter \"Optional\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec, cwd, options",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "getUndocumentedExports": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "GitHubProjectContext": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "GitHubRepoMetadata": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "groupDriftsByCategory": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Array",
+          "issue": "JSDoc documents parameter \"Array\" which is not present in the signature.",
+          "suggestion": "Available parameters: drifts",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "groupFixesByFile": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "hasDocsForExport": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "hasDocsImpact": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "hashFile": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Absolute",
+          "issue": "JSDoc documents parameter \"Absolute\" which is not present in the signature.",
+          "suggestion": "Available parameters: filePath",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "hashFiles": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Array",
+          "issue": "JSDoc documents parameter \"Array\" which is not present in the signature.",
+          "suggestion": "Available parameters: filePaths, cwd",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Base",
+          "issue": "JSDoc documents parameter \"Base\" which is not present in the signature.",
+          "suggestion": "Available parameters: filePaths, cwd",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "hashString": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "String",
+          "issue": "JSDoc documents parameter \"String\" which is not present in the signature.",
+          "suggestion": "Available parameters: content",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "hasNonAssertionComments": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "HealthInput": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "HISTORY_DIR": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "installDependencies": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "FileSystem",
+          "issue": "JSDoc documents parameter \"FileSystem\" which is not present in the signature.",
+          "suggestion": "Available parameters: fs, cwd, runCommand, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Working",
+          "issue": "JSDoc documents parameter \"Working\" which is not present in the signature.",
+          "suggestion": "Available parameters: fs, cwd, runCommand, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Function",
+          "issue": "JSDoc documents parameter \"Function\" which is not present in the signature.",
+          "suggestion": "Available parameters: fs, cwd, runCommand, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Installation",
+          "issue": "JSDoc documents parameter \"Installation\" which is not present in the signature.",
+          "suggestion": "Available parameters: fs, cwd, runCommand, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "InstallOptions": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "InstallResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "isExecutableLang": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "isExportFullyDocumented": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: exp, doccov",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: exp, doccov",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "isFixableDrift": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "isSchemaType": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "isStandardJSONSchema": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "JSDocEdit": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "JSDocParam": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "JSDocPatch": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "JSDocReturn": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "JSDocTag": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "listWorkspacePackages": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "LLMAssertion": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "loadCachedReport": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Path",
+          "issue": "JSDoc documents parameter \"Path\" which is not present in the signature.",
+          "suggestion": "Available parameters: reportPath",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "loadSnapshots": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Working",
+          "issue": "JSDoc documents parameter \"Working\" which is not present in the signature.",
+          "suggestion": "Available parameters: cwd",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "loadSpecCache": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Working",
+          "issue": "JSDoc documents parameter \"Working\" which is not present in the signature.",
+          "suggestion": "Available parameters: cwd",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "MarkdownCodeBlock": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "MarkdownDocFile": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "MemberChange": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "mergeFilters": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Configuration",
+          "issue": "JSDoc documents parameter \"Configuration\" which is not present in the signature.",
+          "suggestion": "Available parameters: config, overrides",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Override",
+          "issue": "JSDoc documents parameter \"Override\" which is not present in the signature.",
+          "suggestion": "Available parameters: config, overrides",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "mergeFixes": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "MonorepoInfo": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "MonorepoType": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "NodeFileSystem": {
+      "coverageScore": 43,
+      "missing": [
+        "params",
+        "examples"
+      ]
+    },
+    "normalizeConfig": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "OpenPkgSpec": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "PackageExports": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "PackageJson": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "PackageManager": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "PackageManagerInfo": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "parseAssertions": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "ParsedGitHubUrl": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "parseExamplesFlag": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ]
+    },
+    "parseGitHubUrl": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "GitHub",
+          "issue": "JSDoc documents parameter \"GitHub\" which is not present in the signature.",
+          "suggestion": "Available parameters: input, defaultRef",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Default",
+          "issue": "JSDoc documents parameter \"Default\" which is not present in the signature.",
+          "suggestion": "Available parameters: input, defaultRef",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "parseScanGitHubUrl": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "parseJSDocToPatch": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "parseListFlag": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "String",
+          "issue": "JSDoc documents parameter \"String\" which is not present in the signature.",
+          "suggestion": "Available parameters: value",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "parseMarkdownFile": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "parseMarkdownFiles": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "PresenceResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "previewForgottenExportFixes": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "ProjectInfo": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "pruneHistory": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Working",
+          "issue": "JSDoc documents parameter \"Working\" which is not present in the signature.",
+          "suggestion": "Available parameters: cwd, keepCount",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Number",
+          "issue": "JSDoc documents parameter \"Number\" which is not present in the signature.",
+          "suggestion": "Available parameters: cwd, keepCount",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "readPackageJson": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "ReleaseTag": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "renderApiSurface": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "renderSparkline": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Array",
+          "issue": "JSDoc documents parameter \"Array\" which is not present in the signature.",
+          "suggestion": "Available parameters: values",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "REPORT_EXTENSIONS": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "REPORT_VERSION": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "resolveCompiledPath": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "ResolvedFilters": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "ResolvedTarget": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "resolveTarget": {
+      "coverageScore": 50,
+      "missing": [
+        "params",
+        "returns"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "FileSystem",
+          "issue": "JSDoc documents parameter \"FileSystem\" which is not present in the signature.",
+          "suggestion": "Available parameters: fs, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Resolution",
+          "issue": "JSDoc documents parameter \"Resolution\" which is not present in the signature.",
+          "suggestion": "Available parameters: fs, options",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "ResolveTargetOptions": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "runExample": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "RunExampleOptions": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "runExamples": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "runExamplesWithPackage": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "RunExamplesWithPackageOptions": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "RunExamplesWithPackageResult": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "RuntimeDrift": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "RunValidationResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "safeParseJson": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "SandboxFileSystem": {
+      "coverageScore": 43,
+      "missing": [
+        "params",
+        "examples"
+      ]
+    },
+    "saveReport": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: report, reportPath",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Path",
+          "issue": "JSDoc documents parameter \"Path\" which is not present in the signature.",
+          "suggestion": "Available parameters: report, reportPath",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "saveSnapshot": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "The",
+          "issue": "JSDoc documents parameter \"The\" which is not present in the signature.",
+          "suggestion": "Available parameters: snapshot, cwd",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Working",
+          "issue": "JSDoc documents parameter \"Working\" which is not present in the signature.",
+          "suggestion": "Available parameters: snapshot, cwd",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "saveSpecCache": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "OpenPkg",
+          "issue": "JSDoc documents parameter \"OpenPkg\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec, context",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Cache",
+          "issue": "JSDoc documents parameter \"Cache\" which is not present in the signature.",
+          "suggestion": "Available parameters: spec, context",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "SchemaAdapter": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "SchemaDetectionContext": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "SchemaDetectionResult": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "SchemaExtractionMode": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "SchemaExtractionResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "serializeJSDoc": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "shouldValidate": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "SPEC_CACHE_FILE": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "SpecCache": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "SpecCacheConfig": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "SpecDiffWithDocs": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "SpecDocDrift": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "SpecSummary": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "StandardJSONSchemaV1": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "StandardSchemaExtractionOutput": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "StandardSchemaExtractionResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "SummaryDriftIssue": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "typecheckExample": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "typecheckExamples": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ]
+    },
+    "TypecheckOptions": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "TypecheckResult": {
+      "coverageScore": 0,
+      "missing": [
+        "description",
+        "examples"
+      ]
+    },
+    "TypecheckValidationResult": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "validateExamples": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "async-mismatch",
+          "target": "returns",
+          "issue": "Function returns Promise but documentation does not indicate async behavior.",
+          "suggestion": "Add @async tag or document @returns {Promise<...>}.",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "validateSpecCache": {
+      "coverageScore": 33,
+      "missing": [
+        "params",
+        "returns",
+        "examples"
+      ],
+      "drift": [
+        {
+          "type": "param-mismatch",
+          "target": "Cached",
+          "issue": "JSDoc documents parameter \"Cached\" which is not present in the signature.",
+          "suggestion": "Available parameters: cache, context",
+          "category": "structural",
+          "fixable": true
+        },
+        {
+          "type": "param-mismatch",
+          "target": "Current",
+          "issue": "JSDoc documents parameter \"Current\" which is not present in the signature.",
+          "suggestion": "Available parameters: cache, context",
+          "category": "structural",
+          "fixable": true
+        }
+      ]
+    },
+    "VALIDATION_INFO": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "WorkspaceConfig": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    },
+    "WorkspacePackage": {
+      "coverageScore": 67,
+      "missing": [
+        "examples"
+      ]
+    }
+  }
+}

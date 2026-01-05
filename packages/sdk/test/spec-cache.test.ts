@@ -285,7 +285,7 @@ describe('saveSpecCache / loadSpecCache', () => {
 
     saveSpecCache(spec, context);
 
-    expect(fs.existsSync(path.join(tempDir, '.doccov'))).toBe(true);
+    expect(fs.existsSync(path.join(tempDir, '.doccov', 'cache'))).toBe(true);
   });
 
   test('returns null for missing cache', () => {
@@ -294,7 +294,7 @@ describe('saveSpecCache / loadSpecCache', () => {
   });
 
   test('returns null for invalid JSON', () => {
-    const cacheDir = path.join(tempDir, '.doccov');
+    const cacheDir = path.join(tempDir, '.doccov', 'cache');
     fs.mkdirSync(cacheDir, { recursive: true });
     fs.writeFileSync(path.join(cacheDir, 'spec.cache.json'), 'not valid json');
 

@@ -1,6 +1,19 @@
-import type { ExampleTypeError, ExampleValidation, ExampleValidationResult } from '@doccov/sdk';
+import type {
+  ExampleTypeError,
+  ExampleValidation,
+  ExampleValidationResult,
+  MarkdownDocFile,
+} from '@doccov/sdk';
 import { validateExamples } from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
+import { fetchUrlDocsBatch } from './docs-fetcher';
+import { fetchGitHubDocsBatch } from './github-fetcher';
+import {
+  type DocsSource,
+  type GitHubDocsSource,
+  type UrlDocsSource,
+  parseDocsPatterns,
+} from './parseDocsPattern';
 import type { CollectedDrift, StaleReference } from './types';
 import { loadMarkdownFiles } from './utils';
 
@@ -67,6 +80,33 @@ export interface MarkdownValidationOptions {
   docsPatterns: string[];
   targetDir: string;
   exportNames: string[];
+  useCache?: boolean;
+  fetchTimeout?: number;
+  cacheTtl?: number;
+}
+
+export interface ParsedDocsSources {
+  local: string[];
+  remote: DocsSource[];
+}
+
+/**
+ * Parse docs patterns and separate local from remote sources
+ */
+export function parseAndSeparateDocsSources(patterns: string[]): ParsedDocsSources {
+  const sources = parseDocsPatterns(patterns);
+  const local: string[] = [];
+  const remote: DocsSource[] = [];
+
+  for (const source of sources) {
+    if (source.type === 'local') {
+      local.push(source.pattern);
+    } else {
+      remote.push(source);
+    }
+  }
+
+  return { local, remote };
 }
 
 /**
@@ -75,23 +115,69 @@ export interface MarkdownValidationOptions {
 export async function validateMarkdownDocs(
   options: MarkdownValidationOptions,
 ): Promise<StaleReference[]> {
-  const { docsPatterns, targetDir, exportNames } = options;
+  const { docsPatterns, targetDir, exportNames, useCache = true, fetchTimeout, cacheTtl } = options;
   const staleRefs: StaleReference[] = [];
 
   if (docsPatterns.length === 0) {
     return staleRefs;
   }
 
-  const markdownFiles = await loadMarkdownFiles(docsPatterns, targetDir);
+  // Parse patterns to detect source types
+  const { local, remote } = parseAndSeparateDocsSources(docsPatterns);
 
-  if (markdownFiles.length === 0) {
+  const allDocs: MarkdownDocFile[] = [];
+
+  // Load local markdown files
+  if (local.length > 0) {
+    const localDocs = await loadMarkdownFiles(local, targetDir);
+    allDocs.push(...localDocs);
+  }
+
+  // Fetch remote URL docs (Phase 2)
+  const urlSources = remote.filter((s): s is UrlDocsSource => s.type === 'url');
+  if (urlSources.length > 0) {
+    const results = await fetchUrlDocsBatch(urlSources, {
+      useCache,
+      timeout: fetchTimeout,
+      ttl: cacheTtl,
+      cwd: targetDir,
+    });
+
+    for (const result of results) {
+      if (result.doc) {
+        allDocs.push(result.doc);
+      }
+      // Errors are silently skipped - could add logging here
+    }
+  }
+
+  // Fetch GitHub docs (Phase 3)
+  const githubSources = remote.filter((s): s is GitHubDocsSource => s.type === 'github');
+  if (githubSources.length > 0) {
+    const results = await fetchGitHubDocsBatch(githubSources, {
+      useCache,
+      timeout: fetchTimeout,
+      ttl: cacheTtl,
+      cwd: targetDir,
+    });
+
+    for (const result of results) {
+      allDocs.push(...result.docs);
+      // Errors are silently skipped - could add logging here
+    }
+  }
+
+  // GitLab sources will be handled later
+  // For now, skip them silently
+
+  if (allDocs.length === 0) {
     return staleRefs;
   }
 
   const exportSet = new Set(exportNames);
 
   // Check each code block for imports that reference non-existent exports
-  for (const mdFile of markdownFiles) {
+  for (const mdFile of allDocs) {
     for (const block of mdFile.codeBlocks) {
       const codeLines = block.code.split('\n');
       for (let i = 0; i < codeLines.length; i++) {

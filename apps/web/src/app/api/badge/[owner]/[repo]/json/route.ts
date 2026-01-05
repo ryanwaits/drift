@@ -1,7 +1,6 @@
-import { validateSpec } from '@openpkg-ts/spec';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { computeCoverageScore, fetchSpec, getColorForScore } from '@/lib/badge';
+import { fetchDocCovReport, getColorForScore } from '@/lib/badge';
 
 export async function GET(
   request: NextRequest,
@@ -11,36 +10,24 @@ export async function GET(
   const searchParams = request.nextUrl.searchParams;
 
   const ref = searchParams.get('ref') ?? searchParams.get('branch') ?? 'main';
-  const specPath = searchParams.get('path') ?? searchParams.get('package') ?? 'openpkg.json';
+  const path = searchParams.get('path');
 
   try {
-    const spec = await fetchSpec(owner, repo, { ref, path: specPath });
+    const report = await fetchDocCovReport(owner, repo, { ref, path: path ?? undefined });
 
-    if (!spec) {
+    if (!report) {
       return NextResponse.json(
         { schemaVersion: 1, label: 'docs', message: 'not found', color: 'lightgrey' },
         { status: 404, headers: { 'Cache-Control': 'no-cache' } },
       );
     }
 
-    const validation = validateSpec(spec);
-    if (!validation.ok) {
-      return NextResponse.json(
-        { schemaVersion: 1, label: 'docs', message: 'invalid', color: 'lightgrey' },
-        { status: 422, headers: { 'Cache-Control': 'no-cache' } },
-      );
-    }
-
-    const coverageScore =
-      (spec as { docs?: { coverageScore?: number } }).docs?.coverageScore ??
-      computeCoverageScore(spec);
-
     return NextResponse.json(
       {
         schemaVersion: 1,
         label: 'docs',
-        message: `${coverageScore}%`,
-        color: getColorForScore(coverageScore),
+        message: `${report.score}%`,
+        color: getColorForScore(report.score),
       },
       { status: 200, headers: { 'Cache-Control': 'public, max-age=300, stale-if-error=3600' } },
     );

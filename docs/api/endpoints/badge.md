@@ -1,12 +1,13 @@
 # Badge Endpoint
 
-Generate coverage badge SVG for README embedding.
+Generate documentation health badge SVG for README embedding.
 
 ## Endpoint
 
 ```
 GET /badge/:owner/:repo
-GET /badge/:owner/:repo.svg
+GET /badge/:owner/:repo/drift
+GET /badge/:owner/:repo/json
 ```
 
 ## Parameters
@@ -23,7 +24,7 @@ GET /badge/:owner/:repo.svg
 | Param | Default | Description |
 |-------|---------|-------------|
 | `ref` / `branch` | `main` | Git ref or branch |
-| `path` / `package` | `openpkg.json` | Spec file path |
+| `path` | `.doccov/doccov.json` | DocCov report path |
 | `style` | `flat` | Badge style |
 
 ### Styles
@@ -44,52 +45,76 @@ GET /badge/:owner/:repo.svg
 </svg>
 ```
 
+## Setup
+
+1. Generate the DocCov report in your CI:
+   ```bash
+   doccov spec --package @your-org/pkg
+   ```
+
+2. Commit `.doccov/@your-org/pkg/doccov.json` to your repo
+
+3. Add badge to README:
+   ```markdown
+   ![Docs](https://api.doccov.com/badge/owner/repo?path=.doccov/@your-org/pkg/doccov.json)
+   ```
+
 ## Examples
 
-### Basic
+### Single Package
 
 ```markdown
-![Coverage](https://api.doccov.dev/badge/owner/repo)
+![Docs](https://api.doccov.com/badge/owner/repo?path=.doccov/my-package/doccov.json)
+```
+
+### Scoped Package
+
+```markdown
+![Docs](https://api.doccov.com/badge/owner/repo?path=.doccov/@doccov/sdk/doccov.json)
 ```
 
 ### Custom Branch
 
 ```markdown
-![Coverage](https://api.doccov.dev/badge/owner/repo?branch=develop)
+![Docs](https://api.doccov.com/badge/owner/repo?path=.doccov/@doccov/sdk/doccov.json&branch=develop)
 ```
 
-### Monorepo Package
+### Multiple Badges (Monorepo)
 
 ```markdown
-![Coverage](https://api.doccov.dev/badge/owner/repo?path=packages/core/openpkg.json)
+![SDK](https://api.doccov.com/badge/owner/repo?path=.doccov/@doccov/sdk/doccov.json)
+![CLI](https://api.doccov.com/badge/owner/repo?path=.doccov/@doccov/cli/doccov.json)
 ```
 
 ### Style Variants
 
 ```markdown
-![Coverage](https://api.doccov.dev/badge/owner/repo?style=for-the-badge)
+![Docs](https://api.doccov.com/badge/owner/repo?style=for-the-badge)
 ```
 
-## Coverage Calculation
+### Drift Badge
 
-1. Fetches `openpkg.json` from GitHub
-2. If enriched spec: uses `docs.coverageScore`
-3. Otherwise: calculates from export descriptions
+```markdown
+![Drift](https://api.doccov.com/badge/owner/repo/drift)
+```
+
+## Health Score
+
+The badge displays the **health score** from `doccov.json`, which combines:
+- **Completeness**: % of exports with full documentation
+- **Accuracy**: Penalty for drift issues (max 50%)
+- **Examples**: Penalty for failing examples (max 30%)
 
 ## Errors
 
 | Status | Description |
 |--------|-------------|
-| 404 | Spec not found |
-| 422 | Invalid spec format |
-| 429 | Rate limit (10/day per IP) |
+| 404 | doccov.json not found |
+| 429 | Rate limit exceeded |
 | 500 | Server error |
 
-Error badges show "error" text instead of percentage.
+Error badges show "not found" or "error" text.
 
 ## Rate Limiting
 
-- Anonymous: 10 requests/day per IP
-- Authenticated: Unlimited
-
-Upgrade to paid plan for unlimited badge requests.
+- 1000 requests/day per IP

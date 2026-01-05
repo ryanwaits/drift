@@ -1,0 +1,5656 @@
+{
+  "$schema": "https://unpkg.com/@openpkg-ts/spec/schemas/v0.4.0/openpkg.schema.json",
+  "openpkg": "0.4.0",
+  "meta": {
+    "ecosystem": "js/ts",
+    "name": "@doccov/spec",
+    "version": "0.27.0",
+    "description": "DocCov specification schema, types, and validation"
+  },
+  "exports": [
+    {
+      "id": "ApiSurfaceResult",
+      "name": "ApiSurfaceResult",
+      "kind": "type",
+      "description": "API Surface analysis result",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 264
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "assertDocCovSpec",
+      "name": "assertDocCovSpec",
+      "kind": "function",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/validate.ts",
+        "line": 75
+      },
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "spec",
+              "schema": {
+                "type": "unknown"
+              },
+              "required": true
+            },
+            {
+              "name": "version",
+              "schema": {
+                "$ref": "#/types/DocCovSchemaVersion"
+              },
+              "required": true
+            }
+          ],
+          "returns": {
+            "schema": {
+              "type": "void"
+            }
+          }
+        }
+      ],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "DocCovDrift",
+      "name": "DocCovDrift",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 52
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "DocCovSchemaVersion",
+      "name": "DocCovSchemaVersion",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/validate.ts",
+        "line": 8
+      },
+      "schema": {
+        "$ref": "#/types/DocCovSchemaVersion"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "DocCovSpec",
+      "name": "DocCovSpec",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 143
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "DocCovSpecError",
+      "name": "DocCovSpecError",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/validate.ts",
+        "line": 12
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "DocCovSpecVersion",
+      "name": "DocCovSpecVersion",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 141
+      },
+      "schema": {
+        "$ref": "#/types/DocCovSpecVersion"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "DocCovSummary",
+      "name": "DocCovSummary",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 167
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "DocumentationHealth",
+      "name": "DocumentationHealth",
+      "kind": "type",
+      "description": "Unified documentation health score combining completeness and accuracy.",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 96
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "DRIFT_CATEGORIES",
+      "name": "DRIFT_CATEGORIES",
+      "kind": "variable",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 23
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "DRIFT_CATEGORY_DESCRIPTIONS",
+      "name": "DRIFT_CATEGORY_DESCRIPTIONS",
+      "kind": "variable",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 46
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "DRIFT_CATEGORY_LABELS",
+      "name": "DRIFT_CATEGORY_LABELS",
+      "kind": "variable",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 40
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "DriftCategory",
+      "name": "DriftCategory",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 21
+      },
+      "schema": {
+        "$ref": "#/types/DriftCategory"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "DriftType",
+      "name": "DriftType",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 5
+      },
+      "schema": {
+        "$ref": "#/types/DriftType"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "ExampleAnalysis",
+      "name": "ExampleAnalysis",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 78
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "ExampleRuntimeDrift",
+      "name": "ExampleRuntimeDrift",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 72
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "ExampleTypecheckError",
+      "name": "ExampleTypecheckError",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 65
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "ExportAnalysis",
+      "name": "ExportAnalysis",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 219
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "ForgottenExport",
+      "name": "ForgottenExport",
+      "kind": "type",
+      "description": "A type referenced in public API but not exported",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 246
+      },
+      "schema": {
+        "$ref": "#/types/__type"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "getAvailableDocCovVersions",
+      "name": "getAvailableDocCovVersions",
+      "kind": "function",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/validate.ts",
+        "line": 96
+      },
+      "signatures": [
+        {
+          "parameters": [],
+          "returns": {
+            "schema": {
+              "$ref": "#/types/Array"
+            }
+          }
+        }
+      ],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "getDocCovValidationErrors",
+      "name": "getDocCovValidationErrors",
+      "kind": "function",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/validate.ts",
+        "line": 88
+      },
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "spec",
+              "schema": {
+                "type": "unknown"
+              },
+              "required": true
+            },
+            {
+              "name": "version",
+              "schema": {
+                "$ref": "#/types/DocCovSchemaVersion"
+              },
+              "required": true
+            }
+          ],
+          "returns": {
+            "schema": {
+              "$ref": "#/types/Array"
+            }
+          }
+        }
+      ],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "LATEST_VERSION",
+      "name": "LATEST_VERSION",
+      "kind": "variable",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/validate.ts",
+        "line": 10
+      },
+      "schema": {
+        "$ref": "#/types/DocCovSchemaVersion"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "MissingDocRule",
+      "name": "MissingDocRule",
+      "kind": "type",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 87
+      },
+      "schema": {
+        "$ref": "#/types/MissingDocRule"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "SCHEMA_URL",
+      "name": "SCHEMA_URL",
+      "kind": "variable",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/constants.ts",
+        "line": 2
+      },
+      "schema": {
+        "type": "string",
+        "enum": [
+          "https://unpkg.com/@doccov/spec/schemas/v1.0.0/doccov.schema.json"
+        ]
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "SCHEMA_VERSION",
+      "name": "SCHEMA_VERSION",
+      "kind": "variable",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/constants.ts",
+        "line": 1
+      },
+      "schema": {
+        "type": "string",
+        "enum": [
+          "1.0.0"
+        ]
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "TypeReferenceLocation",
+      "name": "TypeReferenceLocation",
+      "kind": "type",
+      "description": "Location context for where a type is referenced",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/types.ts",
+        "line": 238
+      },
+      "schema": {
+        "$ref": "#/types/TypeReferenceLocation"
+      },
+      "signatures": [],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "validateDocCovSpec",
+      "name": "validateDocCovSpec",
+      "kind": "function",
+      "tags": [],
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/doccov/packages/doccov-spec/src/validate.ts",
+        "line": 52
+      },
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "spec",
+              "schema": {
+                "type": "unknown"
+              },
+              "required": true
+            },
+            {
+              "name": "version",
+              "schema": {
+                "$ref": "#/types/DocCovSchemaVersion"
+              },
+              "required": true
+            }
+          ],
+          "returns": {
+            "schema": {
+              "type": "{ ok: true; } | { ok: false; errors: DocCovSpecError[]; }"
+            }
+          }
+        }
+      ],
+      "members": [],
+      "examples": []
+    }
+  ],
+  "types": [
+    {
+      "id": "DocCovSchemaVersion",
+      "name": "DocCovSchemaVersion",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toString": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "charAt": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "pos",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "charCodeAt": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "index",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "concat": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "strings",
+                    "schema": {
+                      "$ref": "#/types/Array"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "indexOf": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchString",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "position",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "lastIndexOf": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchString",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "position",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "localeCompare": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "options",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "$ref": "#/types/CollatorOptions"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "options",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "$ref": "#/types/CollatorOptions"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "match": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "regexp",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/types/RegExpMatchArray"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "matcher",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/types/RegExpMatchArray"
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "replace": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replaceValue",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replacer",
+                    "schema": {
+                      "type": "function",
+                      "signatures": [
+                        {
+                          "parameters": [
+                            {
+                              "name": "substring",
+                              "schema": {
+                                "type": "string"
+                              },
+                              "required": true
+                            },
+                            {
+                              "name": "args",
+                              "schema": {
+                                "$ref": "#/types/Array"
+                              },
+                              "required": true
+                            }
+                          ],
+                          "returns": {
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replaceValue",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replacer",
+                    "schema": {
+                      "type": "function",
+                      "signatures": [
+                        {
+                          "parameters": [
+                            {
+                              "name": "substring",
+                              "schema": {
+                                "type": "string"
+                              },
+                              "required": true
+                            },
+                            {
+                              "name": "args",
+                              "schema": {
+                                "$ref": "#/types/Array"
+                              },
+                              "required": true
+                            }
+                          ],
+                          "returns": {
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "search": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "regexp",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searcher",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "slice": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "start",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "end",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "split": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "separator",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "limit",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "$ref": "#/types/Array"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "splitter",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "limit",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "$ref": "#/types/Array"
+                  }
+                }
+              }
+            ]
+          },
+          "substring": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "start",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "end",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLowerCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLocaleLowerCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toUpperCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLocaleUpperCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "trim": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "length": {
+            "type": "number"
+          },
+          "substr": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "from",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "length",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toString",
+          "charAt",
+          "charCodeAt",
+          "concat",
+          "indexOf",
+          "lastIndexOf",
+          "localeCompare",
+          "match",
+          "replace",
+          "search",
+          "slice",
+          "split",
+          "substring",
+          "toLowerCase",
+          "toLocaleLowerCase",
+          "toUpperCase",
+          "toLocaleUpperCase",
+          "trim",
+          "length",
+          "substr"
+        ]
+      },
+      "members": [],
+      "tags": []
+    },
+    {
+      "id": "DocCovSpecVersion",
+      "name": "DocCovSpecVersion",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toString": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "charAt": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "pos",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "charCodeAt": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "index",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "concat": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "strings",
+                    "schema": {
+                      "$ref": "#/types/Array"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "indexOf": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchString",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "position",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "lastIndexOf": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchString",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "position",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "localeCompare": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "options",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "$ref": "#/types/CollatorOptions"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "options",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "$ref": "#/types/CollatorOptions"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "match": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "regexp",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/types/RegExpMatchArray"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "matcher",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/types/RegExpMatchArray"
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "replace": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replaceValue",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replacer",
+                    "schema": {
+                      "type": "function",
+                      "signatures": [
+                        {
+                          "parameters": [
+                            {
+                              "name": "substring",
+                              "schema": {
+                                "type": "string"
+                              },
+                              "required": true
+                            },
+                            {
+                              "name": "args",
+                              "schema": {
+                                "$ref": "#/types/Array"
+                              },
+                              "required": true
+                            }
+                          ],
+                          "returns": {
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replaceValue",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replacer",
+                    "schema": {
+                      "type": "function",
+                      "signatures": [
+                        {
+                          "parameters": [
+                            {
+                              "name": "substring",
+                              "schema": {
+                                "type": "string"
+                              },
+                              "required": true
+                            },
+                            {
+                              "name": "args",
+                              "schema": {
+                                "$ref": "#/types/Array"
+                              },
+                              "required": true
+                            }
+                          ],
+                          "returns": {
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "search": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "regexp",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searcher",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "slice": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "start",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "end",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "split": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "separator",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "limit",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "$ref": "#/types/Array"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "splitter",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "limit",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "$ref": "#/types/Array"
+                  }
+                }
+              }
+            ]
+          },
+          "substring": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "start",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "end",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLowerCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLocaleLowerCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toUpperCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLocaleUpperCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "trim": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "length": {
+            "type": "number"
+          },
+          "substr": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "from",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "length",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toString",
+          "charAt",
+          "charCodeAt",
+          "concat",
+          "indexOf",
+          "lastIndexOf",
+          "localeCompare",
+          "match",
+          "replace",
+          "search",
+          "slice",
+          "split",
+          "substring",
+          "toLowerCase",
+          "toLocaleLowerCase",
+          "toUpperCase",
+          "toLocaleUpperCase",
+          "trim",
+          "length",
+          "substr"
+        ]
+      },
+      "members": [],
+      "tags": []
+    },
+    {
+      "id": "DriftCategory",
+      "name": "DriftCategory",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toString": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "charAt": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "pos",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "charCodeAt": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "index",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "concat": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "strings",
+                    "schema": {
+                      "$ref": "#/types/Array"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "indexOf": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchString",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "position",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "lastIndexOf": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchString",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "position",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "localeCompare": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "options",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "$ref": "#/types/CollatorOptions"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "options",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "$ref": "#/types/CollatorOptions"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "match": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "regexp",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/types/RegExpMatchArray"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "matcher",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/types/RegExpMatchArray"
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "replace": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replaceValue",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replacer",
+                    "schema": {
+                      "type": "function",
+                      "signatures": [
+                        {
+                          "parameters": [
+                            {
+                              "name": "substring",
+                              "schema": {
+                                "type": "string"
+                              },
+                              "required": true
+                            },
+                            {
+                              "name": "args",
+                              "schema": {
+                                "$ref": "#/types/Array"
+                              },
+                              "required": true
+                            }
+                          ],
+                          "returns": {
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replaceValue",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replacer",
+                    "schema": {
+                      "type": "function",
+                      "signatures": [
+                        {
+                          "parameters": [
+                            {
+                              "name": "substring",
+                              "schema": {
+                                "type": "string"
+                              },
+                              "required": true
+                            },
+                            {
+                              "name": "args",
+                              "schema": {
+                                "$ref": "#/types/Array"
+                              },
+                              "required": true
+                            }
+                          ],
+                          "returns": {
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "search": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "regexp",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searcher",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "slice": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "start",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "end",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "split": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "separator",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "limit",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "$ref": "#/types/Array"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "splitter",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "limit",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "$ref": "#/types/Array"
+                  }
+                }
+              }
+            ]
+          },
+          "substring": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "start",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "end",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLowerCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLocaleLowerCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toUpperCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLocaleUpperCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "trim": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "length": {
+            "type": "number"
+          },
+          "substr": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "from",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "length",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toString",
+          "charAt",
+          "charCodeAt",
+          "concat",
+          "indexOf",
+          "lastIndexOf",
+          "localeCompare",
+          "match",
+          "replace",
+          "search",
+          "slice",
+          "split",
+          "substring",
+          "toLowerCase",
+          "toLocaleLowerCase",
+          "toUpperCase",
+          "toLocaleUpperCase",
+          "trim",
+          "length",
+          "substr"
+        ]
+      },
+      "members": [],
+      "tags": []
+    },
+    {
+      "id": "DriftType",
+      "name": "DriftType",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toString": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "charAt": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "pos",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "charCodeAt": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "index",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "concat": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "strings",
+                    "schema": {
+                      "$ref": "#/types/Array"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "indexOf": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchString",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "position",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "lastIndexOf": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchString",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "position",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "localeCompare": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "options",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "$ref": "#/types/CollatorOptions"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "options",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "$ref": "#/types/CollatorOptions"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "match": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "regexp",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/types/RegExpMatchArray"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "matcher",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/types/RegExpMatchArray"
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "replace": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replaceValue",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replacer",
+                    "schema": {
+                      "type": "function",
+                      "signatures": [
+                        {
+                          "parameters": [
+                            {
+                              "name": "substring",
+                              "schema": {
+                                "type": "string"
+                              },
+                              "required": true
+                            },
+                            {
+                              "name": "args",
+                              "schema": {
+                                "$ref": "#/types/Array"
+                              },
+                              "required": true
+                            }
+                          ],
+                          "returns": {
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replaceValue",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replacer",
+                    "schema": {
+                      "type": "function",
+                      "signatures": [
+                        {
+                          "parameters": [
+                            {
+                              "name": "substring",
+                              "schema": {
+                                "type": "string"
+                              },
+                              "required": true
+                            },
+                            {
+                              "name": "args",
+                              "schema": {
+                                "$ref": "#/types/Array"
+                              },
+                              "required": true
+                            }
+                          ],
+                          "returns": {
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "search": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "regexp",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searcher",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "slice": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "start",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "end",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "split": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "separator",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "limit",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "$ref": "#/types/Array"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "splitter",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "limit",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "$ref": "#/types/Array"
+                  }
+                }
+              }
+            ]
+          },
+          "substring": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "start",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "end",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLowerCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLocaleLowerCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toUpperCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLocaleUpperCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "trim": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "length": {
+            "type": "number"
+          },
+          "substr": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "from",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "length",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toString",
+          "charAt",
+          "charCodeAt",
+          "concat",
+          "indexOf",
+          "lastIndexOf",
+          "localeCompare",
+          "match",
+          "replace",
+          "search",
+          "slice",
+          "split",
+          "substring",
+          "toLowerCase",
+          "toLocaleLowerCase",
+          "toUpperCase",
+          "toLocaleUpperCase",
+          "trim",
+          "length",
+          "substr"
+        ]
+      },
+      "members": [],
+      "tags": []
+    },
+    {
+      "id": "MissingDocRule",
+      "name": "MissingDocRule",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toString": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "charAt": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "pos",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "charCodeAt": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "index",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "concat": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "strings",
+                    "schema": {
+                      "$ref": "#/types/Array"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "indexOf": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchString",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "position",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "lastIndexOf": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchString",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "position",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "localeCompare": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "options",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "$ref": "#/types/CollatorOptions"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "options",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "$ref": "#/types/CollatorOptions"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "match": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "regexp",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/types/RegExpMatchArray"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "matcher",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/types/RegExpMatchArray"
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "replace": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replaceValue",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replacer",
+                    "schema": {
+                      "type": "function",
+                      "signatures": [
+                        {
+                          "parameters": [
+                            {
+                              "name": "substring",
+                              "schema": {
+                                "type": "string"
+                              },
+                              "required": true
+                            },
+                            {
+                              "name": "args",
+                              "schema": {
+                                "$ref": "#/types/Array"
+                              },
+                              "required": true
+                            }
+                          ],
+                          "returns": {
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replaceValue",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replacer",
+                    "schema": {
+                      "type": "function",
+                      "signatures": [
+                        {
+                          "parameters": [
+                            {
+                              "name": "substring",
+                              "schema": {
+                                "type": "string"
+                              },
+                              "required": true
+                            },
+                            {
+                              "name": "args",
+                              "schema": {
+                                "$ref": "#/types/Array"
+                              },
+                              "required": true
+                            }
+                          ],
+                          "returns": {
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "search": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "regexp",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searcher",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "slice": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "start",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "end",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "split": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "separator",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "limit",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "$ref": "#/types/Array"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "splitter",
+                    "schema": {
+                      "$ref": "#/types/__type"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "limit",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "$ref": "#/types/Array"
+                  }
+                }
+              }
+            ]
+          },
+          "substring": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "start",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "end",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLowerCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLocaleLowerCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toUpperCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLocaleUpperCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "trim": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "length": {
+            "type": "number"
+          },
+          "substr": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "from",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "length",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toString",
+          "charAt",
+          "charCodeAt",
+          "concat",
+          "indexOf",
+          "lastIndexOf",
+          "localeCompare",
+          "match",
+          "replace",
+          "search",
+          "slice",
+          "split",
+          "substring",
+          "toLowerCase",
+          "toLocaleLowerCase",
+          "toUpperCase",
+          "toLocaleUpperCase",
+          "trim",
+          "length",
+          "substr"
+        ]
+      },
+      "members": [],
+      "tags": []
+    },
+    {
+      "id": "TypeReferenceLocation",
+      "name": "TypeReferenceLocation",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toString": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "charAt": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "pos",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "charCodeAt": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "index",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "concat": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "strings",
+                    "schema": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "indexOf": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchString",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "position",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "lastIndexOf": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchString",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "position",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "localeCompare": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "options",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "$ref": "#/types/CollatorOptions"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "that",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "$ref": "#/types/Locale"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "options",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "$ref": "#/types/CollatorOptions"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "match": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "regexp",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/types/RegExpMatchArray"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "matcher",
+                    "schema": {
+                      "type": "object",
+                      "properties": {}
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/types/RegExpMatchArray"
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "replace": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replaceValue",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replacer",
+                    "schema": {
+                      "type": "function",
+                      "signatures": [
+                        {
+                          "parameters": [
+                            {
+                              "name": "substring",
+                              "schema": {
+                                "type": "string"
+                              },
+                              "required": true
+                            },
+                            {
+                              "name": "args",
+                              "schema": {
+                                "type": "array",
+                                "items": {
+                                  "type": "any"
+                                }
+                              },
+                              "required": true
+                            }
+                          ],
+                          "returns": {
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "type": "object",
+                      "properties": {}
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replaceValue",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searchValue",
+                    "schema": {
+                      "type": "object",
+                      "properties": {}
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "replacer",
+                    "schema": {
+                      "type": "function",
+                      "signatures": [
+                        {
+                          "parameters": [
+                            {
+                              "name": "substring",
+                              "schema": {
+                                "type": "string"
+                              },
+                              "required": true
+                            },
+                            {
+                              "name": "args",
+                              "schema": {
+                                "$ref": "#/types/Array"
+                              },
+                              "required": true
+                            }
+                          ],
+                          "returns": {
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "search": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "regexp",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "searcher",
+                    "schema": {
+                      "type": "object",
+                      "properties": {}
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "slice": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "start",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "end",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "split": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "separator",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/RegExp"
+                        }
+                      ]
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "limit",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "$ref": "#/types/Array"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "splitter",
+                    "schema": {
+                      "type": "object",
+                      "properties": {}
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "limit",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "$ref": "#/types/Array"
+                  }
+                }
+              }
+            ]
+          },
+          "substring": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "start",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "end",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLowerCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLocaleLowerCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toUpperCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toLocaleUpperCase": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Array"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "locales",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "undefined"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/types/Locale"
+                        },
+                        {
+                          "$ref": "#/types/ReadonlyArray"
+                        }
+                      ]
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "trim": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "length": {
+            "type": "number"
+          },
+          "substr": {
+            "type": "function",
+            "signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "from",
+                    "schema": {
+                      "type": "number"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "length",
+                    "schema": {
+                      "type": "number | undefined"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toString",
+          "charAt",
+          "charCodeAt",
+          "concat",
+          "indexOf",
+          "lastIndexOf",
+          "localeCompare",
+          "match",
+          "replace",
+          "search",
+          "slice",
+          "split",
+          "substring",
+          "toLowerCase",
+          "toLocaleLowerCase",
+          "toUpperCase",
+          "toLocaleUpperCase",
+          "trim",
+          "length",
+          "substr"
+        ]
+      },
+      "members": [],
+      "tags": []
+    }
+  ],
+  "generation": {
+    "generator": "@openpkg-ts/extract",
+    "timestamp": "2026-01-05T19:35:54.810Z"
+  }
+}

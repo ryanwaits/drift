@@ -1,29 +1,42 @@
-import type { OpenPkg } from '@openpkg-ts/spec';
-
 export type BadgeStyle = 'flat' | 'flat-square' | 'for-the-badge';
 
 /**
- * Fetch an OpenPkg spec from GitHub raw.
+ * DocCov report structure (subset needed for badge).
+ */
+export interface DocCovReportBadge {
+  doccov: string;
+  summary: {
+    score?: number;
+    totalExports?: number;
+    health?: {
+      score: number;
+    };
+    drift?: {
+      total: number;
+    };
+  };
+}
+
+/**
+ * Fetch JSON from GitHub raw content.
  * Edge-compatible - uses only fetch.
  */
-export async function fetchSpec(
+async function fetchGitHubJson<T>(
   owner: string,
   repo: string,
-  options: { ref?: string; path?: string } = {},
-): Promise<OpenPkg | null> {
-  const ref = options.ref ?? 'main';
-  const specPath = options.path ?? 'openpkg.json';
-
+  path: string,
+  ref: string,
+): Promise<T | null> {
   const urls = [
-    `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${specPath}`,
-    `https://raw.githubusercontent.com/${owner}/${repo}/master/${specPath}`,
+    `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${path}`,
+    `https://raw.githubusercontent.com/${owner}/${repo}/master/${path}`,
   ];
 
   for (const url of urls) {
     try {
       const res = await fetch(url);
       if (res.ok) {
-        return (await res.json()) as OpenPkg;
+        return (await res.json()) as T;
       }
     } catch {
       // Try next URL
@@ -31,6 +44,52 @@ export async function fetchSpec(
   }
 
   return null;
+}
+
+/**
+ * DocCov report result for badge display.
+ */
+export interface DocCovReportResult {
+  score: number;
+  driftScore?: number;
+}
+
+/**
+ * Fetch DocCov report from GitHub.
+ * Returns health score and drift data from doccov.json.
+ *
+ * Path should be `.doccov/{packageName}/doccov.json`
+ * For scoped packages: `.doccov/@org/pkg/doccov.json`
+ */
+export async function fetchDocCovReport(
+  owner: string,
+  repo: string,
+  options: { ref?: string; path?: string } = {},
+): Promise<DocCovReportResult | null> {
+  const ref = options.ref ?? 'main';
+  // No universal default - path is package-specific
+  // Try common locations if not specified
+  const reportPath = options.path ?? '.doccov/doccov.json';
+
+  const report = await fetchGitHubJson<DocCovReportBadge>(owner, repo, reportPath, ref);
+
+  if (!report?.summary) {
+    return null;
+  }
+
+  // Prefer health.score, fall back to summary.score
+  const score = report.summary.health?.score ?? report.summary.score;
+  if (typeof score !== 'number') {
+    return null;
+  }
+
+  // Calculate drift percentage (% of exports with drift issues)
+  let driftScore: number | undefined;
+  if (report.summary.drift && report.summary.totalExports) {
+    driftScore = Math.round((report.summary.drift.total / report.summary.totalExports) * 100);
+  }
+
+  return { score, driftScore };
 }
 
 export type BadgeColor =
@@ -156,12 +215,4 @@ export function generateBadgeSvg(options: BadgeOptions): string {
     default:
       return generateFlatBadge(label, message, bgColor);
   }
-}
-
-export function computeCoverageScore(spec: { exports?: { description?: string }[] }): number {
-  const exports = spec.exports ?? [];
-  if (exports.length === 0) return 0;
-
-  const documented = exports.filter((e) => e.description && e.description.trim().length > 0);
-  return Math.round((documented.length / exports.length) * 100);
 }

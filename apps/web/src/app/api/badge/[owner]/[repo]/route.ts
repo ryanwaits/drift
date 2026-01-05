@@ -1,9 +1,7 @@
-import { validateSpec } from '@openpkg-ts/spec';
 import type { NextRequest } from 'next/server';
 import {
   type BadgeStyle,
-  computeCoverageScore,
-  fetchSpec,
+  fetchDocCovReport,
   generateBadgeSvg,
   getColorForScore,
 } from '@/lib/badge';
@@ -26,13 +24,13 @@ export async function GET(
   const searchParams = request.nextUrl.searchParams;
 
   const ref = searchParams.get('ref') ?? searchParams.get('branch') ?? 'main';
-  const specPath = searchParams.get('path') ?? searchParams.get('package') ?? 'openpkg.json';
+  const path = searchParams.get('path'); // optional override
   const style = (searchParams.get('style') ?? 'flat') as BadgeStyle;
 
   try {
-    const spec = await fetchSpec(owner, repo, { ref, path: specPath });
+    const report = await fetchDocCovReport(owner, repo, { ref, path: path ?? undefined });
 
-    if (!spec) {
+    if (!report) {
       const svg = generateBadgeSvg({
         label: 'docs',
         message: 'not found',
@@ -42,25 +40,10 @@ export async function GET(
       return new Response(svg, { status: 404, headers: CACHE_HEADERS_ERROR });
     }
 
-    const validation = validateSpec(spec);
-    if (!validation.ok) {
-      const svg = generateBadgeSvg({
-        label: 'docs',
-        message: 'invalid',
-        color: 'lightgrey',
-        style,
-      });
-      return new Response(svg, { status: 422, headers: CACHE_HEADERS_ERROR });
-    }
-
-    const coverageScore =
-      (spec as { docs?: { coverageScore?: number } }).docs?.coverageScore ??
-      computeCoverageScore(spec);
-
     const svg = generateBadgeSvg({
       label: 'docs',
-      message: `${coverageScore}%`,
-      color: getColorForScore(coverageScore),
+      message: `${report.score}%`,
+      color: getColorForScore(report.score),
       style,
     });
 

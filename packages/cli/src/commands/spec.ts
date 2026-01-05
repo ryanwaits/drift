@@ -249,16 +249,37 @@ export function registerSpecCommand(
 
         // Write output based on format
         const format = options.format ?? 'json';
-        const outputDir = path.resolve(options.cwd, options.output);
+
+        // Get package name for scoped output directory
+        let packageName: string;
+        if (resolved.packageInfo) {
+          packageName = resolved.packageInfo.name;
+        } else {
+          // Read from package.json in target directory
+          const pkgJsonPath = path.join(targetDir, 'package.json');
+          try {
+            const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
+            packageName = pkgJson.name ?? 'unknown';
+          } catch {
+            packageName = 'unknown';
+          }
+        }
+
+        // Output to scoped directory: .doccov/{packageName}/
+        const baseOutputDir = path.resolve(options.cwd, options.output);
+        const outputDir = path.join(baseOutputDir, packageName);
 
         // Create output directory
         fs.mkdirSync(outputDir, { recursive: true });
+
+        // Relative output path for display
+        const displayPath = `${options.output}/${packageName}`;
 
         if (format === 'api-surface') {
           const apiSurface = renderApiSurface(normalized);
           const apiSurfacePath = path.join(outputDir, 'api-surface.txt');
           writeFileSync(apiSurfacePath, apiSurface);
-          spin.success(`Generated ${options.output}/ (API surface)`);
+          spin.success(`Generated ${displayPath}/ (API surface)`);
         } else {
           // Write openpkg.json
           const openpkgPath = path.join(outputDir, 'openpkg.json');
@@ -268,7 +289,7 @@ export function registerSpecCommand(
           if (doccovSpec) {
             const doccovPath = path.join(outputDir, 'doccov.json');
             writeFileSync(doccovPath, JSON.stringify(doccovSpec, null, 2));
-            spin.success(`Generated ${options.output}/`);
+            spin.success(`Generated ${displayPath}/`);
             log(chalk.gray(`  openpkg.json: ${getArrayLength(normalized.exports)} exports`));
             log(
               chalk.gray(
@@ -276,7 +297,7 @@ export function registerSpecCommand(
               ),
             );
           } else {
-            spin.success(`Generated ${options.output}/openpkg.json`);
+            spin.success(`Generated ${displayPath}/openpkg.json`);
             log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
             log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
           }

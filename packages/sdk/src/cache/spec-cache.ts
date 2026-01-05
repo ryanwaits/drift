@@ -7,7 +7,7 @@ import { diffHashes, hashFile, hashFiles } from './hash';
 export const CACHE_VERSION = '1.1.0';
 
 /** Default cache file path */
-export const SPEC_CACHE_FILE = '.doccov/spec.cache.json';
+export const SPEC_CACHE_FILE = '.doccov/cache/spec.cache.json';
 
 /**
  * Configuration that affects spec generation output.
