@@ -61,7 +61,6 @@
     "zod": "^3.25.0"
   },
   "devDependencies": {
-    "cli-utils": "workspace:*",
     "@types/bun": "latest",
     "@types/node": "^20.0.0",
     "bunup": "latest"

@@ -12,6 +12,15 @@ export {
   mergeFixes,
 } from './deterministic-fixes';
 export {
+  type ApplyForgottenExportResult,
+  applyForgottenExportFixes,
+  type ForgottenExportFix,
+  type GenerateForgottenExportFixesOptions,
+  generateForgottenExportFixes,
+  groupFixesByFile,
+  previewForgottenExportFixes,
+} from './forgotten-exports';
+export {
   type ApplyEditsResult,
   applyEdits,
   applyPatchToJSDoc,
@@ -25,12 +34,3 @@ export {
   parseJSDocToPatch,
   serializeJSDoc,
 } from './jsdoc-writer';
-export {
-  type ApplyForgottenExportResult,
-  applyForgottenExportFixes,
-  type ForgottenExportFix,
-  type GenerateForgottenExportFixesOptions,
-  generateForgottenExportFixes,
-  groupFixesByFile,
-  previewForgottenExportFixes,
-} from './forgotten-exports';

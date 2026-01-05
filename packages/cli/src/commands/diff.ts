@@ -13,11 +13,11 @@ import {
 } from '@doccov/sdk';
 import { calculateNextVersion, type OpenPkg, recommendSemverBump } from '@openpkg-ts/spec';
 import chalk from 'chalk';
-import { spinner } from 'cli-utils';
 import type { Command } from 'commander';
 import { glob } from 'glob';
 import { loadDocCovConfig } from '../config';
 import { type DiffReportData, renderDiffHtml, renderDiffMarkdown, writeReport } from '../reports';
+import { spinner } from '../utils/progress';
 import { resolveThreshold } from '../utils/validation';
 
 export interface DiffCommandDependencies {

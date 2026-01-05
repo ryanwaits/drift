@@ -5,10 +5,7 @@
  * the Standard Schema interface (Zod 3.24+, ArkType, Valibot, etc.)
  */
 
-import {
-  extractStandardSchemasFromProject,
-  resolveCompiledPath,
-} from '../extract/schema';
+import { extractStandardSchemasFromProject, resolveCompiledPath } from '../extract/schema';
 
 export interface SchemaDetectionContext {
   baseDir: string;

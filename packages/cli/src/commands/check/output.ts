@@ -2,8 +2,13 @@ import type { Diagnostic, ExampleTypeError } from '@doccov/sdk';
 import { generateReportFromDocCov } from '@doccov/sdk';
 import type { DocCovSpec } from '@doccov/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
-import { colors, summary as createSummary, getSymbols, supportsUnicode } from 'cli-utils';
 import { computeStats, renderMarkdown, writeReports } from '../../reports';
+import {
+  colors,
+  summary as createSummary,
+  getSymbols,
+  supportsUnicode,
+} from '../../utils/progress';
 import type { CollectedDrift, OutputFormat, StaleReference } from './types';
 
 export interface TextOutputOptions {

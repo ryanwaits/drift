@@ -44,14 +44,19 @@ Full documentation at [docs/README.md](./docs/README.md):
 
 | Package | Purpose |
 |---------|---------|
-| [@openpkg-ts/spec](./packages/spec) | OpenPkg spec schema, validation, diff |
 | [@doccov/spec](./packages/doccov-spec) | DocCov spec schema, validation |
-| [@openpkg-ts/extract](./packages/extract) | TS export extraction |
 | [@doccov/sdk](./packages/sdk) | Core SDK |
 | [@doccov/cli](./packages/cli) | CLI tool |
-| [@openpkg-ts/fumadocs-adapter](./packages/fumadocs-adapter) | Fumadocs integration |
-| [@openpkg-ts/doc-generator](./packages/doc-generator) | API doc generator |
-| [@openpkg-ts/ui](./packages/openpkg-ui) | Docs UI components |
+
+### Dependencies (external)
+
+| Package | Purpose |
+|---------|---------|
+| [@openpkg-ts/spec](https://github.com/ryanwaits/openpkg-ts) | OpenPkg spec schema, validation, diff |
+| [@openpkg-ts/extract](https://github.com/ryanwaits/openpkg-ts) | TS export extraction |
+| [@openpkg-ts/doc-generator](https://github.com/ryanwaits/openpkg-ts) | API doc generator |
+| [@openpkg-ts/fumadocs-adapter](https://github.com/ryanwaits/openpkg-ts) | Fumadocs integration |
+| [@openpkg-ts/ui](https://github.com/ryanwaits/openpkg-ts) | Docs UI components |
 
 ## License
 

@@ -19,8 +19,8 @@ import {
 } from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
-import { spinner } from 'cli-utils';
 import type { Command } from 'commander';
+import { spinner } from '../utils/progress';
 
 export interface TrendsOptions {
   cwd: string;
