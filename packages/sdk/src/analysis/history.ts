@@ -48,19 +48,8 @@ export interface CoverageTrend {
   sparkline: number[];
 }
 
-/**
- * Tier-based retention settings.
- */
-export type RetentionTier = 'free' | 'team' | 'pro';
-
-/**
- * Retention days per tier.
- */
-export const RETENTION_DAYS: Record<RetentionTier, number> = {
-  free: 7,
-  team: 30,
-  pro: 90,
-};
+/** Default retention period in days */
+const RETENTION_DAYS = 90;
 
 /**
  * Weekly summary of coverage data.
@@ -94,8 +83,8 @@ export interface ExtendedTrendAnalysis {
   velocity7d: number;
   /** 30-day velocity */
   velocity30d: number;
-  /** 90-day velocity (Pro only) */
-  velocity90d?: number;
+  /** 90-day velocity */
+  velocity90d: number;
   /** Projected coverage in 30 days (based on velocity) */
   projected30d: number;
   /** Best coverage ever recorded */
@@ -302,46 +291,6 @@ export function pruneHistory(cwd: string, keepCount = 100): number {
 }
 
 /**
- * Prune snapshots based on tier retention policy.
- *
- * @param cwd - Working directory
- * @param tier - Retention tier (free: 7d, team: 30d, pro: 90d)
- * @returns Number of snapshots deleted
- */
-export function pruneByTier(cwd: string, tier: RetentionTier): number {
-  const retentionDays = RETENTION_DAYS[tier];
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
-
-  const historyDir = path.resolve(cwd, HISTORY_DIR);
-
-  if (!fs.existsSync(historyDir)) {
-    return 0;
-  }
-
-  const files = fs.readdirSync(historyDir).filter((f) => f.endsWith('.json'));
-  let deleted = 0;
-
-  for (const file of files) {
-    try {
-      const filepath = path.join(historyDir, file);
-      const content = fs.readFileSync(filepath, 'utf-8');
-      const snapshot = JSON.parse(content) as CoverageSnapshot;
-      const snapshotDate = new Date(snapshot.timestamp);
-
-      if (snapshotDate < cutoffDate) {
-        fs.unlinkSync(filepath);
-        deleted++;
-      }
-    } catch {
-      // Skip invalid files
-    }
-  }
-
-  return deleted;
-}
-
-/**
  * Load snapshots within a date range.
  *
  * @param cwd - Working directory
@@ -449,7 +398,7 @@ export function generateWeeklySummaries(snapshots: CoverageSnapshot[]): WeeklySu
  *
  * @param spec - Current OpenPkg spec
  * @param cwd - Working directory
- * @param options - Analysis options
+ * @param options - Optional git metadata
  * @returns Extended trend analysis
  */
 export function getExtendedTrend(
@@ -458,26 +407,22 @@ export function getExtendedTrend(
   options?: {
     commit?: string;
     branch?: string;
-    tier?: RetentionTier;
   },
 ): ExtendedTrendAnalysis {
-  const tier = options?.tier ?? 'pro';
-  const retentionDays = RETENTION_DAYS[tier];
-
   // Get base trend
   const trend = getTrend(spec, cwd, options);
 
-  // Load snapshots for the retention period
-  const periodSnapshots = loadSnapshotsForDays(cwd, retentionDays);
+  // Load snapshots for the retention period (90 days)
+  const periodSnapshots = loadSnapshotsForDays(cwd, RETENTION_DAYS);
 
   // Calculate velocities
   const snapshots7d = loadSnapshotsForDays(cwd, 7);
   const snapshots30d = loadSnapshotsForDays(cwd, 30);
-  const snapshots90d = tier === 'pro' ? loadSnapshotsForDays(cwd, 90) : [];
+  const snapshots90d = loadSnapshotsForDays(cwd, 90);
 
   const velocity7d = calculateVelocity(snapshots7d);
   const velocity30d = calculateVelocity(snapshots30d);
-  const velocity90d = tier === 'pro' ? calculateVelocity(snapshots90d) : undefined;
+  const velocity90d = calculateVelocity(snapshots90d);
 
   // Calculate projected coverage
   const currentScore = trend.current.coverageScore;

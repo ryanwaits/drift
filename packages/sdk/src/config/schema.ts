@@ -1,4 +1,9 @@
+/**
+ * Zod validation schema for DocCov configuration.
+ * Used by CLI for config file validation.
+ */
 import { z } from 'zod';
+import type { CheckConfig, DocCovConfig, DocsConfig } from './types';
 
 const stringList: z.ZodUnion<[z.ZodString, z.ZodArray<z.ZodString, 'many'>]> = z.union([
   z.string(),
@@ -58,7 +63,6 @@ const checkConfigSchema: z.ZodObject<{
   minHealth: z.ZodOptional<z.ZodNumber>;
   minCoverage: z.ZodOptional<z.ZodNumber>;
   maxDrift: z.ZodOptional<z.ZodNumber>;
-  minApiSurface: z.ZodOptional<z.ZodNumber>;
   apiSurface: z.ZodOptional<typeof apiSurfaceConfigSchema>;
 }> = z.object({
   /**
@@ -72,8 +76,6 @@ const checkConfigSchema: z.ZodObject<{
   minCoverage: z.number().min(0).max(100).optional(),
   /** @deprecated Use minHealth instead */
   maxDrift: z.number().min(0).max(100).optional(),
-  /** Minimum API surface completeness percentage (0-100) - deprecated, use apiSurface.minCompleteness */
-  minApiSurface: z.number().min(0).max(100).optional(),
   /** API surface configuration */
   apiSurface: apiSurfaceConfigSchema.optional(),
 });
@@ -94,15 +96,7 @@ export const docCovConfigSchema: z.ZodObject<{
   check: checkConfigSchema.optional(),
 });
 
-import type { CheckConfig, DocCovConfig, DocsConfig } from '@doccov/sdk';
-
 export type DocCovConfigInput = z.infer<typeof docCovConfigSchema>;
-
-// Re-export types from SDK
-export type { CheckConfig, DocsConfig };
-
-// NormalizedDocCovConfig is the same as DocCovConfig from SDK
-export type NormalizedDocCovConfig = DocCovConfig;
 
 const normalizeList = (value?: string | string[]): string[] | undefined => {
   if (!value) {
@@ -115,7 +109,7 @@ const normalizeList = (value?: string | string[]): string[] | undefined => {
   return normalized.length > 0 ? normalized : undefined;
 };
 
-export const normalizeConfig = (input: DocCovConfigInput): NormalizedDocCovConfig => {
+export const normalizeConfig = (input: DocCovConfigInput): DocCovConfig => {
   const include = normalizeList(input.include);
   const exclude = normalizeList(input.exclude);
 
@@ -138,7 +132,6 @@ export const normalizeConfig = (input: DocCovConfigInput): NormalizedDocCovConfi
       minHealth: input.check.minHealth,
       minCoverage: input.check.minCoverage,
       maxDrift: input.check.maxDrift,
-      minApiSurface: input.check.minApiSurface,
       apiSurface: input.check.apiSurface,
     };
   }

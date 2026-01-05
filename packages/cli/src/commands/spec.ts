@@ -1,6 +1,5 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { spinner } from 'cli-utils';
 import {
   buildDocCovSpec,
   DocCov,
@@ -17,8 +16,8 @@ import {
   validateSpec,
 } from '@openpkg-ts/spec';
 import chalk from 'chalk';
+import { spinner } from 'cli-utils';
 import type { Command } from 'commander';
-import { version as cliVersion } from '../../package.json';
 import { type LoadedDocCovConfig, loadDocCovConfig } from '../config';
 import {
   type FilterOptions as CliFilterOptions,
@@ -161,7 +160,7 @@ export function registerSpecCommand(
           entry: entry as string | undefined,
         });
 
-        const { targetDir, entryFile, packageInfo, entryPointInfo } = resolved;
+        const { targetDir, entryFile } = resolved;
 
         // Load config
         let config: LoadedDocCovConfig | null = null;
@@ -312,14 +311,14 @@ export function registerSpecCommand(
           log(chalk.bold('Generation Info'));
           log(chalk.gray(`  Timestamp:        ${fullGen.timestamp}`));
           log(
-            chalk.gray(`  Generator:        ${fullGen.generator.name}@${fullGen.generator.version}`),
+            chalk.gray(
+              `  Generator:        ${fullGen.generator.name}@${fullGen.generator.version}`,
+            ),
           );
           log(chalk.gray(`  Entry point:      ${fullGen.analysis.entryPoint}`));
           log(chalk.gray(`  Detected via:     ${fullGen.analysis.entryPointSource}`));
           log(
-            chalk.gray(
-              `  Declaration only: ${fullGen.analysis.isDeclarationOnly ? 'yes' : 'no'}`,
-            ),
+            chalk.gray(`  Declaration only: ${fullGen.analysis.isDeclarationOnly ? 'yes' : 'no'}`),
           );
           log(
             chalk.gray(

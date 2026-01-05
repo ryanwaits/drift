@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { colors, getSymbols, supportsUnicode } from 'cli-utils';
 import chalk from 'chalk';
+import { colors, getSymbols, supportsUnicode } from 'cli-utils';
 import type { Command } from 'commander';
 import { DOCCOV_CONFIG_FILENAMES } from '../config';
 

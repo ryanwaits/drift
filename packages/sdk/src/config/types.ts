@@ -53,18 +53,6 @@ export interface CheckConfig {
   examples?: ExampleValidationMode | ExampleValidationMode[] | string;
   /** Minimum health score required (0-100). Unified metric combining coverage + accuracy. */
   minHealth?: number;
-  /**
-   * Minimum coverage percentage required (0-100)
-   * @deprecated Use `minHealth` instead. Will be removed in next major.
-   */
-  minCoverage?: number;
-  /**
-   * Maximum drift percentage allowed (0-100)
-   * @deprecated Use `minHealth` instead. Drift is now factored into health score.
-   */
-  maxDrift?: number;
-  /** Minimum API surface completeness percentage (0-100) - deprecated, use apiSurface.minCompleteness */
-  minApiSurface?: number;
   /** API surface configuration */
   apiSurface?: ApiSurfaceConfig;
 }
@@ -113,7 +101,7 @@ export interface DocCovConfig {
  *   include: ['MyClass', 'myFunction'],
  *   exclude: ['internal*'],
  *   check: {
- *     minCoverage: 80,
+ *     minHealth: 80,
  *   },
  * });
  * ```

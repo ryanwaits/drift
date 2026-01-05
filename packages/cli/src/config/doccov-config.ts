@@ -1,7 +1,8 @@
 import { access } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { docCovConfigSchema, type NormalizedDocCovConfig, normalizeConfig } from './schema';
+
+import { type DocCovConfig, docCovConfigSchema, normalizeConfig } from '@doccov/sdk';
 
 const DOCCOV_CONFIG_FILENAMES = [
   'doccov.config.ts',
@@ -39,7 +40,7 @@ const findConfigFile = async (cwd: string): Promise<string | null> => {
   }
 };
 
-interface LoadedDocCovConfig extends NormalizedDocCovConfig {
+interface LoadedDocCovConfig extends DocCovConfig {
   filePath: string;
 }
 

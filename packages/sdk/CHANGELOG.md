@@ -1,5 +1,40 @@
 # @doccov/sdk
 
+## 0.28.0
+
+### Minor Changes
+
+- refactor: major cleanup - move platform packages, simplify CLI
+
+  ## Package Restructure
+
+  - Moved `api-shared`, `auth`, `db`, `sandbox`, `ui` from `packages/` to `apps/platform/`
+  - These are now internal platform code, not publishable packages
+
+  ## CLI Removals
+
+  - Removed `info` command
+  - Removed deprecated flags: `--min-coverage`, `--max-drift`, `--min-api-surface`, `--update-snapshot`
+  - Removed output formats: `html`, `github`, `pr-comment`, `changelog`
+  - Removed report renderers: changelog-renderer, github, html, pr-comment
+
+  ## SDK Changes
+
+  - Removed `RetentionTier` type and `pruneByTier` function (simplified to single 90-day retention)
+  - Removed deprecated `minCoverage`, `maxDrift`, `minApiSurface` from `CheckConfig` type
+  - Moved config schema from CLI to SDK (`docCovConfigSchema`, `normalizeConfig`)
+  - Exported `DocCovConfigInput` type for config validation
+
+  ## Type System
+
+  - Renamed `NormalizedDocCovConfig` to `DocCovConfig`
+  - Config validation schema still accepts deprecated fields for backwards compat
+
+  ## Breaking Changes
+
+  - Consumers using removed CLI commands/flags need to migrate
+  - Consumers using tier-based retention need to use simple `pruneHistory()`
+
 ## 0.27.5
 
 ### Patch Changes

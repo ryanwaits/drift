@@ -210,11 +210,7 @@ export async function handleForgottenExportFixes(
 
   if (result.fixesApplied > 0) {
     log('');
-    log(
-      chalk.green(
-        `✓ Added ${result.fixesApplied} export(s) to ${result.filesModified} file(s)`,
-      ),
-    );
+    log(chalk.green(`✓ Added ${result.fixesApplied} export(s) to ${result.filesModified} file(s)`));
 
     // Show which types were exported
     const grouped = new Map<string, string[]>();

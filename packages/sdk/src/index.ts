@@ -23,10 +23,6 @@
 // Core Analysis API
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Health computation
-export type { HealthInput } from './analysis/health';
-export { computeHealth } from './analysis/health';
-
 export type { BuildDocCovOptions } from './analysis/doccov-builder';
 // DocCov spec builder
 export { buildDocCovSpec } from './analysis/doccov-builder';
@@ -47,6 +43,9 @@ export {
   DRIFT_CATEGORY_DESCRIPTIONS,
   DRIFT_CATEGORY_LABELS,
 } from './analysis/docs-coverage';
+// Health computation
+export type { HealthInput } from './analysis/health';
+export { computeHealth } from './analysis/health';
 // Lookup helpers (for composition pattern)
 export {
   getExportAnalysis,
@@ -67,8 +66,8 @@ export type { DocCovOptions } from './options';
 // Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type { CheckConfig, DocCovConfig, DocsConfig } from './config';
-export { defineConfig } from './config';
+export type { CheckConfig, DocCovConfig, DocCovConfigInput, DocsConfig } from './config';
+export { defineConfig, docCovConfigSchema, normalizeConfig } from './config';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Project Resolution & Detection
@@ -168,7 +167,6 @@ export type {
   CoverageSnapshot,
   CoverageTrend,
   ExtendedTrendAnalysis,
-  RetentionTier,
 } from './analysis/history';
 export {
   computeSnapshot,
@@ -177,9 +175,7 @@ export {
   getTrend,
   HISTORY_DIR,
   loadSnapshots,
-  pruneByTier,
   pruneHistory,
-  RETENTION_DAYS,
   renderSparkline,
   saveSnapshot,
 } from './analysis/history';

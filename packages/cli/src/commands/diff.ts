@@ -1,6 +1,5 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { spinner } from 'cli-utils';
 import {
   diffSpecWithDocs,
   ensureSpecCoverage,
@@ -14,17 +13,11 @@ import {
 } from '@doccov/sdk';
 import { calculateNextVersion, type OpenPkg, recommendSemverBump } from '@openpkg-ts/spec';
 import chalk from 'chalk';
+import { spinner } from 'cli-utils';
 import type { Command } from 'commander';
 import { glob } from 'glob';
 import { loadDocCovConfig } from '../config';
-import {
-  type DiffReportData,
-  renderChangelog,
-  renderDiffHtml,
-  renderDiffMarkdown,
-  renderPRComment,
-  writeReport,
-} from '../reports';
+import { type DiffReportData, renderDiffHtml, renderDiffMarkdown, writeReport } from '../reports';
 import { resolveThreshold } from '../utils/validation';
 
 export interface DiffCommandDependencies {
@@ -39,7 +32,7 @@ const defaultDependencies: Required<DiffCommandDependencies> = {
   error: console.error,
 };
 
-type OutputFormat = 'text' | 'json' | 'markdown' | 'html' | 'github' | 'pr-comment' | 'changelog';
+type OutputFormat = 'text' | 'json' | 'markdown' | 'html' | 'github';
 
 /** Strict mode presets */
 type StrictPreset = 'ci' | 'release' | 'quality';
@@ -78,18 +71,11 @@ export function registerDiffCommand(
     .option('--base <file>', 'Base spec file (the "before" state)')
     .option('--head <file>', 'Head spec file (the "after" state)')
     // Output control
-    .option(
-      '--format <format>',
-      'Output format: text, json, markdown, html, github, pr-comment, changelog',
-      'text',
-    )
+    .option('--format <format>', 'Output format: text, json, markdown, html, github', 'text')
     .option('--stdout', 'Output to stdout instead of writing to .doccov/')
     .option('-o, --output <file>', 'Custom output path')
     .option('--cwd <dir>', 'Working directory', process.cwd())
     .option('--limit <n>', 'Max items to show in terminal/reports', '10')
-    // PR comment options
-    .option('--repo-url <url>', 'GitHub repo URL for file links (pr-comment format)')
-    .option('--sha <sha>', 'Commit SHA for file links (pr-comment format)')
     // Thresholds (same as check command, applied to HEAD spec)
     .option('--min-coverage <n>', 'Minimum coverage % for HEAD spec (0-100)')
     .option('--max-drift <n>', 'Maximum drift % for HEAD spec (0-100)')
@@ -283,55 +269,6 @@ export function registerDiffCommand(
             // Always stdout for CI annotation parsing
             printGitHubAnnotations(diff, log);
             break;
-
-          case 'pr-comment': {
-            // PR comment format - always stdout for GitHub Actions
-            const semverRecommendation = recommendSemverBump(diff);
-            const content = renderPRComment(
-              { diff, baseName, headName, headSpec },
-              {
-                repoUrl: options.repoUrl,
-                sha: options.sha,
-                minCoverage,
-                limit,
-                semverBump: {
-                  bump: semverRecommendation.bump,
-                  reason: semverRecommendation.reason,
-                },
-              },
-            );
-            log(content);
-            break;
-          }
-
-          case 'changelog': {
-            // Changelog format
-            const content = renderChangelog(
-              {
-                diff,
-                categorizedBreaking: diff.categorizedBreaking,
-                version: headSpec.meta?.version,
-              },
-              {
-                version: headSpec.meta?.version,
-                compareUrl: options.repoUrl
-                  ? `${options.repoUrl}/compare/${baseSpec.meta?.version ?? 'v0'}...${headSpec.meta?.version ?? 'HEAD'}`
-                  : undefined,
-              },
-            );
-            if (options.stdout) {
-              log(content);
-            } else {
-              const outputPath = options.output ?? getDiffReportPath(baseHash, headHash, 'md');
-              writeReport({
-                format: 'markdown',
-                content,
-                outputPath: outputPath.replace(/\.(json|html)$/, '.changelog.md'),
-                cwd: options.cwd,
-              });
-            }
-            break;
-          }
         }
 
         // Run validation (thresholds + strict presets)

@@ -5,7 +5,7 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { spinner } from 'cli-utils';
+
 import {
   type CoverageSnapshot,
   type CoverageTrend,
@@ -13,15 +13,13 @@ import {
   getExtendedTrend,
   getTrend,
   loadSnapshots,
-  pruneByTier,
   pruneHistory,
-  RETENTION_DAYS,
-  type RetentionTier,
   renderSparkline,
   saveSnapshot,
 } from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
+import { spinner } from 'cli-utils';
 import type { Command } from 'commander';
 
 export interface TrendsOptions {
@@ -31,7 +29,6 @@ export interface TrendsOptions {
   record?: boolean;
   json?: boolean;
   extended?: boolean;
-  tier?: string;
   weekly?: boolean;
 }
 
@@ -83,26 +80,17 @@ export function registerTrendsCommand(program: Command): void {
     .option('--record', 'Record current coverage to history')
     .option('--json', 'Output as JSON')
     .option('--extended', 'Show extended trend analysis (velocity, projections)')
-    .option('--tier <tier>', 'Retention tier: free (7d), team (30d), pro (90d)', 'pro')
     .option('--weekly', 'Show weekly summary breakdown')
     .action(async (options: TrendsOptions) => {
       const cwd = path.resolve(options.cwd);
-      const tier = (options.tier ?? 'pro') as RetentionTier;
 
       // Handle prune operation
       if (options.prune) {
-        // If prune is a number, use count-based pruning
         const keepCount = parseInt(options.prune, 10);
         if (!Number.isNaN(keepCount)) {
           const deleted = pruneHistory(cwd, keepCount);
           console.log(
             chalk.green(`Pruned ${deleted} old snapshots, kept ${keepCount} most recent`),
-          );
-        } else {
-          // Otherwise prune by tier
-          const deleted = pruneByTier(cwd, tier);
-          console.log(
-            chalk.green(`Pruned ${deleted} snapshots older than ${RETENTION_DAYS[tier]} days`),
           );
         }
         return;
@@ -208,19 +196,17 @@ export function registerTrendsCommand(program: Command): void {
           try {
             const specContent = fs.readFileSync(specPath, 'utf-8');
             const spec = JSON.parse(specContent) as OpenPkg;
-            const extended = getExtendedTrend(spec, cwd, { tier });
+            const extended = getExtendedTrend(spec, cwd);
 
             console.log(chalk.bold('Extended Analysis'));
-            console.log(chalk.gray(`Tier: ${tier} (${RETENTION_DAYS[tier]}-day retention)`));
+            console.log(chalk.gray('90-day retention'));
             console.log('');
 
             // Velocity metrics
             console.log('  Velocity:');
             console.log(`    7-day:   ${formatVelocity(extended.velocity7d)}`);
             console.log(`    30-day:  ${formatVelocity(extended.velocity30d)}`);
-            if (extended.velocity90d !== undefined) {
-              console.log(`    90-day:  ${formatVelocity(extended.velocity90d)}`);
-            }
+            console.log(`    90-day:  ${formatVelocity(extended.velocity90d)}`);
             console.log('');
 
             // Projections

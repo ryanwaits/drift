@@ -1,7 +1,7 @@
 import type { DocCov } from '@doccov/sdk';
 import type { DriftCategory, DriftType } from '@doccov/spec';
 
-export type OutputFormat = 'text' | 'json' | 'markdown' | 'html' | 'github';
+export type OutputFormat = 'text' | 'json' | 'markdown';
 
 export interface CheckCommandDependencies {
   createDocCov?: (

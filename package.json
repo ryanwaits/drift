@@ -4,7 +4,8 @@
   "type": "module",
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "apps/platform/*"
   ],
   "scripts": {
     "build": "bun run build:spec && bun run build:doccov-spec && bun run build:extract && bun run build:sdk && bun run build:cli && bun run build:fumadocs-adapter && bun run build:doc-generator",
@@ -16,6 +17,7 @@
     "build:fumadocs-adapter": "cd packages/fumadocs-adapter && bun run build",
     "build:doc-generator": "cd packages/doc-generator && bun run build",
     "build:site": "cd apps/site && bun run build",
+    "build:platform": "cd apps/platform && for dir in */; do (cd \"$dir\" && bun run build 2>/dev/null || true); done",
     "dev": "bun run --parallel dev:spec dev:sdk dev:cli",
     "dev:spec": "cd packages/spec && bun run dev",
     "dev:sdk": "cd packages/sdk && bun run dev",

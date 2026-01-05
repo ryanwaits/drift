@@ -42,11 +42,16 @@ Full documentation at [docs/README.md](./docs/README.md):
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
-| [@doccov/cli](./packages/cli) | Command-line interface |
-| [@doccov/sdk](./packages/sdk) | Programmatic API |
-| [@openpkg-ts/spec](./packages/spec) | Schema & validation |
+| Package | Purpose |
+|---------|---------|
+| [@openpkg-ts/spec](./packages/spec) | OpenPkg spec schema, validation, diff |
+| [@doccov/spec](./packages/doccov-spec) | DocCov spec schema, validation |
+| [@openpkg-ts/extract](./packages/extract) | TS export extraction |
+| [@doccov/sdk](./packages/sdk) | Core SDK |
+| [@doccov/cli](./packages/cli) | CLI tool |
+| [@openpkg-ts/fumadocs-adapter](./packages/fumadocs-adapter) | Fumadocs integration |
+| [@openpkg-ts/doc-generator](./packages/doc-generator) | API doc generator |
+| [@openpkg-ts/ui](./packages/openpkg-ui) | Docs UI components |
 
 ## License
 

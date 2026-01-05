@@ -1,15 +1,9 @@
-import type { Diagnostic, ExampleTypeError, ExampleValidationResult } from '@doccov/sdk';
+import type { Diagnostic, ExampleTypeError } from '@doccov/sdk';
 import { generateReportFromDocCov } from '@doccov/sdk';
 import type { DocCovSpec } from '@doccov/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { colors, summary as createSummary, getSymbols, supportsUnicode } from 'cli-utils';
-import {
-  computeStats,
-  renderGithubSummary,
-  renderHtml,
-  renderMarkdown,
-  writeReports,
-} from '../../reports';
+import { computeStats, renderMarkdown, writeReports } from '../../reports';
 import type { CollectedDrift, OutputFormat, StaleReference } from './types';
 
 export interface TextOutputOptions {
@@ -22,7 +16,6 @@ export interface TextOutputOptions {
   driftExports: CollectedDrift[];
   typecheckErrors: Array<{ exportName: string; error: ExampleTypeError }>;
   staleRefs: StaleReference[];
-  exampleResult: ExampleValidationResult | undefined;
   specWarnings: Diagnostic[];
   specInfos: Diagnostic[];
   verbose: boolean;
@@ -62,31 +55,32 @@ function displayHealthTree(
   health: import('@doccov/spec').DocumentationHealth,
   log: typeof console.log,
 ): void {
-  const tree = supportsUnicode()
-    ? { branch: '├─', corner: '└─' }
-    : { branch: '|-', corner: '\\-' };
+  const tree = supportsUnicode() ? { branch: '├─', corner: '└─' } : { branch: '|-', corner: '\\-' };
 
   // Completeness line
   const missingTotal = Object.values(health.completeness.missing).reduce((a, b) => a + b, 0);
-  const completenessLabel = missingTotal > 0
-    ? `${health.completeness.score}%  (${missingTotal} missing docs)`
-    : `${health.completeness.score}%`;
+  const completenessLabel =
+    missingTotal > 0
+      ? `${health.completeness.score}%  (${missingTotal} missing docs)`
+      : `${health.completeness.score}%`;
   const completenessColor = getHealthColor(getHealthStatus(health.completeness.score));
   log(`${tree.branch} ${colors.muted('completeness')}  ${completenessColor(completenessLabel)}`);
 
   // Accuracy line
-  const accuracyLabel = health.accuracy.issues > 0
-    ? `${health.accuracy.score}%  (${health.accuracy.issues} drift issues${health.accuracy.fixable > 0 ? `, ${health.accuracy.fixable} fixable` : ''})`
-    : `${health.accuracy.score}%`;
+  const accuracyLabel =
+    health.accuracy.issues > 0
+      ? `${health.accuracy.score}%  (${health.accuracy.issues} drift issues${health.accuracy.fixable > 0 ? `, ${health.accuracy.fixable} fixable` : ''})`
+      : `${health.accuracy.score}%`;
   const accuracyColor = getHealthColor(getHealthStatus(health.accuracy.score));
   const lastBranch = !health.examples ? tree.corner : tree.branch;
   log(`${lastBranch} ${colors.muted('accuracy')}      ${accuracyColor(accuracyLabel)}`);
 
   // Examples line (if present)
   if (health.examples) {
-    const examplesLabel = health.examples.failed > 0
-      ? `${health.examples.score}%  (${health.examples.failed} failed)`
-      : `${health.examples.score}%`;
+    const examplesLabel =
+      health.examples.failed > 0
+        ? `${health.examples.score}%  (${health.examples.failed} failed)`
+        : `${health.examples.score}%`;
     const examplesColor = getHealthColor(getHealthStatus(health.examples.score));
     log(`${tree.corner} ${colors.muted('examples')}      ${examplesColor(examplesLabel)}`);
   }
@@ -99,12 +93,10 @@ export function displayHealthVerbose(
   health: import('@doccov/spec').DocumentationHealth,
   log: typeof console.log,
 ): void {
-  const tree = supportsUnicode()
-    ? { branch: '├─', corner: '└─' }
-    : { branch: '|-', corner: '\\-' };
+  const tree = supportsUnicode() ? { branch: '├─', corner: '└─' } : { branch: '|-', corner: '\\-' };
 
   // COMPLETENESS section
-  log(colors.bold('COMPLETENESS') + `  ${health.completeness.score}%`);
+  log(`${colors.bold('COMPLETENESS')}  ${health.completeness.score}%`);
   const missingRules = Object.entries(health.completeness.missing) as Array<[string, number]>;
 
   for (let i = 0; i < missingRules.length; i++) {
@@ -112,9 +104,10 @@ export function displayHealthVerbose(
     const isLast = i === missingRules.length - 1;
     const prefix = isLast ? tree.corner : tree.branch;
     const label = count > 0 ? `(${count} missing)` : '';
-    const pct = health.completeness.total > 0
-      ? Math.round(((health.completeness.total - count) / health.completeness.total) * 100)
-      : 100;
+    const pct =
+      health.completeness.total > 0
+        ? Math.round(((health.completeness.total - count) / health.completeness.total) * 100)
+        : 100;
     const color = getHealthColor(getHealthStatus(pct));
     log(`${prefix} ${colors.muted(rule.padEnd(12))} ${color(`${pct}%`)}  ${colors.muted(label)}`);
   }
@@ -122,7 +115,10 @@ export function displayHealthVerbose(
   log('');
 
   // ACCURACY section
-  log(colors.bold('ACCURACY') + `  ${health.accuracy.score}%  ${colors.muted(`(${health.accuracy.issues} issues)`)}`);
+  log(
+    colors.bold('ACCURACY') +
+      `  ${health.accuracy.score}%  ${colors.muted(`(${health.accuracy.issues} issues)`)}`,
+  );
   const categories = Object.entries(health.accuracy.byCategory) as Array<[string, number]>;
   for (let i = 0; i < categories.length; i++) {
     const [category, count] = categories[i];
@@ -134,7 +130,7 @@ export function displayHealthVerbose(
   // EXAMPLES section (if present)
   if (health.examples) {
     log('');
-    log(colors.bold('EXAMPLES') + `  ${health.examples.score}%`);
+    log(`${colors.bold('EXAMPLES')}  ${health.examples.score}%`);
     log(`${tree.branch} ${colors.muted('passed'.padEnd(12))} ${health.examples.passed}`);
     log(`${tree.corner} ${colors.muted('failed'.padEnd(12))} ${health.examples.failed}`);
   }
@@ -154,7 +150,6 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
     driftExports,
     typecheckErrors,
     staleRefs,
-    exampleResult,
     specWarnings,
     specInfos,
     verbose,
@@ -372,10 +367,8 @@ export interface NonTextOutputOptions {
   format: OutputFormat;
   openpkg: OpenPkg;
   doccov: DocCovSpec;
-  coverageScore: number;
   minHealth: number;
   minApiSurface: number | undefined;
-  driftExports: CollectedDrift[];
   typecheckErrors: Array<{ exportName: string; error: ExampleTypeError }>;
   limit: number;
   stdout: boolean;
@@ -388,7 +381,7 @@ export interface NonTextOutputDeps {
 }
 
 /**
- * Handle non-text format output (json, markdown, html, github)
+ * Handle non-text format output (json, markdown)
  * Returns true if passed thresholds, false if failed
  */
 export function handleNonTextOutput(
@@ -399,10 +392,8 @@ export function handleNonTextOutput(
     format,
     openpkg,
     doccov,
-    coverageScore,
     minHealth,
     minApiSurface,
-    driftExports,
     typecheckErrors,
     limit,
     stdout,
@@ -418,7 +409,7 @@ export function handleNonTextOutput(
   const jsonContent = JSON.stringify(report, null, 2);
 
   // Get health score
-  const healthScore = doccov.summary.health?.score ?? coverageScore;
+  const healthScore = doccov.summary.health?.score ?? stats.coverageScore;
 
   // Generate requested format content
   let formatContent: string;
@@ -428,15 +419,6 @@ export function handleNonTextOutput(
       break;
     case 'markdown':
       formatContent = renderMarkdown(stats, { limit });
-      break;
-    case 'html':
-      formatContent = renderHtml(stats, { limit });
-      break;
-    case 'github':
-      formatContent = renderGithubSummary(stats, {
-        coverageScore,
-        driftCount: driftExports.length,
-      });
       break;
     default:
       throw new Error(`Unknown format: ${format}`);

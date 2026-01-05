@@ -2,7 +2,6 @@ import {
   buildDocCovSpec,
   DocCov,
   type ExampleValidation,
-  type ExampleValidationResult,
   NodeFileSystem,
   parseExamplesFlag,
   resolveTarget,
@@ -42,16 +41,6 @@ export function registerCheckCommand(
     .option('--package <name>', 'Target package name (for monorepos)')
     .option('--min-health <percentage>', 'Minimum health score (0-100)', (value) => Number(value))
     .option(
-      '--min-coverage <percentage>',
-      '[deprecated] Use --min-health instead',
-      (value) => Number(value),
-    )
-    .option(
-      '--max-drift <percentage>',
-      '[deprecated] Use --min-health instead',
-      (value) => Number(value),
-    )
-    .option(
       '--examples [mode]',
       'Example validation: presence, typecheck, run (comma-separated). Bare flag runs all.',
     )
@@ -59,10 +48,9 @@ export function registerCheckCommand(
     .option('--docs <glob>', 'Glob pattern for markdown docs to check for stale refs', collect, [])
     .option('--fix', 'Auto-fix drift issues')
     .option('--preview', 'Preview fixes with diff output (implies --fix)')
-    .option('--format <format>', 'Output format: text, json, markdown, html, github', 'text')
+    .option('--format <format>', 'Output format: text, json, markdown', 'text')
     .option('-o, --output <file>', 'Custom output path (overrides default .doccov/ path)')
     .option('--stdout', 'Output to stdout instead of writing to .doccov/')
-    .option('--update-snapshot', 'Force regenerate .doccov/report.json')
     .option('--limit <n>', 'Max exports to show in report tables', '20')
     .option(
       '--max-type-depth <number>',
@@ -78,11 +66,6 @@ export function registerCheckCommand(
     .option(
       '--visibility <tags>',
       'Filter by release stage: public,beta,alpha,internal (comma-separated)',
-    )
-    .option(
-      '--min-api-surface <percentage>',
-      'Minimum API surface completeness percentage (0-100)',
-      (value) => Number(value),
     )
     .option('--api-surface', 'Show only API surface / forgotten exports info')
     .option('-v, --verbose', 'Show detailed output including forgotten exports')
@@ -118,39 +101,14 @@ export function registerCheckCommand(
           hasExamples = validations.length > 0;
         }
 
-        // Deprecation warnings for legacy flags
-        if (options.minCoverage !== undefined) {
-          log(chalk.yellow('Warning: --min-coverage is deprecated. Use --min-health instead.'));
-        }
-        if (options.maxDrift !== undefined) {
-          log(chalk.yellow('Warning: --max-drift is deprecated. Use --min-health instead.'));
-        }
-        if (config?.check?.minCoverage !== undefined) {
-          log(chalk.yellow('Warning: config.check.minCoverage is deprecated. Use minHealth.'));
-        }
-        if (config?.check?.maxDrift !== undefined) {
-          log(chalk.yellow('Warning: config.check.maxDrift is deprecated. Use minHealth.'));
-        }
-
         // CLI option takes precedence, then config, then sensible defaults
         const DEFAULT_MIN_HEALTH = 80;
-        const minHealthRaw =
-          options.minHealth ?? config?.check?.minHealth ?? DEFAULT_MIN_HEALTH;
+        const minHealthRaw = options.minHealth ?? config?.check?.minHealth ?? DEFAULT_MIN_HEALTH;
         const minHealth = clampPercentage(minHealthRaw);
 
-        // Legacy: still read minCoverage/maxDrift for backwards compat display
-        const minCoverageRaw =
-          options.minCoverage ?? config?.check?.minCoverage ?? DEFAULT_MIN_HEALTH;
-        const minCoverage = clampPercentage(minCoverageRaw);
-        const maxDriftRaw = options.maxDrift ?? config?.check?.maxDrift;
-        const maxDrift = maxDriftRaw !== undefined ? clampPercentage(maxDriftRaw) : undefined;
-
-        // API surface config: CLI flag takes precedence, then apiSurface.minCompleteness, then legacy minApiSurface
+        // API surface config: apiSurface.minCompleteness only (--min-api-surface removed)
         const apiSurfaceConfig = config?.check?.apiSurface;
-        const minApiSurfaceRaw =
-          options.minApiSurface ??
-          apiSurfaceConfig?.minCompleteness ??
-          config?.check?.minApiSurface;
+        const minApiSurfaceRaw = apiSurfaceConfig?.minCompleteness;
         const minApiSurface =
           minApiSurfaceRaw !== undefined ? clampPercentage(minApiSurfaceRaw) : undefined;
         const warnBelowApiSurface = apiSurfaceConfig?.warnBelow
@@ -212,7 +170,6 @@ export function registerCheckCommand(
         const shouldFix = options.fix || isPreview;
 
         // Run example validation
-        let exampleResult: ExampleValidationResult | undefined;
         let typecheckErrors: Array<{
           exportName: string;
           error: import('@doccov/sdk').ExampleTypeError;
@@ -224,7 +181,6 @@ export function registerCheckCommand(
             validations,
             targetDir,
           });
-          exampleResult = validation.result;
           typecheckErrors = validation.typecheckErrors;
           runtimeDrifts = validation.runtimeDrifts;
         }
@@ -295,10 +251,8 @@ export function registerCheckCommand(
               format,
               openpkg,
               doccov,
-              coverageScore,
               minHealth,
               minApiSurface,
-              driftExports,
               typecheckErrors,
               limit: parseInt(options.limit, 10) || 20,
               stdout: options.stdout,
@@ -326,7 +280,6 @@ export function registerCheckCommand(
             driftExports,
             typecheckErrors,
             staleRefs,
-            exampleResult,
             specWarnings,
             specInfos,
             verbose: options.verbose ?? false,

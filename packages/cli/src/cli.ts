@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { registerCheckCommand } from './commands/check';
 import { registerDiffCommand } from './commands/diff';
-import { registerInfoCommand } from './commands/info';
 import { registerInitCommand } from './commands/init';
 import { registerSpecCommand } from './commands/spec';
 import { registerTrendsCommand } from './commands/trends';
@@ -25,7 +24,6 @@ program
 
 // Core commands
 registerCheckCommand(program);
-registerInfoCommand(program);
 registerSpecCommand(program);
 
 // Utility commands
