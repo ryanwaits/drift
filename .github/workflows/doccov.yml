@@ -66,7 +66,8 @@ jobs:
 
       - name: Check coverage
         run: |
-          bunx @doccov/cli check --package @doccov/sdk
+          bunx @doccov/cli check --package @doccov/sdk --min-health 34
+          bunx @doccov/cli check --package @doccov/spec --min-health 10
 
       - name: Comment on PR
         if: github.event_name == 'pull_request' && steps.diff.outputs.diff

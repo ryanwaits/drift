@@ -64,11 +64,11 @@ describe('computeHealth', () => {
   });
 
   describe('medium health scenarios', () => {
-    test('good docs (85%), some drift → reduced health (~75%)', () => {
-      // 85% coverage, 4 drift issues out of 20 documented exports
-      // drift_ratio = 4/20 = 0.2, penalty = 0.2 * 0.5 = 0.1
-      // accuracy = (1 - 0.1) * 100 = 90
-      // health = 85 * (1 - 0.1) = 76.5 → 77
+    test('good docs (85%), some drift → reduced health (~78%)', () => {
+      // 85% coverage, 4 drift issues out of 24 total exports
+      // drift_ratio = 4/24 = 0.167, penalty = 0.167 * 0.5 = 0.083
+      // accuracy = (1 - 0.083) * 100 = 92
+      // health = 85 * (1 - 0.083) = 77.9 → 78
       const input = createHealthInput({
         coverageScore: 85,
         documentedExports: 20,
@@ -84,18 +84,18 @@ describe('computeHealth', () => {
 
       const result = computeHealth(input);
 
-      expect(result.score).toBe(77);
+      expect(result.score).toBe(78);
       expect(result.completeness.score).toBe(85);
-      expect(result.accuracy.score).toBe(90);
+      expect(result.accuracy.score).toBe(92);
       expect(result.accuracy.issues).toBe(4);
       expect(result.accuracy.fixable).toBe(2);
     });
 
-    test('moderate docs (70%), light drift → ~65% health', () => {
-      // 70% coverage, 2 drift issues out of 14 documented
-      // drift_ratio = 2/14 = 0.143, penalty = 0.143 * 0.5 = 0.0714
-      // accuracy = (1 - 0.0714) * 100 = 92.86 → 93
-      // health = 70 * (1 - 0.0714) = 65 → 65
+    test('moderate docs (70%), light drift → ~67% health', () => {
+      // 70% coverage, 2 drift issues out of 20 total exports
+      // drift_ratio = 2/20 = 0.1, penalty = 0.1 * 0.5 = 0.05
+      // accuracy = (1 - 0.05) * 100 = 95
+      // health = 70 * (1 - 0.05) = 66.5 → 67
       const input = createHealthInput({
         coverageScore: 70,
         documentedExports: 14,
@@ -110,18 +110,18 @@ describe('computeHealth', () => {
 
       const result = computeHealth(input);
 
-      expect(result.score).toBe(65);
+      expect(result.score).toBe(67);
       expect(result.completeness.score).toBe(70);
-      expect(result.accuracy.score).toBe(93);
+      expect(result.accuracy.score).toBe(95);
     });
   });
 
   describe('low health scenarios', () => {
-    test('bad docs (50%), lots of drift → low health (~45%)', () => {
-      // 50% coverage, 10 drift issues out of 10 documented
-      // drift_ratio = 10/10 = 1.0, penalty = 1.0 * 0.5 = 0.5 (capped at max)
-      // accuracy = (1 - 0.5) * 100 = 50
-      // health = 50 * (1 - 0.5) = 25
+    test('bad docs (50%), lots of drift → low health (~38%)', () => {
+      // 50% coverage, 10 drift issues out of 20 total exports
+      // drift_ratio = 10/20 = 0.5, penalty = 0.5 * 0.5 = 0.25
+      // accuracy = (1 - 0.25) * 100 = 75
+      // health = 50 * (1 - 0.25) = 37.5 → 38
       const input = createHealthInput({
         coverageScore: 50,
         documentedExports: 10,
@@ -137,16 +137,16 @@ describe('computeHealth', () => {
 
       const result = computeHealth(input);
 
-      expect(result.score).toBe(25);
+      expect(result.score).toBe(38);
       expect(result.completeness.score).toBe(50);
-      expect(result.accuracy.score).toBe(50);
+      expect(result.accuracy.score).toBe(75);
     });
 
-    test('poor docs (40%), some drift → ~35% health', () => {
-      // 40% coverage, 3 drift issues out of 8 documented
-      // drift_ratio = 3/8 = 0.375, penalty = 0.375 * 0.5 = 0.1875
-      // accuracy = (1 - 0.1875) * 100 = 81.25 → 81
-      // health = 40 * (1 - 0.1875) = 32.5 → 33
+    test('poor docs (40%), some drift → ~37% health', () => {
+      // 40% coverage, 3 drift issues out of 20 total exports
+      // drift_ratio = 3/20 = 0.15, penalty = 0.15 * 0.5 = 0.075
+      // accuracy = (1 - 0.075) * 100 = 92.5 → 93
+      // health = 40 * (1 - 0.075) = 37
       const input = createHealthInput({
         coverageScore: 40,
         documentedExports: 8,
@@ -161,9 +161,9 @@ describe('computeHealth', () => {
 
       const result = computeHealth(input);
 
-      expect(result.score).toBe(33);
+      expect(result.score).toBe(37);
       expect(result.completeness.score).toBe(40);
-      expect(result.accuracy.score).toBe(81);
+      expect(result.accuracy.score).toBe(93);
     });
   });
 
@@ -277,11 +277,12 @@ describe('computeHealth', () => {
     });
 
     test('combined drift and example penalties', () => {
-      // 80% coverage, 20% drift penalty (4 issues / 20 documented)
-      // drift_ratio = 4/20 = 0.2, drift_penalty = 0.1
-      // after drift: 80 * (1 - 0.1) = 72
+      // 80% coverage, 4 drift issues out of 25 total exports
+      // drift_ratio = 4/25 = 0.16, drift_penalty = 0.08
+      // accuracy = (1 - 0.08) * 100 = 92
+      // after drift: 80 * (1 - 0.08) = 73.6
       // 50% examples fail: penalty = 0.15
-      // final: 72 * (1 - 0.15) = 61.2 → 61
+      // final: 73.6 * (1 - 0.15) = 62.56 → 63
       const input = createHealthInput({
         coverageScore: 80,
         documentedExports: 20,
@@ -297,14 +298,14 @@ describe('computeHealth', () => {
 
       const result = computeHealth(input);
 
-      expect(result.score).toBe(61);
-      expect(result.accuracy.score).toBe(90);
+      expect(result.score).toBe(63);
+      expect(result.accuracy.score).toBe(92);
       expect(result.examples!.score).toBe(50);
     });
   });
 
   describe('edge cases', () => {
-    test('zero documented exports → no drift penalty', () => {
+    test('zero drift issues → 100% accuracy', () => {
       const input = createHealthInput({
         coverageScore: 0,
         documentedExports: 0,

@@ -47,8 +47,8 @@ export function computeHealth(input: HealthInput): DocumentationHealth {
   const completenessScore = coverageScore;
 
   // Accuracy score: penalized by drift ratio (max 50% penalty)
-  // drift_ratio = issues / documented (or 0 if no documented exports)
-  const driftRatio = documentedExports > 0 ? driftIssues / documentedExports : 0;
+  // drift_ratio = issues / total exports
+  const driftRatio = totalExports > 0 ? driftIssues / totalExports : 0;
   const driftPenalty = Math.min(driftRatio * 0.5, 0.5); // cap at 50%
   const accuracyScore = Math.round((1 - driftPenalty) * 100);
 

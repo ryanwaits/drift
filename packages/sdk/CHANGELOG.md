@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.28.2
+
+### Patch Changes
+
+- fix(cli): fail check on runtime errors; fix(sdk): compute drift ratio from total exports
+
 ## 0.28.1
 
 ### Patch Changes

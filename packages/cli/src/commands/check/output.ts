@@ -20,6 +20,7 @@ export interface TextOutputOptions {
   warnBelowApiSurface: number | undefined;
   driftExports: CollectedDrift[];
   typecheckErrors: Array<{ exportName: string; error: ExampleTypeError }>;
+  runtimeErrors: number;
   staleRefs: StaleReference[];
   specWarnings: Diagnostic[];
   specInfos: Diagnostic[];
@@ -71,10 +72,10 @@ function displayHealthTree(
   const completenessColor = getHealthColor(getHealthStatus(health.completeness.score));
   log(`${tree.branch} ${colors.muted('completeness')}  ${completenessColor(completenessLabel)}`);
 
-  // Accuracy line
+  // Accuracy line - show score, hint about fixable if any
   const accuracyLabel =
-    health.accuracy.issues > 0
-      ? `${health.accuracy.score}%  (${health.accuracy.issues} drift issues${health.accuracy.fixable > 0 ? `, ${health.accuracy.fixable} fixable` : ''})`
+    health.accuracy.fixable > 0
+      ? `${health.accuracy.score}%  (${health.accuracy.fixable} fixable with --fix)`
       : `${health.accuracy.score}%`;
   const accuracyColor = getHealthColor(getHealthStatus(health.accuracy.score));
   const lastBranch = !health.examples ? tree.corner : tree.branch;
@@ -154,6 +155,7 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
     warnBelowApiSurface,
     driftExports,
     typecheckErrors,
+    runtimeErrors,
     staleRefs,
     specWarnings,
     specInfos,
@@ -184,6 +186,7 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
   const apiSurfaceWarn =
     warnBelowApiSurface !== undefined && apiSurfaceScore < warnBelowApiSurface && !apiSurfaceFailed;
   const hasTypecheckErrors = typecheckErrors.length > 0;
+  const hasRuntimeErrors = runtimeErrors > 0;
 
   // Display spec diagnostics (warnings/info)
   if (specWarnings.length > 0 || specInfos.length > 0) {
@@ -315,7 +318,7 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
   log('');
 
   // Show pass/fail status
-  const failed = healthFailed || apiSurfaceFailed || hasTypecheckErrors || hasStaleRefs;
+  const failed = healthFailed || apiSurfaceFailed || hasTypecheckErrors || hasRuntimeErrors || hasStaleRefs;
 
   if (!failed) {
     const thresholdParts: string[] = [];
@@ -355,6 +358,9 @@ export function displayTextOutput(options: TextOutputOptions, deps: TextOutputDe
   if (hasTypecheckErrors) {
     log(colors.error(`${sym.error} ${typecheckErrors.length} example type errors`));
   }
+  if (hasRuntimeErrors) {
+    log(colors.error(`${sym.error} ${runtimeErrors} example runtime errors`));
+  }
   if (hasStaleRefs) {
     log(colors.error(`${sym.error} ${staleRefs.length} stale references in docs`));
   }
@@ -375,6 +381,7 @@ export interface NonTextOutputOptions {
   minHealth: number;
   minApiSurface: number | undefined;
   typecheckErrors: Array<{ exportName: string; error: ExampleTypeError }>;
+  runtimeErrors: number;
   limit: number;
   stdout: boolean;
   outputPath?: string;
@@ -400,6 +407,7 @@ export function handleNonTextOutput(
     minHealth,
     minApiSurface,
     typecheckErrors,
+    runtimeErrors,
     limit,
     stdout,
     outputPath,
@@ -447,8 +455,9 @@ export function handleNonTextOutput(
   const apiSurfaceScore = doccov.apiSurface?.completeness ?? 100;
   const apiSurfaceFailed = minApiSurface !== undefined && apiSurfaceScore < minApiSurface;
   const hasTypecheckErrors = typecheckErrors.length > 0;
+  const hasRuntimeErrors = runtimeErrors > 0;
 
-  return !(healthFailed || apiSurfaceFailed || hasTypecheckErrors);
+  return !(healthFailed || apiSurfaceFailed || hasTypecheckErrors || hasRuntimeErrors);
 }
 
 /**
