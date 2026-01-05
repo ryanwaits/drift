@@ -1,6 +1,6 @@
 {
   "name": "@doccov/site",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@doccov/config": "workspace:*",
-    "@doccov/ui": "workspace:*",
+    "@doccov/config": "^0.0.1",
+    "@doccov/ui": "^0.3.2",
     "@ibm/plex": "^6.4.1",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-collapsible": "^1.1.12",

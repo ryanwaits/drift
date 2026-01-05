@@ -1,5 +1,11 @@
 # @doccov/site
 
+## 0.3.8
+
+### Patch Changes
+
+- fix(deps): replace workspace:\* with actual versions in apps
+
 ## 0.3.7
 
 ### Patch Changes

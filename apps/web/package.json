@@ -1,6 +1,6 @@
 {
   "name": "@doccov/web",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,10 +12,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@doccov/auth": "workspace:*",
-    "@doccov/api-shared": "workspace:*",
-    "@doccov/db": "workspace:*",
-    "@doccov/sdk": "workspace:*",
+    "@doccov/auth": "^0.1.2",
+    "@doccov/api-shared": "^0.2.24",
+    "@doccov/db": "^0.2.0",
+    "@doccov/sdk": "^0.28.1",
     "@openpkg-ts/spec": "^0.12.0",
     "better-auth": "^1.4.7",
     "jose": "^6.0.0",

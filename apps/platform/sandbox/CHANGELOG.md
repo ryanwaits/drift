@@ -1,5 +1,11 @@
 # @doccov/sandbox
 
+## 0.1.21
+
+### Patch Changes
+
+- fix(deps): replace workspace:\* with actual versions in apps
+
 ## 0.1.20
 
 ### Patch Changes

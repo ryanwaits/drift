@@ -1,5 +1,11 @@
 # @doccov/api-shared
 
+## 0.2.24
+
+### Patch Changes
+
+- fix(deps): replace workspace:\* with actual versions in apps
+
 ## 0.2.23
 
 ### Patch Changes

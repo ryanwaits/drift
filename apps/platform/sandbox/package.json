@@ -1,6 +1,6 @@
 {
   "name": "@doccov/sandbox",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,8 +9,8 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.0",
-    "@doccov/sdk": "workspace:*",
-    "@doccov/spec": "workspace:*",
+    "@doccov/sdk": "^0.28.1",
+    "@doccov/spec": "^0.27.0",
     "@openpkg-ts/spec": "^0.12.0",
     "@vercel/node": "^3.2.0",
     "@vercel/sandbox": "^1.1.1",

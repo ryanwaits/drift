@@ -1,5 +1,14 @@
 # @doccov/web
 
+## 0.1.26
+
+### Patch Changes
+
+- fix(deps): replace workspace:\* with actual versions in apps
+- Updated dependencies
+  - @doccov/api-shared@0.2.24
+  - @doccov/auth@0.1.2
+
 ## 0.1.25
 
 ### Patch Changes
