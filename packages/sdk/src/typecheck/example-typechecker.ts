@@ -45,6 +45,17 @@ function findTsConfig(packagePath: string): string | undefined {
 }
 
 /**
+ * Check if code already imports from the package
+ */
+function hasPackageImport(code: string, packageName: string): boolean {
+  // Match: import ... from 'packageName' or import ... from "packageName"
+  const importRegex = new RegExp(
+    `import\\s+.*from\\s+['"]${packageName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]`,
+  );
+  return importRegex.test(code);
+}
+
+/**
  * Create a virtual source file content with example code
  */
 function createVirtualSource(
@@ -55,8 +66,11 @@ function createVirtualSource(
   const cleanCode = stripCodeBlockMarkers(example);
   const lines: string[] = [];
 
-  // Add import statement if package name is provided
-  if (packageName && exportNames && exportNames.length > 0) {
+  // Add import statement only if:
+  // 1. Package name is provided
+  // 2. Export names are provided
+  // 3. Example doesn't already import from the package
+  if (packageName && exportNames && exportNames.length > 0 && !hasPackageImport(cleanCode, packageName)) {
     lines.push(`import { ${exportNames.join(', ')} } from '${packageName}';`);
     lines.push('');
   }
@@ -121,9 +135,13 @@ export function typecheckExample(
   const virtualSource = createVirtualSource(cleanCode, packageName, exportNames);
   const virtualFileName = path.join(packagePath, '__doccov_example__.ts');
 
-  // Calculate line offset (for import statement)
-  const hasImport = packageName !== undefined && exportNames && exportNames.length > 0;
-  const lineOffset = hasImport ? 2 : 0; // import + blank line
+  // Calculate line offset (for import statement we added)
+  // Only offset if we added an import (example didn't already have one)
+  const addedImport = packageName !== undefined &&
+    exportNames &&
+    exportNames.length > 0 &&
+    !hasPackageImport(cleanCode, packageName);
+  const lineOffset = addedImport ? 2 : 0; // import + blank line
 
   // Create a custom compiler host
   const sourceFile = ts.createSourceFile(

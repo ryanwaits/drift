@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.28.3
+
+### Patch Changes
+
+- fix(typecheck): skip auto-import when example already imports from package
+
 ## 0.28.2
 
 ### Patch Changes
