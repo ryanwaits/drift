@@ -80,6 +80,30 @@ const BUILTIN_TYPES = new Set([
 ]);
 
 /**
+ * Match export name against pattern (supports * wildcards)
+ */
+function matchesPattern(name: string, pattern: string): boolean {
+  if (!pattern.includes('*')) return name === pattern;
+  const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+  return regex.test(name);
+}
+
+/**
+ * Check if export should be included based on only/ignore filters
+ */
+function shouldIncludeExport(
+  name: string,
+  only?: string[],
+  ignore?: string[],
+): boolean {
+  if (ignore?.some((p) => matchesPattern(name, p))) return false;
+  if (only && only.length > 0) {
+    return only.some((p) => matchesPattern(name, p));
+  }
+  return true;
+}
+
+/**
  * Check if a type name should be skipped (anonymous, generic param, etc.)
  */
 function shouldSkipDanglingRef(name: string): boolean {
@@ -103,6 +127,8 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     maxExternalTypeDepth,
     resolveExternalTypes,
     includeSchema,
+    only,
+    ignore,
   } = options;
 
   const diagnostics: Diagnostic[] = [];
@@ -147,6 +173,9 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
   for (const symbol of exportedSymbols) {
     const exportName = symbol.getName();
+
+    // Apply only/ignore filters
+    if (!shouldIncludeExport(exportName, only, ignore)) continue;
 
     try {
       const { declaration, targetSymbol } = resolveExportTarget(symbol, typeChecker);

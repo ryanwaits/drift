@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/extract",
-  "version": "0.16.1",
+  "version": "0.17.0",
   "description": "TypeScript export extraction to OpenPkg spec",
   "keywords": [
     "openpkg",

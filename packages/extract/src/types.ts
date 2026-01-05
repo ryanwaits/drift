@@ -10,6 +10,10 @@ export interface ExtractOptions {
   schemaExtraction?: 'static' | 'hybrid';
   /** Include $schema URL in output */
   includeSchema?: boolean;
+  /** Only extract these exports (supports * wildcards) */
+  only?: string[];
+  /** Ignore these exports (supports * wildcards) */
+  ignore?: string[];
 }
 
 export interface ExtractResult {

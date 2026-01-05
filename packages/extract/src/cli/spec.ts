@@ -13,6 +13,8 @@ export function createProgram(): Command {
     .option('--max-depth <n>', 'Max type depth (default: 4)')
     .option('--skip-resolve', 'Skip external type resolution')
     .option('--runtime', 'Enable Standard Schema runtime extraction')
+    .option('--only <exports>', 'Only extract these exports (comma-separated, supports * wildcards)')
+    .option('--ignore <exports>', 'Ignore these exports (comma-separated, supports * wildcards)')
     .option('-v, --verbose', 'Show detailed output')
     .action(async (entry, options) => {
       let entryFile: string;
@@ -43,6 +45,8 @@ export function createProgram(): Command {
         ...(options.maxDepth ? { maxTypeDepth: parseInt(options.maxDepth) } : {}),
         resolveExternalTypes: !options.skipResolve,
         schemaExtraction: options.runtime ? 'hybrid' : 'static',
+        ...(options.only ? { only: options.only.split(',').map((s: string) => s.trim()) } : {}),
+        ...(options.ignore ? { ignore: options.ignore.split(',').map((s: string) => s.trim()) } : {}),
       });
 
       const normalized = normalize(result.spec);

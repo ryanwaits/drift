@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.17.0
+
+### Minor Changes
+
+- Add --only and --ignore CLI flags for filtering exports (supports \* wildcards)
+
 ## 0.16.1
 
 ### Patch Changes
