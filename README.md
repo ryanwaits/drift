@@ -2,6 +2,8 @@
 
 [![npm](https://img.shields.io/npm/v/@doccov/cli)](https://npmjs.com/package/@doccov/cli)
 [![npm](https://img.shields.io/npm/v/@doccov/sdk)](https://npmjs.com/package/@doccov/sdk)
+[![sdk docs](https://api.doccov.com/badge/ryanwaits/doccov?path=.doccov/@doccov/sdk/doccov.json)](https://github.com/ryanwaits/doccov)
+[![spec docs](https://api.doccov.com/badge/ryanwaits/doccov?path=.doccov/@doccov/spec/doccov.json)](https://github.com/ryanwaits/doccov)
 
 Documentation coverage and drift detection for TypeScript.
 
