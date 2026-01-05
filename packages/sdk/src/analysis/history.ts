@@ -6,9 +6,17 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { OpenPkg } from '@openpkg-ts/spec';
+import { getDoccovDir } from '../utils/project-root';
 
-/** Directory for storing history snapshots */
+/** Directory for storing history snapshots (relative to .doccov) */
 export const HISTORY_DIR = '.doccov/history';
+
+/**
+ * Get the history directory path (uses project root).
+ */
+function getHistoryDir(cwd: string): string {
+  return path.join(getDoccovDir(cwd), 'history');
+}
 
 /**
  * A historical coverage snapshot.
@@ -143,11 +151,13 @@ export function computeSnapshot(
 /**
  * Save a coverage snapshot to history.
  *
+ * Uses project root for .doccov location (walks up from cwd to find root).
+ *
  * @param snapshot - The snapshot to save
- * @param cwd - Working directory
+ * @param cwd - Working directory (will resolve to project root)
  */
 export function saveSnapshot(snapshot: CoverageSnapshot, cwd: string): void {
-  const historyDir = path.resolve(cwd, HISTORY_DIR);
+  const historyDir = getHistoryDir(cwd);
 
   if (!fs.existsSync(historyDir)) {
     fs.mkdirSync(historyDir, { recursive: true });
@@ -161,11 +171,13 @@ export function saveSnapshot(snapshot: CoverageSnapshot, cwd: string): void {
 /**
  * Load all historical snapshots.
  *
- * @param cwd - Working directory
+ * Uses project root for .doccov location (walks up from cwd to find root).
+ *
+ * @param cwd - Working directory (will resolve to project root)
  * @returns Array of snapshots sorted by timestamp (most recent first)
  */
 export function loadSnapshots(cwd: string): CoverageSnapshot[] {
-  const historyDir = path.resolve(cwd, HISTORY_DIR);
+  const historyDir = getHistoryDir(cwd);
 
   if (!fs.existsSync(historyDir)) {
     return [];
@@ -260,12 +272,14 @@ export function formatDelta(delta: number): string {
 /**
  * Prune old snapshots to keep history manageable.
  *
- * @param cwd - Working directory
+ * Uses project root for .doccov location (walks up from cwd to find root).
+ *
+ * @param cwd - Working directory (will resolve to project root)
  * @param keepCount - Number of snapshots to keep (default: 100)
  * @returns Number of snapshots deleted
  */
 export function pruneHistory(cwd: string, keepCount = 100): number {
-  const historyDir = path.resolve(cwd, HISTORY_DIR);
+  const historyDir = getHistoryDir(cwd);
 
   if (!fs.existsSync(historyDir)) {
     return 0;

@@ -1,5 +1,19 @@
 # @doccov/cli
 
+## 0.30.0
+
+### Patch Changes
+
+- feat(sdk): add project root detection for monorepo .doccov dir placement
+
+  - Add `findProjectRoot()` and `getDoccovDir()` utils to SDK
+  - Walk up from cwd to find .git, pnpm-workspace, or workspaces field
+  - Ensures .doccov/ is always at repo root, not inside subpackages
+  - CLI uses SDK's getDoccovDir for cache, history, spec, and reports
+
+- Updated dependencies
+  - @doccov/sdk@0.30.0
+
 ## 0.29.4
 
 ### Patch Changes

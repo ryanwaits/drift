@@ -4,6 +4,7 @@ import {
   buildDocCovSpec,
   DocCov,
   detectPackageManager,
+  getDoccovDir,
   NodeFileSystem,
   renderApiSurface,
   resolveTarget,
@@ -266,7 +267,11 @@ export function registerSpecCommand(
         }
 
         // Output to scoped directory: .doccov/{packageName}/
-        const baseOutputDir = path.resolve(options.cwd, options.output);
+        // Use project root for default .doccov directory
+        const baseOutputDir =
+          options.output === '.doccov'
+            ? getDoccovDir(options.cwd)
+            : path.resolve(options.cwd, options.output);
         const outputDir = path.join(baseOutputDir, packageName);
 
         // Create output directory

@@ -348,3 +348,5 @@ export type {
 } from './utils/example-runner';
 // Example runner
 export { runExample, runExamples, runExamplesWithPackage } from './utils/example-runner';
+// Project root detection
+export { findProjectRoot, getDoccovDir } from './utils/project-root';

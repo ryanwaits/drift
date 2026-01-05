@@ -5,6 +5,7 @@
 import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { getDoccovDir } from '@doccov/sdk';
 
 export interface DocsCacheOptions {
   cwd: string;
@@ -20,10 +21,10 @@ export interface CacheEntry {
 const DEFAULT_TTL = 60 * 60 * 1000; // 1 hour
 
 /**
- * Get the cache directory path
+ * Get the cache directory path (uses project root)
  */
 export function getCacheDir(cwd: string): string {
-  return path.join(cwd, '.doccov', 'cache');
+  return path.join(getDoccovDir(cwd), 'cache');
 }
 
 /**

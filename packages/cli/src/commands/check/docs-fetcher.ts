@@ -4,7 +4,7 @@
 
 import type { MarkdownDocFile } from '@doccov/sdk';
 import * as cheerio from 'cheerio';
-import { getFromCache, writeToCache } from './docsCache';
+import { getFromCache, writeToCache } from './docs-cache';
 import type { UrlDocsSource } from './parseDocsPattern';
 
 export interface FetchOptions {

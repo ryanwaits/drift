@@ -5,7 +5,7 @@
 
 import type { MarkdownDocFile } from '@doccov/sdk';
 import { minimatch } from 'minimatch';
-import { getFromCache, writeToCache } from './docsCache';
+import { getFromCache, writeToCache } from './docs-cache';
 import type { GitHubDocsSource } from './parseDocsPattern';
 
 export interface GitHubFetchOptions {

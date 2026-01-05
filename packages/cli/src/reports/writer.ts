@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { DEFAULT_REPORT_DIR, getReportPath } from '@doccov/sdk';
+import { DEFAULT_REPORT_DIR, getDoccovDir, getReportPath } from '@doccov/sdk';
 import chalk from 'chalk';
 
 export interface WriteReportOptions {
@@ -28,14 +28,16 @@ export interface WriteReportResult {
 /**
  * Write a report to the .doccov directory (or custom path).
  * Ensures the output directory exists before writing.
+ * Uses project root for .doccov location (walks up from cwd to find root).
  */
 export function writeReport(options: WriteReportOptions): WriteReportResult {
   const { format, content, outputPath, cwd = process.cwd(), silent = false } = options;
 
-  // Determine output path
+  // Determine output path (use project root for .doccov)
+  const doccovDir = getDoccovDir(cwd);
   const reportPath = outputPath
     ? path.resolve(cwd, outputPath)
-    : path.resolve(cwd, getReportPath(format));
+    : path.join(doccovDir, getReportPath(format).replace(DEFAULT_REPORT_DIR + '/', ''));
 
   // Ensure directory exists
   const dir = path.dirname(reportPath);
@@ -107,9 +109,10 @@ export function writeReports(options: WriteReportsOptions): WriteReportResult[] 
 
 /**
  * Ensure the .doccov directory exists.
+ * Uses project root for .doccov location (walks up from cwd to find root).
  */
 export function ensureReportDir(cwd: string = process.cwd()): string {
-  const reportDir = path.resolve(cwd, DEFAULT_REPORT_DIR);
+  const reportDir = getDoccovDir(cwd);
   if (!fs.existsSync(reportDir)) {
     fs.mkdirSync(reportDir, { recursive: true });
   }

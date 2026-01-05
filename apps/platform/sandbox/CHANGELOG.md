@@ -1,5 +1,12 @@
 # @doccov/sandbox
 
+## 0.1.23
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/sdk@0.30.0
+
 ## 0.1.22
 
 ### Patch Changes

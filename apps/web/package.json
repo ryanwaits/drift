@@ -1,6 +1,6 @@
 {
   "name": "@doccov/web",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,9 +13,9 @@
   },
   "dependencies": {
     "@doccov/auth": "^0.1.2",
-    "@doccov/api-shared": "^0.2.25",
+    "@doccov/api-shared": "^0.2.26",
     "@doccov/db": "^0.2.0",
-    "@doccov/sdk": "^0.29.0",
+    "@doccov/sdk": "^0.30.0",
     "@openpkg-ts/spec": "^0.12.0",
     "better-auth": "^1.4.7",
     "jose": "^6.0.0",
