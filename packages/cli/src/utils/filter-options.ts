@@ -1,6 +1,6 @@
 import { type FilterOptions, mergeFilters, parseListFlag, type ReleaseTag } from '@doccov/sdk';
 import chalk from 'chalk';
-import type { NormalizedDocCovConfig } from '../config';
+import type { DocCovConfig } from '../config';
 
 // Re-export from SDK for backwards compatibility
 export type { FilterOptions };
@@ -47,7 +47,7 @@ const formatList = (label: string, values: string[]): string =>
  * This wraps the SDK's mergeFilters with CLI-specific message formatting.
  */
 export const mergeFilterOptions = (
-  config: NormalizedDocCovConfig | null,
+  config: DocCovConfig | null,
   cliOptions: FilterOptions,
 ): ResolvedFilterOptions => {
   const messages: string[] = [];

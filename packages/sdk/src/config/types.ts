@@ -53,6 +53,10 @@ export interface CheckConfig {
   examples?: ExampleValidationMode | ExampleValidationMode[] | string;
   /** Minimum health score required (0-100). Unified metric combining coverage + accuracy. */
   minHealth?: number;
+  /** @deprecated Use minHealth instead */
+  minCoverage?: number;
+  /** @deprecated Use minHealth instead */
+  maxDrift?: number;
   /** API surface configuration */
   apiSurface?: ApiSurfaceConfig;
 }
