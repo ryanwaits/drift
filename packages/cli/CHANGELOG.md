@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.29.1
+
+### Patch Changes
+
+- update docs + action to use .doccov/{pkg}/ output structure, add logo to badges
+
 ## 0.29.0
 
 ### Minor Changes
