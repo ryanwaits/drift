@@ -1,5 +1,13 @@
 # @doccov/cli
 
+## 0.28.1
+
+### Patch Changes
+
+- 24f04ff: style: sort imports alphabetically, remove unused import
+- Updated dependencies [24f04ff]
+  - @doccov/sdk@0.28.1
+
 ## 0.28.0
 
 ### Minor Changes

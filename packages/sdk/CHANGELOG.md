@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.28.1
+
+### Patch Changes
+
+- 24f04ff: style: sort imports alphabetically, remove unused import
+
 ## 0.28.0
 
 ### Minor Changes
