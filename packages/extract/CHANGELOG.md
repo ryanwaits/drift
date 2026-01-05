@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.18.0
+
+### Minor Changes
+
+- feat: add JavaScript file support for entry point detection and compilation
+
 ## 0.17.0
 
 ### Minor Changes

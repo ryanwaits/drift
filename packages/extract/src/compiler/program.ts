@@ -1,6 +1,23 @@
 import * as path from 'node:path';
 import ts from 'typescript';
 
+/**
+ * Check if file is a JavaScript file
+ */
+function isJsFile(file: string): boolean {
+  return /\.(js|mjs|cjs|jsx)$/.test(file);
+}
+
+/**
+ * Get appropriate ScriptKind based on file extension
+ */
+function getScriptKind(file: string): ts.ScriptKind {
+  if (/\.tsx$/.test(file)) return ts.ScriptKind.TSX;
+  if (/\.jsx$/.test(file)) return ts.ScriptKind.JSX;
+  if (/\.(js|mjs|cjs)$/.test(file)) return ts.ScriptKind.JS;
+  return ts.ScriptKind.TS;
+}
+
 const DEFAULT_COMPILER_OPTIONS: ts.CompilerOptions = {
   target: ts.ScriptTarget.Latest,
   module: ts.ModuleKind.CommonJS,
@@ -28,7 +45,11 @@ export function createProgram({
   baseDir = path.dirname(entryFile),
   content,
 }: ProgramOptions): ProgramResult {
-  const configPath = ts.findConfigFile(baseDir, ts.sys.fileExists, 'tsconfig.json');
+  // Look for tsconfig.json first, fallback to jsconfig.json
+  let configPath = ts.findConfigFile(baseDir, ts.sys.fileExists, 'tsconfig.json');
+  if (!configPath) {
+    configPath = ts.findConfigFile(baseDir, ts.sys.fileExists, 'jsconfig.json');
+  }
   let compilerOptions: ts.CompilerOptions = { ...DEFAULT_COMPILER_OPTIONS };
 
   if (configPath) {
@@ -41,10 +62,21 @@ export function createProgram({
     compilerOptions = { ...compilerOptions, ...parsedConfig.options };
   }
 
-  // Avoid TS5053: Option 'allowJs' cannot be specified with 'isolatedDeclarations'
-  const allowJsVal = (compilerOptions as Record<string, unknown>).allowJs;
-  if (typeof allowJsVal === 'boolean' && allowJsVal) {
-    compilerOptions = { ...compilerOptions, allowJs: false, checkJs: false };
+  // Handle JS/TS compiler options conflict
+  if (isJsFile(entryFile)) {
+    // For JS files: enable allowJs/checkJs, disable isolatedDeclarations (conflicts)
+    compilerOptions = {
+      ...compilerOptions,
+      allowJs: true,
+      checkJs: true,
+      isolatedDeclarations: false,
+    };
+  } else {
+    // For TS files: avoid TS5053 (allowJs cannot be specified with isolatedDeclarations)
+    const allowJsVal = (compilerOptions as Record<string, unknown>).allowJs;
+    if (typeof allowJsVal === 'boolean' && allowJsVal) {
+      compilerOptions = { ...compilerOptions, allowJs: false, checkJs: false };
+    }
   }
 
   const compilerHost = ts.createCompilerHost(compilerOptions, true);
@@ -56,7 +88,7 @@ export function createProgram({
       content,
       ts.ScriptTarget.Latest,
       true,
-      ts.ScriptKind.TS,
+      getScriptKind(entryFile),
     );
 
     const originalGetSourceFile = compilerHost.getSourceFile.bind(compilerHost);

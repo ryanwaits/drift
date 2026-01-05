@@ -88,8 +88,16 @@ interface EntryPointResult {
 
 function findEntryPoint(cwd: string): EntryPointResult | null {
   // Prefer source files first (convention over configuration)
-  // Doc generation needs TSDoc comments which exist in source, not .d.ts
-  const sourceEntries = ['src/index.ts', 'index.ts', 'lib/index.ts'];
+  // Doc generation needs TSDoc/JSDoc comments which exist in source, not .d.ts
+  // Check TS first, then JS
+  const sourceEntries = [
+    'src/index.ts',
+    'index.ts',
+    'lib/index.ts',
+    'src/index.js',
+    'index.js',
+    'lib/index.js',
+  ];
   for (const entry of sourceEntries) {
     const fullPath = path.join(cwd, entry);
     if (fs.existsSync(fullPath)) return { path: fullPath, fromDts: false };
@@ -117,11 +125,17 @@ function findEntryPoint(cwd: string): EntryPointResult | null {
         return { path: p, fromDts: pkg.exports['.'].types.endsWith('.d.ts') };
       }
 
-      // Check main field with .ts extension
+      // Check main field - try .ts version first, then .js directly
       if (pkg.main) {
         const mainTs = pkg.main.replace(/\.js$/, '.ts');
-        const fullPath = path.join(cwd, mainTs);
-        if (fs.existsSync(fullPath)) return { path: fullPath, fromDts: false };
+        const tsPath = path.join(cwd, mainTs);
+        if (fs.existsSync(tsPath)) return { path: tsPath, fromDts: false };
+
+        // Also check if the .js file itself exists (for pure JS projects)
+        const jsPath = path.join(cwd, pkg.main);
+        if (pkg.main.endsWith('.js') && fs.existsSync(jsPath)) {
+          return { path: jsPath, fromDts: false };
+        }
       }
     } catch {
       // Ignore parse errors

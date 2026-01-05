@@ -1,5 +1,13 @@
 # @doccov/sdk
 
+## 0.27.5
+
+### Patch Changes
+
+- chore: bump for @openpkg-ts/extract JS support
+- Updated dependencies
+  - @openpkg-ts/extract@0.18.0
+
 ## 0.27.4
 
 ### Patch Changes
