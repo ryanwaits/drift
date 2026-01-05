@@ -1,5 +1,19 @@
 # @doccov/cli
 
+## 0.29.4
+
+### Patch Changes
+
+- fix(cli): suppress noisy external type diagnostics from check output
+
+  - Add `code` field to `Diagnostic`, `SpecDiagnostic`, and `CachedDiagnostic` interfaces
+  - Preserve diagnostic codes from @openpkg-ts/extract through SDK pipeline
+  - Filter out `EXTERNAL_TYPE_*` info diagnostics in CLI check command
+  - Bump cache version to 1.3.0
+
+- Updated dependencies
+  - @doccov/sdk@0.29.4
+
 ## 0.29.3
 
 ### Patch Changes

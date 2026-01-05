@@ -28,6 +28,7 @@ export interface Diagnostic {
   message: string;
   severity: 'error' | 'warning' | 'info';
   suggestion?: string;
+  code?: string;
   location?: {
     file: string;
     line?: number;

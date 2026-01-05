@@ -162,8 +162,11 @@ export function registerCheckCommand(
         const format = (options.format ?? 'text') as OutputFormat;
 
         // Collect spec diagnostics for later display
+        // Filter out EXTERNAL_TYPE_* info diagnostics - not actionable for users
         const specWarnings = specResult.diagnostics.filter((d) => d.severity === 'warning');
-        const specInfos = specResult.diagnostics.filter((d) => d.severity === 'info');
+        const specInfos = specResult.diagnostics.filter(
+          (d) => d.severity === 'info' && !d.code?.startsWith('EXTERNAL_TYPE'),
+        );
 
         // Normalize --fix / --preview
         const isPreview = options.preview;

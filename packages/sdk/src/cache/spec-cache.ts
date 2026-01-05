@@ -4,7 +4,7 @@ import type { OpenPkg } from '@openpkg-ts/spec';
 import { diffHashes, hashFile, hashFiles } from './hash';
 
 /** Current cache format version - bump when spec extraction logic changes */
-export const CACHE_VERSION = '1.2.0';
+export const CACHE_VERSION = '1.3.0';
 
 /** Default cache file path */
 export const SPEC_CACHE_FILE = '.doccov/cache/spec.cache.json';
@@ -23,6 +23,7 @@ export interface CachedDiagnostic {
   message: string;
   severity: 'error' | 'warning' | 'info';
   suggestion?: string;
+  code?: string;
   location?: {
     file: string;
     line?: number;

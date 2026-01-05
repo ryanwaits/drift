@@ -21,6 +21,7 @@ export interface SpecDiagnostic {
   message: string;
   severity: 'error' | 'warning' | 'info';
   suggestion?: string;
+  code?: string;
 }
 
 export interface RunAnalysisResult {
@@ -146,6 +147,7 @@ export async function runAnalysis(input: AnalysisContextInput): Promise<RunAnaly
       message: diag.message,
       severity: diag.severity,
       suggestion: diag.suggestion,
+      code: diag.code,
     });
   }
 
