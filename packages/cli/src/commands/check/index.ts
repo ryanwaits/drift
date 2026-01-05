@@ -8,10 +8,10 @@ import {
 } from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
-import { spinner } from 'cli-utils';
 import type { Command } from 'commander';
 import { loadDocCovConfig } from '../../config';
 import { mergeFilterOptions, parseVisibilityFlag } from '../../utils/filter-options';
+import { spinner } from '../../utils/progress';
 import { clampPercentage } from '../../utils/validation';
 import { handleFixes, handleForgottenExportFixes } from './fix-handler';
 import { displayApiSurfaceOutput, displayTextOutput, handleNonTextOutput } from './output';

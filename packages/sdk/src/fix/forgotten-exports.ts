@@ -4,7 +4,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { ForgottenExport, ApiSurfaceResult } from '@doccov/spec';
+import type { ApiSurfaceResult } from '@doccov/spec';
 
 /** Fix for a forgotten export */
 export interface ForgottenExportFix {
@@ -68,9 +68,7 @@ export function generateForgottenExportFixes(
 /**
  * Group fixes by target file for efficient application.
  */
-export function groupFixesByFile(
-  fixes: ForgottenExportFix[],
-): Map<string, ForgottenExportFix[]> {
+export function groupFixesByFile(fixes: ForgottenExportFix[]): Map<string, ForgottenExportFix[]> {
   const grouped = new Map<string, ForgottenExportFix[]>();
 
   for (const fix of fixes) {
@@ -122,11 +120,7 @@ export async function applyForgottenExportFixes(
       const uniqueStatements = [...new Set(statements)];
 
       // Insert statements
-      const newContent = insertExportStatements(
-        lines,
-        insertLine,
-        uniqueStatements,
-      );
+      const newContent = insertExportStatements(lines, insertLine, uniqueStatements);
 
       // Write back
       await fs.promises.writeFile(filePath, newContent, 'utf8');
@@ -148,10 +142,7 @@ export async function applyForgottenExportFixes(
  * Find the best line to insert new exports.
  * Prefers: after last re-export, after last export, end of file.
  */
-function findBestInsertionPoint(
-  lines: string[],
-  _fixes: ForgottenExportFix[],
-): number {
+function findBestInsertionPoint(lines: string[], _fixes: ForgottenExportFix[]): number {
   let lastExportLine = -1;
   let lastReExportLine = -1;
 
@@ -186,11 +177,7 @@ function findBestInsertionPoint(
 /**
  * Insert export statements at specified line.
  */
-function insertExportStatements(
-  lines: string[],
-  insertLine: number,
-  statements: string[],
-): string {
+function insertExportStatements(lines: string[], insertLine: number, statements: string[]): string {
   const newLines = [...lines];
 
   // Add blank line before if needed

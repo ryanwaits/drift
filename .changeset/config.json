@@ -4,8 +4,7 @@
   "commit": false,
   "fixed": [],
   "linked": [
-    ["@doccov/sdk", "@doccov/cli", "@doccov/spec"],
-    ["@openpkg-ts/spec", "@openpkg-ts/extract"]
+    ["@doccov/sdk", "@doccov/cli", "@doccov/spec"]
   ],
   "access": "public",
   "baseBranch": "main",

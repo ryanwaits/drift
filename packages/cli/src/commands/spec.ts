@@ -16,7 +16,6 @@ import {
   validateSpec,
 } from '@openpkg-ts/spec';
 import chalk from 'chalk';
-import { spinner } from 'cli-utils';
 import type { Command } from 'commander';
 import { type LoadedDocCovConfig, loadDocCovConfig } from '../config';
 import {
@@ -25,6 +24,7 @@ import {
   parseListFlag,
   parseVisibilityFlag,
 } from '../utils/filter-options';
+import { spinner } from '../utils/progress';
 
 export type SpecFormat = 'json' | 'api-surface';
 

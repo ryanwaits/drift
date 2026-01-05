@@ -1,5 +1,5 @@
-import type { CategorizedDrift, DriftCategory, SpecDocDrift } from '../analysis/drift/types';
 import type { ApiSurfaceResult, DocumentationHealth } from '@doccov/spec';
+import type { CategorizedDrift, DriftCategory, SpecDocDrift } from '../analysis/drift/types';
 
 /**
  * DocCov report schema version.

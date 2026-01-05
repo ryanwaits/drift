@@ -1,4 +1,4 @@
 {
   "framework": "nextjs",
-  "buildCommand": "cd ../../packages/spec && bun run build && cd ../sdk && bun run build && cd ../db && bun run migrate && cd ../../apps/web && bun run build"
+  "buildCommand": "cd ../../packages/doccov-spec && bun run build && cd ../sdk && bun run build && cd ../../apps/web && bun run build"
 }

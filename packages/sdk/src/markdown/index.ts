@@ -2,6 +2,8 @@
  * Markdown/MDX documentation analysis module
  */
 
+// Diff with docs impact (re-export CategorizedBreaking for consumers of SpecDiffWithDocs)
+export type { CategorizedBreaking } from '@openpkg-ts/spec';
 // Analyzer functions
 export {
   analyzeDocsImpact,
@@ -13,8 +15,6 @@ export {
 } from './analyzer';
 // Parser functions
 export type { MethodCallInfo } from './ast-extractor';
-// Diff with docs impact (re-export CategorizedBreaking for consumers of SpecDiffWithDocs)
-export type { CategorizedBreaking } from '@openpkg-ts/spec';
 export type { DiffWithDocsOptions, SpecDiffWithDocs } from './diff-with-docs';
 export {
   diffSpecWithDocs,
