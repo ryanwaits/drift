@@ -87,7 +87,7 @@ export function PackageInstall({
   global: isGlobal = false,
   managers = ['npm', 'bun', 'pnpm', 'yarn'],
   copyButton = true,
-}: PackageInstallProps) {
+}: PackageInstallProps): React.ReactNode {
   const [activeManager, setActiveManager] = useState<PackageManager>(managers[0]);
   const command = getInstallCommand(activeManager, pkg, { dev, global: isGlobal });
 

@@ -36,7 +36,7 @@ export const chConfig: CodeHikeConfig = {
  * flagsToOptions("na") // { lineNumbers: true, animate: true }
  * flagsToOptions("c") // { copyButton: true }
  */
-export function flagsToOptions(flags: string = '') {
+export function flagsToOptions(flags: string = ''): CodeOptions {
   const options: CodeOptions = {};
   const map = {
     c: 'copyButton',

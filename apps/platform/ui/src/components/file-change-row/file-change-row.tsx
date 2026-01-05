@@ -17,7 +17,7 @@ import { CopyButton } from '../docskit/code.copy';
 import { getHandlers } from '../docskit/code.handlers';
 import { CodeIcon } from '../docskit/code.icon';
 
-function StackedChevrons({ isOpen, className }: { isOpen?: boolean; className?: string }) {
+function StackedChevrons({ isOpen, className }: { isOpen?: boolean; className?: string }): React.ReactNode {
   return (
     <div className={cn('flex flex-col items-center -space-y-1 transition-opacity', className)}>
       <ChevronUp
@@ -86,7 +86,7 @@ function FileChangeRow({
   children,
   defaultOpen = false,
   className,
-}: FileChangeRowProps) {
+}: FileChangeRowProps): React.ReactNode {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
@@ -191,7 +191,7 @@ function FileChangeList({
   children,
   defaultOpen = true,
   className,
-}: FileChangeListProps) {
+}: FileChangeListProps): React.ReactNode {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (

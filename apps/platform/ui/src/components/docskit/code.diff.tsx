@@ -61,7 +61,7 @@ interface ClientDiffCodeProps {
  * DocKit code block variant with file change row header.
  * Displays path/filename with diff stats, collapsible with syntax-highlighted code.
  */
-export function ClientDiffCode(props: ClientDiffCodeProps) {
+export function ClientDiffCode(props: ClientDiffCodeProps): React.ReactNode {
   const {
     codeblock,
     path = '',

@@ -9,7 +9,7 @@ export function CodeIcon({
   title: string;
   lang: string;
   className?: string;
-}) {
+}): React.ReactNode {
   if (
     title?.toLowerCase() === 'terminal output' ||
     title?.toLowerCase() === 'terminal' ||

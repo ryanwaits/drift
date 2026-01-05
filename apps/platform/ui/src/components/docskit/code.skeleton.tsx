@@ -21,7 +21,7 @@ export function CodeBlockSkeleton({
 }: {
   hasTitle?: boolean;
   lines?: number;
-}) {
+}): React.ReactNode {
   const id = useId();
   // Randomize line widths for a more natural look
   const lineWidths = Array.from({ length: lines }, (_, i) => {
@@ -56,7 +56,7 @@ export function CodeBlockSkeleton({
 /**
  * Loading skeleton for terminal-style code blocks.
  */
-export function TerminalSkeleton({ lines = 3 }: { lines?: number }) {
+export function TerminalSkeleton({ lines = 3 }: { lines?: number }): React.ReactNode {
   const id = useId();
   const lineWidths = Array.from({ length: lines }, (_, i) => {
     const widths = ['60%', '45%', '70%', '55%'];
@@ -91,7 +91,7 @@ export function TerminalSkeleton({ lines = 3 }: { lines?: number }) {
 /**
  * Loading skeleton for inline code.
  */
-export function InlineCodeSkeleton() {
+export function InlineCodeSkeleton(): React.ReactNode {
   return (
     <span className="inline-block h-5 w-16 bg-dk-border/20 rounded border border-dk-border animate-pulse align-middle" />
   );
@@ -100,7 +100,7 @@ export function InlineCodeSkeleton() {
 /**
  * Loading skeleton for code tabs.
  */
-export function CodeTabsSkeleton({ tabs = 2, lines = 6 }: { tabs?: number; lines?: number }) {
+export function CodeTabsSkeleton({ tabs = 2, lines = 6 }: { tabs?: number; lines?: number }): React.ReactNode {
   const id = useId();
   const lineWidths = Array.from({ length: lines }, (_, i) => {
     const widths = ['40%', '65%', '55%', '80%', '45%', '70%'];

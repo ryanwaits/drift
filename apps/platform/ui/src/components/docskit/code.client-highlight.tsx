@@ -31,7 +31,7 @@ export function ClientDocsKitCode(props: {
   codeblock: RawCode;
   handlers?: AnnotationHandler[];
   className?: string;
-}) {
+}): React.ReactNode {
   const { codeblock, handlers: extraHandlers, className: wrapperClassName } = props;
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
@@ -110,7 +110,7 @@ export function ClientDocsKitCode(props: {
 /**
  * Client-side terminal-style code block.
  */
-export function ClientTerminal(props: { codeblock: RawCode; handlers?: AnnotationHandler[] }) {
+export function ClientTerminal(props: { codeblock: RawCode; handlers?: AnnotationHandler[] }): React.ReactNode {
   const { codeblock, handlers: extraHandlers } = props;
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
@@ -188,7 +188,7 @@ export function ClientTerminal(props: { codeblock: RawCode; handlers?: Annotatio
 /**
  * Client-side inline code with syntax highlighting.
  */
-export function ClientInlineCode({ codeblock }: { codeblock: RawCode }) {
+export function ClientInlineCode({ codeblock }: { codeblock: RawCode }): React.ReactNode {
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
   useEffect(() => {
@@ -245,7 +245,7 @@ function extractFlagsSimple(codeblock: RawCode) {
 /**
  * Client-side code tabs with multiple files.
  */
-export function ClientCode(props: { codeblocks: RawCode[]; flags?: string; storage?: string }) {
+export function ClientCode(props: { codeblocks: RawCode[]; flags?: string; storage?: string }): React.ReactNode {
   const { codeblocks, flags: groupFlags, storage } = props;
   const [highlighted, setHighlighted] = useState<Map<
     number,

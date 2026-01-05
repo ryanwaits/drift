@@ -10,7 +10,7 @@ interface Note {
   children: React.ReactNode;
 }
 
-export function WithNotes({ children, ...rest }: { children: React.ReactNode }) {
+export function WithNotes({ children, ...rest }: { children: React.ReactNode }): React.ReactNode {
   // get all the blocks inside <WithNotes />
   // and put them into Context
   const notes: Note[] = Object.entries(rest)

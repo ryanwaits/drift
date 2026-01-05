@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { SingleCode, toCodeGroup } from './code';
 import { MultiCode } from './code.client';
 
-export async function CodeGroup(props: unknown) {
+export async function CodeGroup(props: unknown): Promise<React.ReactNode> {
   // Type assertion needed due to zod version mismatch between codehike and project
   // biome-ignore lint/suspicious/noExplicitAny: codehike/zod version mismatch requires any cast
   const result = (Block.extend as any)({
@@ -24,7 +24,7 @@ export async function CodeGroup(props: unknown) {
   return <Code codeblocks={code} {...rest} />;
 }
 
-export async function Code(props: { codeblocks: RawCode[]; flags?: string; storage?: string }) {
+export async function Code(props: { codeblocks: RawCode[]; flags?: string; storage?: string }): Promise<React.ReactNode> {
   const group = await toCodeGroup(props);
   return group.tabs.length === 1 ? (
     <SingleCode group={group} />

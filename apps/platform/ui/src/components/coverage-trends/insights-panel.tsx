@@ -23,7 +23,7 @@ const insightColors: Record<CoverageInsight['severity'] & string, string> = {
   success: 'text-success',
 };
 
-export function InsightsPanel({ insights, className }: InsightsPanelProps) {
+export function InsightsPanel({ insights, className }: InsightsPanelProps): React.ReactNode {
   if (insights.length === 0) return null;
 
   return (

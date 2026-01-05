@@ -17,7 +17,7 @@ const ranges: { value: TimeRange; label: string }[] = [
   { value: 'versions', label: 'Versions' },
 ];
 
-export function TimeRangeSelector({ value, onChange, className }: TimeRangeSelectorProps) {
+export function TimeRangeSelector({ value, onChange, className }: TimeRangeSelectorProps): React.ReactNode {
   return (
     <div
       className={cn(

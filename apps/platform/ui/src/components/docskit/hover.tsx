@@ -2,11 +2,11 @@ import type { AnnotationHandler, CodeAnnotation } from 'codehike/code';
 import type React from 'react';
 import { Hoverable, HoverBlock, HoverInline, HoverLine, HoverProvider } from './hover.client';
 
-export function WithHover(props: { children: React.ReactNode }) {
+export function WithHover(props: { children: React.ReactNode }): React.ReactNode {
   return <HoverProvider>{props.children}</HoverProvider>;
 }
 
-export function HoverLink(props: { href?: string; children?: React.ReactNode }) {
+export function HoverLink(props: { href?: string; children?: React.ReactNode }): React.ReactNode {
   const hover = props.href?.slice('hover:'.length) ?? '';
   return (
     <Hoverable

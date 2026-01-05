@@ -12,7 +12,7 @@ export function CopyButton({
   text: string;
   className?: string;
   variant?: 'floating' | 'inline';
-}) {
+}): React.ReactNode {
   const [copied, setCopied] = useState(false);
 
   return (

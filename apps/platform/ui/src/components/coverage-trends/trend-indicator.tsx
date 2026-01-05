@@ -18,7 +18,7 @@ export function TrendIndicator({
   size = 'md',
   showIcon = true,
   className,
-}: TrendIndicatorProps) {
+}: TrendIndicatorProps): React.ReactNode {
   const isPositive = direction === 'up';
   const isNegative = direction === 'down';
   const isStable = direction === 'stable';

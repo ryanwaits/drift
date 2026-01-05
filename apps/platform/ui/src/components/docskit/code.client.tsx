@@ -6,7 +6,7 @@ import type { CodeInfo } from './code.config';
 import { CopyButton } from './code.copy';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 
-export function MultiCode({ group, className }: { group: CodeInfo; className?: string }) {
+export function MultiCode({ group, className }: { group: CodeInfo; className?: string }): React.ReactNode {
   const [storedTitle, setCurrentTitle] = useStateOrLocalStorage(group.storage, group.tabs[0].title);
   const current = group.tabs.find((tab) => tab.title === storedTitle) || group.tabs[0];
 

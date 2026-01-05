@@ -9,7 +9,7 @@ interface RegressionAlertProps {
   className?: string;
 }
 
-export function RegressionAlert({ regression, className }: RegressionAlertProps) {
+export function RegressionAlert({ regression, className }: RegressionAlertProps): React.ReactNode {
   return (
     <div
       className={cn(
