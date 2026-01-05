@@ -1,5 +1,17 @@
 # @doccov/sdk
 
+## 0.29.2
+
+### Patch Changes
+
+- refactor: use @openpkg-ts/extract for program creation, cache diagnostics/forgotten exports
+
+  - Replace local `analysis/program.ts` with `@openpkg-ts/extract` createProgram
+  - Rename `openpkg.ts` -> `analyzer.ts` for clarity
+  - Cache specDiagnostics and forgottenExports for faster cache hits
+  - Bump cache version to 1.2.0
+  - Default cwd to git repo root instead of process.cwd()
+
 ## 0.29.0
 
 ### Patch Changes

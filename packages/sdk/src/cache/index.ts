@@ -1,6 +1,8 @@
 export { diffHashes, hashFile, hashFiles, hashString } from './hash';
 export {
   CACHE_VERSION,
+  type CachedDiagnostic,
+  type CachedForgottenExport,
   type CacheContext,
   type CacheValidationResult,
   clearSpecCache,

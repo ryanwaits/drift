@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.29.3
+
+### Patch Changes
+
+- chore: sync with sdk 0.29.2
+
 ## 0.29.1
 
 ### Patch Changes

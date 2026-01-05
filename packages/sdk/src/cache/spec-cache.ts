@@ -4,7 +4,7 @@ import type { OpenPkg } from '@openpkg-ts/spec';
 import { diffHashes, hashFile, hashFiles } from './hash';
 
 /** Current cache format version - bump when spec extraction logic changes */
-export const CACHE_VERSION = '1.1.0';
+export const CACHE_VERSION = '1.2.0';
 
 /** Default cache file path */
 export const SPEC_CACHE_FILE = '.doccov/cache/spec.cache.json';
@@ -14,6 +14,36 @@ export const SPEC_CACHE_FILE = '.doccov/cache/spec.cache.json';
  */
 export interface SpecCacheConfig {
   resolveExternalTypes: boolean;
+}
+
+/**
+ * Cached diagnostic from spec analysis.
+ */
+export interface CachedDiagnostic {
+  message: string;
+  severity: 'error' | 'warning' | 'info';
+  suggestion?: string;
+  location?: {
+    file: string;
+    line?: number;
+    column?: number;
+  };
+}
+
+/**
+ * Cached forgotten export info.
+ */
+export interface CachedForgottenExport {
+  name: string;
+  definedIn?: string;
+  referencedBy: Array<{
+    typeName: string;
+    exportName: string;
+    location: 'return' | 'parameter' | 'property' | 'extends' | 'type-parameter';
+    path?: string;
+  }>;
+  isExternal: boolean;
+  fix?: string;
 }
 
 /**
@@ -49,6 +79,12 @@ export interface SpecCache {
 
   /** The cached OpenPkg spec */
   spec: OpenPkg;
+
+  /** Cached spec-level diagnostics (info/warning messages from extraction) */
+  specDiagnostics?: CachedDiagnostic[];
+
+  /** Cached forgotten exports */
+  forgottenExports?: CachedForgottenExport[];
 }
 
 /**
@@ -92,6 +128,12 @@ export interface CacheContext {
 
   /** Working directory */
   cwd: string;
+
+  /** Spec-level diagnostics to cache */
+  specDiagnostics?: CachedDiagnostic[];
+
+  /** Forgotten exports to cache */
+  forgottenExports?: CachedForgottenExport[];
 }
 
 /**
@@ -120,7 +162,16 @@ export function loadSpecCache(cwd: string): SpecCache | null {
  * @param context - Cache context with file paths and config
  */
 export function saveSpecCache(spec: OpenPkg, context: CacheContext): void {
-  const { entryFile, sourceFiles, tsconfigPath, packageJsonPath, config, cwd } = context;
+  const {
+    entryFile,
+    sourceFiles,
+    tsconfigPath,
+    packageJsonPath,
+    config,
+    cwd,
+    specDiagnostics,
+    forgottenExports,
+  } = context;
 
   const cache: SpecCache = {
     cacheVersion: CACHE_VERSION,
@@ -134,6 +185,8 @@ export function saveSpecCache(spec: OpenPkg, context: CacheContext): void {
     },
     config,
     spec,
+    specDiagnostics,
+    forgottenExports,
   };
 
   const cachePath = path.resolve(cwd, SPEC_CACHE_FILE);

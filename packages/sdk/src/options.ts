@@ -1,4 +1,21 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import type { SchemaExtractionMode } from './config';
+
+/**
+ * Find the git repository root by walking up from startDir.
+ * Returns startDir if not in a git repo.
+ */
+function findRepoRoot(startDir: string): string {
+  let dir = startDir;
+  while (dir !== path.dirname(dir)) {
+    if (fs.existsSync(path.join(dir, '.git'))) {
+      return dir;
+    }
+    dir = path.dirname(dir);
+  }
+  return startDir;
+}
 
 export interface DocCovOptions {
   includePrivate?: boolean;
@@ -7,7 +24,7 @@ export interface DocCovOptions {
   resolveExternalTypes?: boolean;
   /** Enable spec caching (default: true) */
   useCache?: boolean;
-  /** Working directory for cache operations (default: process.cwd()) */
+  /** Working directory for cache operations (default: git repo root or process.cwd()) */
   cwd?: string;
   /**
    * Schema extraction mode for validation libraries (Zod, Valibot, etc.)
@@ -46,6 +63,6 @@ export function normalizeDocCovOptions(options: DocCovOptions = {}): NormalizedD
     ...options,
     maxDepth: options.maxDepth ?? DEFAULT_MAX_TYPE_DEPTH,
     useCache: options.useCache ?? true,
-    cwd: options.cwd ?? process.cwd(),
+    cwd: options.cwd ?? findRepoRoot(process.cwd()),
   };
 }

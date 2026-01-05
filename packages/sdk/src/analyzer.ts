@@ -3,12 +3,14 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type * as TS from 'typescript';
 import type { DetectedSchemaEntry } from './analysis/context';
-import { createProgram } from './analysis/program';
+import { createProgram } from '@openpkg-ts/extract';
 import type { AnalysisMetadataInternal } from './analysis/run-analysis';
 import { runAnalysis } from './analysis/run-analysis';
 import { detectRuntimeSchemas } from './analysis/schema-detection';
 import type { OpenPkgSpec } from './analysis/spec-types';
 import {
+  type CachedDiagnostic,
+  type CachedForgottenExport,
   type CacheContext,
   type CacheValidationResult,
   loadSpecCache,
@@ -158,10 +160,11 @@ export class DocCov {
         const filterOutcome = this.applySpecFilters(cacheResult.spec, analyzeOptions.filters);
         return {
           spec: filterOutcome.spec,
-          diagnostics: filterOutcome.diagnostics,
+          diagnostics: [...(cacheResult.specDiagnostics ?? []), ...filterOutcome.diagnostics],
           metadata: cacheResult.metadata,
           fromCache: true,
           cacheStatus: { valid: true },
+          forgottenExports: cacheResult.forgottenExports,
         };
       }
     }
@@ -197,7 +200,13 @@ export class DocCov {
 
     // Save to cache if enabled
     if (useCache) {
-      this.saveToCache(result, resolvedPath, analysis.metadata);
+      this.saveToCache(
+        result,
+        resolvedPath,
+        analysis.metadata,
+        analysis.specDiagnostics,
+        analysis.forgottenExports,
+      );
     }
 
     return result;
@@ -211,7 +220,12 @@ export class DocCov {
     entryFile: string,
     packageDir: string,
     resolveExternalTypes?: boolean,
-  ): { spec: OpenPkgSpec; metadata: AnalysisMetadata } | null {
+  ): {
+    spec: OpenPkgSpec;
+    metadata: AnalysisMetadata;
+    specDiagnostics?: CachedDiagnostic[];
+    forgottenExports?: CachedForgottenExport[];
+  } | null {
     const { cwd } = this.options;
     const cache = loadSpecCache(cwd);
 
@@ -263,6 +277,8 @@ export class DocCov {
         resolveExternalTypes: cache.config.resolveExternalTypes,
         sourceFiles: cachedSourceFiles,
       },
+      specDiagnostics: cache.specDiagnostics,
+      forgottenExports: cache.forgottenExports,
     };
   }
 
@@ -290,6 +306,8 @@ export class DocCov {
     result: AnalysisResult,
     entryFile: string,
     metadata: AnalysisMetadataInternal,
+    specDiagnostics: Diagnostic[],
+    forgottenExports?: ForgottenExportResult[],
   ): void {
     const { cwd } = this.options;
 
@@ -306,6 +324,8 @@ export class DocCov {
         resolveExternalTypes: metadata.resolveExternalTypes,
       },
       cwd,
+      specDiagnostics,
+      forgottenExports,
     };
 
     try {

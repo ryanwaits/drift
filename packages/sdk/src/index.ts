@@ -58,8 +58,8 @@ export {
 export { generateReport, renderApiSurface } from './analysis/report';
 // Spec types
 export type { OpenPkgSpec } from './analysis/spec-types';
-export type { AnalysisResult, AnalyzeOptions, Diagnostic, ForgottenExportResult } from './openpkg';
-export { analyze, analyzeFile, DocCov } from './openpkg';
+export type { AnalysisResult, AnalyzeOptions, Diagnostic, ForgottenExportResult } from './analyzer';
+export { analyze, analyzeFile, DocCov } from './analyzer';
 export type { DocCovOptions } from './options';
 
 // ─────────────────────────────────────────────────────────────────────────────
