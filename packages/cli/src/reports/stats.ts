@@ -24,6 +24,13 @@ export type DriftSummaryStats = {
   fixable: number;
 };
 
+export type StaleReferenceItem = {
+  file: string;
+  line: number;
+  exportName: string;
+  context: string;
+};
+
 export type ReportStats = {
   packageName: string;
   version: string;
@@ -42,12 +49,21 @@ export type ReportStats = {
   driftSummary: DriftSummaryStats;
   apiSurface?: ApiSurfaceResult;
   health?: DocumentationHealth;
+  staleRefs?: StaleReferenceItem[];
 };
+
+export interface ComputeStatsOptions {
+  staleRefs?: StaleReferenceItem[];
+}
 
 /**
  * Compute report statistics from an OpenPkg spec and DocCov spec.
  */
-export function computeStats(openpkg: OpenPkg, doccov: DocCovSpec): ReportStats {
+export function computeStats(
+  openpkg: OpenPkg,
+  doccov: DocCovSpec,
+  options: ComputeStatsOptions = {},
+): ReportStats {
   const exports = openpkg.exports ?? [];
   const signals = {
     description: { covered: 0, total: 0 },
@@ -167,5 +183,6 @@ export function computeStats(openpkg: OpenPkg, doccov: DocCovSpec): ReportStats 
     driftSummary,
     apiSurface: doccov.apiSurface,
     health: doccov.summary.health,
+    staleRefs: options.staleRefs,
   };
 }

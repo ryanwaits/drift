@@ -382,6 +382,7 @@ export interface NonTextOutputOptions {
   minApiSurface: number | undefined;
   typecheckErrors: Array<{ exportName: string; error: ExampleTypeError }>;
   runtimeErrors: number;
+  staleRefs: StaleReference[];
   limit: number;
   stdout: boolean;
   outputPath?: string;
@@ -408,6 +409,7 @@ export function handleNonTextOutput(
     minApiSurface,
     typecheckErrors,
     runtimeErrors,
+    staleRefs,
     limit,
     stdout,
     outputPath,
@@ -415,11 +417,14 @@ export function handleNonTextOutput(
   } = options;
   const { log } = deps;
 
-  const stats = computeStats(openpkg, doccov);
+  const stats = computeStats(openpkg, doccov, { staleRefs });
 
   // Generate JSON report (always needed for cache)
   const report = generateReportFromDocCov(openpkg, doccov);
-  const jsonContent = JSON.stringify(report, null, 2);
+  // Extend report with stale refs if present
+  const extendedReport =
+    staleRefs.length > 0 ? { ...report, staleRefs } : report;
+  const jsonContent = JSON.stringify(extendedReport, null, 2);
 
   // Get health score
   const healthScore = doccov.summary.health?.score ?? stats.coverageScore;
@@ -456,8 +461,9 @@ export function handleNonTextOutput(
   const apiSurfaceFailed = minApiSurface !== undefined && apiSurfaceScore < minApiSurface;
   const hasTypecheckErrors = typecheckErrors.length > 0;
   const hasRuntimeErrors = runtimeErrors > 0;
+  const hasStaleRefs = staleRefs.length > 0;
 
-  return !(healthFailed || apiSurfaceFailed || hasTypecheckErrors || hasRuntimeErrors);
+  return !(healthFailed || apiSurfaceFailed || hasTypecheckErrors || hasRuntimeErrors || hasStaleRefs);
 }
 
 /**

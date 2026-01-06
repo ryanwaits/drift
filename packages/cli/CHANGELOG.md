@@ -1,5 +1,17 @@
 # @doccov/cli
 
+## 0.30.2
+
+### Patch Changes
+
+- feat(cli): add stale refs to markdown report, split coverage sections
+
+  - Pass staleRefs to output/stats pipeline
+  - Add stale references section to markdown report
+  - Split exports into "Undocumented" (0%) and "Partial Coverage" (1-99%) sections
+  - Add reportUrl linking for "X more" overflow links
+  - Include staleRefs in JSON report output
+
 ## 0.30.1
 
 ### Patch Changes

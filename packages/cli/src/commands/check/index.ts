@@ -258,6 +258,7 @@ export function registerCheckCommand(
               minApiSurface,
               typecheckErrors,
               runtimeErrors: runtimeDrifts.length,
+              staleRefs,
               limit: parseInt(options.limit, 10) || 20,
               stdout: options.stdout,
               outputPath: options.output,

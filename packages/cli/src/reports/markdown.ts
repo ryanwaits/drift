@@ -6,11 +6,18 @@ function bar(pct: number, width = 10): string {
   return '█'.repeat(filled) + '░'.repeat(width - filled);
 }
 
-export function renderMarkdown(stats: ReportStats, options: { limit?: number } = {}): string {
+export function renderMarkdown(
+  stats: ReportStats,
+  options: { limit?: number; reportUrl?: string } = {},
+): string {
   const limit = options.limit ?? 20;
+  const { reportUrl } = options;
   const lines: string[] = [];
 
   lines.push(`# DocCov Report: ${stats.packageName}@${stats.version}`);
+  if (reportUrl) {
+    lines.push(`[View full report →](${reportUrl})`);
+  }
   lines.push('');
 
   // Health score (if available)
@@ -64,20 +71,45 @@ export function renderMarkdown(stats: ReportStats, options: { limit?: number } =
     }
   }
 
-  // Lowest coverage exports
-  const lowExports = stats.exports.filter((e) => e.score < 100).slice(0, limit);
-  if (lowExports.length > 0) {
+  // Undocumented exports (score === 0)
+  const undocExports = stats.exports.filter((e) => e.score === 0);
+  if (undocExports.length > 0) {
     lines.push('');
-    lines.push('## Lowest Coverage Exports');
+    lines.push('## Undocumented Exports');
+    lines.push('');
+    lines.push('| Export | Kind | Missing |');
+    lines.push('|--------|------|---------|');
+    for (const e of undocExports.slice(0, limit)) {
+      lines.push(`| \`${e.name}\` | ${e.kind} | ${e.missing.join(', ') || '-'} |`);
+    }
+    if (undocExports.length > limit) {
+      const moreText = `${undocExports.length - limit} more`;
+      if (reportUrl) {
+        lines.push(`| [${moreText} →](${reportUrl}#undocumented) | | |`);
+      } else {
+        lines.push(`| ... | | ${moreText} |`);
+      }
+    }
+  }
+
+  // Partial coverage exports (1-99%)
+  const partialExports = stats.exports.filter((e) => e.score > 0 && e.score < 100);
+  if (partialExports.length > 0) {
+    lines.push('');
+    lines.push('## Partial Coverage Exports');
     lines.push('');
     lines.push('| Export | Kind | Score | Missing |');
     lines.push('|--------|------|-------|---------|');
-    for (const e of lowExports) {
+    for (const e of partialExports.slice(0, limit)) {
       lines.push(`| \`${e.name}\` | ${e.kind} | ${e.score}% | ${e.missing.join(', ') || '-'} |`);
     }
-    const totalLow = stats.exports.filter((e) => e.score < 100).length;
-    if (totalLow > limit) {
-      lines.push(`| ... | | | ${totalLow - limit} more |`);
+    if (partialExports.length > limit) {
+      const moreText = `${partialExports.length - limit} more`;
+      if (reportUrl) {
+        lines.push(`| [${moreText} →](${reportUrl}#partial) | | | |`);
+      } else {
+        lines.push(`| ... | | | ${moreText} |`);
+      }
     }
   }
 
@@ -118,7 +150,12 @@ export function renderMarkdown(stats: ReportStats, options: { limit?: number } =
         lines.push(`| \`${d.exportName}\` | ${d.issue}${hint} |`);
       }
       if (issues.length > 10) {
-        lines.push(`| ... | ${issues.length - 10} more ${category} issues |`);
+        const moreText = `${issues.length - 10} more ${category} issues`;
+        if (reportUrl) {
+          lines.push(`| [${moreText} →](${reportUrl}#drift-${category}) | |`);
+        } else {
+          lines.push(`| ... | ${moreText} |`);
+        }
       }
       lines.push('');
     }
@@ -147,7 +184,34 @@ export function renderMarkdown(stats: ReportStats, options: { limit?: number } =
       lines.push(`| \`${f.name}\` | ${definedIn} | ${refs}${moreRefs} |`);
     }
     if (stats.apiSurface.forgotten.length > limit) {
-      lines.push(`| ... | | ${stats.apiSurface.forgotten.length - limit} more |`);
+      const moreText = `${stats.apiSurface.forgotten.length - limit} more`;
+      if (reportUrl) {
+        lines.push(`| [${moreText} →](${reportUrl}#api-surface) | | |`);
+      } else {
+        lines.push(`| ... | | ${moreText} |`);
+      }
+    }
+  }
+
+  // Stale References in Documentation
+  if (stats.staleRefs && stats.staleRefs.length > 0) {
+    lines.push('');
+    lines.push('## Stale References');
+    lines.push('');
+    lines.push(`**${stats.staleRefs.length} stale reference(s)** found in documentation`);
+    lines.push('');
+    lines.push('| File | Line | Export |');
+    lines.push('|------|------|--------|');
+    for (const ref of stats.staleRefs.slice(0, limit)) {
+      lines.push(`| ${ref.file} | ${ref.line} | \`${ref.exportName}\` |`);
+    }
+    if (stats.staleRefs.length > limit) {
+      const moreText = `${stats.staleRefs.length - limit} more`;
+      if (reportUrl) {
+        lines.push(`| [${moreText} →](${reportUrl}#stale-refs) | | |`);
+      } else {
+        lines.push(`| ... | | ${moreText} |`);
+      }
     }
   }
 
