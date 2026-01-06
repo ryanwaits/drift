@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.30.6
+
+### Patch Changes
+
+- fix: update @openpkg-ts/extract to 0.23.2 (adds deprecated flag extraction)
+
 ## 0.30.4
 
 ### Patch Changes

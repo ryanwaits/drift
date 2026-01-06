@@ -173,7 +173,7 @@
     },
     "packages/cli": {
       "name": "@doccov/cli",
-      "version": "0.30.3",
+      "version": "0.30.5",
       "bin": {
         "doccov": "./dist/cli.js",
       },
@@ -223,10 +223,10 @@
     },
     "packages/sdk": {
       "name": "@doccov/sdk",
-      "version": "0.30.3",
+      "version": "0.30.4",
       "dependencies": {
         "@doccov/spec": "^0.27.0",
-        "@openpkg-ts/extract": "^0.23.1",
+        "@openpkg-ts/extract": "0.23.2",
         "@openpkg-ts/spec": "^0.23.0",
         "@vercel/sandbox": "^1.0.3",
         "mdast": "^3.0.0",
@@ -2172,6 +2172,8 @@
 
     "@doccov/sandbox/vercel": ["vercel@40.1.0", "", { "dependencies": { "@vercel/build-utils": "9.2.0", "@vercel/fun": "1.1.2", "@vercel/go": "3.2.1", "@vercel/hydrogen": "1.1.0", "@vercel/next": "4.5.0", "@vercel/node": "5.1.0", "@vercel/python": "4.7.1", "@vercel/redwood": "2.2.0", "@vercel/remix-builder": "5.2.0", "@vercel/ruby": "2.2.0", "@vercel/static-build": "2.6.0", "chokidar": "4.0.0" }, "bin": { "vc": "dist/vc.js", "vercel": "dist/vc.js" } }, "sha512-p8FG2zjrCtrhiW8GsJycviMIpKgz/q/rVUFNbucLbWhxfkKp2igF2B//EKsl7FIgmrDK2JW5xpKXU+39tDwJug=="],
 
+    "@doccov/sdk/@openpkg-ts/extract": ["@openpkg-ts/extract@0.23.2", "", { "dependencies": { "@openpkg-ts/spec": "^0.23.0", "chalk": "^5.4.1", "commander": "^12.0.0", "tree-sitter-wasms": "^0.1.13", "typescript": "^5.0.0" }, "bin": { "tspec": "dist/bin/tspec.js" } }, "sha512-eOIKXioLf+xn+GtF4eTEcI+kF+QMoWGgITItiQqMU6oraVV+8xuvWVnMdH6FE+LFy7K2Hv3NdPKV8siYYSEiPw=="],
+
     "@doccov/sdk/zod": ["zod@4.3.5", "", {}, "sha512-k7Nwx6vuWx1IJ9Bjuf4Zt1PEllcwe7cls3VNzm4CQ1/hgtFUK2bRNG3rvnpPUhFjmqJKAKtjV576KnUkHocg/g=="],
 
     "@doccov/ui/tailwind-merge": ["tailwind-merge@2.6.0", "", {}, "sha512-P+Vu1qXfzediirmHOC3xKGAYeZtPcV9g76X+xg2FD4tYgR71ewMA35Y3sCz3zhiN/dwefRpJX0yBcgwi1fXNQA=="],
@@ -2495,6 +2497,8 @@
     "@doccov/sandbox/vercel/@vercel/ruby": ["@vercel/ruby@2.2.0", "", {}, "sha512-FJF9gKVNHAljGOgV6zS5ou2N7ZgjOqMMtcPA5lsJEUI5/AZzVDWCmtcowTP80wEtHuupkd7d7M399FA082kXYQ=="],
 
     "@doccov/sandbox/vercel/@vercel/static-build": ["@vercel/static-build@2.6.0", "", { "dependencies": { "@vercel/gatsby-plugin-vercel-analytics": "1.0.11", "@vercel/gatsby-plugin-vercel-builder": "2.0.67", "@vercel/static-config": "3.0.0", "ts-morph": "12.0.0" } }, "sha512-+S4k59m2R2neO1MVKye2iH/+qYeSvbqI+B8Na9sLh8PIUkWgra59sKdCe4NkeBaK2w4leK7vQzqswROqgPpGwA=="],
+
+    "@doccov/sdk/@openpkg-ts/extract/commander": ["commander@12.1.0", "", {}, "sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA=="],
 
     "@isaacs/cliui/strip-ansi/ansi-regex": ["ansi-regex@6.2.2", "", {}, "sha512-Bq3SmSpyFHaWjPk8If9yc6svM8c56dB5BAtW4Qbw5jHTwwXXcTLoRMkpDJp6VL0XzlWaCHTXrkFURMYmD0sLqg=="],
 
