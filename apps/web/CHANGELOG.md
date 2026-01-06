@@ -1,5 +1,21 @@
 # @doccov/web
 
+## 0.1.29
+
+### Patch Changes
+
+- refactor(sdk): use SpecTag.param for param parsing, bump openpkg-ts deps
+
+  - utils.ts: rewrite extractParamFromTag to use SpecTag.param field directly
+  - param-drift.ts: pass full SpecTag to extractParamFromTag
+  - index.ts: remove normalizeParamName export (unused)
+  - cli/writer.ts: use findProjectRoot for cleaner relative paths
+  - bump @openpkg-ts/extract ^0.18.0 -> ^0.19.0 (root, sdk)
+  - bump @openpkg-ts/spec ^0.12.0 -> ^0.19.0 (sdk, cli, web)
+
+- Updated dependencies
+  - @doccov/sdk@0.30.1
+
 ## 0.1.28
 
 ### Patch Changes

@@ -1,60 +1,22 @@
-import type { SpecExport, SpecSchema } from '@openpkg-ts/spec';
+import type { SpecExport, SpecSchema, SpecTag } from '@openpkg-ts/spec';
 import type { ClosestMatch, DocumentedTemplateTag, ParsedParamTag } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Param Tag Parsing
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function extractParamFromTag(text: string): ParsedParamTag | undefined {
-  const trimmed = text.trim();
-  if (!trimmed) {
+/**
+ * Extract param info from a SpecTag's structured param field.
+ */
+export function extractParamFromTag(tag: SpecTag): ParsedParamTag | undefined {
+  if (!tag.param) {
     return undefined;
   }
-
-  const match = trimmed.match(/^(?:\{([^}]+)\}\s+)?(\S+)(?:\s+-\s+)?/);
-  if (!match) {
-    return undefined;
-  }
-
-  const [, type, rawName] = match;
-  const isOptional = Boolean(rawName?.startsWith('[') && rawName?.endsWith(']'));
-  const name = normalizeParamName(rawName);
-
-  if (!name) {
-    return undefined;
-  }
-
   return {
-    name,
-    type: type?.trim(),
-    isOptional,
+    name: tag.param.name,
+    type: tag.param.type,
+    isOptional: tag.param.optional,
   };
-}
-
-export function normalizeParamName(raw?: string): string | undefined {
-  if (!raw) {
-    return undefined;
-  }
-
-  let name = raw.trim();
-  if (!name) {
-    return undefined;
-  }
-
-  if (name.startsWith('[') && name.endsWith(']')) {
-    name = name.slice(1, -1);
-  }
-
-  const equalsIndex = name.indexOf('=');
-  if (equalsIndex >= 0) {
-    name = name.slice(0, equalsIndex);
-  }
-
-  if (name.endsWith(',')) {
-    name = name.slice(0, -1);
-  }
-
-  return name;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

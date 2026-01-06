@@ -43,8 +43,8 @@ export function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
   }
 
   const documentedParamNames = (entry.tags ?? [])
-    .filter((tag) => tag.name === 'param' && Boolean(tag.text))
-    .map((tag) => extractParamFromTag(tag.text ?? '')?.name)
+    .filter((tag) => tag.name === 'param')
+    .map((tag) => extractParamFromTag(tag)?.name)
     .filter((name): name is string => Boolean(name));
 
   if (documentedParamNames.length === 0) {
@@ -153,8 +153,8 @@ export function detectOptionalityDrift(entry: SpecExport): SpecDocDrift[] {
   }
 
   const documentedParams = (entry.tags ?? [])
-    .filter((tag) => tag.name === 'param' && Boolean(tag.text))
-    .map((tag) => extractParamFromTag(tag.text ?? ''))
+    .filter((tag) => tag.name === 'param')
+    .map((tag) => extractParamFromTag(tag))
     .filter((parsed): parsed is ParsedParamTag & { name: string } => Boolean(parsed?.name));
 
   if (documentedParams.length === 0) {
@@ -202,8 +202,8 @@ export function detectParamTypeDrift(entry: SpecExport): SpecDocDrift[] {
   }
 
   const documentedParams = (entry.tags ?? [])
-    .filter((tag) => tag.name === 'param' && Boolean(tag.text))
-    .map((tag) => extractParamFromTag(tag.text ?? ''))
+    .filter((tag) => tag.name === 'param')
+    .map((tag) => extractParamFromTag(tag))
     .filter(
       (parsed): parsed is ParsedParamTag & { name: string; type: string } =>
         Boolean(parsed?.name) && Boolean(parsed?.type),

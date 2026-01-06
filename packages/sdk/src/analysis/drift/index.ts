@@ -74,7 +74,6 @@ export {
   extractTypeFromSchema,
   findClosestMatch,
   levenshtein,
-  normalizeParamName,
   normalizeType,
   parseTemplateTag,
   splitCamelCase,

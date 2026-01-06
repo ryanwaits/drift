@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { DEFAULT_REPORT_DIR, getDoccovDir, getReportPath } from '@doccov/sdk';
+import { DEFAULT_REPORT_DIR, findProjectRoot, getDoccovDir, getReportPath } from '@doccov/sdk';
 import chalk from 'chalk';
 
 export interface WriteReportOptions {
@@ -48,7 +48,9 @@ export function writeReport(options: WriteReportOptions): WriteReportResult {
   // Write file
   fs.writeFileSync(reportPath, content);
 
-  const relativePath = path.relative(cwd, reportPath);
+  // Show path relative to project root for cleaner output (avoids ../../.doccov/...)
+  const projectRoot = findProjectRoot(cwd);
+  const relativePath = path.relative(projectRoot, reportPath);
 
   if (!silent) {
     console.log(chalk.green(`✓ Wrote ${format} report to ${relativePath}`));

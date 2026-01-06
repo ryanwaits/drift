@@ -4,6 +4,7 @@
     "": {
       "name": "openpkg",
       "dependencies": {
+        "@openpkg-ts/extract": "^0.19.0",
         "vercel": "^48.10.12",
       },
       "devDependencies": {
@@ -15,10 +16,10 @@
     },
     "apps/platform/api-shared": {
       "name": "@doccov/api-shared",
-      "version": "0.2.24",
+      "version": "0.2.26",
       "dependencies": {
         "@doccov/db": "^0.2.0",
-        "@doccov/sdk": "^0.28.1",
+        "@doccov/sdk": "^0.30.0",
         "@openpkg-ts/spec": "^0.12.0",
         "kysely": "^0.27.4",
         "nanoid": "^5.0.0",
@@ -60,7 +61,7 @@
     },
     "apps/platform/sandbox": {
       "name": "@doccov/sandbox",
-      "version": "0.1.21",
+      "version": "0.1.23",
       "dependencies": {
         "@ai-sdk/anthropic": "^3.0.0",
         "@doccov/sdk": "^0.28.1",
@@ -145,13 +146,13 @@
     },
     "apps/web": {
       "name": "@doccov/web",
-      "version": "0.1.26",
+      "version": "0.1.28",
       "dependencies": {
-        "@doccov/api-shared": "^0.2.23",
-        "@doccov/auth": "^0.1.1",
+        "@doccov/api-shared": "^0.2.26",
+        "@doccov/auth": "^0.1.2",
         "@doccov/db": "^0.2.0",
-        "@doccov/sdk": "^0.28.1",
-        "@openpkg-ts/spec": "^0.12.0",
+        "@doccov/sdk": "^0.30.0",
+        "@openpkg-ts/spec": "^0.19.0",
         "better-auth": "^1.4.7",
         "jose": "^6.0.0",
         "kysely": "^0.27.4",
@@ -172,17 +173,17 @@
     },
     "packages/cli": {
       "name": "@doccov/cli",
-      "version": "0.28.2",
+      "version": "0.30.0",
       "bin": {
         "doccov": "./dist/cli.js",
       },
       "dependencies": {
         "@ai-sdk/anthropic": "^1.0.0",
         "@ai-sdk/openai": "^1.0.0",
-        "@doccov/sdk": "^0.28.2",
+        "@doccov/sdk": "^0.30.0",
         "@doccov/spec": "^0.27.0",
         "@inquirer/prompts": "^7.8.0",
-        "@openpkg-ts/spec": "^0.12.0",
+        "@openpkg-ts/spec": "^0.19.0",
         "ai": "^4.0.0",
         "chalk": "^5.4.1",
         "cheerio": "^1.1.2",
@@ -222,11 +223,11 @@
     },
     "packages/sdk": {
       "name": "@doccov/sdk",
-      "version": "0.28.3",
+      "version": "0.30.0",
       "dependencies": {
         "@doccov/spec": "^0.27.0",
-        "@openpkg-ts/extract": "^0.18.0",
-        "@openpkg-ts/spec": "^0.12.0",
+        "@openpkg-ts/extract": "^0.19.0",
+        "@openpkg-ts/spec": "^0.19.0",
         "@vercel/sandbox": "^1.0.3",
         "mdast": "^3.0.0",
         "minimatch": "^10.1.1",
@@ -591,7 +592,7 @@
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
 
-    "@openpkg-ts/extract": ["@openpkg-ts/extract@0.18.3", "", { "dependencies": { "@openpkg-ts/spec": "^0.12.0", "chalk": "^5.4.1", "commander": "^12.0.0", "tree-sitter-wasms": "^0.1.13", "typescript": "^5.0.0" }, "bin": { "tspec": "dist/bin/tspec.js" } }, "sha512-9If5XNKhpIw44Hn8TgFQwUQc2FcL8GLgOcFqaXfIfshgSIlz94MScv5A8YFR2FzDo2Oh/4982Ct8EPzdj+J5uw=="],
+    "@openpkg-ts/extract": ["@openpkg-ts/extract@0.19.0", "", { "dependencies": { "@openpkg-ts/spec": "^0.19.0", "chalk": "^5.4.1", "commander": "^12.0.0", "tree-sitter-wasms": "^0.1.13", "typescript": "^5.0.0" }, "bin": { "tspec": "dist/bin/tspec.js" } }, "sha512-AEVcg/kBd53euOZib+cUw6jZHnC9UsKypUqSPzjDPOnuXmYGBslk8Tr7R+UXbhaur52OxNy+gCS+ZfFFcoxlOw=="],
 
     "@openpkg-ts/spec": ["@openpkg-ts/spec@0.12.0", "", { "dependencies": { "ajv": "^8.17.1", "ajv-formats": "^3.0.1" } }, "sha512-uMu3x5l7WKFp/277OfDQ+5WWijCP19bVssN+kIP3V3RNHeLjSAwk75v7Kvz45hzqejl7bs7LTXZ2WIxWPuf8eA=="],
 
@@ -2165,15 +2166,21 @@
 
     "@changesets/parse/js-yaml": ["js-yaml@4.1.1", "", { "dependencies": { "argparse": "^2.0.1" }, "bin": { "js-yaml": "bin/js-yaml.js" } }, "sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA=="],
 
+    "@doccov/cli/@openpkg-ts/spec": ["@openpkg-ts/spec@0.19.0", "", { "dependencies": { "ajv": "^8.17.1", "ajv-formats": "^3.0.1" } }, "sha512-AfBwr1ZdowPhLFrZ10Pjtzg8h9FOs0N+8M/NJZm0zRU4gL08esbZVAMh53D82s7njRDpZ/OalHJHf9vbmZuniQ=="],
+
     "@doccov/sandbox/@ai-sdk/anthropic": ["@ai-sdk/anthropic@3.0.4", "", { "dependencies": { "@ai-sdk/provider": "3.0.1", "@ai-sdk/provider-utils": "4.0.2" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-0TdiAHsgws15ZlWeMNa7rR6mIkcYrnU94atMgDvGNCUQuwuypDspeCcKbvohGpPmDRiec3/Ws/7Q3DjhZdtM9A=="],
 
     "@doccov/sandbox/ai": ["ai@6.0.7", "", { "dependencies": { "@ai-sdk/gateway": "3.0.6", "@ai-sdk/provider": "3.0.1", "@ai-sdk/provider-utils": "4.0.2", "@opentelemetry/api": "1.9.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-kLzSXHdW6cAcb2mFSIfkbfzxYqqjrUnyhrB1sg855qlC+6XkLI8hmwFE8f/4SnjmtcTDOnkIaVjWoO5i5Ir0bw=="],
 
     "@doccov/sandbox/vercel": ["vercel@40.1.0", "", { "dependencies": { "@vercel/build-utils": "9.2.0", "@vercel/fun": "1.1.2", "@vercel/go": "3.2.1", "@vercel/hydrogen": "1.1.0", "@vercel/next": "4.5.0", "@vercel/node": "5.1.0", "@vercel/python": "4.7.1", "@vercel/redwood": "2.2.0", "@vercel/remix-builder": "5.2.0", "@vercel/ruby": "2.2.0", "@vercel/static-build": "2.6.0", "chokidar": "4.0.0" }, "bin": { "vc": "dist/vc.js", "vercel": "dist/vc.js" } }, "sha512-p8FG2zjrCtrhiW8GsJycviMIpKgz/q/rVUFNbucLbWhxfkKp2igF2B//EKsl7FIgmrDK2JW5xpKXU+39tDwJug=="],
 
+    "@doccov/sdk/@openpkg-ts/spec": ["@openpkg-ts/spec@0.19.0", "", { "dependencies": { "ajv": "^8.17.1", "ajv-formats": "^3.0.1" } }, "sha512-AfBwr1ZdowPhLFrZ10Pjtzg8h9FOs0N+8M/NJZm0zRU4gL08esbZVAMh53D82s7njRDpZ/OalHJHf9vbmZuniQ=="],
+
     "@doccov/sdk/zod": ["zod@4.3.5", "", {}, "sha512-k7Nwx6vuWx1IJ9Bjuf4Zt1PEllcwe7cls3VNzm4CQ1/hgtFUK2bRNG3rvnpPUhFjmqJKAKtjV576KnUkHocg/g=="],
 
     "@doccov/ui/tailwind-merge": ["tailwind-merge@2.6.0", "", {}, "sha512-P+Vu1qXfzediirmHOC3xKGAYeZtPcV9g76X+xg2FD4tYgR71ewMA35Y3sCz3zhiN/dwefRpJX0yBcgwi1fXNQA=="],
+
+    "@doccov/web/@openpkg-ts/spec": ["@openpkg-ts/spec@0.19.0", "", { "dependencies": { "ajv": "^8.17.1", "ajv-formats": "^3.0.1" } }, "sha512-AfBwr1ZdowPhLFrZ10Pjtzg8h9FOs0N+8M/NJZm0zRU4gL08esbZVAMh53D82s7njRDpZ/OalHJHf9vbmZuniQ=="],
 
     "@isaacs/cliui/strip-ansi": ["strip-ansi@7.1.2", "", { "dependencies": { "ansi-regex": "^6.0.1" } }, "sha512-gmBGslpoQJtgnMAvOVqGZpEz9dyoKTCzy2nfz/n8aIFhN/jCE/rCmcxabB6jOOHV+0WNnylOxaxBQPSvcWklhA=="],
 
@@ -2190,6 +2197,8 @@
     "@manypkg/get-packages/@changesets/types": ["@changesets/types@4.1.0", "", {}, "sha512-LDQvVDv5Kb50ny2s25Fhm3d9QSZimsoUGBsUioj6MC3qbMUCuC8GPIvk/M6IvXx3lYhAs0lwWUQLb+VIEUCECw=="],
 
     "@manypkg/get-packages/fs-extra": ["fs-extra@8.1.0", "", { "dependencies": { "graceful-fs": "^4.2.0", "jsonfile": "^4.0.0", "universalify": "^0.1.0" } }, "sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g=="],
+
+    "@openpkg-ts/extract/@openpkg-ts/spec": ["@openpkg-ts/spec@0.19.0", "", { "dependencies": { "ajv": "^8.17.1", "ajv-formats": "^3.0.1" } }, "sha512-AfBwr1ZdowPhLFrZ10Pjtzg8h9FOs0N+8M/NJZm0zRU4gL08esbZVAMh53D82s7njRDpZ/OalHJHf9vbmZuniQ=="],
 
     "@openpkg-ts/extract/commander": ["commander@12.1.0", "", {}, "sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA=="],
 
