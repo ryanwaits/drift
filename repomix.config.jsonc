@@ -32,7 +32,7 @@
     "useGitignore": true,
     "useDefaultPatterns": true,
     // ignore is specified in .repomixignore
-    "customPatterns": [],
+    "customPatterns": [".doccov/**", "apps/**"],
   },
   "security": {
     "enableSecurityCheck": true,

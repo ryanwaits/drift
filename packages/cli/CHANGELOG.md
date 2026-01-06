@@ -1,5 +1,13 @@
 # @doccov/cli
 
+## 0.30.3
+
+### Patch Changes
+
+- bump @openpkg-ts/extract ^0.19.0 -> ^0.23.0, @openpkg-ts/spec -> ^0.23.0
+- Updated dependencies
+  - @doccov/sdk@0.30.3
+
 ## 0.30.2
 
 ### Patch Changes
