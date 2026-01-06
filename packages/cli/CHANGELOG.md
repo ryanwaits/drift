@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.30.5
+
+### Patch Changes
+
+- chore(cli): bump @doccov/sdk to 0.30.4 for isExternal fix
+
 ## 0.30.3
 
 ### Patch Changes

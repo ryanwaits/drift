@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.30.4
+
+### Patch Changes
+
+- fix(sdk): bump @openpkg-ts/extract to 0.23.1 for correct isExternal detection on linked packages
+
 ## 0.30.3
 
 ### Patch Changes
