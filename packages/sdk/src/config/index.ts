@@ -8,8 +8,10 @@ export { docCovConfigSchema, normalizeConfig } from './schema';
 export type {
   CheckConfig,
   DocCovConfig,
+  DocRequirements,
   DocsConfig,
   ExampleValidationMode,
   SchemaExtractionMode,
+  StylePreset,
 } from './types';
 export { defineConfig } from './types';

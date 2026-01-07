@@ -37,10 +37,40 @@ doccov info src/index.ts
 Analyze documentation coverage against thresholds.
 
 ```bash
-doccov check src/index.ts --min-coverage 80
+doccov check src/index.ts --min-health 80
 doccov check --format json -o report.json
 doccov check --examples typecheck    # Validate @example blocks
 doccov check --fix                   # Auto-fix drift issues
+```
+
+#### Monorepo / Batch Mode
+
+Analyze multiple packages at once using glob patterns or multiple targets:
+
+```bash
+# Glob pattern - analyze all packages
+doccov check "packages/*/src/index.ts"
+
+# Multiple explicit targets
+doccov check packages/server/src/index.ts packages/client/src/index.ts
+
+# With options
+doccov check "packages/*/src/index.ts" --format markdown --min-health 60
+```
+
+Output shows per-package breakdown with aggregated totals:
+
+```
+Documentation Coverage Report (3 packages)
+
+| Package | Health | Exports | Drift |
+|---------|--------|---------|-------|
+| @pkg/server | 75% | 78 | 4 |
+| @pkg/client | 82% | 45 | 2 |
+| @pkg/core | 90% | 32 | 1 |
+| Total | 81% | 155 | 7 |
+
+✓ Check passed (health 81% >= 80%)
 ```
 
 ### spec
@@ -87,17 +117,58 @@ doccov trends --extended             # Show velocity/projections
 
 ## Configuration
 
-Create `doccov.config.yaml` or use `doccov init`:
+Create `doccov.config.ts` or use `doccov init`:
 
-```yaml
-check:
-  minCoverage: 80
-  maxDrift: 10
-  examples: [presence, typecheck]
+```ts
+// doccov.config.ts
+import { defineConfig } from '@doccov/cli';
 
-docs:
-  include:
-    - "docs/**/*.md"
+export default defineConfig({
+  check: {
+    minHealth: 80,
+    examples: ['presence', 'typecheck'],
+
+    // Documentation style presets
+    style: 'minimal',  // 'minimal' | 'verbose' | 'types-only'
+
+    // Fine-grained requirements (override preset)
+    require: {
+      description: true,
+      params: false,
+      returns: false,
+      examples: false,
+    },
+  },
+  docs: {
+    include: ['docs/**/*.md'],
+  },
+});
+```
+
+### Style Presets
+
+Different projects have different documentation standards. Use `style` to choose a preset:
+
+| Preset | description | params | returns | examples |
+|--------|-------------|--------|---------|----------|
+| `minimal` | required | optional | optional | optional |
+| `verbose` | required | required | required | optional |
+| `types-only` | optional | optional | optional | optional |
+
+- **minimal** (default): Only requires description. Good for projects relying on TypeScript types.
+- **verbose**: Requires description, @param, and @returns. For comprehensive API documentation.
+- **types-only**: No requirements. Score is 100% if exports exist. For TypeScript-first projects.
+
+Use `require` to override individual rules from the preset:
+
+```ts
+// Start with minimal, but also require examples
+{
+  style: 'minimal',
+  require: {
+    examples: true,
+  }
+}
 ```
 
 ## Output Formats

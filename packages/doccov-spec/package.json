@@ -1,6 +1,6 @@
 {
   "name": "@doccov/spec",
-  "version": "0.27.0",
+  "version": "0.31.0",
   "description": "DocCov specification schema, types, and validation",
   "keywords": [
     "doccov",

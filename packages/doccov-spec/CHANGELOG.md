@@ -1,5 +1,11 @@
 # @doccov/spec
 
+## 0.31.0
+
+### Patch Changes
+
+- add batch analysis mode with glob patterns, cross-module link validation, incremental analysis, and improved drift detection
+
 ## 0.27.0
 
 ### Minor Changes

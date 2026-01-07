@@ -1,4 +1,5 @@
 import type { SpecExport } from '@openpkg-ts/spec';
+import type { ModuleGraph } from '../module-graph';
 import type { OpenPkgSpec } from '../spec-types';
 import { detectAllExampleIssues } from './example-drift';
 import { detectOptionalityDrift, detectParamDrift, detectParamTypeDrift } from './param-drift';
@@ -14,6 +15,17 @@ import {
   detectReturnTypeDrift,
 } from './type-drift';
 import type { DriftResult, ExportInfo, ExportRegistry, SpecDocDrift } from './types';
+
+/**
+ * Options for computing drift.
+ */
+export interface ComputeDriftOptions {
+  /**
+   * Module graph for cross-module @link validation.
+   * When provided, @link targets are validated across all modules.
+   */
+  moduleGraph?: ModuleGraph;
+}
 
 /**
  * Build a registry of all export/type names for cross-reference validation.
@@ -79,14 +91,15 @@ export function buildExportRegistry(spec: OpenPkgSpec): ExportRegistry {
  * Compute drift for all exports in a spec.
  *
  * @param spec - The OpenPkg spec to analyze
+ * @param options - Optional config including moduleGraph for cross-module validation
  * @returns Drift results per export
  */
-export function computeDrift(spec: OpenPkgSpec): DriftResult {
+export function computeDrift(spec: OpenPkgSpec, options?: ComputeDriftOptions): DriftResult {
   const registry = buildExportRegistry(spec);
   const exports = new Map<string, SpecDocDrift[]>();
 
   for (const entry of spec.exports ?? []) {
-    const drift = computeExportDrift(entry, registry);
+    const drift = computeExportDrift(entry, registry, options);
     exports.set(entry.id ?? entry.name, drift);
   }
 
@@ -98,9 +111,14 @@ export function computeDrift(spec: OpenPkgSpec): DriftResult {
  *
  * @param entry - The export to analyze
  * @param registry - Registry of known exports and types for validation
+ * @param options - Optional config including moduleGraph for cross-module validation
  * @returns Array of drift issues detected
  */
-export function computeExportDrift(entry: SpecExport, registry?: ExportRegistry): SpecDocDrift[] {
+export function computeExportDrift(
+  entry: SpecExport,
+  registry?: ExportRegistry,
+  options?: ComputeDriftOptions,
+): SpecDocDrift[] {
   // Early exit - no docs means no drift possible
   const hasDescription = Boolean(entry.description);
   const hasTags = (entry.tags?.length ?? 0) > 0;
@@ -134,7 +152,7 @@ export function computeExportDrift(entry: SpecExport, registry?: ExportRegistry)
 
   // Broken links can be in description or tags
   if (hasDescription || hasTags) {
-    drifts.push(...detectBrokenLinks(entry, registry));
+    drifts.push(...detectBrokenLinks(entry, registry, { moduleGraph: options?.moduleGraph }));
   }
 
   return drifts;

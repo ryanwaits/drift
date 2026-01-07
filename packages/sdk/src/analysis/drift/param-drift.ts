@@ -95,6 +95,8 @@ export function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
             type: 'param-mismatch',
             target: documentedName,
             issue: `JSDoc documents property "${propertyPath}" on parameter "${prefix}" which does not exist.`,
+            expected: documentedName,
+            actual: propsArray.length > 0 ? propsArray.map((p) => `${prefix}.${p}`).join(', ') : undefined,
             suggestion: suggestionText,
           });
           continue;
@@ -122,6 +124,8 @@ export function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
       type: 'param-mismatch',
       target: documentedName,
       issue: `JSDoc documents parameter "${documentedName}" which is not present in the signature.`,
+      expected: documentedName,
+      actual: paramsArray.join(', ') || undefined,
       suggestion: suggestionText,
     });
   }
@@ -185,6 +189,8 @@ export function detectOptionalityDrift(entry: SpecExport): SpecDocDrift[] {
       type: 'optionality-mismatch',
       target: docParam.name,
       issue,
+      expected: documentedOptional ? `[${docParam.name}]` : docParam.name,
+      actual: actualOptional ? 'optional' : 'required',
       suggestion,
     });
   }
@@ -252,6 +258,8 @@ export function detectParamTypeDrift(entry: SpecExport): SpecDocDrift[] {
       type: 'param-type-mismatch',
       target: documentedParam.name,
       issue: buildParamTypeMismatchIssue(documentedParam.name, documentedParam.type, declaredType),
+      expected: documentedParam.type,
+      actual: declaredType,
       suggestion: `Update @param {${declaredType}} ${documentedParam.name} to match the signature.`,
     });
   }

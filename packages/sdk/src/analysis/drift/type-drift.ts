@@ -54,6 +54,8 @@ export function detectReturnTypeDrift(entry: SpecExport): SpecDocDrift[] {
       type: 'return-type-mismatch',
       target: 'returns',
       issue: buildReturnTypeMismatchIssue(documentedType, documentedNormalized, declaredType),
+      expected: documentedType,
+      actual: declaredType,
       suggestion: `Update @returns to ${declaredType}.`,
     },
   ];
@@ -103,6 +105,8 @@ export function detectGenericConstraintDrift(entry: SpecExport): SpecDocDrift[] 
       type: 'generic-constraint-mismatch',
       target: doc.name,
       issue: buildGenericConstraintMismatchIssue(doc.name, doc.constraint, actualConstraint),
+      expected: doc.constraint ?? 'none',
+      actual: actualConstraint ?? 'none',
       suggestion: buildGenericConstraintSuggestion(doc.name, actualConstraint),
     });
   }
@@ -149,6 +153,8 @@ export function detectPropertyTypeDrift(entry: SpecExport): SpecDocDrift[] {
         type: 'property-type-drift',
         target: memberName,
         issue: `Property "${memberName}" documented as {${documentedType}} but actual type is ${actualType}.`,
+        expected: documentedType,
+        actual: actualType,
         suggestion: `Update @type {${actualType}} to match the declaration.`,
       });
     }

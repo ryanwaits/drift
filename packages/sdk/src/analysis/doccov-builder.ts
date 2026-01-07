@@ -11,10 +11,20 @@ import type {
 } from '@doccov/spec';
 import { DRIFT_CATEGORIES } from '@doccov/spec';
 import type { SpecExport } from '@openpkg-ts/spec';
+import type { StylePreset } from '../config/types';
 import { isFixableDrift } from '../fix';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';
-import { computeHealth } from './health';
+import { computeHealth, isExportDocumented } from './health';
+import type { DocRequirements } from './presets';
+import { resolveRequirements } from './presets';
 import type { OpenPkgSpec } from './spec-types';
+
+/**
+ * Check if an export has the @internal tag.
+ */
+function hasInternalTag(exp: SpecExport): boolean {
+  return exp.tags?.some((t) => t.name === 'internal') ?? false;
+}
 
 /** Forgotten export from extract package (different shape than spec type) */
 export interface ExtractForgottenExport {
@@ -38,6 +48,39 @@ export interface BuildDocCovOptions {
   forgottenExports?: ExtractForgottenExport[];
   /** Type names to ignore in API surface calculation */
   apiSurfaceIgnore?: string[];
+  /**
+   * Export names from the package entry point.
+   * When analyzing a sub-file, provide this to filter out false positive
+   * "forgotten" exports that are actually exported from the main entry.
+   */
+  entryExportNames?: string[];
+  /** Progress callback for long-running analysis */
+  onProgress?: (current: number, total: number, item: string) => void;
+  /**
+   * Callback invoked after each export is analyzed.
+   * Can be used for incremental persistence (crash recovery).
+   */
+  onExportAnalyzed?: (
+    id: string,
+    name: string,
+    analysis: ExportAnalysis,
+    index: number,
+    total: number,
+  ) => void | Promise<void>;
+  /** Documentation style preset */
+  style?: StylePreset;
+  /** Custom documentation requirements (overrides preset) */
+  require?: Partial<DocRequirements>;
+}
+
+/** Batch size for async yields during analysis */
+const YIELD_BATCH_SIZE = 5;
+
+/** Intermediate analysis result for a single export */
+interface ExportAnalysisIntermediate {
+  coverage: CoverageResult;
+  drifts: DocCovDrift[];
+  exp: SpecExport;
 }
 
 /**
@@ -46,10 +89,56 @@ export interface BuildDocCovOptions {
  * @param options - Build options
  * @returns DocCov specification with coverage analysis
  */
-export function buildDocCovSpec(options: BuildDocCovOptions): DocCovSpec {
-  const { openpkg, openpkgPath, forgottenExports, apiSurfaceIgnore } = options;
+export async function buildDocCovSpec(options: BuildDocCovOptions): Promise<DocCovSpec> {
+  const {
+    openpkg,
+    openpkgPath,
+    forgottenExports,
+    apiSurfaceIgnore,
+    entryExportNames,
+    onProgress,
+    onExportAnalyzed,
+    style,
+    require,
+  } = options;
   const registry = buildExportRegistry(openpkg);
 
+  // Resolve documentation requirements from style preset and custom overrides
+  const requirements = resolveRequirements(style, require);
+
+  // Filter out @internal exports - they're excluded from coverage/drift analysis
+  const allExports = (openpkg.exports ?? []).filter((exp) => !hasInternalTag(exp));
+  const total = allExports.length;
+
+  // Phase 1: Analyze each export individually
+  const analysisResults: ExportAnalysisIntermediate[] = [];
+
+  for (let i = 0; i < total; i++) {
+    const exp = allExports[i];
+
+    // Report progress and yield to event loop periodically
+    onProgress?.(i + 1, total, exp.name);
+    if (i % YIELD_BATCH_SIZE === 0 && i > 0) {
+      await new Promise((r) => setImmediate(r));
+    }
+
+    const coverage = computeExportCoverage(exp, requirements);
+    const rawDrifts = computeExportDrift(exp, registry);
+    const categorizedDrifts = rawDrifts.map((d) => toCategorizedDrift(d));
+
+    analysisResults.push({ coverage, drifts: categorizedDrifts, exp });
+  }
+
+  // Phase 2: Group by name to handle overloads
+  const byName = new Map<string, ExportAnalysisIntermediate[]>();
+  for (const result of analysisResults) {
+    const name = result.exp.name;
+    const existing = byName.get(name) ?? [];
+    existing.push(result);
+    byName.set(name, existing);
+  }
+
+  // Phase 3: Build exports map, using best coverage across overloads
   const exports: Record<string, ExportAnalysis> = {};
   let totalScore = 0;
   let documentedCount = 0;
@@ -68,33 +157,67 @@ export function buildDocCovSpec(options: BuildDocCovOptions): DocCovSpec {
   let totalDrift = 0;
   let fixableDrift = 0;
 
-  for (const exp of openpkg.exports ?? []) {
-    const coverage = computeExportCoverage(exp);
-    const rawDrifts = computeExportDrift(exp, registry);
-    const categorizedDrifts = rawDrifts.map((d) => toCategorizedDrift(d));
+  for (const [name, overloads] of byName) {
+    // Find best coverage score across overloads (highest = most documented)
+    const bestResult = overloads.reduce((best, curr) =>
+      curr.coverage.score > best.coverage.score ? curr : best,
+    );
 
-    const exportId = exp.id ?? exp.name;
-    exports[exportId] = {
-      coverageScore: coverage.score,
-      missing: coverage.missing.length > 0 ? coverage.missing : undefined,
-      drift: categorizedDrifts.length > 0 ? categorizedDrifts : undefined,
+    // Use ID from best result, fall back to name
+    const exportId = bestResult.exp.id ?? name;
+
+    // Collect all unique missing rules across overloads (union)
+    // But if ANY overload is fully documented, it's considered documented
+    const allMissing = new Set<MissingDocRule>();
+    for (const r of overloads) {
+      for (const m of r.coverage.missing) {
+        allMissing.add(m);
+      }
+    }
+
+    // Merge all drifts from all overloads
+    const allDrifts: DocCovDrift[] = [];
+    for (const r of overloads) {
+      allDrifts.push(...r.drifts);
+    }
+
+    const analysis: ExportAnalysis = {
+      coverageScore: bestResult.coverage.score,
+      missing: allMissing.size > 0 ? Array.from(allMissing) : undefined,
+      drift: allDrifts.length > 0 ? allDrifts : undefined,
     };
 
-    totalScore += coverage.score;
-    if (coverage.score === 100) documentedCount++;
+    // Add overload count if > 1
+    if (overloads.length > 1) {
+      analysis.overloadCount = overloads.length;
+    }
 
-    for (const rule of coverage.missing) {
+    exports[exportId] = analysis;
+
+    // Invoke callback for incremental persistence
+    if (onExportAnalyzed) {
+      const idx = Object.keys(exports).length;
+      await onExportAnalyzed(exportId, name, analysis, idx, byName.size);
+    }
+
+    // Count this grouped export once for summary stats
+    totalScore += bestResult.coverage.score;
+    if (isExportDocumented(bestResult.exp)) documentedCount++;
+
+    // Count missing rules once per unique export (using best result)
+    for (const rule of bestResult.coverage.missing) {
       missingByRule[rule]++;
     }
 
-    for (const d of categorizedDrifts) {
+    // Count drifts from all overloads
+    for (const d of allDrifts) {
       driftByCategory[d.category]++;
       totalDrift++;
       if (d.fixable) fixableDrift++;
     }
   }
 
-  const exportCount = openpkg.exports?.length ?? 0;
+  const exportCount = byName.size; // Count unique names, not individual overloads
   const coverageScore = exportCount > 0 ? Math.round(totalScore / exportCount) : 100;
 
   // Compute health score
@@ -126,6 +249,7 @@ export function buildDocCovSpec(options: BuildDocCovOptions): DocCovSpec {
     forgottenExports,
     openpkg.types?.length ?? 0,
     apiSurfaceIgnore,
+    entryExportNames,
   );
 
   return {
@@ -150,12 +274,20 @@ function computeApiSurface(
   forgottenExports: ExtractForgottenExport[] | undefined,
   exportedTypesCount: number,
   ignoreList?: string[],
+  entryExportNames?: string[],
 ): ApiSurfaceResult | undefined {
   if (!forgottenExports) return undefined;
 
   // Filter out ignored types
   const ignoreSet = new Set(ignoreList ?? []);
-  const filteredExports = forgottenExports.filter((f) => !ignoreSet.has(f.name));
+
+  // Filter out types that are exported from the package entry point
+  // (relevant when analyzing sub-files, not the main entry)
+  const entryExportSet = new Set(entryExportNames ?? []);
+
+  const filteredExports = forgottenExports.filter(
+    (f) => !ignoreSet.has(f.name) && !entryExportSet.has(f.name),
+  );
 
   const forgotten: ForgottenExport[] = filteredExports.map((f) => ({
     name: f.name,
@@ -188,18 +320,29 @@ interface CoverageResult {
 
 /**
  * Compute coverage score and missing rules for an export.
+ *
+ * @param exp - The export to analyze
+ * @param requirements - Documentation requirements to enforce
  */
-function computeExportCoverage(exp: SpecExport): CoverageResult {
+function computeExportCoverage(exp: SpecExport, requirements: DocRequirements): CoverageResult {
   const missing: MissingDocRule[] = [];
   let points = 0;
   let maxPoints = 0;
 
-  // Description (required for all exports)
-  maxPoints += 30;
-  if (exp.description && exp.description.trim().length > 0) {
-    points += 30;
+  // Description - weight based on requirement
+  const descRequired = requirements.description;
+  if (descRequired) {
+    maxPoints += 30;
+    if (exp.description && exp.description.trim().length > 0) {
+      points += 30;
+    } else {
+      missing.push('description');
+    }
   } else {
-    missing.push('description');
+    // Still track as missing if not present, but no penalty
+    if (!exp.description || exp.description.trim().length === 0) {
+      missing.push('description');
+    }
   }
 
   // Parameters (only for callables)
@@ -208,14 +351,17 @@ function computeExportCoverage(exp: SpecExport): CoverageResult {
     const sig = exp.signatures[0];
     const params = sig.parameters ?? [];
     if (params.length > 0) {
-      maxPoints += 25;
+      const paramsRequired = requirements.params;
+      if (paramsRequired) {
+        maxPoints += 25;
+      }
       const documentedParams = params.filter(
         (p) => p.description && p.description.trim().length > 0,
       );
       if (documentedParams.length === params.length) {
-        points += 25;
+        if (paramsRequired) points += 25;
       } else if (documentedParams.length > 0) {
-        points += Math.round((documentedParams.length / params.length) * 25);
+        if (paramsRequired) points += Math.round((documentedParams.length / params.length) * 25);
         missing.push('params');
       } else {
         missing.push('params');
@@ -224,15 +370,18 @@ function computeExportCoverage(exp: SpecExport): CoverageResult {
 
     // Returns (only for functions)
     if (exp.kind === 'function' && sig.returns) {
-      maxPoints += 20;
+      const returnsRequired = requirements.returns;
+      if (returnsRequired) {
+        maxPoints += 20;
+      }
       if (sig.returns.description && sig.returns.description.trim().length > 0) {
-        points += 20;
+        if (returnsRequired) points += 20;
       } else {
         missing.push('returns');
       }
     }
 
-    // Throws
+    // Throws (not configurable - always optional contribution)
     if (sig.throws && sig.throws.length > 0) {
       maxPoints += 10;
       const documentedThrows = sig.throws.filter((t) => t.description);
@@ -244,14 +393,18 @@ function computeExportCoverage(exp: SpecExport): CoverageResult {
     }
   }
 
-  // Examples (always check)
-  maxPoints += 15;
+  // Examples
+  const examplesRequired = requirements.examples;
+  if (examplesRequired) {
+    maxPoints += 15;
+  }
   if (exp.examples && exp.examples.length > 0) {
-    points += 15;
+    if (examplesRequired) points += 15;
   } else {
     missing.push('examples');
   }
 
+  // Handle 'types-only' preset: when no requirements, score is 100%
   const score = maxPoints > 0 ? Math.round((points / maxPoints) * 100) : 100;
   return { score, missing };
 }

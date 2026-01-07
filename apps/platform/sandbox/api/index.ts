@@ -569,7 +569,7 @@ async function handleExecute(req: VercelRequest, res: VercelResponse): Promise<v
         `Failed to read spec file (${specFilePath}): ${readError instanceof Error ? readError.message : 'Unknown error'}`,
       );
     }
-    const doccov = buildDocCovSpec({ openpkg: spec, openpkgPath: specFilePath });
+    const doccov = await buildDocCovSpec({ openpkg: spec, openpkgPath: specFilePath });
     const summary = createSpecSummary(spec, doccov);
 
     const result = {
@@ -759,7 +759,7 @@ async function handleExecuteStream(req: VercelRequest, res: VercelResponse): Pro
         `Failed to read spec file (${specFilePath}): ${readError instanceof Error ? readError.message : 'Unknown error'}`,
       );
     }
-    const doccov = buildDocCovSpec({ openpkg: spec, openpkgPath: specFilePath });
+    const doccov = await buildDocCovSpec({ openpkg: spec, openpkgPath: specFilePath });
     const summary = createSpecSummary(spec, doccov);
 
     const result = {

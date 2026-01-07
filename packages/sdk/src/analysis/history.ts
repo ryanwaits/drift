@@ -7,6 +7,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { getDoccovDir } from '../utils/project-root';
+import { isExportDocumented } from './health';
 
 /** Directory for storing history snapshots (relative to .doccov) */
 export const HISTORY_DIR = '.doccov/history';
@@ -125,7 +126,7 @@ export function computeSnapshot(
   options?: { commit?: string; branch?: string },
 ): CoverageSnapshot {
   const exports = spec.exports ?? [];
-  const documented = exports.filter((e) => e.description && e.description.trim().length > 0);
+  const documented = exports.filter(isExportDocumented);
   const driftCount = exports.reduce((sum, e) => {
     // Check for drift in the export's docs metadata
     const docs = (e as { docs?: { drift?: unknown[] } }).docs;

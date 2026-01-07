@@ -21,7 +21,7 @@
 // Build info detection
 export { detectBuildInfo, getPrimaryBuildScript } from './build';
 // Entry point detection
-export { detectEntryPoint } from './entry-point';
+export { detectEntryPoint, findEntryPointForFile, isPackageEntryPoint } from './entry-point';
 // FileSystem implementations
 export { NodeFileSystem, SandboxFileSystem } from './filesystem';
 

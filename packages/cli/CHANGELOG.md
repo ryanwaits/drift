@@ -1,5 +1,17 @@
 # @doccov/cli
 
+## 0.31.0
+
+### Minor Changes
+
+- add batch analysis mode with glob patterns, cross-module link validation, incremental analysis, and improved drift detection
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/sdk@0.31.0
+  - @doccov/spec@0.31.0
+
 ## 0.30.7
 
 ### Patch Changes

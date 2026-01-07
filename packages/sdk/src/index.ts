@@ -45,7 +45,7 @@ export {
 } from './analysis/docs-coverage';
 // Health computation
 export type { HealthInput } from './analysis/health';
-export { computeHealth } from './analysis/health';
+export { computeHealth, isExportDocumented } from './analysis/health';
 // Lookup helpers (for composition pattern)
 export {
   getExportAnalysis,
@@ -56,8 +56,27 @@ export {
 } from './analysis/lookup';
 // Report generation
 export { generateReport, renderApiSurface } from './analysis/report';
+// Batch analysis
+export type { BatchResult, PackageResult } from './analysis/batch';
+export { aggregateResults, createPackageResult } from './analysis/batch';
+// Module graph for cross-module @link validation
+export type { ModuleGraph, ModuleInfo } from './analysis/module-graph';
+export { buildModuleGraph, findSymbolModule, symbolExistsInGraph } from './analysis/module-graph';
+// Drift options
+export type { ComputeDriftOptions } from './analysis/drift/compute';
 // Spec types
 export type { OpenPkgSpec } from './analysis/spec-types';
+// Incremental analysis (crash recovery)
+export type {
+  IncrementalAnalyzerOptions,
+  IncrementalExportResult,
+  PartialAnalysisState,
+} from './analysis/incremental';
+export {
+  cleanupOrphanedTempFiles,
+  findOrphanedTempFiles,
+  IncrementalAnalyzer,
+} from './analysis/incremental';
 export type { AnalysisResult, AnalyzeOptions, Diagnostic, ForgottenExportResult } from './analyzer';
 export { analyze, analyzeFile, DocCov } from './analyzer';
 export type { DocCovOptions } from './options';
@@ -66,8 +85,22 @@ export type { DocCovOptions } from './options';
 // Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type { CheckConfig, DocCovConfig, DocCovConfigInput, DocsConfig } from './config';
+export type {
+  CheckConfig,
+  DocCovConfig,
+  DocCovConfigInput,
+  DocRequirements,
+  DocsConfig,
+  StylePreset,
+} from './config';
 export { defineConfig, docCovConfigSchema, normalizeConfig } from './config';
+// Presets for documentation style requirements
+export type { DocRequirements as ResolvedDocRequirements } from './analysis/presets';
+export {
+  DEFAULT_REQUIREMENTS,
+  PRESETS,
+  resolveRequirements,
+} from './analysis/presets';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Project Resolution & Detection
@@ -216,11 +249,13 @@ export {
   detectBuildInfo,
   detectEntryPoint,
   detectMonorepo,
+  findEntryPointForFile,
   findPackageByName,
   formatPackageList,
   getInstallCommand,
   getPrimaryBuildScript,
   getRunCommand,
+  isPackageEntryPoint,
   readPackageJson,
   SandboxFileSystem,
   safeParseJson,

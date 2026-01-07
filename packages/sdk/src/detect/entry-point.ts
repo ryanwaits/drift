@@ -3,6 +3,7 @@
  * Resolves dist/build paths to source .ts files when possible.
  */
 
+import * as nodePath from 'node:path';
 import type { EntryPointInfo, FileSystem, TsConfigInfo } from './types';
 import { readPackageJson, safeParseJson } from './utils';
 
@@ -217,4 +218,53 @@ async function resolveToSource(
   }
 
   return null;
+}
+
+/**
+ * Find the package entry point for a given source file.
+ * Walks up directories to find package.json and detects entry point.
+ *
+ * @param fs - FileSystem implementation
+ * @param filePath - Absolute or relative path to the source file
+ * @returns Entry point info and package path, or null if not found
+ */
+export async function findEntryPointForFile(
+  fs: FileSystem,
+  filePath: string,
+): Promise<{ entryPoint: EntryPointInfo; packagePath: string } | null> {
+  // Get directory of the file
+  let currentDir = nodePath.dirname(filePath);
+
+  // Walk up to find package.json
+  while (currentDir !== nodePath.dirname(currentDir)) {
+    const hasPackageJson = await fs.exists(nodePath.join(currentDir, 'package.json'));
+    if (hasPackageJson) {
+      try {
+        const entryPoint = await detectEntryPoint(fs, currentDir);
+        return { entryPoint, packagePath: currentDir };
+      } catch {
+        // No valid entry point in this package, continue up
+      }
+    }
+    currentDir = nodePath.dirname(currentDir);
+  }
+
+  return null;
+}
+
+/**
+ * Check if a file is the package entry point.
+ *
+ * @param fs - FileSystem implementation
+ * @param filePath - Path to check
+ * @returns True if the file is the package entry point
+ */
+export async function isPackageEntryPoint(fs: FileSystem, filePath: string): Promise<boolean> {
+  const result = await findEntryPointForFile(fs, filePath);
+  if (!result) return false;
+
+  const entryAbsolute = nodePath.resolve(result.packagePath, result.entryPoint.path);
+  const fileAbsolute = nodePath.resolve(filePath);
+
+  return entryAbsolute === fileAbsolute;
 }

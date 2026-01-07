@@ -27,6 +27,11 @@ export type SpecDocDrift = {
   type: DriftType;
   target?: string;
   issue: string;
+  /** Expected value from JSDoc/documentation */
+  expected?: string;
+  /** Actual value from TypeScript signature/code */
+  actual?: string;
+  /** Actionable suggestion for fixing the drift */
   suggestion?: string;
 };
 

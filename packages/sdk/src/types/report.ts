@@ -180,6 +180,11 @@ export interface ExportCoverageData {
    * Drift issues for this export.
    */
   drift?: SpecDocDrift[];
+
+  /**
+   * Number of overloads if > 1 (for overloaded functions).
+   */
+  overloadCount?: number;
 }
 
 /**

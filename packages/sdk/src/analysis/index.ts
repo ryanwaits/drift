@@ -64,6 +64,10 @@ export {
   isExportFullyDocumented,
 } from './lookup';
 
+// Module graph for cross-module @link validation
+export type { ModuleGraph, ModuleInfo } from './module-graph';
+export { buildModuleGraph, findSymbolModule, symbolExistsInGraph } from './module-graph';
+
 // Report generation
 export {
   generateReport,
@@ -83,3 +87,13 @@ export {
 
 // Spec types
 export type { OpenPkgSpec } from './spec-types';
+
+// Incremental analysis for crash recovery
+export {
+  cleanupOrphanedTempFiles,
+  findOrphanedTempFiles,
+  IncrementalAnalyzer,
+  type IncrementalAnalyzerOptions,
+  type IncrementalExportResult,
+  type PartialAnalysisState,
+} from './incremental';

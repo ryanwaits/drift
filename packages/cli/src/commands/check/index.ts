@@ -1,23 +1,42 @@
+import * as path from 'node:path';
 import {
+  aggregateResults,
   buildDocCovSpec,
+  createPackageResult,
   DocCov,
   type ExampleValidation,
+  findEntryPointForFile,
+  IncrementalAnalyzer,
   NodeFileSystem,
+  type PackageResult,
+  type PartialAnalysisState,
   parseExamplesFlag,
   resolveTarget,
 } from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
+import { glob } from 'glob';
 import { loadDocCovConfig } from '../../config';
 import { mergeFilterOptions, parseVisibilityFlag } from '../../utils/filter-options';
 import { spinner } from '../../utils/progress';
 import { clampPercentage } from '../../utils/validation';
 import { handleFixes, handleForgottenExportFixes } from './fix-handler';
-import { displayApiSurfaceOutput, displayTextOutput, handleNonTextOutput } from './output';
+import {
+  displayApiSurfaceOutput,
+  displayBatchTextOutput,
+  displayTextOutput,
+  handleBatchNonTextOutput,
+  handleNonTextOutput,
+} from './output';
 import type { CheckCommandDependencies, CollectedDrift, OutputFormat } from './types';
 import { collect, collectDrift } from './utils';
 import { runExampleValidation, validateMarkdownDocs } from './validation';
+import {
+  clearIncrementalAnalyzer,
+  registerSignalHandlers,
+  setIncrementalAnalyzer,
+} from '../../utils/signal-handler';
 
 const defaultDependencies: Required<CheckCommandDependencies> = {
   createDocCov: (options) => new DocCov(options),
@@ -35,7 +54,7 @@ export function registerCheckCommand(
   };
 
   program
-    .command('check [entry]')
+    .command('check [targets...]')
     .description('Check documentation coverage and output reports')
     .option('--cwd <dir>', 'Working directory', process.cwd())
     .option('--package <name>', 'Target package name (for monorepos)')
@@ -69,13 +88,29 @@ export function registerCheckCommand(
     )
     .option('--api-surface', 'Show only API surface / forgotten exports info')
     .option('-v, --verbose', 'Show detailed output including forgotten exports')
-    .action(async (entry, options) => {
+    .action(async (targets: string[], options) => {
+      // Register signal handlers for graceful shutdown
+      registerSignalHandlers();
+
       try {
         const spin = spinner('Analyzing...');
+
+        // Expand glob patterns in targets
+        const resolvedTargets = await expandGlobTargets(targets, options.cwd);
+        const isBatchMode = resolvedTargets.length > 1;
 
         // Parse --examples flag (may be overridden by config later)
         let validations = parseExamplesFlag(options.examples);
         let hasExamples = validations.length > 0;
+
+        // If batch mode, run batch analysis
+        if (isBatchMode) {
+          await runBatchAnalysis(resolvedTargets, options, { createDocCov, log, error, spin });
+          return;
+        }
+
+        // Single target mode (original behavior)
+        const entry = resolvedTargets[0];
 
         // Resolve target directory and entry point
         const fileSystem = new NodeFileSystem(options.cwd);
@@ -152,13 +187,61 @@ export function registerCheckCommand(
 
         // Build DocCov spec with coverage data (composition pattern)
         const openpkg = specResult.spec as OpenPkg;
-        const doccov = buildDocCovSpec({
+        spin.update('Building coverage spec...');
+
+        // Auto-detect entry point exports when analyzing a sub-file
+        // This filters out "forgotten" exports that are actually exported from the main entry
+        let entryExportNames: string[] | undefined;
+        const entryResult = await findEntryPointForFile(fileSystem, entryFile);
+        if (entryResult) {
+          const pkgEntryPath = path.resolve(entryResult.packagePath, entryResult.entryPoint.path);
+          const isSubFile = path.resolve(entryFile) !== pkgEntryPath;
+
+          if (isSubFile) {
+            // Analyze the entry point to get its exports
+            const entryAnalyzer = createDocCov({
+              resolveExternalTypes: false,
+              useCache: options.cache !== false,
+              cwd: entryResult.packagePath,
+            });
+            const entrySpec = await entryAnalyzer.analyzeFileWithDiagnostics(pkgEntryPath);
+            if (entrySpec?.spec?.exports) {
+              entryExportNames = entrySpec.spec.exports.map((e) => e.name);
+            }
+          }
+        }
+
+        // Set up incremental analyzer for crash recovery
+        const incrementalAnalyzer = new IncrementalAnalyzer();
+        setIncrementalAnalyzer(incrementalAnalyzer, (partial: PartialAnalysisState) => {
+          log(chalk.yellow(`\n⚠️  Partial results (${partial.results.length} exports):`));
+          for (const r of partial.results.slice(-5)) {
+            log(chalk.dim(`  - ${r.name}: ${r.coverageScore}%`));
+          }
+          if (partial.results.length > 5) {
+            log(chalk.dim(`  ... and ${partial.results.length - 5} more`));
+          }
+        });
+
+        const doccov = await buildDocCovSpec({
           openpkg,
           openpkgPath: entryFile,
           packagePath: targetDir,
           forgottenExports: specResult.forgottenExports,
           apiSurfaceIgnore,
+          entryExportNames,
+          onProgress: (current, total, item) => {
+            spin.setDetail(`${current}/${total}: ${item}`);
+          },
+          onExportAnalyzed: async (id, name, analysis) => {
+            await incrementalAnalyzer.writeExportAnalysis(id, name, analysis);
+          },
         });
+
+        // Clean up incremental analyzer on success
+        clearIncrementalAnalyzer();
+        await incrementalAnalyzer.cleanup();
+
         const format = (options.format ?? 'text') as OutputFormat;
 
         // Collect spec diagnostics for later display
@@ -304,6 +387,150 @@ export function registerCheckCommand(
         process.exit(1);
       }
     });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Batch Analysis Support
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Expand glob patterns in target list.
+ * Non-glob paths are passed through unchanged.
+ */
+async function expandGlobTargets(targets: string[], cwd: string): Promise<string[]> {
+  if (targets.length === 0) {
+    return []; // Will use resolveTarget's default behavior
+  }
+
+  const expanded: string[] = [];
+  for (const target of targets) {
+    if (target.includes('*')) {
+      // Expand glob pattern
+      const matches = await glob(target, { cwd, nodir: true });
+      expanded.push(...matches.map((m) => path.resolve(cwd, m)));
+    } else {
+      expanded.push(path.resolve(cwd, target));
+    }
+  }
+
+  return expanded;
+}
+
+interface BatchAnalysisDeps {
+  createDocCov: (options: import('@doccov/sdk').DocCovOptions) => DocCov;
+  log: typeof console.log;
+  error: typeof console.error;
+  spin: ReturnType<typeof spinner>;
+}
+
+/**
+ * Run batch analysis across multiple targets.
+ */
+async function runBatchAnalysis(
+  targets: string[],
+  options: Record<string, unknown>,
+  deps: BatchAnalysisDeps,
+): Promise<void> {
+  const { createDocCov, log, error, spin } = deps;
+  const fileSystem = new NodeFileSystem(options.cwd as string);
+  const packageResults: PackageResult[] = [];
+
+  // Analyze each target
+  for (let i = 0; i < targets.length; i++) {
+    const target = targets[i];
+    spin.update(`Analyzing ${i + 1}/${targets.length}: ${path.basename(target)}...`);
+
+    try {
+      const resolved = await resolveTarget(fileSystem, {
+        cwd: options.cwd as string,
+        entry: target,
+      });
+
+      const { targetDir, entryFile } = resolved;
+      const config = await loadDocCovConfig(targetDir);
+
+      const resolveExternalTypes = !(options.skipResolve as boolean);
+      const analyzer = createDocCov({
+        resolveExternalTypes,
+        maxDepth: options.maxTypeDepth as number | undefined,
+        useCache: options.cache !== false,
+        cwd: targetDir,
+      });
+
+      const specResult = await analyzer.analyzeFileWithDiagnostics(entryFile);
+      if (!specResult) {
+        log(chalk.yellow(`  Skipping ${target}: analysis failed`));
+        continue;
+      }
+
+      const openpkg = specResult.spec as OpenPkg;
+      const doccov = await buildDocCovSpec({
+        openpkg,
+        openpkgPath: entryFile,
+        packagePath: targetDir,
+        forgottenExports: specResult.forgottenExports,
+      });
+
+      packageResults.push(createPackageResult(openpkg, doccov, entryFile));
+    } catch (err) {
+      log(chalk.yellow(`  Skipping ${target}: ${err instanceof Error ? err.message : err}`));
+    }
+  }
+
+  if (packageResults.length === 0) {
+    spin.fail('No packages analyzed successfully');
+    process.exit(1);
+  }
+
+  spin.success(`Analyzed ${packageResults.length} package(s)`);
+
+  // Aggregate results
+  const batchResult = aggregateResults(packageResults);
+
+  // Load config for thresholds (use first target's config)
+  const firstTargetDir = path.dirname(targets[0]);
+  const config = await loadDocCovConfig(firstTargetDir);
+
+  const DEFAULT_MIN_HEALTH = 80;
+  const minHealthRaw =
+    (options.minHealth as number | undefined) ?? config?.check?.minHealth ?? DEFAULT_MIN_HEALTH;
+  const minHealth = clampPercentage(minHealthRaw);
+
+  const format = ((options.format as string) ?? 'text') as OutputFormat;
+
+  // Handle output
+  if (format !== 'text') {
+    const passed = handleBatchNonTextOutput(
+      {
+        format,
+        batchResult,
+        minHealth,
+        limit: parseInt(options.limit as string, 10) || 20,
+        stdout: options.stdout as boolean,
+        outputPath: options.output as string | undefined,
+        cwd: options.cwd as string,
+      },
+      { log },
+    );
+    if (!passed) {
+      process.exit(1);
+    }
+    return;
+  }
+
+  // Display text output
+  const passed = displayBatchTextOutput(
+    {
+      batchResult,
+      minHealth,
+      verbose: (options.verbose as boolean) ?? false,
+    },
+    { log },
+  );
+
+  if (!passed) {
+    process.exit(1);
+  }
 }
 
 // Re-export types for consumers

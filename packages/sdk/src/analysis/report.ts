@@ -10,7 +10,7 @@ import {
   REPORT_VERSION,
 } from '../types/report';
 import { buildDocCovSpec } from './doccov-builder';
-import { getExportAnalysis } from './lookup';
+import { isExportDocumented } from './health';
 
 /**
  * Generate a DocCov report from an OpenPkg spec.
@@ -30,8 +30,11 @@ import { getExportAnalysis } from './lookup';
  * console.log(`Coverage: ${report.coverage.score}%`);
  * ```
  */
-export function generateReport(spec: OpenPkg, openpkgPath = 'openpkg.json'): DocCovReport {
-  const doccov = buildDocCovSpec({ openpkg: spec, openpkgPath });
+export async function generateReport(
+  spec: OpenPkg,
+  openpkgPath = 'openpkg.json',
+): Promise<DocCovReport> {
+  const doccov = await buildDocCovSpec({ openpkg: spec, openpkgPath });
   return generateReportFromDocCov(spec, doccov);
 }
 
@@ -46,36 +49,53 @@ export function generateReport(spec: OpenPkg, openpkgPath = 'openpkg.json'): Doc
  * @returns A DocCov report with coverage analysis
  */
 export function generateReportFromDocCov(openpkg: OpenPkg, doccov: DocCovSpec): DocCovReport {
-  // Build per-export coverage data
+  // Build per-export coverage data from doccov.exports (already handles overload grouping)
   const exportsData: Record<string, ExportCoverageData> = {};
   const missingByRule: Record<string, number> = {};
+
+  // Build lookup from openpkg for name/kind info
+  const openpkgExportsById = new Map<string, SpecExport>();
+  for (const exp of openpkg.exports ?? []) {
+    const id = exp.id ?? exp.name;
+    // For overloads, first one wins (they all have same name/kind)
+    if (!openpkgExportsById.has(id)) {
+      openpkgExportsById.set(id, exp);
+    }
+  }
 
   let documentedExports = 0;
   let totalDrift = 0;
 
-  for (const exp of openpkg.exports ?? []) {
-    const analysis = getExportAnalysis(exp, doccov);
+  // Iterate over doccov exports (grouped by name)
+  for (const [exportId, analysis] of Object.entries(doccov.exports)) {
+    const openpkgExp = openpkgExportsById.get(exportId);
     const data: ExportCoverageData = {
-      name: exp.name,
-      kind: exp.kind,
-      coverageScore: analysis?.coverageScore ?? 100,
+      name: openpkgExp?.name ?? exportId,
+      kind: openpkgExp?.kind ?? 'unknown',
+      coverageScore: analysis.coverageScore,
     };
 
-    if (analysis?.missing && analysis.missing.length > 0) {
+    if (analysis.missing && analysis.missing.length > 0) {
       data.missing = analysis.missing;
       for (const ruleId of analysis.missing) {
         missingByRule[ruleId] = (missingByRule[ruleId] ?? 0) + 1;
       }
-    } else {
+    }
+
+    // Use isExportDocumented for consistent counting
+    if (openpkgExp && isExportDocumented(openpkgExp)) {
       documentedExports++;
     }
 
-    if (analysis?.drift && analysis.drift.length > 0) {
+    if (analysis.drift && analysis.drift.length > 0) {
       data.drift = analysis.drift;
       totalDrift += analysis.drift.length;
     }
 
-    const exportId = exp.id ?? exp.name;
+    if (analysis.overloadCount && analysis.overloadCount > 1) {
+      data.overloadCount = analysis.overloadCount;
+    }
+
     exportsData[exportId] = data;
   }
 

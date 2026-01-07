@@ -229,11 +229,15 @@ export function registerSpecCommand(
         // Build DocCov spec (unless --openpkg-only)
         let doccovSpec = null;
         if (!options.openpkgOnly) {
-          doccovSpec = buildDocCovSpec({
+          spin.update('Building coverage spec...');
+          doccovSpec = await buildDocCovSpec({
             openpkgPath: 'openpkg.json',
             openpkg: normalized,
             packagePath: targetDir,
             forgottenExports: result.forgottenExports,
+            onProgress: (current, total, item) => {
+              spin.setDetail(`${current}/${total}: ${item}`);
+            },
           });
 
           // Validate doccov spec

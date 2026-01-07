@@ -15,6 +15,8 @@ export type DriftIssueItem = {
   exportName: string;
   type: string;
   issue: string;
+  expected?: string;
+  actual?: string;
   suggestion?: string;
 };
 
@@ -110,6 +112,8 @@ export function computeStats(
         exportName: exp.name,
         type: d.type,
         issue: d.issue,
+        expected: d.expected,
+        actual: d.actual,
         suggestion: d.suggestion,
       };
       driftIssues.push(item);

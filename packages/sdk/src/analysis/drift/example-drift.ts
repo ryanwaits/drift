@@ -123,6 +123,8 @@ export function detectAllExampleIssues(
         type: 'example-syntax-error',
         target: `example[${i}]`,
         issue: `@example contains invalid syntax: ${message}`,
+        expected: 'valid syntax',
+        actual: message,
         suggestion: 'Check for missing brackets, semicolons, or typos.',
       });
       // Skip drift detection for examples with syntax errors
@@ -181,6 +183,8 @@ export function detectAllExampleIssues(
             type: 'example-drift',
             target: identifier,
             issue: `@example references "${identifier}" which does not exist in this package.`,
+            expected: identifier,
+            actual: hasCloseMatch ? suggestion.value : undefined,
             suggestion: hasCloseMatch ? `Did you mean "${suggestion.value}"?` : undefined,
           });
         }
@@ -241,6 +245,8 @@ export function detectExampleRuntimeErrors(
       issue: isTimeout
         ? `@example timed out after ${result.duration}ms.`
         : `@example throws at runtime: ${errorMessage}`,
+      expected: 'successful execution',
+      actual: errorMessage,
       suggestion: isTimeout
         ? 'Check for infinite loops or long-running operations.'
         : 'Fix the example code or update it to match the current API.',
@@ -355,6 +361,8 @@ export function detectExampleAssertionFailures(
           type: 'example-assertion-failed',
           target: `example[${i}]:line${assertion.lineNumber}`,
           issue: `Assertion expected "${assertion.expected}" but no output was produced`,
+          expected: assertion.expected,
+          actual: '(no output)',
           suggestion: 'Ensure the example produces output for each assertion',
         });
         continue;
@@ -366,6 +374,8 @@ export function detectExampleAssertionFailures(
           type: 'example-assertion-failed',
           target: `example[${i}]:line${assertion.lineNumber}`,
           issue: `Assertion failed: expected "${assertion.expected}" but got "${actual}"`,
+          expected: assertion.expected,
+          actual,
           suggestion: `Update assertion to: // => ${actual}`,
         });
       }

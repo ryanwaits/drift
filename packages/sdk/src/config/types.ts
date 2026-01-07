@@ -19,6 +19,32 @@ export interface DocsConfig {
 export type ExampleValidationMode = 'presence' | 'typecheck' | 'run';
 
 /**
+ * Documentation style presets.
+ *
+ * - 'minimal': Only description required (default)
+ * - 'verbose': Description, params, returns all required
+ * - 'types-only': No documentation required (rely on TypeScript types)
+ */
+export type StylePreset = 'minimal' | 'verbose' | 'types-only';
+
+/**
+ * Fine-grained documentation requirements.
+ * Use with `require` config to override preset defaults.
+ */
+export interface DocRequirements {
+  /** Require description/summary */
+  description?: boolean;
+  /** Require @param tags for function parameters */
+  params?: boolean;
+  /** Require @returns tag for functions */
+  returns?: boolean;
+  /** Require @example blocks */
+  examples?: boolean;
+  /** Require @since tag */
+  since?: boolean;
+}
+
+/**
  * Schema extraction modes for validation libraries (Zod, Valibot, TypeBox, ArkType).
  *
  * - 'static': TypeScript Compiler API only (no runtime, always safe)
@@ -59,6 +85,18 @@ export interface CheckConfig {
   maxDrift?: number;
   /** API surface configuration */
   apiSurface?: ApiSurfaceConfig;
+  /**
+   * Documentation style preset.
+   * - 'minimal': Only description required (default)
+   * - 'verbose': Description, params, returns all required
+   * - 'types-only': No documentation required
+   */
+  style?: StylePreset;
+  /**
+   * Fine-grained documentation requirements.
+   * Overrides preset defaults for specific rules.
+   */
+  require?: DocRequirements;
 }
 
 /**

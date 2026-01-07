@@ -1,8 +1,14 @@
-import type { Diagnostic, ExampleTypeError } from '@doccov/sdk';
+import type { BatchResult, Diagnostic, ExampleTypeError } from '@doccov/sdk';
 import { generateReportFromDocCov } from '@doccov/sdk';
 import type { DocCovSpec } from '@doccov/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
-import { computeStats, renderMarkdown, writeReports } from '../../reports';
+import {
+  computeStats,
+  formatCIJson,
+  renderBatchMarkdown,
+  renderMarkdown,
+  writeReports,
+} from '../../reports';
 import {
   colors,
   summary as createSummary,
@@ -419,15 +425,26 @@ export function handleNonTextOutput(
 
   const stats = computeStats(openpkg, doccov, { staleRefs });
 
-  // Generate JSON report (always needed for cache)
+  // Generate base JSON report
   const report = generateReportFromDocCov(openpkg, doccov);
   // Extend report with stale refs if present
-  const extendedReport =
-    staleRefs.length > 0 ? { ...report, staleRefs } : report;
-  const jsonContent = JSON.stringify(extendedReport, null, 2);
+  const extendedReport = staleRefs.length > 0 ? { ...report, staleRefs } : report;
 
-  // Get health score
-  const healthScore = doccov.summary.health?.score ?? stats.coverageScore;
+  // Check thresholds
+  const hasTypecheckErrors = typecheckErrors.length > 0;
+  const hasRuntimeErrors = runtimeErrors > 0;
+  const hasStaleRefs = staleRefs.length > 0;
+
+  // Generate CI-friendly JSON with threshold checking
+  const ciReport = formatCIJson(extendedReport, {
+    minHealth,
+    hasTypecheckErrors,
+    hasRuntimeErrors,
+    hasStaleRefs,
+  });
+
+  // JSON content for caching is the CI report (full structure)
+  const jsonContent = JSON.stringify(ciReport, null, 2);
 
   // Generate requested format content
   let formatContent: string;
@@ -455,15 +472,11 @@ export function handleNonTextOutput(
     });
   }
 
-  // Check thresholds using health score
-  const healthFailed = healthScore < minHealth;
+  // Use CI report's success status for pass/fail (also check apiSurface)
   const apiSurfaceScore = doccov.apiSurface?.completeness ?? 100;
   const apiSurfaceFailed = minApiSurface !== undefined && apiSurfaceScore < minApiSurface;
-  const hasTypecheckErrors = typecheckErrors.length > 0;
-  const hasRuntimeErrors = runtimeErrors > 0;
-  const hasStaleRefs = staleRefs.length > 0;
 
-  return !(healthFailed || apiSurfaceFailed || hasTypecheckErrors || hasRuntimeErrors || hasStaleRefs);
+  return ciReport.success && !apiSurfaceFailed;
 }
 
 /**
@@ -533,4 +546,159 @@ export function displayApiSurfaceOutput(
     log('');
     log(colors.success(`${sym.success} All referenced types are exported`));
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Batch Output (Monorepo Mode)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface BatchTextOutputOptions {
+  batchResult: BatchResult;
+  minHealth: number;
+  verbose: boolean;
+}
+
+/**
+ * Display batch analysis results in text format.
+ */
+export function displayBatchTextOutput(
+  options: BatchTextOutputOptions,
+  deps: { log: typeof console.log },
+): boolean {
+  const { batchResult, minHealth, verbose } = options;
+  const { log } = deps;
+  const { packages, aggregate } = batchResult;
+  const sym = getSymbols(supportsUnicode());
+
+  log('');
+  log(colors.bold(`Documentation Coverage Report (${packages.length} packages)`));
+  log('');
+
+  // Per-package table
+  log('| Package | Health | Exports | Drift |');
+  log('|---------|--------|---------|-------|');
+  for (const pkg of packages) {
+    const healthColor =
+      pkg.health >= 80 ? colors.success : pkg.health >= 60 ? colors.warning : colors.error;
+    log(
+      `| ${pkg.name} | ${healthColor(`${pkg.health}%`)} | ${pkg.totalExports} | ${pkg.driftCount} |`,
+    );
+  }
+
+  // Total row
+  const totalHealthColor =
+    aggregate.health >= 80
+      ? colors.success
+      : aggregate.health >= 60
+        ? colors.warning
+        : colors.error;
+  log(
+    `| ${colors.bold('Total')} | ${totalHealthColor(colors.bold(`${aggregate.health}%`))} | ${colors.bold(String(aggregate.totalExports))} | ${colors.bold(String(aggregate.driftCount))} |`,
+  );
+  log('');
+
+  // Check threshold
+  const passed = aggregate.health >= minHealth;
+
+  if (passed) {
+    log(colors.success(`${sym.success} Check passed (health ${aggregate.health}% >= ${minHealth}%)`));
+  } else {
+    log(colors.error(`${sym.error} Health ${aggregate.health}% below minimum ${minHealth}%`));
+  }
+
+  // Verbose mode: show per-package details
+  if (verbose) {
+    log('');
+    for (const pkg of packages) {
+      const health = pkg.doccov.summary.health;
+      if (health) {
+        log(colors.bold(`${pkg.name}:`));
+        displayHealthVerbose(health, log);
+        log('');
+      }
+    }
+  }
+
+  return passed;
+}
+
+export interface BatchNonTextOutputOptions {
+  format: OutputFormat;
+  batchResult: BatchResult;
+  minHealth: number;
+  limit: number;
+  stdout: boolean;
+  outputPath?: string;
+  cwd: string;
+}
+
+/**
+ * Handle batch output for non-text formats.
+ */
+export function handleBatchNonTextOutput(
+  options: BatchNonTextOutputOptions,
+  deps: { log: typeof console.log },
+): boolean {
+  const { format, batchResult, minHealth, limit, stdout, outputPath, cwd } = options;
+  const { log } = deps;
+
+  const healthPassed = batchResult.aggregate.health >= minHealth;
+
+  // CI-friendly batch JSON structure
+  const ciBatchReport = {
+    success: healthPassed,
+    health: batchResult.aggregate.health,
+    thresholds: {
+      health: {
+        min: minHealth,
+        actual: batchResult.aggregate.health,
+        passed: healthPassed,
+      },
+    },
+    drift: {
+      total: batchResult.aggregate.driftCount,
+    },
+    exports: {
+      total: batchResult.aggregate.totalExports,
+      documented: batchResult.aggregate.documented,
+    },
+    exitCode: healthPassed ? 0 : 1,
+    packages: batchResult.packages.map((p) => ({
+      name: p.name,
+      version: p.version,
+      entryPath: p.entryPath,
+      totalExports: p.totalExports,
+      documented: p.documented,
+      health: p.health,
+      driftCount: p.driftCount,
+      coverageScore: p.coverageScore,
+    })),
+    aggregate: batchResult.aggregate,
+  };
+
+  let formatContent: string;
+  switch (format) {
+    case 'json':
+      formatContent = JSON.stringify(ciBatchReport, null, 2);
+      break;
+    case 'markdown':
+      formatContent = renderBatchMarkdown(batchResult, { limit });
+      break;
+    default:
+      throw new Error(`Unknown format: ${format}`);
+  }
+
+  if (stdout) {
+    log(formatContent);
+  } else {
+    writeReports({
+      format,
+      formatContent,
+      jsonContent: JSON.stringify(ciBatchReport, null, 2),
+      outputPath,
+      cwd,
+    });
+  }
+
+  return healthPassed;
 }

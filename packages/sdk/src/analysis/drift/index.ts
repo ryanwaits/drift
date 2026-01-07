@@ -8,7 +8,12 @@ export {
   groupDriftsByCategory,
 } from './categorize';
 // Core computation
-export { buildExportRegistry, computeDrift, computeExportDrift } from './compute';
+export {
+  buildExportRegistry,
+  computeDrift,
+  computeExportDrift,
+  type ComputeDriftOptions,
+} from './compute';
 // Coverage utilities
 export { calculateAggregateCoverage, ensureSpecCoverage } from './coverage';
 // Example drift detection
@@ -25,6 +30,7 @@ export {
 export { detectOptionalityDrift, detectParamDrift, detectParamTypeDrift } from './param-drift';
 // Semantic drift detection
 export {
+  type BrokenLinkOptions,
   detectAsyncMismatch,
   detectBrokenLinks,
   detectDeprecatedDrift,

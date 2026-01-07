@@ -228,6 +228,9 @@ export type ExportAnalysis = {
 
   /** Example validation results */
   examples?: ExampleAnalysis;
+
+  /** Number of overloads if > 1 (for overloaded functions) */
+  overloadCount?: number;
 };
 
 // ============================================================================

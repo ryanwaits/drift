@@ -1,4 +1,23 @@
 import type { DocumentationHealth, DriftCategory, MissingDocRule } from '@doccov/spec';
+import type { SpecExport } from '@openpkg-ts/spec';
+
+/**
+ * Check if an export has meaningful documentation.
+ * An export is considered documented if it has:
+ * - A description
+ * - Meaningful JSDoc tags
+ * - For namespaces: description counts as documented (no examples required)
+ */
+export function isExportDocumented(exp: SpecExport): boolean {
+  // Has direct description
+  if (exp.description && exp.description.trim().length > 0) return true;
+
+  // Has meaningful tags (excluding @internal which is filtered out elsewhere)
+  const meaningfulTags = exp.tags?.filter((t) => t.name !== 'internal') ?? [];
+  if (meaningfulTags.length > 0) return true;
+
+  return false;
+}
 
 /**
  * Input data for computing documentation health score.

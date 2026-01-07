@@ -1,4 +1,5 @@
 import type { SpecExport, SpecTag } from '@openpkg-ts/spec';
+import type { ModuleGraph } from '../module-graph';
 import type {
   CodeVisibility,
   DocVisibility,
@@ -8,6 +9,17 @@ import type {
   SpecMemberWithVisibility,
 } from './types';
 import { extractTypeFromSchema, findClosestMatch } from './utils';
+
+/**
+ * Options for broken link detection.
+ */
+export interface BrokenLinkOptions {
+  /**
+   * Module graph for cross-module symbol validation.
+   * When provided, @link targets are validated across all modules.
+   */
+  moduleGraph?: ModuleGraph;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Deprecated Drift
@@ -33,6 +45,8 @@ export function detectDeprecatedDrift(entry: SpecExport): SpecDocDrift[] {
         type: 'deprecated-mismatch',
         target,
         issue: `Declaration for "${target}" is marked deprecated but @deprecated is missing from the docs.`,
+        expected: 'not deprecated',
+        actual: 'deprecated',
         suggestion: 'Add an @deprecated tag explaining the replacement or removal timeline.',
       },
     ];
@@ -43,6 +57,8 @@ export function detectDeprecatedDrift(entry: SpecExport): SpecDocDrift[] {
       type: 'deprecated-mismatch',
       target,
       issue: `JSDoc marks "${target}" as deprecated but the TypeScript declaration is not.`,
+      expected: '@deprecated',
+      actual: 'not deprecated',
       suggestion: 'Remove the @deprecated tag or deprecate the declaration.',
     },
   ];
@@ -77,6 +93,8 @@ export function detectVisibilityDrift(entry: SpecExport): SpecDocDrift[] {
       type: 'visibility-mismatch',
       target,
       issue: buildVisibilityIssue(target, exportDocVisibility, exportActualVisibility),
+      expected: formatDocVisibilityTag(exportDocVisibility.tagName),
+      actual: exportActualVisibility,
       suggestion: buildVisibilitySuggestion(exportDocVisibility, exportActualVisibility),
     });
   }
@@ -101,6 +119,8 @@ export function detectVisibilityDrift(entry: SpecExport): SpecDocDrift[] {
       type: 'visibility-mismatch',
       target: qualifiedTarget,
       issue: buildVisibilityIssue(qualifiedTarget, memberDocVisibility, memberActualVisibility),
+      expected: formatDocVisibilityTag(memberDocVisibility.tagName),
+      actual: memberActualVisibility,
       suggestion: buildVisibilitySuggestion(memberDocVisibility, memberActualVisibility),
     });
   }
@@ -196,13 +216,25 @@ function formatDocVisibilityTag(tagName: string): string {
 
 /**
  * Detect broken {@link}, {@see}, {@inheritDoc} references.
+ *
+ * When a moduleGraph is provided, validates references across all modules
+ * in the graph before reporting as broken.
+ *
+ * @param entry - Export to check for broken links
+ * @param registry - Registry of exports/types in current module
+ * @param options - Optional config including moduleGraph for cross-module validation
  */
-export function detectBrokenLinks(entry: SpecExport, registry?: ExportRegistry): SpecDocDrift[] {
+export function detectBrokenLinks(
+  entry: SpecExport,
+  registry?: ExportRegistry,
+  options?: BrokenLinkOptions,
+): SpecDocDrift[] {
   if (!registry) {
     return [];
   }
 
   const drifts: SpecDocDrift[] = [];
+  const { moduleGraph } = options ?? {};
 
   // Patterns for various link/reference syntaxes in TSDoc/JSDoc
   const patterns: Array<{ pattern: RegExp; type: string }> = [
@@ -248,17 +280,28 @@ export function detectBrokenLinks(entry: SpecExport, registry?: ExportRegistry):
         continue;
       }
 
-      if (!registry.all.has(rootName) && !registry.all.has(target)) {
-        // For links, suggest from all exports and types (use pre-computed array)
-        const suggestion = findClosestMatch(rootName, registry.allNames);
-
-        drifts.push({
-          type: 'broken-link',
-          target,
-          issue: `{${type} ${target}} references a symbol that does not exist.`,
-          suggestion: suggestion ? `Did you mean "${suggestion.value}"?` : undefined,
-        });
+      // Check current module first
+      if (registry.all.has(rootName) || registry.all.has(target)) {
+        continue;
       }
+
+      // Check cross-module if graph available
+      if (moduleGraph?.all.has(rootName) || moduleGraph?.all.has(target)) {
+        continue;
+      }
+
+      // Symbol not found anywhere - report as broken
+      // For links, suggest from all exports and types (use pre-computed array)
+      const suggestion = findClosestMatch(rootName, registry.allNames);
+
+      drifts.push({
+        type: 'broken-link',
+        target,
+        issue: `{${type} ${target}} references a symbol that does not exist.`,
+        expected: target,
+        actual: suggestion?.value,
+        suggestion: suggestion ? `Did you mean "${suggestion.value}"?` : undefined,
+      });
     }
   }
 
@@ -302,6 +345,8 @@ export function detectAsyncMismatch(entry: SpecExport): SpecDocDrift[] {
       type: 'async-mismatch',
       target: 'returns',
       issue: 'Function returns Promise but documentation does not indicate async behavior.',
+      expected: 'sync',
+      actual: 'Promise',
       suggestion: 'Add @async tag or document @returns {Promise<...>}.',
     });
   }
@@ -312,6 +357,8 @@ export function detectAsyncMismatch(entry: SpecExport): SpecDocDrift[] {
       type: 'async-mismatch',
       target: 'returns',
       issue: 'Documentation indicates async but function does not return Promise.',
+      expected: '@async / Promise',
+      actual: 'sync',
       suggestion: 'Remove @async tag or update @returns type.',
     });
   }
