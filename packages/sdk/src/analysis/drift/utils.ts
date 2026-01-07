@@ -207,11 +207,27 @@ export function findClosestMatch(source: string, candidates: string[]): ClosestM
     return undefined;
   }
 
+  // Pre-filter candidates by similarity heuristics to reduce Levenshtein calls
+  const sourceLen = source.length;
+  const sourceLower = source.toLowerCase();
+  const sourceFirst = sourceLower[0];
+
+  const filtered = candidates.filter((c) => {
+    // Length must be within ±3 chars (typos don't change length much)
+    if (Math.abs(c.length - sourceLen) > 3) return false;
+    // First char should match (most typos preserve first char)
+    if (c[0]?.toLowerCase() !== sourceFirst) return false;
+    return true;
+  });
+
+  // If no candidates pass filter, fall back to original list but limit to 50
+  const toCheck = filtered.length > 0 ? filtered : candidates.slice(0, 50);
+
   const sourceWords = splitCamelCase(source);
   let bestMatch: string | undefined;
   let bestScore = 0;
 
-  for (const candidate of candidates) {
+  for (const candidate of toCheck) {
     // Skip exact matches (not a suggestion if it's the same)
     if (candidate === source) continue;
 
@@ -245,7 +261,14 @@ export function findClosestMatch(source: string, candidates: string[]): ClosestM
     // Word score (0 to 1+)
     const wordScore = matchingWords / Math.max(sourceWords.length, candidateWords.length);
 
-    // Normalized Levenshtein distance (0 to 1, higher is better)
+    // Early exit: if word score too low, Levenshtein can't save it
+    // Max possible totalScore = wordScore * 1.5 + 1.0 (perfect lev) for suffix match
+    // Max possible totalScore = wordScore + 0.5 (perfect lev * 0.5) for non-suffix
+    // Threshold is 0.5, so we can skip candidates that can never reach it
+    if (!suffixMatch && wordScore < 0.3) continue;
+    if (suffixMatch && wordScore < 0.2) continue;
+
+    // NOW run expensive Levenshtein only for promising candidates
     const editDistance = levenshtein(source.toLowerCase(), candidate.toLowerCase());
     const maxLen = Math.max(source.length, candidate.length);
     const levScore = 1 - editDistance / maxLen;

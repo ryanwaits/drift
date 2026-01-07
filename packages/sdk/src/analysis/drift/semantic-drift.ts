@@ -249,8 +249,8 @@ export function detectBrokenLinks(entry: SpecExport, registry?: ExportRegistry):
       }
 
       if (!registry.all.has(rootName) && !registry.all.has(target)) {
-        // For links, suggest from all exports and types
-        const suggestion = findClosestMatch(rootName, Array.from(registry.all));
+        // For links, suggest from all exports and types (use pre-computed array)
+        const suggestion = findClosestMatch(rootName, registry.allNames);
 
         drifts.push({
           type: 'broken-link',

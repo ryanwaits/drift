@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.30.7
+
+### Patch Changes
+
+- perf: optimize drift detection - pre-compute fuzzy match candidates, combine example AST parsing, add early exits, skip expensive diagnostics
+
 ## 0.30.6
 
 ### Patch Changes

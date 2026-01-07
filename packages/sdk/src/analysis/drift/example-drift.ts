@@ -75,52 +75,77 @@ function isIdentifierReference(node: ts.Identifier): boolean {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Detect references to non-existent exports in @example code blocks.
+ * Strip markdown code block markers from example content.
  */
-export function detectExampleDrift(entry: SpecExport, registry?: ExportRegistry): SpecDocDrift[] {
-  if (!registry || !entry.examples?.length) return [];
+function stripCodeBlockMarkers(example: string): string {
+  return example
+    .replace(/^```(?:ts|typescript|js|javascript)?\n?/i, '')
+    .replace(/\n?```$/i, '')
+    .trim();
+}
+
+/**
+ * Detect all example issues in one pass: syntax errors AND reference drift.
+ * Parses each example AST only once for performance.
+ */
+export function detectAllExampleIssues(
+  entry: SpecExport,
+  registry?: ExportRegistry,
+): SpecDocDrift[] {
+  if (!entry.examples?.length) return [];
 
   const drifts: SpecDocDrift[] = [];
 
-  for (const example of entry.examples) {
+  for (let i = 0; i < entry.examples.length; i++) {
+    const example = entry.examples[i];
     if (typeof example !== 'string') continue;
 
-    // Strip markdown code block markers if present
-    const codeContent = example
-      .replace(/^```(?:ts|typescript|js|javascript)?\n?/i, '')
-      .replace(/\n?```$/i, '')
-      .trim();
-
+    const codeContent = stripCodeBlockMarkers(example);
     if (!codeContent) continue;
 
-    // Parse as AST - this automatically excludes comments and string literals
+    // Parse AST once for both syntax and drift detection
     const sourceFile = ts.createSourceFile(
-      'example.ts',
+      `example-${i}.ts`,
       codeContent,
       ts.ScriptTarget.Latest,
       true,
       ts.ScriptKind.TS,
     );
 
+    // Check for syntax errors first
+    const parseDiagnostics = (sourceFile as unknown as { parseDiagnostics?: ts.Diagnostic[] })
+      .parseDiagnostics;
+
+    if (parseDiagnostics && parseDiagnostics.length > 0) {
+      const firstError = parseDiagnostics[0];
+      const message = ts.flattenDiagnosticMessageText(firstError.messageText, '\n');
+      drifts.push({
+        type: 'example-syntax-error',
+        target: `example[${i}]`,
+        issue: `@example contains invalid syntax: ${message}`,
+        suggestion: 'Check for missing brackets, semicolons, or typos.',
+      });
+      // Skip drift detection for examples with syntax errors
+      continue;
+    }
+
+    // Check for reference drift (only if registry provided)
+    if (!registry) continue;
+
     const localDeclarations = new Set<string>();
-    // Track identifiers with their usage context
     const referencedIdentifiers = new Map<string, 'call' | 'type' | 'value'>();
 
-    // Walk AST to find local declarations and identifier references
     function visit(node: ts.Node) {
       if (ts.isIdentifier(node)) {
         const text = node.text;
-        // Skip very short identifiers (single letters are usually local vars)
         if (text.length <= 1) {
           ts.forEachChild(node, visit);
           return;
         }
 
         if (isLocalDeclaration(node)) {
-          // Track locally declared identifiers so we don't flag them as missing
           localDeclarations.add(text);
         } else if (isIdentifierReference(node) && !isBuiltInIdentifier(text)) {
-          // Track with context (prefer 'call' over other contexts if seen multiple times)
           const context = getIdentifierContext(node);
           const existing = referencedIdentifiers.get(text);
           if (!existing || context === 'call') {
@@ -132,38 +157,22 @@ export function detectExampleDrift(entry: SpecExport, registry?: ExportRegistry)
     }
     visit(sourceFile);
 
-    // Remove local declarations from references (they're defined in the example)
     for (const local of localDeclarations) {
       referencedIdentifiers.delete(local);
     }
 
-    // Check if referenced identifiers exist in registry
     for (const [identifier, context] of referencedIdentifiers) {
       if (!registry.all.has(identifier)) {
-        // Get context-appropriate candidates for suggestions
         let candidates: string[];
         if (context === 'call') {
-          // For function calls, only suggest callable exports (functions, classes)
-          candidates = Array.from(registry.exports.values())
-            .filter((e) => e.isCallable)
-            .map((e) => e.name);
+          candidates = registry.callableNames;
         } else if (context === 'type') {
-          // For type references, suggest types and type-like exports (interfaces, classes)
-          candidates = [
-            ...Array.from(registry.types),
-            ...Array.from(registry.exports.values())
-              .filter((e) => ['class', 'interface', 'type', 'enum'].includes(e.kind))
-              .map((e) => e.name),
-          ];
+          candidates = registry.typeNames;
         } else {
-          // For value references, suggest all exports (not types)
-          candidates = Array.from(registry.exports.keys());
+          candidates = registry.allExportNames;
         }
 
         const suggestion = findClosestMatch(identifier, candidates);
-
-        // Only report drift if there's a close match (likely typo)
-        // or if the identifier looks like a type/class name (PascalCase)
         const isPascal = /^[A-Z]/.test(identifier);
         const hasCloseMatch = suggestion && suggestion.distance <= 5;
 
@@ -183,54 +192,23 @@ export function detectExampleDrift(entry: SpecExport, registry?: ExportRegistry)
 }
 
 /**
+ * Detect references to non-existent exports in @example code blocks.
+ * @deprecated Use detectAllExampleIssues for better performance
+ */
+export function detectExampleDrift(entry: SpecExport, registry?: ExportRegistry): SpecDocDrift[] {
+  if (!registry || !entry.examples?.length) return [];
+  // Delegate to combined function and filter
+  return detectAllExampleIssues(entry, registry).filter((d) => d.type === 'example-drift');
+}
+
+/**
  * Detect syntax errors in @example code blocks.
+ * @deprecated Use detectAllExampleIssues for better performance
  */
 export function detectExampleSyntaxErrors(entry: SpecExport): SpecDocDrift[] {
-  if (!entry.examples || entry.examples.length === 0) {
-    return [];
-  }
-
-  const drifts: SpecDocDrift[] = [];
-
-  for (let i = 0; i < entry.examples.length; i++) {
-    const example = entry.examples[i];
-    if (typeof example !== 'string') continue;
-
-    // Strip markdown code block markers if present
-    const codeContent = example
-      .replace(/^```(?:ts|typescript|js|javascript)?\n?/i, '')
-      .replace(/\n?```$/i, '')
-      .trim();
-
-    if (!codeContent) continue;
-
-    // Try to parse as TypeScript/JavaScript
-    const sourceFile = ts.createSourceFile(
-      `example-${i}.ts`,
-      codeContent,
-      ts.ScriptTarget.Latest,
-      true,
-      ts.ScriptKind.TS,
-    );
-
-    // Check for parse diagnostics
-    const parseDiagnostics = (sourceFile as unknown as { parseDiagnostics?: ts.Diagnostic[] })
-      .parseDiagnostics;
-
-    if (parseDiagnostics && parseDiagnostics.length > 0) {
-      const firstError = parseDiagnostics[0];
-      const message = ts.flattenDiagnosticMessageText(firstError.messageText, '\n');
-
-      drifts.push({
-        type: 'example-syntax-error',
-        target: `example[${i}]`,
-        issue: `@example contains invalid syntax: ${message}`,
-        suggestion: 'Check for missing brackets, semicolons, or typos.',
-      });
-    }
-  }
-
-  return drifts;
+  if (!entry.examples?.length) return [];
+  // Delegate to combined function and filter
+  return detectAllExampleIssues(entry).filter((d) => d.type === 'example-syntax-error');
 }
 
 /**

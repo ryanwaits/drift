@@ -13,6 +13,7 @@ export { buildExportRegistry, computeDrift, computeExportDrift } from './compute
 export { calculateAggregateCoverage, ensureSpecCoverage } from './coverage';
 // Example drift detection
 export {
+  detectAllExampleIssues,
   detectExampleAssertionFailures,
   detectExampleDrift,
   detectExampleRuntimeErrors,

@@ -20,6 +20,7 @@ describe('isStandardJSONSchema', () => {
         version: 1,
         vendor: 'zod',
         jsonSchema: {
+          input: () => ({ type: 'string' }),
           output: () => ({ type: 'string' }),
         },
       },
@@ -35,7 +36,7 @@ describe('isStandardJSONSchema', () => {
     const schema = {
       '~standard': {
         vendor: 'zod',
-        jsonSchema: { output: () => ({}) },
+        jsonSchema: { input: () => ({}), output: () => ({}) },
       },
     };
     expect(isStandardJSONSchema(schema)).toBe(false);
@@ -45,7 +46,7 @@ describe('isStandardJSONSchema', () => {
     const schema = {
       '~standard': {
         version: 1,
-        jsonSchema: { output: () => ({}) },
+        jsonSchema: { input: () => ({}), output: () => ({}) },
       },
     };
     expect(isStandardJSONSchema(schema)).toBe(false);
@@ -136,6 +137,14 @@ describe('extractStandardSchemas', () => {
           version: 1,
           vendor: 'zod',
           jsonSchema: {
+            input: () => ({
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                age: { type: 'number' }
+              },
+              required: ['name']
+            }),
             output: () => ({
               type: 'object',
               properties: {
@@ -180,6 +189,7 @@ describe('extractStandardSchemas', () => {
           version: 1,
           vendor: 'valibot',
           jsonSchema: {
+            input: () => ({ type }),
             output: () => ({ type })
           }
         }
@@ -230,7 +240,7 @@ describe('extractStandardSchemas', () => {
         '~standard': {
           version: 1,
           vendor: 'test',
-          jsonSchema: { output: () => ({ type: 'string' }) }
+          jsonSchema: { input: () => ({ type: 'string' }), output: () => ({ type: 'string' }) }
         }
       };
 
@@ -271,6 +281,7 @@ describe('extractStandardSchemas', () => {
           version: 1,
           vendor: 'test',
           jsonSchema: {
+            input: () => { throw new Error('Extraction failed'); },
             output: () => { throw new Error('Extraction failed'); }
           }
         }

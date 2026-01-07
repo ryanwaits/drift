@@ -120,6 +120,11 @@ export interface ExportRegistry {
   types: Set<string>;
   /** Combined set of all names (for backward compatibility) */
   all: Set<string>;
+  /** Pre-computed candidate lists for fuzzy matching (performance optimization) */
+  callableNames: string[];
+  typeNames: string[];
+  allExportNames: string[];
+  allNames: string[];
 }
 
 /**

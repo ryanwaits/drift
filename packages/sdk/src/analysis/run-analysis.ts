@@ -112,12 +112,8 @@ export async function runAnalysis(input: AnalysisContextInput): Promise<RunAnaly
   const resolveExternalTypes =
     options.resolveExternalTypes !== undefined ? options.resolveExternalTypes : hasNodeModules;
 
-  // Filter benign TS5053
-  const diagnostics = ts.getPreEmitDiagnostics(context.program).filter((d) => {
-    if (d.code === 5053) return false;
-    const msg = ts.flattenDiagnosticMessageText(d.messageText, '\n');
-    return !/allowJs/i.test(msg);
-  });
+  // Skip ts.getPreEmitDiagnostics - it's expensive and users already have IDE/build for this
+  const diagnostics: readonly TS.Diagnostic[] = [];
 
   // Collect spec-level diagnostics
   const specDiagnostics: SpecDiagnostic[] = [];

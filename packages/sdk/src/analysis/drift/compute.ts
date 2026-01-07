@@ -1,6 +1,6 @@
 import type { SpecExport } from '@openpkg-ts/spec';
 import type { OpenPkgSpec } from '../spec-types';
-import { detectExampleDrift, detectExampleSyntaxErrors } from './example-drift';
+import { detectAllExampleIssues } from './example-drift';
 import { detectOptionalityDrift, detectParamDrift, detectParamTypeDrift } from './param-drift';
 import {
   detectAsyncMismatch,
@@ -56,7 +56,23 @@ export function buildExportRegistry(spec: OpenPkgSpec): ExportRegistry {
     if (type.id) all.add(type.id);
   }
 
-  return { exports, types, all };
+  // Pre-compute candidate lists for fuzzy matching (performance optimization)
+  const callableNames = Array.from(exports.values())
+    .filter((e) => e.isCallable)
+    .map((e) => e.name);
+
+  const typeKinds = new Set(['class', 'interface', 'type', 'enum']);
+  const typeNames = [
+    ...Array.from(types),
+    ...Array.from(exports.values())
+      .filter((e) => typeKinds.has(e.kind))
+      .map((e) => e.name),
+  ];
+
+  const allExportNames = Array.from(exports.keys());
+  const allNames = Array.from(all);
+
+  return { exports, types, all, callableNames, typeNames, allExportNames, allNames };
 }
 
 /**
@@ -85,18 +101,41 @@ export function computeDrift(spec: OpenPkgSpec): DriftResult {
  * @returns Array of drift issues detected
  */
 export function computeExportDrift(entry: SpecExport, registry?: ExportRegistry): SpecDocDrift[] {
-  return [
-    ...detectParamDrift(entry),
-    ...detectOptionalityDrift(entry),
-    ...detectParamTypeDrift(entry),
-    ...detectReturnTypeDrift(entry),
-    ...detectGenericConstraintDrift(entry),
-    ...detectDeprecatedDrift(entry),
-    ...detectVisibilityDrift(entry),
-    ...detectExampleDrift(entry, registry),
-    ...detectBrokenLinks(entry, registry),
-    ...detectExampleSyntaxErrors(entry),
-    ...detectAsyncMismatch(entry),
-    ...detectPropertyTypeDrift(entry),
-  ];
+  // Early exit - no docs means no drift possible
+  const hasDescription = Boolean(entry.description);
+  const hasTags = (entry.tags?.length ?? 0) > 0;
+  const hasExamples = (entry.examples?.length ?? 0) > 0;
+
+  if (!hasDescription && !hasTags && !hasExamples) {
+    return [];
+  }
+
+  const drifts: SpecDocDrift[] = [];
+
+  // Only run tag-related detectors if tags exist
+  if (hasTags) {
+    drifts.push(
+      ...detectParamDrift(entry),
+      ...detectOptionalityDrift(entry),
+      ...detectParamTypeDrift(entry),
+      ...detectReturnTypeDrift(entry),
+      ...detectGenericConstraintDrift(entry),
+      ...detectDeprecatedDrift(entry),
+      ...detectVisibilityDrift(entry),
+      ...detectAsyncMismatch(entry),
+      ...detectPropertyTypeDrift(entry),
+    );
+  }
+
+  // Only run example detectors if examples exist (combined function parses AST once)
+  if (hasExamples) {
+    drifts.push(...detectAllExampleIssues(entry, registry));
+  }
+
+  // Broken links can be in description or tags
+  if (hasDescription || hasTags) {
+    drifts.push(...detectBrokenLinks(entry, registry));
+  }
+
+  return drifts;
 }
