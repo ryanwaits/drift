@@ -33,7 +33,7 @@
     "@types/node": "^20.0.0"
   },
   "dependencies": {
-    "@openpkg-ts/extract": "^0.25.0",
+    "@openpkg-ts/extract": "^0.27.0",
     "vercel": "^48.10.12"
   }
 }
