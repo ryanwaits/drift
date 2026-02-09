@@ -16,7 +16,7 @@
     "@doccov/api-shared": "^0.2.27",
     "@doccov/db": "^0.2.0",
     "@doccov/sdk": "^0.31.0",
-    "@openpkg-ts/spec": "file:../../../openpkg-ts/packages/spec",
+    "@openpkg-ts/spec": "^0.35.1",
     "better-auth": "^1.4.7",
     "jose": "^6.0.0",
     "kysely": "^0.27.4",
