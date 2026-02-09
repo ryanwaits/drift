@@ -1,7 +1,8 @@
 /**
  * Shared test fixtures and helpers for SDK tests.
  */
-import type { OpenPkg, SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
+import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
+import type { SpecDocDrift } from '../src/analysis/drift/types';
 
 /**
  * Create a minimal valid OpenPkg spec for testing.

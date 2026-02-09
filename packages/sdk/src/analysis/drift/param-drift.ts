@@ -57,7 +57,7 @@ export function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
       continue;
     }
 
-    // Handle destructured param notation (e.g., "opts.name")
+    // Handle destructured param notation (e.g., "opts.name" or "options.model")
     if (documentedName.includes('.')) {
       const [prefix, ...rest] = documentedName.split('.');
       const propertyPath = rest.join('.');
@@ -106,6 +106,25 @@ export function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
         // Don't report drift - we can't verify
         continue;
       }
+
+      // Prefix doesn't match any actual param — check if this is a destructured
+      // documentation pattern where `@param options.model` documents a destructured
+      // param `({model, ...}: Options)`. The property name should match an actual param.
+      const firstProperty = rest[0];
+      if (actualParamNames.has(firstProperty)) {
+        continue; // Valid destructured param documentation
+      }
+    }
+
+    // Handle bare container param (e.g., `@param options` when function has destructured params)
+    // If there are other `@param options.X` docs where X matches actual params, this is the container
+    if (!documentedName.includes('.')) {
+      const isContainer = documentedParamNames.some((other) => {
+        if (!other.startsWith(documentedName + '.')) return false;
+        const prop = other.split('.')[1];
+        return actualParamNames.has(prop);
+      });
+      if (isContainer) continue;
     }
 
     // No match found - report drift

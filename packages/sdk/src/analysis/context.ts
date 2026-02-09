@@ -2,7 +2,7 @@ import * as path from 'node:path';
 import type * as ts from 'typescript';
 import type { DocCovOptions, NormalizedDocCovOptions } from '../options';
 import { normalizeDocCovOptions } from '../options';
-import { createProgram } from '@openpkg-ts/extract';
+import { createProgram } from '@openpkg-ts/sdk';
 
 /**
  * Pre-detected Standard Schema for a variable export.

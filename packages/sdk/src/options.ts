@@ -44,7 +44,7 @@ export type NormalizedDocCovOptions = DocCovOptions & {
   cwd: string;
 };
 
-/** Default max depth for type conversion - matches @openpkg-ts/extract default */
+/** Default max depth for type conversion - matches @openpkg-ts/sdk default */
 export const DEFAULT_MAX_TYPE_DEPTH = 4;
 
 const DEFAULT_OPTIONS: Pick<

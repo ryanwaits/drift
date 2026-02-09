@@ -48,8 +48,8 @@
   ],
   "dependencies": {
     "@doccov/spec": "^0.31.0",
-    "@openpkg-ts/extract": "0.27.0",
-    "@openpkg-ts/spec": "^0.23.0",
+    "@openpkg-ts/sdk": "file:../../../openpkg-ts/packages/sdk",
+    "@openpkg-ts/spec": "file:../../../openpkg-ts/packages/spec",
     "@vercel/sandbox": "^1.0.3",
     "mdast": "^3.0.0",
     "minimatch": "^10.1.1",

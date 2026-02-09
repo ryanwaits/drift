@@ -1,11 +1,11 @@
 /**
  * Schema Type Extraction Module
  *
- * Re-exports from @openpkg-ts/extract with SDK-specific convenience wrappers.
+ * Re-exports from @openpkg-ts/sdk with SDK-specific convenience wrappers.
  */
 import type * as TS from 'typescript';
 
-// Re-export everything from @openpkg-ts/extract
+// Re-export everything from @openpkg-ts/sdk
 export {
   // Adapters
   arktypeAdapter,
@@ -30,7 +30,7 @@ export {
   typeboxAdapter,
   valibotAdapter,
   zodAdapter,
-} from '@openpkg-ts/extract';
+} from '@openpkg-ts/sdk';
 
 import {
   arktypeAdapter,
@@ -39,7 +39,7 @@ import {
   typeboxAdapter,
   valibotAdapter,
   zodAdapter,
-} from '@openpkg-ts/extract';
+} from '@openpkg-ts/sdk';
 
 // SDK-specific convenience wrappers
 

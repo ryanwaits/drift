@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { extract, type ForgottenExport } from '@openpkg-ts/extract';
+import { extract, type ForgottenExport } from '@openpkg-ts/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import type * as TS from 'typescript';
 import { ts } from '../ts-module';

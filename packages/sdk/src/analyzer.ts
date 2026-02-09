@@ -3,7 +3,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type * as TS from 'typescript';
 import type { DetectedSchemaEntry } from './analysis/context';
-import { createProgram } from '@openpkg-ts/extract';
+import { createProgram } from '@openpkg-ts/sdk';
 import type { AnalysisMetadataInternal } from './analysis/run-analysis';
 import { runAnalysis } from './analysis/run-analysis';
 import { detectRuntimeSchemas } from './analysis/schema-detection';
