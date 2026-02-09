@@ -113,7 +113,7 @@ const SegmentedTabs: React.ForwardRefExoticComponent<
         ref={ref}
         className={cn(
           'inline-flex items-stretch',
-          'border border-border rounded-md',
+          'border border-border rounded',
           'bg-background shadow-sm',
           className,
         )}
@@ -135,7 +135,7 @@ const SegmentedTabs: React.ForwardRefExoticComponent<
                   type="button"
                   onClick={() => onTabChange?.(tab.id)}
                   className={cn(
-                    'flex items-center gap-1.5 pl-3 pr-1 py-2 text-[13px] transition-colors',
+                    'flex items-center gap-1.5 pl-3 pr-1 py-2 text-sm transition-colors',
                     'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
                     isActive
                       ? 'bg-accent text-foreground font-medium'
@@ -144,13 +144,13 @@ const SegmentedTabs: React.ForwardRefExoticComponent<
                 >
                   <span
                     className={cn(
-                      'flex items-center justify-center size-4 rounded-[3px] text-[8px] font-bold text-white',
+                      'flex items-center justify-center size-4 rounded-sm text-[8px] font-bold text-white',
                       fileTypeColors[tab.fileType || 'ts'] || 'bg-stone-500',
                     )}
                   >
                     {fileTypeLabels[tab.fileType || 'ts']}
                   </span>
-                  <span className="font-mono text-[13px]">{tab.label}</span>
+                  <span className="font-mono text-sm">{tab.label}</span>
                 </button>
                 <button
                   type="button"
@@ -180,7 +180,7 @@ const SegmentedTabs: React.ForwardRefExoticComponent<
                 }
               }}
               className={cn(
-                'relative flex items-center gap-1.5 px-3 py-2 text-[13px] transition-colors',
+                'relative flex items-center gap-1.5 px-3 py-2 text-sm transition-colors',
                 'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
                 // Vertical divider (border-right) except for last item
                 !isLast && 'border-r border-border',
@@ -207,13 +207,13 @@ const SegmentedTabs: React.ForwardRefExoticComponent<
                   {/* File type icon */}
                   <span
                     className={cn(
-                      'flex items-center justify-center size-4 rounded-[3px] text-[8px] font-bold text-white',
+                      'flex items-center justify-center size-4 rounded-sm text-[8px] font-bold text-white',
                       fileTypeColors[tab.fileType || 'ts'] || 'bg-stone-500',
                     )}
                   >
                     {fileTypeLabels[tab.fileType || 'ts']}
                   </span>
-                  <span className="font-mono text-[13px]">{tab.label}</span>
+                  <span className="font-mono text-sm">{tab.label}</span>
                 </>
               )}
 

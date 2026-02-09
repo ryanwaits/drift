@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 
 /* Scan the UI package for Tailwind classes */
-@source "../../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../../../../apps/platform/ui/src/**/*.{ts,tsx}";
 
 @custom-variant dark (&:is(.dark *));
 

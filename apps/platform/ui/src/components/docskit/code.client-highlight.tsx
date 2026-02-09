@@ -49,7 +49,7 @@ export function ClientDocsKitCode(props: {
       cancelled = true;
     };
     // Only depend on primitive values to avoid infinite re-renders
-  }, [codeblock.value, codeblock.lang, codeblock.meta, codeblock]);
+  }, [codeblock.value, codeblock.lang, codeblock.meta]);
 
   if (!highlighted) {
     return <CodeBlockSkeleton hasTitle={!!title} />;
@@ -128,7 +128,7 @@ export function ClientTerminal(props: { codeblock: RawCode; handlers?: Annotatio
       cancelled = true;
     };
     // Only depend on primitive values to avoid infinite re-renders
-  }, [codeblock.value, codeblock.lang, codeblock.meta, codeblock]);
+  }, [codeblock.value, codeblock.lang, codeblock.meta]);
 
   if (!highlighted) {
     return <TerminalSkeleton />;
@@ -202,7 +202,7 @@ export function ClientInlineCode({ codeblock }: { codeblock: RawCode }): React.R
       cancelled = true;
     };
     // Only depend on primitive values to avoid infinite re-renders
-  }, [codeblock.value, codeblock.lang, codeblock.meta, codeblock]);
+  }, [codeblock.value, codeblock.lang, codeblock.meta]);
 
   if (!highlighted) {
     return <InlineCodeSkeleton />;
@@ -292,7 +292,8 @@ export function ClientCode(props: { codeblocks: RawCode[]; flags?: string; stora
     return () => {
       cancelled = true;
     };
-  }, [codeblocks.map, groupOptions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [_codeBlocksKey]);
 
   if (!highlighted) {
     return <CodeTabsSkeleton tabs={codeblocks.length} />;

@@ -19,7 +19,7 @@ const inputVariants: (props?: {
     'placeholder:text-[var(--input-placeholder)]',
     'border border-[var(--input-border)]',
     'bg-[var(--input-bg)]',
-    'rounded-md outline-none transition-all duration-150',
+    'rounded outline-none transition-all duration-200',
     'disabled:cursor-not-allowed disabled:opacity-50',
   ],
   {
@@ -181,7 +181,7 @@ const InputWithButton: React.ForwardRefExoticComponent<
               'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)]',
               'font-mono text-base font-medium',
               'hover:opacity-90',
-              'transition-colors duration-150',
+              'transition-colors duration-200',
               'disabled:opacity-50 disabled:cursor-not-allowed',
             )}
           >

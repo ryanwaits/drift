@@ -1,72 +1,119 @@
-# DocCov
+# drift
 
-[![npm](https://img.shields.io/npm/v/@doccov/cli)](https://npmjs.com/package/@doccov/cli)
-[![npm](https://img.shields.io/npm/v/@doccov/sdk)](https://npmjs.com/package/@doccov/sdk)
-[![sdk docs](https://api.doccov.com/badge/ryanwaits/doccov?path=.doccov/@doccov/sdk/doccov.json)](https://github.com/ryanwaits/doccov)
-[![spec docs](https://api.doccov.com/badge/ryanwaits/doccov?path=.doccov/@doccov/spec/doccov.json)](https://github.com/ryanwaits/doccov)
+> Know when your TypeScript docs lie.
 
-Documentation coverage and drift detection for TypeScript.
+Documentation quality primitives for TypeScript. 11 atomic commands that give AI agents structured understanding of your API.
 
-## Install
+## Quick Start
 
 ```bash
-npm install -g @doccov/cli
+# Check documentation coverage
+drift coverage src/index.ts
+
+# Find JSDoc issues (param mismatches, broken links, type errors)
+drift lint src/index.ts
+
+# List all exports
+drift list src/index.ts
 ```
 
-## Usage
+Entry auto-detects from `package.json` — just `drift coverage` in any TypeScript project.
+
+## Commands
+
+### Extraction
+
+| Command | Description |
+|---------|-------------|
+| `drift extract [entry]` | Extract full API spec as JSON |
+| `drift list [entry]` | List all exports with kinds |
+| `drift get <name> [entry]` | Get single export detail + types |
+
+### Spec Operations
+
+| Command | Description |
+|---------|-------------|
+| `drift validate <spec.json>` | Validate a spec file |
+| `drift filter <spec.json>` | Filter exports by `--kind`, `--search`, `--tag` |
+
+### Analysis
+
+| Command | Description |
+|---------|-------------|
+| `drift coverage [entry]` | Documentation coverage score + undocumented list |
+| `drift lint [entry]` | Cross-reference JSDoc vs code for accuracy issues |
+
+### Comparison
+
+| Command | Description |
+|---------|-------------|
+| `drift diff <old> <new>` | What changed between two specs |
+| `drift breaking <old> <new>` | Detect breaking changes (exit 1 if found) |
+| `drift semver <old> <new>` | Recommend semver bump |
+| `drift changelog <old> <new>` | Generate changelog (markdown or JSON) |
+
+## Output
+
+All commands output `{ok, data, meta}` JSON to stdout. Human-readable summary goes to stderr.
 
 ```bash
-# Generate spec (outputs to .doccov/{package}/)
-doccov spec
+# Pipe to jq
+drift coverage 2>/dev/null | jq '.data.score'
 
-# Check coverage (fail if below 80%)
-doccov check --min-coverage 80
-
-# Auto-fix drift issues
-doccov check --fix
+# Check exit codes in CI
+drift lint || echo "Issues found"
+drift coverage --min 80 || echo "Below threshold"
 ```
 
-## Badges
+## How It Works
 
-Add a documentation health badge:
-
-```markdown
-![Docs](https://api.doccov.com/badge/YOUR_ORG/YOUR_REPO?path=.doccov/your-package/doccov.json)
+```
+TypeScript source
+    |  drift extract
+    v
+openpkg.json spec    (portable API structure)
+    |  drift lint / coverage / diff
+    v
+structured facts     (JSON to stdout)
 ```
 
-For scoped packages:
-```markdown
-![Docs](https://api.doccov.com/badge/YOUR_ORG/YOUR_REPO?path=.doccov/@your-org/pkg/doccov.json)
+drift extracts a machine-readable spec from your TypeScript, then runs analysis against it. Every command outputs facts — agents decide what to do with them.
+
+## Agent Skills
+
+drift is designed for AI agents. Skills teach agents to compose primitives into workflows:
+
+| Skill | What it does |
+|-------|-------------|
+| `/drift-fix` | Find lint issues, fix JSDoc to match actual signatures |
+| `/drift-enrich` | Add JSDoc to undocumented exports |
+| `/drift-scan` | Scan markdown docs for stale API references |
+| `/drift-review` | Review a PR for documentation impact |
+| `/drift-release` | Pre-release documentation audit |
+
+## CI Example
+
+```bash
+# Fail if coverage below 80% or any lint issues
+drift coverage --min 80
+drift lint
 ```
 
-Requires `.doccov/{package}/doccov.json` committed to your default branch. See [badge docs](./docs/api/endpoints/badge.md) for options.
+## Philosophy
 
-## Documentation
+- Every command is an atomic primitive — one input, one output, one job
+- No bundled workflows — agents compose primitives via skills
+- No config files — auto-detect entry points, flags for overrides
+- Primitives output facts, not analysis — agents are smart enough to categorize
 
-Full documentation at [docs/README.md](./docs/README.md):
+## Architecture
 
-- [Getting Started](./docs/getting-started/installation.md)
-- [CLI Reference](./docs/cli/overview.md)
-- [API Reference](./docs/api/overview.md)
-- [SDK Reference](./docs/sdk/overview.md)
-
-## Packages
-
-| Package | Purpose |
-|---------|---------|
-| [@doccov/spec](./packages/doccov-spec) | DocCov spec schema, validation |
-| [@doccov/sdk](./packages/sdk) | Core SDK |
-| [@doccov/cli](./packages/cli) | CLI tool |
-
-### Dependencies (external)
-
-| Package | Purpose |
-|---------|---------|
-| [@openpkg-ts/spec](https://github.com/ryanwaits/openpkg-ts) | OpenPkg spec schema, validation, diff |
-| [@openpkg-ts/extract](https://github.com/ryanwaits/openpkg-ts) | TS export extraction |
-| [@openpkg-ts/doc-generator](https://github.com/ryanwaits/openpkg-ts) | API doc generator |
-| [@openpkg-ts/fumadocs-adapter](https://github.com/ryanwaits/openpkg-ts) | Fumadocs integration |
-| [@openpkg-ts/ui](https://github.com/ryanwaits/openpkg-ts) | Docs UI components |
+```
+Layer 0: @openpkg-ts/spec   (open standard)
+Layer 1: @openpkg-ts/sdk    (extraction engine)
+Layer 2: drift CLI           (11 atomic primitives)
+Layer 3: drift skills        (agent workflow instructions)
+```
 
 ## License
 

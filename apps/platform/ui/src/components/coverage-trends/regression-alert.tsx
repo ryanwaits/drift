@@ -13,7 +13,7 @@ export function RegressionAlert({ regression, className }: RegressionAlertProps)
   return (
     <div
       className={cn(
-        'flex items-start gap-3 p-3 rounded-lg',
+        'flex items-start gap-3 p-3 rounded',
         'bg-warning-light border border-warning/20',
         className,
       )}

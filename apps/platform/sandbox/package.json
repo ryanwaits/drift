@@ -11,7 +11,7 @@
     "@ai-sdk/anthropic": "^3.0.0",
     "@doccov/sdk": "^0.31.0",
     "@doccov/spec": "^0.31.0",
-    "@openpkg-ts/spec": "^0.23.0",
+    "@openpkg-ts/spec": "file:../../../../openpkg-ts/packages/spec",
     "@vercel/node": "^3.2.0",
     "@vercel/sandbox": "^1.1.1",
     "ai": "^6.0.0",

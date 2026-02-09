@@ -21,7 +21,7 @@ export function TimeRangeSelector({ value, onChange, className }: TimeRangeSelec
   return (
     <div
       className={cn(
-        'inline-flex items-stretch border border-border rounded-md bg-background',
+        'inline-flex items-stretch border border-border rounded bg-background',
         className,
       )}
     >
