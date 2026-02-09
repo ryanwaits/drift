@@ -1,274 +1,119 @@
-import * as fs from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
-import chalk from 'chalk';
+import { fileURLToPath } from 'node:url';
 import type { Command } from 'commander';
-import { DOCCOV_CONFIG_FILENAMES } from '../config';
-import { colors, getSymbols, supportsUnicode } from '../utils/progress';
+import { extract } from '@openpkg-ts/sdk';
+import { normalize } from '@openpkg-ts/spec';
+import { ensureProjectDir, getGlobalConfigPath, getGlobalDir } from '../config/global';
+import { renderInit } from '../formatters/init';
+import { detectEntry } from '../utils/detect-entry';
+import { formatError, formatOutput } from '../utils/output';
+import { detectWorkspaces, resolveGlobs } from '../utils/workspaces';
 
-export interface InitCommandDependencies {
-  fileExists?: typeof fs.existsSync;
-  writeFileSync?: typeof fs.writeFileSync;
-  readFileSync?: typeof fs.readFileSync;
-  mkdirSync?: typeof fs.mkdirSync;
-  log?: typeof console.log;
-  error?: typeof console.error;
-}
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-type PackageType = 'module' | 'commonjs' | undefined;
-
-const defaultDependencies: Required<InitCommandDependencies> = {
-  fileExists: fs.existsSync,
-  writeFileSync: fs.writeFileSync,
-  readFileSync: fs.readFileSync,
-  mkdirSync: fs.mkdirSync,
-  log: console.log,
-  error: console.error,
-};
-
-export function registerInitCommand(
-  program: Command,
-  dependencies: InitCommandDependencies = {},
-): void {
-  const { fileExists, writeFileSync, readFileSync, mkdirSync, log, error } = {
-    ...defaultDependencies,
-    ...dependencies,
-  };
-
-  program
-    .command('init')
-    .description('Initialize DocCov: config, GitHub Action, and badge')
-    .option('--cwd <dir>', 'Working directory', process.cwd())
-    .option('--skip-action', 'Skip GitHub Action workflow creation')
-    .action((options) => {
-      const cwd = path.resolve(options.cwd as string);
-
-      const existing = findExistingConfig(cwd, fileExists);
-      if (existing) {
-        error(
-          chalk.red(
-            `A DocCov config already exists at ${path.relative(cwd, existing) || './doccov.config.*'}.`,
-          ),
-        );
-        process.exitCode = 1;
-        return;
-      }
-
-      const packageType = detectPackageType(cwd, fileExists, readFileSync);
-      // Use .ts for TypeScript projects, .mts for others
-      const targetFormat = packageType === 'module' ? 'ts' : 'mts';
-
-      const fileName = `doccov.config.${targetFormat}`;
-      const outputPath = path.join(cwd, fileName);
-
-      if (fileExists(outputPath)) {
-        error(chalk.red(`Cannot create ${fileName}; file already exists.`));
-        process.exitCode = 1;
-        return;
-      }
-
-      const sym = getSymbols(supportsUnicode());
-
-      // 1. Create config
-      const template = buildConfigTemplate();
-      writeFileSync(outputPath, template, { encoding: 'utf8' });
-      log(colors.success(`${sym.success} Created ${fileName}`));
-
-      // 2. Create GitHub Action workflow (unless skipped)
-      if (!options.skipAction) {
-        const workflowDir = path.join(cwd, '.github', 'workflows');
-        const workflowPath = path.join(workflowDir, 'doccov.yml');
-
-        if (!fileExists(workflowPath)) {
-          mkdirSync(workflowDir, { recursive: true });
-          writeFileSync(workflowPath, buildWorkflowTemplate(), { encoding: 'utf8' });
-          log(colors.success(`${sym.success} Created .github/workflows/doccov.yml`));
-        } else {
-          log(
-            colors.warning(`${sym.bullet} Skipped .github/workflows/doccov.yml (already exists)`),
-          );
-        }
-      }
-
-      // 3. Detect repo info for badge
-      const repoInfo = detectRepoInfo(cwd, fileExists, readFileSync);
-
-      // 4. Output badge snippet
-      log('');
-      log(chalk.bold('Add this badge to your README:'));
-      log('');
-      if (repoInfo) {
-        log(
-          chalk.cyan(
-            `[![DocCov](https://doccov.dev/badge/${repoInfo.owner}/${repoInfo.repo})](https://doccov.dev/${repoInfo.owner}/${repoInfo.repo})`,
-          ),
-        );
-      } else {
-        log(
-          chalk.cyan(
-            `[![DocCov](https://doccov.dev/badge/OWNER/REPO)](https://doccov.dev/OWNER/REPO)`,
-          ),
-        );
-        log(chalk.dim('  Replace OWNER/REPO with your GitHub repo'));
-      }
-      log('');
-
-      // 5. Quick start hint
-      log(chalk.dim('Run `doccov check` to verify your documentation coverage'));
-    });
-}
-
-const findExistingConfig = (cwd: string, fileExists: typeof fs.existsSync): string | null => {
-  let current = path.resolve(cwd);
-  const { root } = path.parse(current);
-
-  while (true) {
-    for (const candidate of DOCCOV_CONFIG_FILENAMES) {
-      const candidatePath = path.join(current, candidate);
-      if (fileExists(candidatePath)) {
-        return candidatePath;
-      }
-    }
-
-    if (current === root) {
-      break;
-    }
-
-    current = path.dirname(current);
+function getVersion(): string {
+  try {
+    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+  } catch {
+    return '0.0.0';
   }
+}
 
-  return null;
-};
+interface PackageScan {
+  name: string;
+  entry: string;
+  exports: number;
+  coverage: number;
+}
 
-const detectPackageType = (
-  cwd: string,
-  fileExists: typeof fs.existsSync,
-  readFileSync: typeof fs.readFileSync,
-): PackageType => {
-  const packageJsonPath = findNearestPackageJson(cwd, fileExists);
-  if (!packageJsonPath) {
-    return undefined;
+async function scanPackage(cwd: string, pkgDir: string): Promise<PackageScan | null> {
+  const absDir = path.join(cwd, pkgDir);
+  if (!existsSync(absDir)) return null;
+
+  const pkgPath = path.join(absDir, 'package.json');
+  let name = pkgDir;
+  if (existsSync(pkgPath)) {
+    try {
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+      if (pkg.name) name = pkg.name;
+    } catch {}
   }
 
   try {
-    const raw = readFileSync(packageJsonPath, 'utf8');
-    const parsed = JSON.parse(raw) as { type?: string };
-    if (parsed.type === 'module') {
-      return 'module';
+    const entryFile = detectEntry(absDir);
+    const result = await extract({ entryFile });
+    const spec = normalize(result.spec);
+    const exports = spec.exports ?? [];
+    const total = exports.length;
+    let documented = 0;
+    for (const exp of exports) {
+      if (exp.description && exp.description.trim().length > 0) documented++;
     }
-    if (parsed.type === 'commonjs') {
-      return 'commonjs';
-    }
-  } catch (_error) {
-    // Ignore malformed package.json entries and fall back to defaults.
+    const coverage = total > 0 ? Math.round((documented / total) * 100) : 100;
+    return { name, entry: path.relative(cwd, entryFile), exports: total, coverage };
+  } catch {
+    return null;
   }
+}
 
-  return undefined;
-};
+function generateConfig(packages: PackageScan[]): object {
+  const worstCoverage = Math.min(...packages.map((p) => p.coverage));
+  const threshold = Math.max(0, Math.floor(worstCoverage) - 5);
 
-const findNearestPackageJson = (cwd: string, fileExists: typeof fs.existsSync): string | null => {
-  let current = path.resolve(cwd);
-  const { root } = path.parse(current);
+  return {
+    coverage: { min: threshold },
+  };
+}
 
-  while (true) {
-    const candidate = path.join(current, 'package.json');
-    if (fileExists(candidate)) {
-      return candidate;
-    }
+export function registerInitCommand(program: Command): void {
+  program
+    .command('init')
+    .description('Scan project, generate global drift config')
+    .action(async () => {
+      const startTime = Date.now();
+      const version = getVersion();
+      const cwd = process.cwd();
 
-    if (current === root) {
-      break;
-    }
+      try {
+        // Detect packages
+        const workspaces = detectWorkspaces(cwd);
+        const isMonorepo = workspaces !== null;
+        const packageDirs = isMonorepo ? resolveGlobs(cwd, workspaces) : ['.'];
 
-    current = path.dirname(current);
-  }
-
-  return null;
-};
-
-const buildConfigTemplate = (): string => {
-  return `import { defineConfig } from '@doccov/cli/config';
-
-export default defineConfig({
-  // Filter exports to analyze (optional)
-  // include: ['MyClass', 'myFunction'],
-  // exclude: ['internal*'],
-
-  check: {
-    // Fail if coverage drops below threshold
-    minCoverage: 80,
-
-    // Fail if drift exceeds threshold
-    // maxDrift: 20,
-  },
-});
-`;
-};
-
-const buildWorkflowTemplate = (): string => {
-  return `name: DocCov
-
-on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-
-jobs:
-  doccov:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: doccov/action@v1
-        with:
-          min-coverage: 80
-          comment-on-pr: true
-`;
-};
-
-const detectRepoInfo = (
-  cwd: string,
-  fileExists: typeof fs.existsSync,
-  readFileSync: typeof fs.readFileSync,
-): { owner: string; repo: string } | null => {
-  // Try to read from package.json repository field
-  const packageJsonPath = findNearestPackageJson(cwd, fileExists);
-  if (packageJsonPath) {
-    try {
-      const raw = readFileSync(packageJsonPath, 'utf8');
-      const parsed = JSON.parse(raw) as { repository?: string | { url?: string } };
-
-      let repoUrl: string | undefined;
-      if (typeof parsed.repository === 'string') {
-        repoUrl = parsed.repository;
-      } else if (parsed.repository?.url) {
-        repoUrl = parsed.repository.url;
-      }
-
-      if (repoUrl) {
-        // Parse GitHub URL: github.com/owner/repo or git+https://github.com/owner/repo.git
-        const match = repoUrl.match(/github\.com[/:]([^/]+)\/([^/.]+)/);
-        if (match) {
-          return { owner: match[1], repo: match[2] };
+        // Scan all packages
+        const packages: PackageScan[] = [];
+        for (const dir of packageDirs) {
+          const result = await scanPackage(cwd, dir);
+          if (result) packages.push(result);
         }
-      }
-    } catch {
-      // Ignore
-    }
-  }
 
-  // Try to read from .git/config
-  const gitConfigPath = path.join(cwd, '.git', 'config');
-  if (fileExists(gitConfigPath)) {
-    try {
-      const config = readFileSync(gitConfigPath, 'utf8');
-      const match = config.match(/url\s*=\s*.*github\.com[/:]([^/]+)\/([^/.]+)/);
-      if (match) {
-        return { owner: match[1], repo: match[2].replace(/\.git$/, '') };
-      }
-    } catch {
-      // Ignore
-    }
-  }
+        if (packages.length === 0) {
+          formatError('init', 'No TypeScript packages found', startTime, version);
+          return;
+        }
 
-  return null;
-};
+        // Generate config → write to ~/.drift/config.json
+        const config = generateConfig(packages);
+        const globalDir = getGlobalDir();
+        if (!existsSync(globalDir)) mkdirSync(globalDir, { recursive: true });
+        const configPath = getGlobalConfigPath();
+        writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+
+        // Ensure per-project dir
+        ensureProjectDir(cwd);
+
+        const data = {
+          packages,
+          config,
+          configPath,
+          ciPath: null,
+          isMonorepo,
+        };
+
+        formatOutput('init', data, startTime, version, renderInit);
+      } catch (err) {
+        formatError('init', err instanceof Error ? err.message : String(err), startTime, version);
+      }
+    });
+}

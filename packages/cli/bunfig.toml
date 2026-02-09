@@ -1,0 +1,3 @@
+[test]
+smol = true
+root = "./test"

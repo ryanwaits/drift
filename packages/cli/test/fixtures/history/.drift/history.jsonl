@@ -1,0 +1,13 @@
+{"date":"2026-01-20","package":"@acme/core","coverage":38,"lint":12,"exports":50,"commit":"abc1234"}
+{"date":"2026-01-20","package":"@acme/utils","coverage":65,"lint":3,"exports":20,"commit":"abc1234"}
+{"date":"2026-01-20","package":"@acme/types","coverage":100,"lint":0,"exports":8,"commit":"abc1234"}
+{"date":"2026-01-23","package":"@acme/core","coverage":42,"lint":10,"exports":52,"commit":"def5678"}
+{"date":"2026-01-23","package":"@acme/utils","coverage":68,"lint":2,"exports":20,"commit":"def5678"}
+{"date":"2026-01-23","package":"@acme/types","coverage":100,"lint":0,"exports":8,"commit":"def5678"}
+{"date":"2026-01-27","package":"@acme/core","coverage":50,"lint":8,"exports":55,"commit":"ghi9012"}
+{"date":"2026-01-27","package":"@acme/utils","coverage":72,"lint":1,"exports":22,"commit":"ghi9012"}
+{"date":"2026-01-30","package":"@acme/core","coverage":55,"lint":6,"exports":55,"commit":"jkl3456"}
+{"date":"2026-01-30","package":"@acme/utils","coverage":75,"lint":0,"exports":22,"commit":"jkl3456"}
+{"date":"2026-01-30","package":"@acme/types","coverage":100,"lint":0,"exports":10,"commit":"jkl3456"}
+{"date":"2026-02-03","package":"@acme/core","coverage":64,"lint":4,"exports":58,"commit":"mno7890"}
+{"date":"2026-02-03","package":"@acme/utils","coverage":78,"lint":0,"exports":23,"commit":"mno7890"}

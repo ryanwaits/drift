@@ -1,0 +1,46 @@
+import { c, indent } from '../utils/render';
+
+interface LintIssue {
+  export: string;
+  issue: string;
+  location?: string;
+}
+
+interface LintData {
+  issues: LintIssue[];
+  count: number;
+}
+
+export function renderLint(data: LintData): string {
+  const lines: string[] = [''];
+
+  if (data.count === 0) {
+    lines.push(indent(`${c.green('ok')} No issues found`));
+    lines.push('');
+    return lines.join('\n');
+  }
+
+  lines.push(indent(`${data.count} issue${data.count === 1 ? '' : 's'}`));
+  lines.push('');
+
+  // Group by export
+  const grouped = new Map<string, LintIssue[]>();
+  for (const issue of data.issues) {
+    const existing = grouped.get(issue.export) ?? [];
+    existing.push(issue);
+    grouped.set(issue.export, existing);
+  }
+
+  for (const [exportName, issues] of grouped) {
+    lines.push(indent(c.bold(exportName)));
+    for (const issue of issues) {
+      lines.push(indent(`  ${issue.issue}`, 2));
+    }
+    lines.push('');
+  }
+
+  lines.push(indent(`${data.count} issue${data.count === 1 ? '' : 's'} found`));
+  lines.push('');
+
+  return lines.join('\n');
+}

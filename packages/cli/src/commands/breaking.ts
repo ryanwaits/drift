@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Command } from 'commander';
 import { diffSpec, categorizeBreakingChanges } from '@openpkg-ts/spec';
-import { renderDiff } from '../formatters/diff';
+import { renderBreaking } from '../formatters/breaking';
 import { formatError, formatOutput } from '../utils/output';
 import { shouldRenderHuman } from '../utils/render';
 import { resolveSpecs } from '../utils/resolve-specs';
@@ -18,10 +18,10 @@ function getVersion(): string {
   }
 }
 
-export function registerDiffCommand(program: Command): void {
+export function registerBreakingCommand(program: Command): void {
   program
-    .command('diff [old] [new]')
-    .description('Compare two specs and show what changed')
+    .command('breaking [old] [new]')
+    .description('Detect breaking changes between two specs')
     .option('--base <ref>', 'Git ref for old spec')
     .option('--head <ref>', 'Git ref for new spec (default: working tree)')
     .option('--entry <file>', 'Entry file for git ref extraction')
@@ -36,30 +36,20 @@ export function registerDiffCommand(program: Command): void {
         const diff = diffSpec(oldSpec, newSpec);
         const breaking = categorizeBreakingChanges(diff.breaking, oldSpec, newSpec);
 
-        const data = {
-          breaking,
-          added: diff.nonBreaking,
-          changed: diff.docsOnly,
-          summary: {
-            breaking: diff.breaking.length,
-            added: diff.nonBreaking.length,
-            changed: diff.docsOnly.length,
-          },
-        };
+        const data = { breaking, count: breaking.length };
 
-        formatOutput('diff', data, startTime, version, renderDiff);
+        formatOutput('breaking', data, startTime, version, renderBreaking);
 
-        if (!shouldRenderHuman()) {
-          const parts: string[] = [];
-          if (diff.breaking.length > 0) parts.push(`${diff.breaking.length} breaking`);
-          if (diff.nonBreaking.length > 0) parts.push(`${diff.nonBreaking.length} added`);
-          if (diff.docsOnly.length > 0) parts.push(`${diff.docsOnly.length} changed`);
-          process.stderr.write(`${parts.length > 0 ? parts.join(', ') : 'no changes'}\n`);
+        if (breaking.length > 0) {
+          if (!shouldRenderHuman()) {
+            process.stderr.write(`${breaking.length} breaking change${breaking.length === 1 ? '' : 's'} found\n`);
+          }
+          process.exitCode = 1;
+        } else if (!shouldRenderHuman()) {
+          process.stderr.write('No breaking changes\n');
         }
-
-        if (diff.breaking.length > 0) process.exitCode = 1;
       } catch (err) {
-        formatError('diff', err instanceof Error ? err.message : String(err), startTime, version);
+        formatError('breaking', err instanceof Error ? err.message : String(err), startTime, version);
       }
     });
 }

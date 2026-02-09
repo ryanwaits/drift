@@ -1,0 +1,65 @@
+{
+  "openpkg": "0.4.0",
+  "meta": {
+    "ecosystem": "js/ts",
+    "name": "my-lib",
+    "version": "1.0.0"
+  },
+  "exports": [
+    {
+      "id": "add",
+      "name": "add",
+      "kind": "function",
+      "description": "Adds two numbers.",
+      "tags": [],
+      "signatures": [
+        {
+          "parameters": [
+            { "name": "a", "schema": { "type": "number" }, "required": true },
+            { "name": "b", "schema": { "type": "number" }, "required": true }
+          ],
+          "returns": { "schema": { "type": "number" } }
+        }
+      ],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "multiply",
+      "name": "multiply",
+      "kind": "function",
+      "description": "Multiplies two numbers.",
+      "tags": [],
+      "signatures": [
+        {
+          "parameters": [
+            { "name": "a", "schema": { "type": "number" }, "required": true },
+            { "name": "b", "schema": { "type": "number" }, "required": true }
+          ],
+          "returns": { "schema": { "type": "number" } }
+        }
+      ],
+      "members": [],
+      "examples": []
+    },
+    {
+      "id": "Point",
+      "name": "Point",
+      "kind": "interface",
+      "description": "A point.",
+      "tags": [],
+      "members": [
+        { "name": "x", "kind": "property", "schema": { "type": "number" } },
+        { "name": "y", "kind": "property", "schema": { "type": "number" } }
+      ],
+      "signatures": [],
+      "examples": []
+    }
+  ],
+  "types": [],
+  "generation": {
+    "generator": "@openpkg-ts/sdk",
+    "timestamp": "2026-01-01T00:00:00.000Z",
+    "mode": "source"
+  }
+}
