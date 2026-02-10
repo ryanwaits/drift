@@ -1,5 +1,16 @@
 # @doccov/cli
 
+## 0.32.0
+
+### Minor Changes
+
+- 0b9d171: Drift CLI with 18 commands (extract, list, get, validate, filter, coverage, lint, health, diff, breaking, semver, changelog, ci, release, report, init, cache status, cache clear), global config at ~/.drift/, spec cache with mtime invalidation
+
+### Patch Changes
+
+- Updated dependencies [0b9d171]
+  - @doccov/sdk@0.32.0
+
 ## 0.31.1
 
 ### Patch Changes

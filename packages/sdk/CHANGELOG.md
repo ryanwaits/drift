@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.32.0
+
+### Minor Changes
+
+- 0b9d171: Improve param drift detection and schema extraction
+
 ## 0.31.1
 
 ### Patch Changes
