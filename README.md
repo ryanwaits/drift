@@ -1,23 +1,23 @@
 # drift
 
-> Know when your TypeScript docs lie.
+> Your code changed. Your docs didn't.
 
-Documentation quality primitives for TypeScript. 19 atomic commands that give AI agents structured understanding of your API.
+Detect documentation drift in TypeScript projects. 21 commands that catch when JSDoc, examples, and markdown fall out of sync with your actual API.
 
 ## Quick Start
 
 ```bash
 # Full scan: coverage + lint + prose drift + health
-drift scan src/index.ts
+drift scan
 
 # Check documentation coverage
-drift coverage src/index.ts
+drift coverage
 
 # Find JSDoc issues (param mismatches, broken links, type errors)
-drift lint src/index.ts
+drift lint
 
 # List all exports
-drift list src/index.ts
+drift list
 ```
 
 Entry auto-detects from `package.json` — just `drift scan` in any TypeScript project.
@@ -70,7 +70,9 @@ Entry auto-detects from `package.json` — just `drift scan` in any TypeScript p
 |---------|-------------|
 | `drift report` | Documentation trends from history |
 | `drift release` | Pre-release documentation audit |
+| `drift context` | Generate agent-readable project state |
 | `drift init` | Create configuration file |
+| `drift config` | Manage configuration (list, get, set) |
 | `drift cache` | Cache management |
 
 ## Output
@@ -86,14 +88,25 @@ drift lint || echo "Issues found"
 drift coverage --min 80 || echo "Below threshold"
 ```
 
-## Agent Discovery
+## AI Agent Usage
 
-```bash
-# Machine-readable list of all commands, flags, and types
-drift --capabilities
+drift ships as a [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code). Install the skill, then use `/drift` inside any TypeScript project:
+
+```
+/drift              # status check, auto-init if needed
+/drift fix          # lint → fix JSDoc to match actual signatures
+/drift enrich       # coverage → add missing JSDoc
+/drift review       # PR documentation impact analysis
+/drift release      # pre-release documentation audit
+/drift docs/        # scan external docs for stale API references
 ```
 
-Agents call `drift --capabilities` to discover available primitives at runtime. New commands work automatically.
+Detection is the tool's job. Mutation is the agent's job. The CLI outputs structured JSON with `filePath` and `line` — agents read the diagnosis, then edit code directly.
+
+```bash
+# Machine-readable command discovery
+drift --capabilities
+```
 
 ## Drift Detection
 
@@ -125,25 +138,20 @@ structured facts     (JSON to stdout)
 
 drift extracts a machine-readable spec from your TypeScript, then runs analysis against it. Every command outputs facts — agents decide what to do with them.
 
-## Agent Skills
+## CI
 
-drift is designed for AI agents. Skills teach agents to compose primitives into workflows:
-
-| Skill | What it does |
-|-------|-------------|
-| `/drift-fix` | Find lint issues, fix JSDoc to match actual signatures |
-| `/drift-enrich` | Add JSDoc to undocumented exports |
-| `/drift-scan` | Scan markdown docs for stale API references |
-| `/drift-review` | Review a PR for documentation impact |
-| `/drift-release` | Pre-release documentation audit |
-
-## CI Example
+```yaml
+# GitHub Actions
+- uses: driftdev/drift@v1
+  with:
+    min-coverage: 80
+```
 
 ```bash
-# Single command: coverage + lint + prose + health
+# Or run directly
 drift scan --min 80
 
-# Or compose primitives
+# Compose primitives
 drift coverage --min 80
 drift lint
 drift examples
@@ -153,7 +161,6 @@ drift examples
 
 - Two surfaces, one engine — composed commands for humans, primitives for agents
 - Every primitive is individually addressable — `scan` is a convenience, not a gate
-- No bundled workflows — agents compose primitives via skills
 - Primitives output structured facts with location data for efficient agent fixes
 
 ## Architecture
@@ -161,8 +168,7 @@ drift examples
 ```
 Layer 0: @openpkg-ts/spec   (open standard)
 Layer 1: @driftdev/sdk       (detection engine)
-Layer 2: drift CLI           (19 commands — composed + primitives + plumbing)
-Layer 3: drift skills        (agent workflow instructions)
+Layer 2: drift CLI           (21 commands — composed + primitives + plumbing)
 ```
 
 ## License

@@ -2,7 +2,7 @@
 
 ## Quick Start
 
-1. Install the CLI:
+1. Install:
 ```bash
 bun add -g @driftdev/cli
 ```
@@ -21,7 +21,7 @@ drift coverage --min 80
 
 ### `drift scan`
 
-Run coverage + lint + prose drift + health in one pass.
+Coverage + lint + prose drift + health in one pass.
 
 ```bash
 drift scan [entry] [options]
@@ -32,11 +32,17 @@ Options:
 - `--all` — Run across all workspace packages
 - `--private` — Include private packages
 
+### `drift health`
+
+Documentation health score (default command — bare `drift` runs this).
+
 ```bash
-drift scan
-drift scan --min 80
-drift scan --all --private
+drift health [entry] [options]
 ```
+
+Options:
+- `--min <n>` — Minimum health threshold
+- `--all` — Run across all workspace packages
 
 ### `drift coverage`
 
@@ -50,11 +56,6 @@ Options:
 - `--min <n>` — Minimum coverage % (exit 1 if below)
 - `--all` — Run across all workspace packages
 
-```bash
-drift coverage --min 80
-drift coverage --all
-```
-
 ### `drift lint`
 
 Cross-reference JSDoc vs code signatures. Detects 15 drift types including prose drift (broken import references in markdown).
@@ -66,24 +67,6 @@ drift lint [entry] [options]
 Options:
 - `--all` — Run across all workspace packages
 - `--private` — Include private packages
-
-```bash
-drift lint
-drift lint --json         # includes filePath/line for agent-driven fixes
-drift lint --all
-```
-
-### `drift health`
-
-Documentation health score (default command — bare `drift` runs this).
-
-```bash
-drift health [entry] [options]
-```
-
-Options:
-- `--min <n>` — Minimum health threshold
-- `--all` — Run across all workspace packages
 
 ### `drift examples`
 
@@ -99,12 +82,6 @@ Options:
 - `--min <n>` — Minimum example coverage %
 - `--all` — Run across all workspace packages
 
-```bash
-drift examples
-drift examples --typecheck --run
-drift examples --min 50
-```
-
 ### `drift extract`
 
 Extract full API spec as JSON.
@@ -119,6 +96,71 @@ Options:
 - `--ignore <patterns>` — Exclude exports matching glob
 - `--all` — Extract all workspace packages
 
+### `drift list`
+
+List all exports with kinds.
+
+```bash
+drift list [entry] [search] [options]
+```
+
+Options:
+- `--kind <type>` — Filter by export kind
+- `--undocumented` — Show only undocumented exports
+- `--drifted` — Show only exports with drift issues
+- `--full` — Show full details
+
+### `drift get`
+
+Get single export detail + types.
+
+```bash
+drift get <name> [entry]
+```
+
+Includes fuzzy matching — suggests similar names if not found.
+
+### `drift diff`
+
+What changed between two specs.
+
+```bash
+drift diff <old> <new>
+drift diff --base main --head HEAD
+```
+
+Options:
+- `--base <ref>` — Git ref for old spec
+- `--head <ref>` — Git ref for new spec
+
+### `drift breaking`
+
+Detect breaking changes (exit 1 if found).
+
+```bash
+drift breaking <old> <new>
+drift breaking --base main --head HEAD
+```
+
+### `drift semver`
+
+Recommend semver bump based on changes.
+
+```bash
+drift semver <old> <new>
+```
+
+### `drift changelog`
+
+Generate changelog from spec diff.
+
+```bash
+drift changelog <old> <new> [options]
+```
+
+Options:
+- `--format <md|json>` — Output format (default: md)
+
 ### `drift ci`
 
 CI checks with GitHub integration.
@@ -130,13 +172,61 @@ drift ci [options]
 Options:
 - `--all` — Check all packages, not just changed
 - `--private` — Include private packages
+- `--min <n>` — Minimum coverage threshold
 
 Features:
 - Auto-detects changed packages via `git diff`
 - Posts PR comments with results
 - Writes GitHub step summaries
-- Appends to history
+- Appends to history for trend tracking
 - Generates `.drift/context.md`
+
+### `drift release`
+
+Pre-publish documentation audit. Checks coverage + lint against thresholds.
+
+```bash
+drift release [entry]
+```
+
+Exit 1 if not ready. Suggests next command to fix issues.
+
+### `drift report`
+
+Documentation trends from history.
+
+```bash
+drift report [options]
+```
+
+Options:
+- `--all` — Show all packages
+
+Shows coverage/lint trends over time and packages needing attention. Auto-seeds history on first run.
+
+### `drift context`
+
+Generate agent-readable project state as markdown.
+
+```bash
+drift context [entry] [options]
+```
+
+Options:
+- `--all` — Include all workspace packages
+- `--private` — Include private packages
+- `--output <path>` — Output path (default: `~/.drift/projects/<slug>/context.md`)
+
+### `drift config`
+
+Manage configuration.
+
+```bash
+drift config list                        # show all values
+drift config get <key>                   # get by dot-notation key
+drift config set <key> <value>           # set globally
+drift config set <key> <value> --project # set in drift.config.json
+```
 
 ### `drift init`
 
@@ -144,6 +234,37 @@ Create configuration file.
 
 ```bash
 drift init
+drift init --project  # local drift.config.json
+```
+
+### `drift validate`
+
+Validate a spec file.
+
+```bash
+drift validate <spec.json>
+```
+
+### `drift filter`
+
+Filter exports in a spec file.
+
+```bash
+drift filter <spec.json> [options]
+```
+
+Options:
+- `--kind <type>` — Filter by kind
+- `--search <term>` — Search by name
+- `--tag <tag>` — Filter by tag
+
+### `drift cache`
+
+Cache management.
+
+```bash
+drift cache status   # show cache stats
+drift cache clear    # clear cache
 ```
 
 ### Agent Discovery
@@ -171,6 +292,8 @@ drift --capabilities    # JSON list of all commands + flags
 }
 ```
 
+Config resolution order: flag → project → parent → global → built-ins.
+
 ## Understanding the Output
 
 All commands return `{ok, data, meta}` JSON when piped or with `--json`:
@@ -180,11 +303,11 @@ All commands return `{ok, data, meta}` JSON when piped or with `--json`:
   "ok": true,
   "data": {
     "coverage": { "score": 88, "documented": 243, "total": 275, "undocumented": 32 },
-    "lint": { "issues": [...], "count": 36 },
+    "lint": { "issues": [], "count": 36 },
     "health": 89,
     "pass": true
   },
-  "meta": { "command": "scan", "duration": 7845, "version": "0.34.3" }
+  "meta": { "command": "scan", "duration": 7845, "version": "0.36.0" }
 }
 ```
 
@@ -201,8 +324,6 @@ Each lint issue includes enough context for agents to fix:
   "line": 42
 }
 ```
-
-`filePath` and `line` appear on prose drift issues (markdown references to non-existent exports).
 
 ## SDK Usage
 
@@ -254,22 +375,13 @@ console.log('Breaking changes:', diff.breaking);
 ### GitHub Actions
 
 ```yaml
-name: Docs Coverage
-on: [push, pull_request]
-
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
-      - run: bunx @driftdev/cli scan --min 80
+- uses: driftdev/drift@v1
+  with:
+    min-coverage: 80
 ```
 
-### Simple CI
+### Direct
 
 ```bash
-# Fail if health below 80% or any lint issues
 drift scan --min 80
 ```
