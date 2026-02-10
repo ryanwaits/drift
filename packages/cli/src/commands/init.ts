@@ -70,7 +70,8 @@ export function registerInitCommand(program: Command): void {
   program
     .command('init')
     .description('Scan project, generate global drift config')
-    .action(async () => {
+    .option('--project', 'Write to drift.config.json in cwd instead of global config')
+    .action(async (opts: { project?: boolean }) => {
       const startTime = Date.now();
       const version = getVersion();
       const cwd = process.cwd();
@@ -93,11 +94,16 @@ export function registerInitCommand(program: Command): void {
           return;
         }
 
-        // Generate config → write to ~/.drift/config.json
+        // Generate config → write to project or global location
         const config = generateConfig(packages);
-        const globalDir = getGlobalDir();
-        if (!existsSync(globalDir)) mkdirSync(globalDir, { recursive: true });
-        const configPath = getGlobalConfigPath();
+        const configPath = opts.project
+          ? path.resolve(cwd, 'drift.config.json')
+          : getGlobalConfigPath();
+
+        if (!opts.project) {
+          const globalDir = getGlobalDir();
+          if (!existsSync(globalDir)) mkdirSync(globalDir, { recursive: true });
+        }
         writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
 
         // Ensure per-project dir
