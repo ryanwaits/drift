@@ -68,7 +68,7 @@ export function parseListFlag(value?: string | string[]): string[] | undefined {
  * - Include: CLI values intersect with config values (narrowing)
  * - Exclude: CLI values are added to config values (expanding)
  *
- * @param config - Configuration (from doccov.config.ts)
+ * @param config - Configuration (from drift.config.ts)
  * @param overrides - Override filters (from CLI flags or API params)
  * @returns Merged filter options
  *

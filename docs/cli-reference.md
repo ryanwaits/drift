@@ -363,36 +363,66 @@ drift filter api-spec.json --kind function
 
 ## Comparison Commands
 
-### `drift diff <old> <new>`
+### `drift diff [old] [new]`
 
-Show what changed between two specs.
+Show what changed between two specs. Exits 1 if breaking changes detected.
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--base <ref>` | string | Git ref for old spec |
+| `--head <ref>` | string | Git ref for new spec (default: working tree) |
+| `--entry <file>` | string | Entry file for git ref extraction |
 
 ```bash
 drift diff api-v1.json api-v2.json
+drift diff --base main
+drift diff --base main --head feature
 ```
 
-### `drift breaking <old> <new>`
+### `drift breaking [old] [new]`
 
-Detect breaking changes between two specs.
+Detect breaking changes between two specs. Exits 1 if breaking changes found.
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--base <ref>` | string | Git ref for old spec |
+| `--head <ref>` | string | Git ref for new spec (default: working tree) |
+| `--entry <file>` | string | Entry file for git ref extraction |
 
 ```bash
 drift breaking api-v1.json api-v2.json
+drift breaking --base main
 ```
 
-### `drift semver <old> <new>`
+### `drift semver [old] [new]`
 
 Recommend semver bump based on API changes.
 
+| Flag | Type | Description |
+|------|------|-------------|
+| `--base <ref>` | string | Git ref for old spec |
+| `--head <ref>` | string | Git ref for new spec (default: working tree) |
+| `--entry <file>` | string | Entry file for git ref extraction |
+
 ```bash
 drift semver api-v1.json api-v2.json
+drift semver --base main
 ```
 
-### `drift changelog <old> <new>`
+### `drift changelog [old] [new]`
 
 Generate changelog from API diff.
 
+| Flag | Type | Description |
+|------|------|-------------|
+| `--format <fmt>` | string | Output format: md or json (default: md) |
+| `--base <ref>` | string | Git ref for old spec |
+| `--head <ref>` | string | Git ref for new spec (default: working tree) |
+| `--entry <file>` | string | Entry file for git ref extraction |
+
 ```bash
 drift changelog api-v1.json api-v2.json
+drift changelog --base main --format json
 ```
 
 ---

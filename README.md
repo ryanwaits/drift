@@ -120,7 +120,7 @@ openpkg.json spec    (portable API structure)
 structured facts     (JSON to stdout)
     |
     v
-.doccov/context.md   (agent-readable project state)
+.drift/context.md    (agent-readable project state)
 ```
 
 drift extracts a machine-readable spec from your TypeScript, then runs analysis against it. Every command outputs facts — agents decide what to do with them.
@@ -160,7 +160,7 @@ drift examples
 
 ```
 Layer 0: @openpkg-ts/spec   (open standard)
-Layer 1: @doccov/sdk         (detection engine)
+Layer 1: @driftdev/sdk       (detection engine)
 Layer 2: drift CLI           (19 commands — composed + primitives + plumbing)
 Layer 3: drift skills        (agent workflow instructions)
 ```

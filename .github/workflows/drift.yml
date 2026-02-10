@@ -1,4 +1,4 @@
-name: DocCov
+name: Drift
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
       - 'packages/cli/**'
       - 'package.json'
       - 'bun.lock'
-      - '.github/workflows/doccov.yml'
+      - '.github/workflows/drift.yml'
   push:
     branches: [main, master]
     paths:
@@ -18,7 +18,7 @@ on:
       - 'packages/cli/**'
       - 'package.json'
       - 'bun.lock'
-      - '.github/workflows/doccov.yml'
+      - '.github/workflows/drift.yml'
 
 jobs:
   check:
@@ -41,29 +41,29 @@ jobs:
 
       - name: Generate specs (head)
         run: |
-          bunx @doccov/cli spec --package @doccov/sdk
-          bunx @doccov/cli spec --package @doccov/spec
+          bunx @driftdev/cli spec --package @driftdev/sdk
+          bunx @driftdev/cli spec --package @driftdev/spec
         continue-on-error: true
 
       - name: Save head specs for diff
         if: github.event_name == 'pull_request'
         run: |
-          cp .doccov/@doccov/sdk/openpkg.json /tmp/sdk-head.json 2>/dev/null || true
-          cp .doccov/@doccov/spec/openpkg.json /tmp/spec-head.json 2>/dev/null || true
+          cp .drift/@driftdev/sdk/openpkg.json /tmp/sdk-head.json 2>/dev/null || true
+          cp .drift/@driftdev/spec/openpkg.json /tmp/spec-head.json 2>/dev/null || true
 
       - name: Generate base specs
         if: github.event_name == 'pull_request'
         run: |
           git checkout ${{ github.event.pull_request.base.sha }}
-          bunx @doccov/cli spec --package @doccov/sdk 2>/dev/null || true
-          bunx @doccov/cli spec --package @doccov/spec 2>/dev/null || true
-          cp .doccov/@doccov/sdk/openpkg.json /tmp/sdk-base.json 2>/dev/null || echo '{"openpkg":"0.4.0","exports":[]}' > /tmp/sdk-base.json
-          cp .doccov/@doccov/spec/openpkg.json /tmp/spec-base.json 2>/dev/null || echo '{"openpkg":"0.4.0","exports":[]}' > /tmp/spec-base.json
+          bunx @driftdev/cli spec --package @driftdev/sdk 2>/dev/null || true
+          bunx @driftdev/cli spec --package @driftdev/spec 2>/dev/null || true
+          cp .drift/@driftdev/sdk/openpkg.json /tmp/sdk-base.json 2>/dev/null || echo '{"openpkg":"0.4.0","exports":[]}' > /tmp/sdk-base.json
+          cp .drift/@driftdev/spec/openpkg.json /tmp/spec-base.json 2>/dev/null || echo '{"openpkg":"0.4.0","exports":[]}' > /tmp/spec-base.json
           git checkout ${{ github.event.pull_request.head.sha }}
           # Restore head specs
-          mkdir -p .doccov/@doccov/sdk .doccov/@doccov/spec
-          cp /tmp/sdk-head.json .doccov/@doccov/sdk/openpkg.json 2>/dev/null || true
-          cp /tmp/spec-head.json .doccov/@doccov/spec/openpkg.json 2>/dev/null || true
+          mkdir -p .drift/@driftdev/sdk .drift/@driftdev/spec
+          cp /tmp/sdk-head.json .drift/@driftdev/sdk/openpkg.json 2>/dev/null || true
+          cp /tmp/spec-head.json .drift/@driftdev/spec/openpkg.json 2>/dev/null || true
         continue-on-error: true
 
       - name: Run diff (SDK)
@@ -71,7 +71,7 @@ jobs:
         id: diff
         run: |
           if [ -f /tmp/sdk-base.json ] && [ -f /tmp/sdk-head.json ]; then
-            DIFF_OUTPUT=$(bunx @doccov/cli diff /tmp/sdk-base.json /tmp/sdk-head.json --format json)
+            DIFF_OUTPUT=$(bunx @driftdev/cli diff /tmp/sdk-base.json /tmp/sdk-head.json --format json)
             echo "diff<<EOF" >> $GITHUB_OUTPUT
             echo "$DIFF_OUTPUT" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
@@ -80,8 +80,8 @@ jobs:
 
       - name: Check coverage
         run: |
-          bunx @doccov/cli check --package @doccov/sdk --min-health 34
-          bunx @doccov/cli check --package @doccov/spec --min-health 10
+          bunx @driftdev/cli check --package @driftdev/sdk --min-health 34
+          bunx @driftdev/cli check --package @driftdev/spec --min-health 10
 
       - name: Comment on PR
         if: github.event_name == 'pull_request' && steps.diff.outputs.diff
@@ -93,7 +93,7 @@ jobs:
             const coverageEmoji = diff.coverageDelta > 0 ? '📈' : diff.coverageDelta < 0 ? '📉' : '➡️';
             const deltaStr = diff.coverageDelta > 0 ? `+${diff.coverageDelta}` : String(diff.coverageDelta);
 
-            let body = `## ${coverageEmoji} DocCov Report\n\n`;
+            let body = `## ${coverageEmoji} Drift Report\n\n`;
             body += `**Coverage:** ${diff.oldCoverage}% → ${diff.newCoverage}% (${deltaStr}%)\n\n`;
 
             if (diff.newUndocumented?.length > 0) {
@@ -121,7 +121,7 @@ jobs:
             });
 
             const botComment = comments.find(c =>
-              c.user?.type === 'Bot' && c.body?.includes('DocCov Report')
+              c.user?.type === 'Bot' && c.body?.includes('Drift Report')
             );
 
             if (botComment) {
@@ -141,4 +141,3 @@ jobs:
             }
         env:
           DIFF_OUTPUT: ${{ steps.diff.outputs.diff }}
-

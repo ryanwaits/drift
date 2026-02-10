@@ -4,7 +4,7 @@
 
 1. Install the CLI:
 ```bash
-bun add -g @doccov/cli
+bun add -g @driftdev/cli
 ```
 
 2. Run a full scan:
@@ -137,7 +137,7 @@ Features:
 - Posts PR comments with results
 - Writes GitHub step summaries
 - Appends to history
-- Generates `.doccov/context.md`
+- Generates `.drift/context.md`
 
 ### `drift init`
 
@@ -172,10 +172,10 @@ drift --capabilities    # JSON list of all commands + flags
 }
 ```
 
-### doccov.config.ts
+### drift.config.ts
 
 ```typescript
-import { defineConfig } from '@doccov/cli/config';
+import { defineConfig } from '@driftdev/cli/config';
 
 export default defineConfig({
   include: ['createUser', 'updateUser'],
@@ -227,7 +227,7 @@ Each lint issue includes enough context for agents to fix:
 ### Basic Analysis
 
 ```typescript
-import { DocCov } from '@doccov/sdk';
+import { DocCov } from '@driftdev/sdk';
 
 const doccov = new DocCov();
 const result = await doccov.analyzeFileWithDiagnostics('src/index.ts');
@@ -239,7 +239,7 @@ console.log(`Exports: ${result.spec.exports.length}`);
 ### Drift Detection
 
 ```typescript
-import { computeDrift, buildExportRegistry, detectProseDrift, discoverMarkdownFiles } from '@doccov/sdk';
+import { computeDrift, buildExportRegistry, detectProseDrift, discoverMarkdownFiles } from '@driftdev/sdk';
 
 // JSDoc drift
 const drift = computeDrift(spec);
@@ -282,7 +282,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
-      - run: bunx @doccov/cli scan --min 80
+      - run: bunx @driftdev/cli scan --min 80
 ```
 
 ### Simple CI

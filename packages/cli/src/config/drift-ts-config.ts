@@ -4,11 +4,11 @@ import { pathToFileURL } from 'node:url';
 
 import { type DocCovConfig, docCovConfigSchema, normalizeConfig } from '@driftdev/sdk';
 
-const DOCCOV_CONFIG_FILENAMES = [
-  'doccov.config.ts',
-  'doccov.config.mts',
-  'doccov.config.js',
-  'doccov.config.mjs',
+const DRIFT_CONFIG_FILENAMES = [
+  'drift.config.ts',
+  'drift.config.mts',
+  'drift.config.js',
+  'drift.config.mjs',
 ] as const;
 
 const fileExists = async (filePath: string): Promise<boolean> => {
@@ -25,7 +25,7 @@ const findConfigFile = async (cwd: string): Promise<string | null> => {
   const { root } = path.parse(current);
 
   while (true) {
-    for (const candidate of DOCCOV_CONFIG_FILENAMES) {
+    for (const candidate of DRIFT_CONFIG_FILENAMES) {
       const candidatePath = path.join(current, candidate);
       if (await fileExists(candidatePath)) {
         return candidatePath;
@@ -40,7 +40,7 @@ const findConfigFile = async (cwd: string): Promise<string | null> => {
   }
 };
 
-interface LoadedDocCovConfig extends DocCovConfig {
+interface LoadedDriftTsConfig extends DocCovConfig {
   filePath: string;
 }
 
@@ -54,7 +54,7 @@ const importConfigModule = async (absolutePath: string): Promise<unknown> => {
 
 const formatIssues = (issues: string[]): string => issues.map((issue) => `- ${issue}`).join('\n');
 
-const loadDocCovConfig = async (cwd: string): Promise<LoadedDocCovConfig | null> => {
+const loadDriftTsConfig = async (cwd: string): Promise<LoadedDriftTsConfig | null> => {
   const configPath = await findConfigFile(cwd);
   if (!configPath) {
     return null;
@@ -65,7 +65,7 @@ const loadDocCovConfig = async (cwd: string): Promise<LoadedDocCovConfig | null>
     rawConfig = await importConfigModule(configPath);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to load DocCov config at ${configPath}: ${message}`);
+    throw new Error(`Failed to load drift config at ${configPath}: ${message}`);
   }
 
   const parsed = docCovConfigSchema.safeParse(rawConfig);
@@ -75,7 +75,7 @@ const loadDocCovConfig = async (cwd: string): Promise<LoadedDocCovConfig | null>
       return `${pathLabel}: ${issue.message}`;
     });
 
-    throw new Error(`Invalid DocCov configuration at ${configPath}.\n${formatIssues(issues)}`);
+    throw new Error(`Invalid drift configuration at ${configPath}.\n${formatIssues(issues)}`);
   }
 
   const normalized = normalizeConfig(parsed.data);
@@ -86,5 +86,5 @@ const loadDocCovConfig = async (cwd: string): Promise<LoadedDocCovConfig | null>
   };
 };
 
-export { DOCCOV_CONFIG_FILENAMES, loadDocCovConfig };
-export type { LoadedDocCovConfig };
+export { DRIFT_CONFIG_FILENAMES, loadDriftTsConfig };
+export type { LoadedDriftTsConfig };

@@ -8,7 +8,7 @@
     "style": "json",
     "parsableStyle": false,
     "compress": false,
-    "headerText": "This repository contains the code for DocCov.",
+    "headerText": "This repository contains the code for Drift.",
     "fileSummary": true,
     "directoryStructure": true,
     "files": true,
@@ -32,7 +32,7 @@
     "useGitignore": true,
     "useDefaultPatterns": true,
     // ignore is specified in .repomixignore
-    "customPatterns": [".doccov/**", "apps/**"],
+    "customPatterns": [".drift/**", "apps/**"],
   },
   "security": {
     "enableSecurityCheck": true,

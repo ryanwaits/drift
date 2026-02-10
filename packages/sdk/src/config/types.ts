@@ -32,7 +32,7 @@ export interface DocCovConfig {
 
 /**
  * Define a DocCov configuration.
- * Helper function for type-safe configuration in doccov.config.ts.
+ * Helper function for type-safe configuration in drift.config.ts.
  *
  * @param config - Configuration object
  * @returns The configuration object (for type inference)

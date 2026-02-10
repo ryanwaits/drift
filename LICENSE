@@ -1,4 +1,4 @@
-# DocCov Licensing
+# Drift Licensing
 
 This repository contains multiple packages with different licenses:
 
@@ -7,7 +7,7 @@ This repository contains multiple packages with different licenses:
 The following packages are licensed under the MIT License:
 
 - **@openpkg-ts/spec** - OpenPkg JSON Schema, TypeScript types, and validation utilities
-- **@doccov/cli** - Command-line interface for documentation coverage analysis
+- **@driftdev/cli** - Command-line interface for documentation coverage analysis
 - **docusaurus-plugin-doccov** - Docusaurus integration plugin
 
 These packages are free to use, modify, and distribute for any purpose.
@@ -17,7 +17,7 @@ See `packages/*/LICENSE` for the full MIT license text.
 
 The following package is licensed under the Business Source License 1.1:
 
-- **@doccov/sdk** - Core analysis engine for TypeScript documentation coverage
+- **@driftdev/sdk** - Core analysis engine for TypeScript documentation coverage
 
 ### What this means:
 
@@ -34,7 +34,7 @@ For commercial licensing inquiries, contact: licensing@doccov.com
 
 ## API Service
 
-The `packages/api` directory contains the DocCov SaaS backend and is not
+The `packages/api` directory contains the Drift SaaS backend and is not
 licensed for external use.
 
 ---

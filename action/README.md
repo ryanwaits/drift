@@ -1,4 +1,4 @@
-# DocCov GitHub Action
+# Drift GitHub Action
 
 Check documentation coverage and detect drift in TypeScript projects.
 
@@ -9,11 +9,11 @@ name: Docs Coverage
 on: [push, pull_request]
 
 jobs:
-  doccov:
+  drift:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doccov/doccov@v1
+      - uses: driftdev/drift@v1
         with:
           min-coverage: 80
           require-examples: false
@@ -46,12 +46,12 @@ Control when the action fails using presets or custom check combinations:
 
 ```yaml
 # Use a preset
-- uses: doccov/doccov@v1
+- uses: driftdev/drift@v1
   with:
     strict: ci
 
 # Custom checks
-- uses: doccov/doccov@v1
+- uses: driftdev/drift@v1
   with:
     strict: "breaking,drift"
 ```
@@ -77,10 +77,9 @@ When `comment-on-pr` is enabled, the action posts a comment on PRs with:
 Add a coverage badge to your README:
 
 ```markdown
-![DocCov](https://api.doccov.com/badge/your-org/your-repo)
+![Drift](https://api.driftdev.com/badge/your-org/your-repo)
 ```
 
 ## License
 
 MIT
-

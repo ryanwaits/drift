@@ -163,4 +163,4 @@ Config is validated on load. Invalid keys produce clear error messages:
 Invalid config at drift.config.json: "coverage.min" must be a number 0-100
 ```
 
-The `drift init` command creates a starter `drift.config.json` in the current directory.
+The `drift init` command creates a global config at `~/.drift/config.json`. Use `drift config set --project` to create a project-local `drift.config.json`.

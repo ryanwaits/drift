@@ -1,9 +1,9 @@
 import type { DocCovConfig, DocCovConfigInput, DocsConfig } from '@driftdev/sdk';
 
-import type { LoadedDocCovConfig } from './doccov-config';
-import { DOCCOV_CONFIG_FILENAMES, loadDocCovConfig } from './doccov-config';
+import type { LoadedDriftTsConfig } from './drift-ts-config';
+import { DRIFT_CONFIG_FILENAMES, loadDriftTsConfig } from './drift-ts-config';
 
 const defineConfig = (config: DocCovConfigInput): DocCovConfigInput => config;
 
-export { DOCCOV_CONFIG_FILENAMES, defineConfig, loadDocCovConfig };
-export type { DocCovConfig, DocCovConfigInput, DocsConfig, LoadedDocCovConfig };
+export { DRIFT_CONFIG_FILENAMES, defineConfig, loadDriftTsConfig };
+export type { DocCovConfig, DocCovConfigInput, DocsConfig, LoadedDriftTsConfig };

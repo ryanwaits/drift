@@ -1,4 +1,4 @@
-name: 'DocCov'
+name: 'Drift'
 description: 'Documentation coverage and drift detection for TypeScript'
 author: 'Ryan Waits'
 
@@ -47,7 +47,7 @@ inputs:
     required: false
     default: '.'
   skip-spec:
-    description: 'Skip spec generation and use existing .doccov/ files'
+    description: 'Skip spec generation and use existing .drift/ files'
     required: false
     default: 'false'
   github-token:
@@ -55,7 +55,7 @@ inputs:
     required: false
     default: ${{ github.token }}
   auto-commit-spec:
-    description: 'Auto-commit .doccov/ directory to the branch (PRs only)'
+    description: 'Auto-commit .drift/ directory to the branch (PRs only)'
     required: false
     default: 'false'
 
@@ -71,7 +71,7 @@ outputs:
   docs-impact-count:
     description: 'Number of docs files needing updates'
   spec-path:
-    description: 'Path to generated doccov.json'
+    description: 'Path to generated drift.json'
 
 runs:
   using: 'composite'
@@ -81,9 +81,9 @@ runs:
       with:
         node-version: '20'
 
-    - name: Install DocCov CLI
+    - name: Install Drift CLI
       shell: bash
-      run: npm install -g @doccov/cli
+      run: npm install -g @driftdev/cli
 
     - name: Resolve package name
       id: pkg
@@ -98,7 +98,7 @@ runs:
         fi
         echo "name=$PKG_NAME" >> $GITHUB_OUTPUT
         # Convert package name to path (handles scoped packages)
-        echo "path=.doccov/$PKG_NAME" >> $GITHUB_OUTPUT
+        echo "path=.drift/$PKG_NAME" >> $GITHUB_OUTPUT
 
     - name: Generate spec
       if: inputs.skip-spec != 'true'
@@ -116,7 +116,7 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        SPEC_PATH="${{ steps.pkg.outputs.path }}/doccov.json"
+        SPEC_PATH="${{ steps.pkg.outputs.path }}/drift.json"
         if [ ! -f "$SPEC_PATH" ]; then
           echo "Error: $SPEC_PATH not found. Either commit it or set skip-spec to false."
           exit 1
@@ -164,7 +164,7 @@ runs:
         SPEC_PATH="${{ steps.pkg.outputs.path }}"
         if [ -f "$SPEC_PATH/openpkg.json" ]; then
           cp "$SPEC_PATH/openpkg.json" /tmp/openpkg-head.json
-          cp "$SPEC_PATH/doccov.json" /tmp/doccov-head.json 2>/dev/null || true
+          cp "$SPEC_PATH/drift.json" /tmp/drift-head.json 2>/dev/null || true
         fi
 
     - name: Generate base spec (PRs only)
@@ -178,7 +178,7 @@ runs:
 
         if [ "${{ inputs.skip-spec }}" = "true" ] && [ -f "$SPEC_PATH/openpkg.json" ]; then
           cp "$SPEC_PATH/openpkg.json" /tmp/openpkg-base.json
-          cp "$SPEC_PATH/doccov.json" /tmp/doccov-base.json 2>/dev/null || true
+          cp "$SPEC_PATH/drift.json" /tmp/drift-base.json 2>/dev/null || true
         else
           SPEC_ARGS=""
           if [ -n "${{ inputs.package }}" ]; then
@@ -187,7 +187,7 @@ runs:
           drift extract $SPEC_ARGS 2>/dev/null || true
           if [ -f "$SPEC_PATH/openpkg.json" ]; then
             cp "$SPEC_PATH/openpkg.json" /tmp/openpkg-base.json
-            cp "$SPEC_PATH/doccov.json" /tmp/doccov-base.json 2>/dev/null || true
+            cp "$SPEC_PATH/drift.json" /tmp/drift-base.json 2>/dev/null || true
           else
             echo '{"openpkg":"0.4.0","exports":[]}' > /tmp/openpkg-base.json
           fi
@@ -198,7 +198,7 @@ runs:
         if [ -f /tmp/openpkg-head.json ]; then
           mkdir -p "$SPEC_PATH"
           cp /tmp/openpkg-head.json "$SPEC_PATH/openpkg.json"
-          cp /tmp/doccov-head.json "$SPEC_PATH/doccov.json" 2>/dev/null || true
+          cp /tmp/drift-head.json "$SPEC_PATH/drift.json" 2>/dev/null || true
         fi
 
     - name: Run diff (PRs only)
@@ -279,7 +279,7 @@ runs:
             issue_number: context.issue.number,
           });
 
-          const existing = comments.find(c => c.body?.includes('DocCov'));
+          const existing = comments.find(c => c.body?.includes('Drift'));
 
           if (existing) {
             await github.rest.issues.updateComment({
@@ -298,4 +298,3 @@ runs:
           }
       env:
         COMMENT_BODY: ${{ steps.comment.outputs.body }}
-
