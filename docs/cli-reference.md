@@ -56,7 +56,6 @@ Coverage + lint + prose drift + health in one pass.
 | Flag | Type | Description |
 |------|------|-------------|
 | `--min <n>` | number | Minimum health threshold (exit 1 if below) |
-| `--ci` | boolean | Strict mode: exit 1 on any issue |
 | `--all` | boolean | Run across all workspace packages |
 | `--private` | boolean | Include private packages in `--all` mode |
 
@@ -472,8 +471,13 @@ drift report
 
 Create a `drift.config.json` configuration file.
 
+| Flag | Type | Description |
+|------|------|-------------|
+| `--project` | boolean | Write to `drift.config.json` in cwd instead of global config |
+
 ```bash
 drift init
+drift init --project
 ```
 
 ### `drift config`

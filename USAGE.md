@@ -29,7 +29,6 @@ drift scan [entry] [options]
 
 Options:
 - `--min <n>` — Minimum health threshold (exit 1 if below)
-- `--ci` — Strict mode: exit 1 on any issue
 - `--all` — Run across all workspace packages
 - `--private` — Include private packages
 
@@ -172,23 +171,6 @@ drift --capabilities    # JSON list of all commands + flags
 }
 ```
 
-### drift.config.ts
-
-```typescript
-import { defineConfig } from '@driftdev/cli/config';
-
-export default defineConfig({
-  include: ['createUser', 'updateUser'],
-  exclude: ['internalHelper'],
-  docs: {
-    include: ['docs/**/*.md'],
-  },
-  check: {
-    examples: ['presence', 'typecheck'],
-  },
-});
-```
-
 ## Understanding the Output
 
 All commands return `{ok, data, meta}` JSON when piped or with `--json`:
@@ -289,5 +271,5 @@ jobs:
 
 ```bash
 # Fail if health below 80% or any lint issues
-drift scan --min 80 --ci
+drift scan --min 80
 ```

@@ -176,7 +176,6 @@ const grouped = groupDriftsByCategory(drifts);
 - `pruneHistory` — Clean old snapshots
 
 ### Configuration
-- `defineConfig` — Type-safe config helper
 - `normalizeConfig` — Config normalization
 - `docCovConfigSchema` — Zod schema for validation
 
