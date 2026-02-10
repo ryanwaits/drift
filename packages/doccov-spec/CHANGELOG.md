@@ -1,5 +1,11 @@
 # @doccov/spec
 
+## 0.36.0
+
+### Minor Changes
+
+- Add --project flag to drift init, delete dead TS config system, rewrite action.yml as drift ci wrapper, remove --ci from docs
+
 ## 0.35.1
 
 ### Patch Changes

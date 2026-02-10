@@ -1,5 +1,17 @@
 # @doccov/cli
 
+## 0.36.0
+
+### Minor Changes
+
+- Add --project flag to drift init, delete dead TS config system, rewrite action.yml as drift ci wrapper, remove --ci from docs
+
+### Patch Changes
+
+- Updated dependencies
+  - @driftdev/sdk@0.36.0
+  - @driftdev/spec@0.36.0
+
 ## 0.35.1
 
 ### Patch Changes
