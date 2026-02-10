@@ -4,6 +4,8 @@ interface LintIssue {
   export: string;
   issue: string;
   location?: string;
+  filePath?: string;
+  line?: number;
 }
 
 interface LintData {
@@ -34,7 +36,10 @@ export function renderLint(data: LintData): string {
   for (const [exportName, issues] of grouped) {
     lines.push(indent(c.bold(exportName)));
     for (const issue of issues) {
-      lines.push(indent(`  ${issue.issue}`, 2));
+      const loc = issue.filePath
+        ? `  ${c.dim(`${issue.filePath}${issue.line ? `:${issue.line}` : ''}`)}`
+        : '';
+      lines.push(indent(`  ${issue.issue}${loc}`, 2));
     }
     lines.push('');
   }

@@ -3,13 +3,14 @@ import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Command } from 'commander';
-import { computeDrift } from '@doccov/sdk';
+import { computeDrift } from '@driftdev/sdk';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderCi } from '../formatters/ci';
 import { detectEntry } from '../utils/detect-entry';
 import { getGitHubContext, getPRNumber, postOrUpdatePRComment, writeStepSummary } from '../utils/github';
-import { appendHistory } from '../utils/history';
+import { writeContext } from '../utils/context-writer';
+import { appendHistory, readHistory } from '../utils/history';
 import { formatError, formatOutput } from '../utils/output';
 import { detectWorkspaces, resolveGlobs } from '../utils/workspaces';
 
@@ -195,6 +196,21 @@ export function registerCiCommand(program: Command): void {
             ...(commit ? { commit } : {}),
           })),
         );
+
+        // Write context.md to ~/.drift/projects/<slug>/
+        try {
+          writeContext(cwd, {
+            packages: results.map((r) => ({
+              name: r.name,
+              coverage: r.coverage,
+              lintIssues: r.lintIssues,
+              exports: r.exports,
+            })),
+            history: readHistory(cwd),
+            config,
+            commit: commit ?? null,
+          });
+        } catch {}
 
         // PR comment / step summary (13.2)
         if (gh.isPR && gh.token && gh.repository) {

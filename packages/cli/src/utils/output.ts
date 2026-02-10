@@ -11,10 +11,16 @@ export interface OutputMeta {
   version: string;
 }
 
+export interface OutputNext {
+  suggested: string;
+  reason: string;
+}
+
 export interface OutputEnvelope<T = unknown> {
   ok: boolean;
   data: T;
   meta: OutputMeta;
+  next?: OutputNext;
 }
 
 /**
@@ -27,12 +33,14 @@ export function formatOutput<T>(
   startTime: number,
   version: string,
   humanRenderer?: (data: T) => string,
+  next?: OutputNext,
 ): OutputEnvelope<T> {
   const duration = Date.now() - startTime;
   const envelope: OutputEnvelope<T> = {
     ok: true,
     data,
     meta: { command, duration, version },
+    ...(next ? { next } : {}),
   };
 
   if (humanRenderer && shouldRenderHuman()) {

@@ -7,7 +7,7 @@ import { loadConfig } from '../config/loader';
 import { renderBatchCoverage } from '../formatters/batch';
 import { renderCoverage } from '../formatters/coverage';
 import { detectEntry } from '../utils/detect-entry';
-import { formatError, formatOutput } from '../utils/output';
+import { formatError, formatOutput, type OutputNext } from '../utils/output';
 import { computeRatchetMin } from '../utils/ratchet';
 import { shouldRenderHuman } from '../utils/render';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
@@ -91,7 +91,11 @@ export function registerCoverageCommand(program: Command): void {
 
         const data = { score, documented, total, undocumented };
 
-        formatOutput('coverage', data, startTime, version, renderCoverage);
+        const next: OutputNext | undefined = undocumented.length > 0
+          ? { suggested: 'drift-enrich skill', reason: `${undocumented.length} exports lack documentation` }
+          : undefined;
+
+        formatOutput('coverage', data, startTime, version, renderCoverage, next);
 
         let minThreshold = options.min ? parseInt(options.min, 10) : config.coverage?.min;
         if (minThreshold !== undefined && config.coverage?.ratchet) {

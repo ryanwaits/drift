@@ -17,6 +17,11 @@ export interface DriftConfig {
   lint?: boolean;
   /** Glob patterns to ignore from analysis */
   ignore?: string[];
+  /** Markdown docs discovery patterns */
+  docs?: {
+    include?: string[];
+    exclude?: string[];
+  };
 }
 
 const DEFAULTS: DriftConfig = {
@@ -67,6 +72,20 @@ export function validateConfig(raw: unknown): { ok: true; config: DriftConfig } 
   if (obj.ignore !== undefined) {
     if (!Array.isArray(obj.ignore) || !obj.ignore.every((i) => typeof i === 'string')) {
       errors.push('"ignore" must be an array of strings');
+    }
+  }
+
+  if (obj.docs !== undefined) {
+    if (typeof obj.docs !== 'object' || obj.docs === null) {
+      errors.push('"docs" must be an object');
+    } else {
+      const docs = obj.docs as Record<string, unknown>;
+      if (docs.include !== undefined && (!Array.isArray(docs.include) || !docs.include.every((i) => typeof i === 'string'))) {
+        errors.push('"docs.include" must be an array of strings');
+      }
+      if (docs.exclude !== undefined && (!Array.isArray(docs.exclude) || !docs.exclude.every((i) => typeof i === 'string'))) {
+        errors.push('"docs.exclude" must be an array of strings');
+      }
     }
   }
 

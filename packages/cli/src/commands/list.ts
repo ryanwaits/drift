@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listExports } from '@openpkg-ts/sdk';
-import { computeDrift } from '@doccov/sdk';
+import { computeDrift } from '@driftdev/sdk';
 import { cachedExtract } from '../cache/cached-extract';
 import type { Command } from 'commander';
 import { renderBatchList } from '../formatters/batch';

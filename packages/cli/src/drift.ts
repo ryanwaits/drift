@@ -10,12 +10,16 @@ import { registerCacheCommand } from './commands/cache';
 import { registerChangelogCommand } from './commands/changelog';
 import { registerCiCommand } from './commands/ci';
 import { registerCoverageCommand } from './commands/coverage';
+import { registerExamplesCommand } from './commands/examples';
 import { registerDiffCommand } from './commands/diff';
 import { registerExtractCommand } from './commands/extract';
 import { registerFilterCommand } from './commands/filter';
 import { registerGetCommand } from './commands/get';
+import { registerConfigCommand } from './commands/config';
+import { registerContextCommand } from './commands/context';
 import { registerInitCommand } from './commands/init';
 import { registerLintCommand } from './commands/lint';
+import { registerScanCommand } from './commands/scan';
 import { registerListCommand } from './commands/list';
 import { registerReleaseCommand } from './commands/release';
 import { registerReportCommand } from './commands/report';
@@ -23,6 +27,7 @@ import { registerSemverCommand } from './commands/semver';
 import { registerValidateCommand } from './commands/validate';
 import { setNoCache } from './cache/spec-cache';
 import { setConfigPath } from './config/loader';
+import { extractCapabilities } from './utils/capabilities';
 import { setOutputMode } from './utils/render';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -65,7 +70,9 @@ registerFilterCommand(program);
 
 // Analysis
 registerCoverageCommand(program);
+registerExamplesCommand(program);
 registerLintCommand(program);
+registerScanCommand(program);
 
 // Comparison
 registerDiffCommand(program);
@@ -80,9 +87,19 @@ registerReportCommand(program);
 
 // Setup
 registerInitCommand(program);
+registerConfigCommand(program);
+
+// Context
+registerContextCommand(program);
 
 // Cache management
 registerCacheCommand(program);
+
+if (process.argv.includes('--capabilities')) {
+  const caps = extractCapabilities(program);
+  process.stdout.write(`${JSON.stringify(caps, null, 2)}\n`);
+  process.exit(0);
+}
 
 program.parseAsync().catch(() => {
   process.exit(1);

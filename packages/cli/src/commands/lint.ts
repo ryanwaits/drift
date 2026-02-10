@@ -2,13 +2,13 @@ import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Command } from 'commander';
-import { computeDrift } from '@doccov/sdk';
+import { buildExportRegistry, computeDrift, detectProseDrift, discoverMarkdownFiles, isFixableDrift } from '@driftdev/sdk';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderBatchLint } from '../formatters/batch';
 import { renderLint } from '../formatters/lint';
 import { detectEntry } from '../utils/detect-entry';
-import { formatError, formatOutput } from '../utils/output';
+import { formatError, formatOutput, type OutputNext } from '../utils/output';
 import { shouldRenderHuman } from '../utils/render';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
 
@@ -26,6 +26,8 @@ interface LintIssue {
   export: string;
   issue: string;
   location?: string;
+  filePath?: string;
+  line?: number;
 }
 
 export function registerLintCommand(program: Command): void {
@@ -92,13 +94,49 @@ export function registerLintCommand(program: Command): void {
               export: exportName,
               issue: drift.issue,
               ...(drift.target ? { location: drift.target } : {}),
+              filePath: drift.filePath,
+              line: drift.line,
             });
           }
         }
 
+        // Prose drift: check markdown docs for broken import references
+        try {
+          const pkgJsonPath = path.resolve(process.cwd(), 'package.json');
+          const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
+          const packageName = pkgJson.name as string | undefined;
+          if (packageName) {
+            const registry = buildExportRegistry(spec);
+            const markdownFiles = discoverMarkdownFiles(process.cwd(), config.docs);
+            const proseDrifts = detectProseDrift({ packageName, markdownFiles, registry });
+            for (const drift of proseDrifts) {
+              issues.push({
+                export: drift.target ?? '',
+                issue: drift.issue,
+                ...(drift.suggestion ? { location: drift.suggestion } : {}),
+                filePath: drift.filePath,
+                line: drift.line,
+              });
+            }
+          }
+        } catch {
+          // silently skip prose detection if package.json unreadable
+        }
+
         const data = { issues, count: issues.length };
 
-        formatOutput('lint', data, startTime, version, renderLint);
+        // Compute next action hint
+        let fixableCount = 0;
+        for (const [, drifts] of driftResult.exports) {
+          for (const d of drifts) {
+            if (isFixableDrift(d)) fixableCount++;
+          }
+        }
+        const next: OutputNext | undefined = issues.length > 0
+          ? { suggested: 'drift-fix skill', reason: `${fixableCount} of ${issues.length} issues are auto-fixable` }
+          : undefined;
+
+        formatOutput('lint', data, startTime, version, renderLint, next);
 
         if (issues.length > 0) {
           if (!shouldRenderHuman()) {

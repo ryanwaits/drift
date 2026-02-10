@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Command } from 'commander';
-import { computeDrift } from '@doccov/sdk';
+import { computeDrift } from '@driftdev/sdk';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderBatchCoverage } from '../formatters/batch';

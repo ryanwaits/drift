@@ -6,7 +6,7 @@ import * as path from 'node:path';
 import { listExports, getExport, filterSpec } from '@openpkg-ts/sdk';
 import { normalize, validateSpec, diffSpec, categorizeBreakingChanges, recommendSemverBump } from '@openpkg-ts/spec';
 import { extract } from '@openpkg-ts/sdk';
-import { computeDrift } from '@doccov/sdk';
+import { computeDrift } from '@driftdev/sdk';
 
 const FIXTURE = path.resolve(__dirname, 'fixtures/sample/src/index.ts');
 const CLEAN = path.resolve(__dirname, 'fixtures/clean/src/index.ts');

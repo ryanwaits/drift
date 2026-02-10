@@ -1,143 +1,193 @@
 # @doccov/cli
 
-Command-line interface for documentation coverage analysis and drift detection.
+Command-line interface for documentation coverage analysis and drift detection. Ships as the `drift` binary.
 
 ## Install
 
 ```bash
-npm install -g @doccov/cli
+bun add -g @doccov/cli
 ```
 
 ## Quick Start
 
 ```bash
+# Full scan: coverage + lint + prose drift + health
+drift scan
+
 # Check documentation coverage
-doccov check src/index.ts
+drift coverage
 
-# Generate OpenPkg spec
-doccov spec src/index.ts -o .doccov
+# Find JSDoc accuracy issues
+drift lint
 
-# Get package info
-doccov info src/index.ts
+# Validate @example blocks
+drift examples
 ```
+
+Entry auto-detects from `package.json` — works in any TypeScript project.
 
 ## Commands
 
+### Composed
+
 | Command | Description |
 |---------|-------------|
-| `check` | Analyze coverage and detect drift |
-| `spec` | Generate OpenPkg + DocCov specs |
-| `diff` | Compare two specs for breaking changes |
-| `info` | Show brief coverage summary |
-| `trends` | View historical coverage trends |
-| `init` | Create configuration file |
+| `drift scan [entry]` | Coverage + lint + prose drift + health in one pass |
+| `drift health [entry]` | Documentation health score (default command) |
+| `drift ci` | CI checks on changed packages with PR comments |
 
-### check
+### Analysis
 
-Analyze documentation coverage against thresholds.
+| Command | Description |
+|---------|-------------|
+| `drift coverage [entry]` | Documentation coverage score |
+| `drift lint [entry]` | Cross-reference JSDoc vs code signatures |
+| `drift examples [entry]` | Validate @example blocks (presence, typecheck, run) |
 
-```bash
-doccov check src/index.ts --min-health 80
-doccov check --format json -o report.json
-doccov check --examples typecheck    # Validate @example blocks
-doccov check --fix                   # Auto-fix drift issues
-```
+### Extraction
 
-#### Monorepo / Batch Mode
+| Command | Description |
+|---------|-------------|
+| `drift extract [entry]` | Extract full API spec as JSON |
+| `drift list [entry]` | List all exports with kinds |
+| `drift get <name> [entry]` | Inspect single export detail + types |
 
-Analyze multiple packages at once using glob patterns or multiple targets:
+### Spec Operations
 
-```bash
-# Glob pattern - analyze all packages
-doccov check "packages/*/src/index.ts"
+| Command | Description |
+|---------|-------------|
+| `drift validate <spec>` | Validate a spec file |
+| `drift filter <spec>` | Filter exports by kind, search, tag |
 
-# Multiple explicit targets
-doccov check packages/server/src/index.ts packages/client/src/index.ts
+### Comparison
 
-# With options
-doccov check "packages/*/src/index.ts" --format markdown --min-health 60
-```
+| Command | Description |
+|---------|-------------|
+| `drift diff <old> <new>` | What changed between two specs |
+| `drift breaking <old> <new>` | Detect breaking changes |
+| `drift semver <old> <new>` | Recommend semver bump |
+| `drift changelog <old> <new>` | Generate changelog |
 
-Output shows per-package breakdown with aggregated totals:
+### Plumbing
 
-```
-Documentation Coverage Report (3 packages)
+| Command | Description |
+|---------|-------------|
+| `drift report` | Documentation trends from history |
+| `drift release` | Pre-release documentation audit |
+| `drift init` | Create configuration file |
+| `drift cache` | Cache management (clear, status) |
 
-| Package | Health | Exports | Drift |
-|---------|--------|---------|-------|
-| @pkg/server | 75% | 78 | 4 |
-| @pkg/client | 82% | 45 | 2 |
-| @pkg/core | 90% | 32 | 1 |
-| Total | 81% | 155 | 7 |
-
-✓ Check passed (health 81% >= 80%)
-```
-
-### spec
-
-Generate specification files.
+### Discovery
 
 ```bash
-doccov spec src/index.ts -o .doccov
-doccov spec --format api-surface     # Human-readable output
-doccov spec --runtime                # Extract Zod/Valibot schemas
+# Machine-readable list of all commands + flags
+drift --capabilities
 ```
 
-### diff
+## Global Options
 
-Compare specs and detect breaking changes.
+```
+--json          Force JSON output (default when piped)
+--human         Force human-readable output (default in terminal)
+--config <path> Path to drift config file
+--cwd <dir>     Run as if started in <dir>
+--no-cache      Bypass spec cache
+```
+
+## scan
+
+Run coverage + lint + prose drift + health in one pass.
 
 ```bash
-doccov diff main.json feature.json
-doccov diff --recommend-version      # Suggest semver bump
-doccov diff --format github          # PR comment format
+drift scan                    # single package
+drift scan --min 80           # fail if health below 80%
+drift scan --ci               # strict: fail on any issue
+drift scan --all              # all workspace packages
+drift scan --all --private    # include private packages
 ```
 
-### info
+## lint
 
-Quick coverage overview.
+Cross-reference JSDoc against code signatures. Detects 15 drift types across 4 categories (structural, semantic, example, prose). Prose detection scans markdown files for broken import references.
 
 ```bash
-doccov info src/index.ts
-# @stacks/transactions@7.3.1
-#   Exports:    413
-#   Coverage:   13%
-#   Drift:      13%
+drift lint                    # single package
+drift lint --all              # all workspace packages
+drift lint --json             # JSON output with filePath/line
 ```
 
-### trends
+## coverage
 
-View coverage history over time.
+Documentation coverage score.
 
 ```bash
-doccov trends --cwd ./my-package
-doccov trends --record               # Save current coverage
-doccov trends --extended             # Show velocity/projections
+drift coverage                # single package
+drift coverage --min 80       # fail if below 80%
+drift coverage --all          # all workspace packages
 ```
+
+## health
+
+Weighted health score: completeness (coverage) + accuracy (lint).
+
+```bash
+drift health                  # default command (bare `drift`)
+drift health --min 80
+drift health --all
+```
+
+## examples
+
+Validate @example blocks.
+
+```bash
+drift examples                # presence check
+drift examples --typecheck    # type-check examples
+drift examples --run          # execute examples
+drift examples --min 50       # fail if example coverage below 50%
+```
+
+## ci
+
+CI checks with GitHub integration: PR comments, step summaries, history tracking.
+
+```bash
+drift ci                      # check changed packages
+drift ci --all                # check all packages
+drift ci --private            # include private packages
+```
+
+Generates `.doccov/context.md` — machine-readable project state for agents.
 
 ## Configuration
 
-Create `doccov.config.ts` or use `doccov init`:
+### drift.config.json
+
+```json
+{
+  "entry": "src/index.ts",
+  "coverage": {
+    "min": 80,
+    "ratchet": true
+  },
+  "lint": true,
+  "docs": {
+    "include": ["README.md", "docs/**/*.md"],
+    "exclude": ["node_modules/**"]
+  }
+}
+```
+
+### doccov.config.ts
 
 ```ts
-// doccov.config.ts
 import { defineConfig } from '@doccov/cli';
 
 export default defineConfig({
   check: {
     minHealth: 80,
     examples: ['presence', 'typecheck'],
-
-    // Documentation style presets
-    style: 'minimal',  // 'minimal' | 'verbose' | 'types-only'
-
-    // Fine-grained requirements (override preset)
-    require: {
-      description: true,
-      params: false,
-      returns: false,
-      examples: false,
-    },
+    style: 'minimal',
   },
   docs: {
     include: ['docs/**/*.md'],
@@ -145,40 +195,31 @@ export default defineConfig({
 });
 ```
 
-### Style Presets
+## Output Format
 
-Different projects have different documentation standards. Use `style` to choose a preset:
+All commands return `{ok, data, meta}` JSON when piped or with `--json`:
 
-| Preset | description | params | returns | examples |
-|--------|-------------|--------|---------|----------|
-| `minimal` | required | optional | optional | optional |
-| `verbose` | required | required | required | optional |
-| `types-only` | optional | optional | optional | optional |
-
-- **minimal** (default): Only requires description. Good for projects relying on TypeScript types.
-- **verbose**: Requires description, @param, and @returns. For comprehensive API documentation.
-- **types-only**: No requirements. Score is 100% if exports exist. For TypeScript-first projects.
-
-Use `require` to override individual rules from the preset:
-
-```ts
-// Start with minimal, but also require examples
+```json
 {
-  style: 'minimal',
-  require: {
-    examples: true,
-  }
+  "ok": true,
+  "data": { "score": 88, "documented": 243, "total": 275 },
+  "meta": { "command": "coverage", "duration": 1234, "version": "0.34.3" }
 }
 ```
 
-## Output Formats
+Human-readable output in terminal by default, or with `--human`.
 
-All commands support multiple output formats:
+## Monorepo Support
 
-- `text` (default) - Human-readable terminal output
-- `json` - Machine-readable JSON
-- `markdown` - Markdown report
-- `github` - GitHub Actions annotations
+All analysis commands support `--all` for workspace batch mode:
+
+```bash
+drift scan --all              # scan all packages
+drift coverage --all          # coverage per package
+drift lint --all              # lint per package
+```
+
+Auto-detects workspace globs from `package.json`.
 
 ## License
 

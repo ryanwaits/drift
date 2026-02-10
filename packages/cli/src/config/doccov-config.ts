@@ -2,7 +2,7 @@ import { access } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { type DocCovConfig, docCovConfigSchema, normalizeConfig } from '@doccov/sdk';
+import { type DocCovConfig, docCovConfigSchema, normalizeConfig } from '@driftdev/sdk';
 
 const DOCCOV_CONFIG_FILENAMES = [
   'doccov.config.ts',

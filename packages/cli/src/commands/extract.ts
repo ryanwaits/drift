@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DocCov, NodeFileSystem, resolveTarget } from '@doccov/sdk';
+import { DocCov, NodeFileSystem, resolveTarget } from '@driftdev/sdk';
 import { normalize, validateSpec } from '@openpkg-ts/spec';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';

@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { computeDrift } from '@doccov/sdk';
+import { computeDrift } from '@driftdev/sdk';
 import { cachedExtract } from '../cache/cached-extract';
 import { detectEntry } from './detect-entry';
 import { detectWorkspaces, resolveGlobs } from './workspaces';
