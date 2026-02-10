@@ -1,6 +1,8 @@
 # Drift GitHub Action
 
-Check documentation coverage and detect drift in TypeScript projects.
+Documentation coverage and drift detection for TypeScript projects.
+
+Thin wrapper around `drift ci` — installs the CLI and runs it.
 
 ## Usage
 
@@ -16,69 +18,32 @@ jobs:
       - uses: driftdev/drift@v1
         with:
           min-coverage: 80
-          require-examples: false
-          comment-on-pr: true
 ```
 
 ## Inputs
 
 | Input | Description | Default |
 |-------|-------------|---------|
-| `min-coverage` | Minimum coverage percentage (0-100) | `80` |
-| `require-examples` | Require @example blocks on all exports | `false` |
-| `strict` | Fail conditions (preset or custom checks) | `''` |
-| `docs-glob` | Glob pattern for markdown docs to check for impact | `''` |
-| `comment-on-pr` | Post coverage report as PR comment | `true` |
-| `working-directory` | Working directory for the check | `.` |
 | `github-token` | GitHub token for PR comments | `${{ github.token }}` |
+| `working-directory` | Working directory for the check | `.` |
+| `min-coverage` | Minimum coverage percentage (0-100) | `80` |
+| `check-all` | Check all packages, not just changed | `false` |
+| `include-private` | Include private packages | `false` |
 
-## Strict Mode
+## Outputs
 
-Control when the action fails using presets or custom check combinations:
+| Output | Description |
+|--------|-------------|
+| `coverage` | Current coverage percentage |
+| `health` | Current health score |
 
-| Preset | Checks | Use Case |
-|--------|--------|----------|
-| `ci` | breaking, regression | Default CI protection |
-| `release` | breaking, regression, drift, docs-impact, undocumented | Pre-release validation |
-| `quality` | drift, undocumented | Documentation hygiene |
+## What `drift ci` does
 
-### Examples
-
-```yaml
-# Use a preset
-- uses: driftdev/drift@v1
-  with:
-    strict: ci
-
-# Custom checks
-- uses: driftdev/drift@v1
-  with:
-    strict: "breaking,drift"
-```
-
-### Available Checks
-
-- `breaking` - Fail if breaking changes are detected
-- `regression` - Fail if coverage decreases
-- `drift` - Fail if new drift issues are introduced
-- `undocumented` - Fail if new exports are undocumented
-- `docs-impact` - Fail if changes impact existing documentation
-
-## PR Comments
-
-When `comment-on-pr` is enabled, the action posts a comment on PRs with:
-
-- Coverage percentage change
-- New undocumented exports
-- Drift issues introduced/resolved
-
-## Badge
-
-Add a coverage badge to your README:
-
-```markdown
-![Drift](https://api.driftdev.com/badge/your-org/your-repo)
-```
+- Auto-detects changed packages via `git diff`
+- Runs coverage + lint checks
+- Posts PR comments with results
+- Writes GitHub step summaries
+- Appends to history
 
 ## License
 
