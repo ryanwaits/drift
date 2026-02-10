@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.34.0
+
+### Minor Changes
+
+- Skip private packages by default in --all mode. Add --private flag to opt-in.
+
 ## 0.33.1
 
 ### Patch Changes
