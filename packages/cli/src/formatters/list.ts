@@ -11,6 +11,7 @@ interface ListData {
   exports: ListExport[];
   search?: string;
   showAll?: boolean;
+  filter?: 'undocumented' | 'drifted';
 }
 
 export function renderList(data: ListData): string {
@@ -25,6 +26,16 @@ export function renderList(data: ListData): string {
     lines.push(`  ${c.bold(`${total} exports`)}`);
   }
   lines.push('');
+
+  // Empty state with active filter
+  if (total === 0 && data.filter) {
+    const msg = data.filter === 'undocumented'
+      ? `${c.green(sym.ok)} All exports are documented`
+      : `${c.green(sym.ok)} No drifted exports found`;
+    lines.push(indent(msg));
+    lines.push('');
+    return lines.join('\n');
+  }
 
   // Kind summary (skip when searching — saves vertical space)
   if (!data.search) {

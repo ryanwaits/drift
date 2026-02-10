@@ -54,9 +54,14 @@ export function registerListCommand(program: Command): void {
           const rows: Array<{ name: string; count: number }> = [];
           for (const pkg of packages) {
             const res = await listExports({ entryFile: pkg.entry });
-            rows.push({ name: pkg.name, count: res.exports.length });
+            let filtered = res.exports;
+            if (options.undocumented) {
+              filtered = filtered.filter((e) => !e.description || e.description.trim().length === 0);
+            }
+            rows.push({ name: pkg.name, count: filtered.length });
           }
-          formatOutput('list', { packages: rows }, startTime, version, renderBatchList);
+          const filter = options.undocumented ? 'undocumented' as const : undefined;
+          formatOutput('list', { packages: rows, filter }, startTime, version, renderBatchList);
           return;
         }
 
@@ -106,6 +111,10 @@ export function registerListCommand(program: Command): void {
           exports = matches.map((m) => exports.find((e) => e.name === m.name)!);
         }
 
+        const filter = options.undocumented ? 'undocumented' as const
+          : options.drifted ? 'drifted' as const
+          : undefined;
+
         const data = {
           exports: exports.map((e) => ({
             name: e.name,
@@ -115,6 +124,7 @@ export function registerListCommand(program: Command): void {
           })),
           ...(searchTerm ? { search: searchTerm } : {}),
           showAll: !!options.full,
+          ...(filter ? { filter } : {}),
         };
 
         formatOutput('list', data, startTime, version, renderList);

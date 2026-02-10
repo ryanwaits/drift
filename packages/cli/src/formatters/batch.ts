@@ -60,20 +60,25 @@ export function renderBatchLint(data: { packages: BatchLintRow[]; aggregate: { c
   return lines.join('\n');
 }
 
-export function renderBatchList(data: { packages: BatchListRow[] }): string {
+export function renderBatchList(data: { packages: BatchListRow[]; filter?: 'undocumented' }): string {
   const lines: string[] = [''];
   const rows = data.packages;
+  const columnLabel = data.filter === 'undocumented' ? 'UNDOCUMENTED' : 'EXPORTS';
 
   const nameW = Math.max(7, ...rows.map((r) => r.name.length));
-  lines.push(indent(`${c.gray(pad('PACKAGE', nameW))}  ${c.gray('EXPORTS')}`));
+  lines.push(indent(`${c.gray(pad('PACKAGE', nameW))}  ${c.gray(columnLabel)}`));
 
   for (const r of rows) {
-    lines.push(indent(`${pad(r.name, nameW)}  ${r.count}`));
+    const countStr = data.filter === 'undocumented'
+      ? (r.count === 0 ? c.green('0') : c.yellow(String(r.count)))
+      : String(r.count);
+    lines.push(indent(`${pad(r.name, nameW)}  ${countStr}`));
   }
 
   const total = rows.reduce((s, r) => s + r.count, 0);
   lines.push('');
-  lines.push(indent(`${c.bold('Total')}: ${total} exports across ${rows.length} packages`));
+  const label = data.filter === 'undocumented' ? 'undocumented exports' : 'exports';
+  lines.push(indent(`${c.bold('Total')}: ${total} ${label} across ${rows.length} packages`));
   lines.push('');
   return lines.join('\n');
 }
