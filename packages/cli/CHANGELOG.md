@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.34.2
+
+### Patch Changes
+
+- d0f36b6: Fix stale cache after JSDoc edits: include max source file mtime in cache key so editing any .ts file in the package busts the cache
+
 ## 0.34.1
 
 ### Patch Changes
