@@ -96,7 +96,6 @@ export function registerScanCommand(program: Command): void {
             const h = computeHealth(exps.length, documented, issues);
             const min = options.min ? parseInt(options.min, 10) : undefined;
             if (min !== undefined && h.health < min) anyFail = true;
-            if (options.ci && issues.length > 0) anyFail = true;
 
             rows.push({
               name: pkg.name,

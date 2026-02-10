@@ -219,7 +219,7 @@ export {
   validateSpecCache,
 } from './cache';
 // Config types (additional)
-export type { ExampleValidationMode, SchemaExtractionMode } from './config';
+export type { ExampleValidationMode } from './config';
 export type {
   AnalyzeProjectOptions,
   BuildInfo,

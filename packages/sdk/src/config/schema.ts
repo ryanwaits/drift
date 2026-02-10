@@ -3,7 +3,7 @@
  * Used by CLI for config file validation.
  */
 import { z } from 'zod';
-import type { DocCovConfig, DocsConfig, SchemaExtractionMode } from './types';
+import type { DocCovConfig, DocsConfig } from './types';
 
 const stringList: z.ZodUnion<[z.ZodString, z.ZodArray<z.ZodString, 'many'>]> = z.union([
   z.string(),
@@ -23,20 +23,15 @@ const docsConfigSchema: z.ZodObject<{
   exclude: stringList.optional(),
 });
 
-const schemaExtractionSchema = z.enum(['static', 'runtime', 'hybrid']);
-
 export const docCovConfigSchema: z.ZodObject<{
   include: z.ZodOptional<typeof stringList>;
   exclude: z.ZodOptional<typeof stringList>;
   docs: z.ZodOptional<typeof docsConfigSchema>;
-  schemaExtraction: z.ZodOptional<typeof schemaExtractionSchema>;
 }> = z.object({
   include: stringList.optional(),
   exclude: stringList.optional(),
   /** Markdown documentation configuration */
   docs: docsConfigSchema.optional(),
-  /** Schema extraction mode for validation libraries */
-  schemaExtraction: schemaExtractionSchema.optional(),
 });
 
 export type DocCovConfigInput = z.infer<typeof docCovConfigSchema>;
@@ -72,6 +67,5 @@ export const normalizeConfig = (input: DocCovConfigInput): DocCovConfig => {
     include,
     exclude,
     docs,
-    schemaExtraction: input.schemaExtraction as SchemaExtractionMode | undefined,
   };
 };

@@ -19,15 +19,6 @@ export interface DocsConfig {
 export type ExampleValidationMode = 'presence' | 'typecheck' | 'run';
 
 /**
- * Schema extraction modes for validation libraries (Zod, Valibot, TypeBox, ArkType).
- *
- * - 'static': TypeScript Compiler API only (no runtime, always safe)
- * - 'runtime': Standard Schema runtime extraction (requires built package)
- * - 'hybrid': Try runtime first, fall back to static
- */
-export type SchemaExtractionMode = 'static' | 'runtime' | 'hybrid';
-
-/**
  * Normalized DocCov configuration.
  */
 export interface DocCovConfig {
@@ -37,14 +28,6 @@ export interface DocCovConfig {
   exclude?: string[];
   /** Documentation configuration */
   docs?: DocsConfig;
-  /**
-   * Schema extraction mode for validation libraries.
-   *
-   * - 'static' (default): Safe, uses TypeScript Compiler API
-   * - 'runtime': Uses Standard Schema (requires built package)
-   * - 'hybrid': Tries runtime first, falls back to static
-   */
-  schemaExtraction?: SchemaExtractionMode;
 }
 
 /**

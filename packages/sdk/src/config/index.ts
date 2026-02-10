@@ -9,6 +9,5 @@ export type {
   DocCovConfig,
   DocsConfig,
   ExampleValidationMode,
-  SchemaExtractionMode,
 } from './types';
 export { defineConfig } from './types';
