@@ -1,5 +1,24 @@
 # @doccov/sdk
 
+## 0.35.1
+
+### Patch Changes
+
+- Retry publish under @driftdev scope (0.35.0 version was consumed by failed publish).
+- Updated dependencies
+  - @driftdev/spec@0.35.1
+
+## 0.35.0
+
+### Minor Changes
+
+- Publish under @driftdev scope. Rename legacy config files from doccov.config._ to drift.config._, update CI/Action/docs references.
+
+### Patch Changes
+
+- Updated dependencies
+  - @driftdev/spec@0.35.0
+
 ## 0.32.0
 
 ### Minor Changes

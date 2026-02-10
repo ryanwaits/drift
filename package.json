@@ -3,28 +3,23 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*",
-    "apps/*",
-    "apps/platform/*"
+    "packages/*"
   ],
   "scripts": {
-    "build": "bun run build:doccov-spec && bun run build:sdk && bun run build:cli",
-    "build:doccov-spec": "cd packages/doccov-spec && bun run build",
+    "build": "bun run build:spec && bun run build:sdk && bun run build:cli",
+    "build:spec": "cd packages/doccov-spec && bun run build",
     "build:sdk": "cd packages/sdk && bun run build",
     "build:cli": "cd packages/cli && bun run build",
-    "build:site": "cd apps/site && bun run build",
-    "build:platform": "cd apps/platform && for dir in */; do (cd \"$dir\" && bun run build 2>/dev/null || true); done",
-    "dev": "bun run --parallel dev:doccov-spec dev:sdk dev:cli",
-    "dev:doccov-spec": "cd packages/doccov-spec && bun run dev",
+    "dev": "bun run --parallel dev:spec dev:sdk dev:cli",
+    "dev:spec": "cd packages/doccov-spec && bun run dev",
     "dev:sdk": "cd packages/sdk && bun run dev",
     "dev:cli": "cd packages/cli && bun run dev",
-    "dev:site": "cd apps/site && bun run dev",
-    "lint": "bunx biome check packages/ apps/",
-    "lint:fix": "bunx biome check --write packages/ apps/",
-    "format": "bunx biome format --write packages/ apps/",
+    "lint": "bunx biome check packages/",
+    "lint:fix": "bunx biome check --write packages/",
+    "format": "bunx biome format --write packages/",
     "changeset": "changeset",
     "version": "changeset version && bun install",
-    "release": "NPM_TOKEN=$NPM_DOCCOV_TOKEN changeset publish"
+    "release": "changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.2",
@@ -33,7 +28,6 @@
     "@types/node": "^20.0.0"
   },
   "dependencies": {
-    "@openpkg-ts/sdk": "file:../openpkg-ts/packages/sdk",
-    "vercel": "^48.10.12"
+    "@openpkg-ts/sdk": "file:../openpkg-ts/packages/sdk"
   }
 }
