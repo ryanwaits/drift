@@ -97,18 +97,26 @@ function resolveToSource(cwd: string, filePath: string): string | null {
     normalized.replace(/\.cjs$/, '.cts'),
   ];
 
-  // dist/ → src/
+  // dist/ → src/ (handles both dist/index.d.ts and dist/src/index.d.ts layouts)
   const outputDirs = ['dist', 'build', 'lib', 'out'];
   for (const outDir of outputDirs) {
     if (normalized.startsWith(`${outDir}/`)) {
+      // dist/foo.d.ts → src/foo.ts
       const srcPath = normalized.replace(new RegExp(`^${outDir}/`), 'src/');
       candidates.push(srcPath.replace(/\.js$/, '.ts'));
       candidates.push(srcPath.replace(/\.d\.ts$/, '.ts'));
+      // dist/src/foo.d.ts → src/foo.ts (strip duplicate src/)
+      if (normalized.startsWith(`${outDir}/src/`)) {
+        const stripped = normalized.replace(new RegExp(`^${outDir}/src/`), 'src/');
+        candidates.push(stripped.replace(/\.js$/, '.ts'));
+        candidates.push(stripped.replace(/\.d\.ts$/, '.ts'));
+      }
     }
   }
 
   for (const c of candidates) {
-    if (/\.d\.[mc]?ts$/.test(c)) continue;
+    // Skip declaration files and non-TypeScript files (.js/.mjs/.cjs passthrough from no-op replacements)
+    if (!/\.[mc]?ts$/.test(c) || /\.d\.[mc]?ts$/.test(c)) continue;
     const full = path.join(cwd, c);
     if (existsSync(full)) return full;
   }

@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.33.1
+
+### Patch Changes
+
+- Fix entry auto-detection for `dist/src/` layouts. Was resolving to bundled `.js` (stripped JSDoc → 0% coverage) instead of source `.ts`.
+
 ## 0.33.0
 
 ### Minor Changes
