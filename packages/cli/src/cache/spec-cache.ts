@@ -1,7 +1,7 @@
 /**
  * Spec extraction cache — mtime-based invalidation.
  *
- * Cache key = sha256(entryFile + entry_mtime + pkg_mtime + config_hash)
+ * Cache key = sha256(entryFile + entry_mtime + pkg_mtime + src_max_mtime + config_hash)
  * Location: .drift/cache/ (fallback $TMPDIR/drift-cache/)
  */
 
@@ -62,12 +62,38 @@ export interface CacheKeyInput {
   configHash?: string;
 }
 
+/** Walk directory tree for newest .ts/.tsx mtime. */
+function getSourceMaxMtime(entryFile: string): number {
+  const pkgJson = findPackageJson(entryFile);
+  if (!pkgJson) return 0;
+  const pkgDir = path.dirname(pkgJson);
+  const srcDir = path.join(pkgDir, 'src');
+  return walkMaxMtime(existsSync(srcDir) ? srcDir : pkgDir);
+}
+
+function walkMaxMtime(dir: string): number {
+  let max = 0;
+  try {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules' && entry.name !== 'dist') {
+        const sub = walkMaxMtime(path.join(dir, entry.name));
+        if (sub > max) max = sub;
+      } else if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx'))) {
+        const mt = getMtime(path.join(dir, entry.name));
+        if (mt > max) max = mt;
+      }
+    }
+  } catch {}
+  return max;
+}
+
 function buildCacheKey(input: CacheKeyInput): string {
   const absEntry = path.resolve(input.entryFile);
   const entryMtime = getMtime(absEntry);
   const pkgJson = findPackageJson(absEntry);
   const pkgMtime = pkgJson ? getMtime(pkgJson) : 0;
-  const parts = [absEntry, String(entryMtime), String(pkgMtime)];
+  const srcMtime = getSourceMaxMtime(absEntry);
+  const parts = [absEntry, String(entryMtime), String(pkgMtime), String(srcMtime)];
   if (input.configHash) parts.push(input.configHash);
   return hashString(parts.join('|'));
 }
