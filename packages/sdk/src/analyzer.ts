@@ -2,11 +2,9 @@ import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type * as TS from 'typescript';
-import type { DetectedSchemaEntry } from './analysis/context';
 import { createProgram } from '@openpkg-ts/sdk';
 import type { AnalysisMetadataInternal } from './analysis/run-analysis';
 import { runAnalysis } from './analysis/run-analysis';
-import { detectRuntimeSchemas } from './analysis/schema-detection';
 import type { OpenPkgSpec } from './analysis/spec-types';
 import {
   type CachedDiagnostic,
@@ -116,19 +114,11 @@ export class DocCov {
     const resolvedFileName = path.resolve(fileName ?? 'temp.ts');
     const packageDir = resolvePackageDir(resolvedFileName);
 
-    // Try runtime schema detection if analyzing a real file (not temp.ts)
-    // This enables Standard Schema extraction even for in-memory analysis
-    const isRealFile = fileName && !fileName.includes('temp.ts');
-    const detectedSchemas = isRealFile
-      ? await this.detectSchemas(resolvedFileName, packageDir)
-      : undefined;
-
     const analysis = await runAnalysis({
       entryFile: resolvedFileName,
       packageDir,
       content: code,
       options: this.options,
-      detectedSchemas,
     });
 
     const filterOutcome = this.applySpecFilters(analysis.spec, analyzeOptions.filters);
@@ -173,15 +163,11 @@ export class DocCov {
     // Run full analysis
     const content = await fs.readFile(resolvedPath, 'utf-8');
 
-    // Opportunistically detect Standard Schema exports (Zod, ArkType, Valibot)
-    const detectedSchemas = await this.detectSchemas(resolvedPath, packageDir);
-
     const analysis = await runAnalysis({
       entryFile: resolvedPath,
       packageDir,
       content,
       options: this.options,
-      detectedSchemas,
     });
 
     const filterOutcome = this.applySpecFilters(analysis.spec, analyzeOptions.filters);
@@ -369,45 +355,6 @@ export class DocCov {
         return null;
       }
       current = parent;
-    }
-  }
-
-  /**
-   * Detect Standard Schema exports from compiled modules.
-   * Only runs when schemaExtraction is 'runtime' or 'hybrid'.
-   * Returns undefined if detection is disabled, fails, or no schemas found.
-   */
-  private async detectSchemas(
-    entryFile: string,
-    packageDir: string,
-  ): Promise<Map<string, DetectedSchemaEntry> | undefined> {
-    // Only run runtime detection for 'runtime' or 'hybrid' modes
-    const mode = this.options.schemaExtraction ?? 'static';
-    if (mode === 'static') {
-      return undefined;
-    }
-
-    try {
-      const result = await detectRuntimeSchemas({
-        baseDir: packageDir,
-        entryFile,
-      });
-
-      if (result.schemas.size === 0) {
-        return undefined;
-      }
-
-      const detected = new Map<string, DetectedSchemaEntry>();
-      for (const [name, schema] of result.schemas) {
-        detected.set(name, {
-          schema: schema.schema,
-          vendor: schema.vendor,
-        });
-      }
-      return detected;
-    } catch {
-      // Runtime detection unavailable - proceed with AST-only analysis
-      return undefined;
     }
   }
 

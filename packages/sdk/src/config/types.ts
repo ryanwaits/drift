@@ -28,38 +28,7 @@ export type ExampleValidationMode = 'presence' | 'typecheck' | 'run';
 export type SchemaExtractionMode = 'static' | 'runtime' | 'hybrid';
 
 /**
- * API surface configuration options.
- */
-export interface ApiSurfaceConfig {
-  /** Minimum completeness percentage to pass (0-100) */
-  minCompleteness?: number;
-  /** Warning threshold - warn when below this (0-100) */
-  warnBelow?: number;
-  /** Type names to ignore (won't be flagged as forgotten exports) */
-  ignore?: string[];
-}
-
-/**
- * Check command configuration options.
- */
-export interface CheckConfig {
-  /**
-   * Example validation modes to run.
-   * Can be a single mode, array of modes, or comma-separated string.
-   * - 'presence': Check that @example blocks exist on exports
-   * - 'typecheck': Compile examples with TypeScript
-   * - 'run': Execute examples and validate assertions
-   */
-  examples?: ExampleValidationMode | ExampleValidationMode[] | string;
-  /** Minimum health score required (0-100). Unified metric combining coverage + accuracy. */
-  minHealth?: number;
-  /** API surface configuration */
-  apiSurface?: ApiSurfaceConfig;
-}
-
-/**
  * Normalized DocCov configuration.
- * This is the parsed/normalized form used by commands.
  */
 export interface DocCovConfig {
   /** Export include patterns */
@@ -68,17 +37,12 @@ export interface DocCovConfig {
   exclude?: string[];
   /** Documentation configuration */
   docs?: DocsConfig;
-  /** Check command configuration */
-  check?: CheckConfig;
   /**
    * Schema extraction mode for validation libraries.
    *
    * - 'static' (default): Safe, uses TypeScript Compiler API
    * - 'runtime': Uses Standard Schema (requires built package)
    * - 'hybrid': Tries runtime first, falls back to static
-   *
-   * Runtime extraction provides richer JSON Schema output (formats, patterns)
-   * but requires the package to be built first.
    */
   schemaExtraction?: SchemaExtractionMode;
 }
@@ -92,15 +56,12 @@ export interface DocCovConfig {
  *
  * @example
  * ```typescript
- * // doccov.config.ts
  * import { defineConfig } from '@driftdev/sdk';
  *
  * export default defineConfig({
  *   include: ['MyClass', 'myFunction'],
  *   exclude: ['internal*'],
- *   check: {
- *     minHealth: 80,
- *   },
+ *   docs: { include: ['docs/*.md'] },
  * });
  * ```
  */

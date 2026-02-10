@@ -86,7 +86,6 @@ export type { DocCovOptions } from './options';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type {
-  CheckConfig,
   DocCovConfig,
   DocCovConfigInput,
   DocsConfig,
@@ -173,7 +172,6 @@ export { typecheckExamples } from './typecheck';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Context types
-export type { DetectedSchemaEntry } from './analysis/context';
 export type { ExportDriftResult } from './analysis/docs-coverage';
 // Analysis (migrate to @driftdev/sdk/analysis)
 export {
@@ -205,9 +203,6 @@ export {
   saveSnapshot,
 } from './analysis/history';
 export { generateReportFromDocCov, loadCachedReport, saveReport } from './analysis/report';
-export type { SchemaDetectionContext, SchemaDetectionResult } from './analysis/schema-detection';
-// Schema detection
-export { detectRuntimeSchemas } from './analysis/schema-detection';
 export type { CacheContext, CacheValidationResult, SpecCache, SpecCacheConfig } from './cache';
 // Cache (for advanced usage)
 export {
@@ -263,24 +258,6 @@ export type {
 
 // Examples (additional exports)
 export { ALL_VALIDATIONS, shouldValidate, VALIDATION_INFO } from './examples';
-export type {
-  ExtractStandardSchemasOptions,
-  SchemaAdapter,
-  SchemaExtractionResult,
-  StandardJSONSchemaV1,
-  StandardSchemaExtractionOutput,
-  StandardSchemaExtractionResult,
-} from './extract/schema';
-// Schema extraction
-export {
-  extractSchemaType,
-  extractStandardSchemas,
-  extractStandardSchemasFromProject,
-  findAdapter,
-  isSchemaType,
-  isStandardJSONSchema,
-  resolveCompiledPath,
-} from './extract/schema';
 export { extractPackageSpec } from './extractor';
 export type { FilterSource, ResolvedFilters } from './filtering/merge';
 // Filtering

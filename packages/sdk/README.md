@@ -1,17 +1,17 @@
-# @doccov/sdk
+# @driftdev/sdk
 
 Programmatic API for documentation coverage analysis, drift detection, and spec generation.
 
 ## Install
 
 ```bash
-bun add @doccov/sdk
+bun add @driftdev/sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { DocCov, buildDocCovSpec } from '@doccov/sdk';
+import { DocCov, buildDocCovSpec } from '@driftdev/sdk';
 
 // Analyze a package
 const doccov = new DocCov();
@@ -35,7 +35,7 @@ console.log(`Drift issues: ${spec.summary.drift.total}`);
 15 drift types across 4 categories: structural, semantic, example, prose.
 
 ```typescript
-import { computeDrift, buildExportRegistry, detectProseDrift, discoverMarkdownFiles } from '@doccov/sdk';
+import { computeDrift, buildExportRegistry, detectProseDrift, discoverMarkdownFiles } from '@driftdev/sdk';
 
 // JSDoc drift (param mismatches, type errors, broken links, etc.)
 const drift = computeDrift(spec);
@@ -57,7 +57,7 @@ Every `SpecDocDrift` includes `filePath` and `line` for agent-driven fixes.
 ### Coverage Analysis
 
 ```typescript
-import { buildDocCovSpec, getExportDrift } from '@doccov/sdk';
+import { buildDocCovSpec, getExportDrift } from '@driftdev/sdk';
 
 const doccovSpec = buildDocCovSpec({ openpkg, openpkgPath, packagePath });
 
@@ -68,7 +68,7 @@ const drifts = getExportDrift(someExport, doccovSpec);
 ### Health Scoring
 
 ```typescript
-import { computeHealth, isExportDocumented } from '@doccov/sdk';
+import { computeHealth, isExportDocumented } from '@driftdev/sdk';
 
 const health = computeHealth({
   coverageScore: 88,
@@ -83,7 +83,7 @@ const health = computeHealth({
 ### Markdown Discovery
 
 ```typescript
-import { discoverMarkdownFiles, parseMarkdownFiles, findExportReferences } from '@doccov/sdk';
+import { discoverMarkdownFiles, parseMarkdownFiles, findExportReferences } from '@driftdev/sdk';
 
 // Auto-discover markdown files (README.md, docs/**/*.md)
 const files = discoverMarkdownFiles(process.cwd(), {
@@ -98,7 +98,7 @@ const refs = findExportReferences(files, ['createUser', 'updateUser']);
 ### Example Validation
 
 ```typescript
-import { validateExamples, typecheckExamples } from '@doccov/sdk';
+import { validateExamples, typecheckExamples } from '@driftdev/sdk';
 
 // Full validation (presence + typecheck + run)
 const validation = await validateExamples(spec, {
@@ -110,7 +110,7 @@ const validation = await validateExamples(spec, {
 ### Target Resolution
 
 ```typescript
-import { resolveTarget, NodeFileSystem } from '@doccov/sdk';
+import { resolveTarget, NodeFileSystem } from '@driftdev/sdk';
 
 const fs = new NodeFileSystem(process.cwd());
 const { entryFile, targetDir, packageInfo } = await resolveTarget(fs, {
@@ -121,7 +121,7 @@ const { entryFile, targetDir, packageInfo } = await resolveTarget(fs, {
 ### History & Trends
 
 ```typescript
-import { saveSnapshot, loadSnapshots, getTrend, computeSnapshot } from '@doccov/sdk';
+import { saveSnapshot, loadSnapshots, getTrend, computeSnapshot } from '@driftdev/sdk';
 
 saveSnapshot(computeSnapshot(spec), process.cwd());
 const snapshots = loadSnapshots(process.cwd());
@@ -131,7 +131,7 @@ const trend = getTrend(spec, process.cwd());
 ### Categorize & Summarize
 
 ```typescript
-import { categorizeDrift, getDriftSummary, groupDriftsByCategory } from '@doccov/sdk';
+import { categorizeDrift, getDriftSummary, groupDriftsByCategory } from '@driftdev/sdk';
 
 const summary = getDriftSummary(drifts);
 // summary.total, summary.byCategory (structural/semantic/example/prose), summary.fixable

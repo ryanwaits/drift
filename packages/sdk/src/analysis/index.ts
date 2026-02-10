@@ -10,7 +10,6 @@
  */
 
 // Context types
-export type { DetectedSchemaEntry } from './context';
 // DocCov spec builder
 export {
   type BuildDocCovOptions,
@@ -79,12 +78,6 @@ export {
   saveReport,
 } from './report';
 
-// Schema detection
-export {
-  detectRuntimeSchemas,
-  type SchemaDetectionContext,
-  type SchemaDetectionResult,
-} from './schema-detection';
 
 // Spec types
 export type { OpenPkgSpec } from './spec-types';

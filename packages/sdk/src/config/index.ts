@@ -6,7 +6,6 @@
 export type { DocCovConfigInput } from './schema';
 export { docCovConfigSchema, normalizeConfig } from './schema';
 export type {
-  CheckConfig,
   DocCovConfig,
   DocsConfig,
   ExampleValidationMode,

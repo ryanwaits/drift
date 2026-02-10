@@ -4,14 +4,6 @@ import type { DocCovOptions, NormalizedDocCovOptions } from '../options';
 import { normalizeDocCovOptions } from '../options';
 import { createProgram } from '@openpkg-ts/sdk';
 
-/**
- * Pre-detected Standard Schema for a variable export.
- */
-export interface DetectedSchemaEntry {
-  schema: Record<string, unknown>;
-  vendor: string;
-}
-
 export interface AnalysisContext {
   entryFile: string;
   baseDir: string;
@@ -22,8 +14,6 @@ export interface AnalysisContext {
   compilerHost: ts.CompilerHost;
   options: NormalizedDocCovOptions;
   configPath?: string;
-  /** Pre-detected Standard Schemas (from runtime detection) */
-  detectedSchemas?: Map<string, DetectedSchemaEntry>;
 }
 
 export interface AnalysisContextInput {
@@ -31,8 +21,6 @@ export interface AnalysisContextInput {
   packageDir?: string;
   content?: string;
   options?: DocCovOptions;
-  /** Pre-detected Standard Schemas (from runtime detection) */
-  detectedSchemas?: Map<string, DetectedSchemaEntry>;
 }
 
 export function createAnalysisContext({
@@ -40,7 +28,6 @@ export function createAnalysisContext({
   packageDir,
   content,
   options,
-  detectedSchemas,
 }: AnalysisContextInput): AnalysisContext {
   const baseDir = packageDir ?? path.dirname(entryFile);
   const normalizedOptions: NormalizedDocCovOptions = normalizeDocCovOptions(options);
@@ -61,6 +48,5 @@ export function createAnalysisContext({
     compilerHost: programResult.compilerHost,
     options: normalizedOptions,
     configPath: programResult.configPath,
-    detectedSchemas,
   };
 }
