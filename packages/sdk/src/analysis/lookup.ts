@@ -4,7 +4,7 @@
  * These utilities simplify accessing per-export coverage/drift data
  * when working with the composition pattern (OpenPkg + DocCovSpec).
  */
-import type { DocCovDrift, DocCovSpec, ExportAnalysis, MissingDocRule } from '@doccov/spec';
+import type { DocCovDrift, DocCovSpec, ExportAnalysis, MissingDocRule } from '@driftdev/spec';
 import type { SpecExport } from '@openpkg-ts/spec';
 
 /**

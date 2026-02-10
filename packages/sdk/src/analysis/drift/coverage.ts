@@ -14,7 +14,7 @@ import type { OpenPkgSpec } from '../spec-types';
  *
  * @example
  * ```ts
- * import { calculateAggregateCoverage } from '@doccov/sdk';
+ * import { calculateAggregateCoverage } from '@driftdev/sdk';
  *
  * const coverage = calculateAggregateCoverage(spec);
  * console.log(`Coverage: ${coverage}%`);
@@ -56,7 +56,7 @@ export function calculateAggregateCoverage(spec: OpenPkgSpec): number {
  *
  * @example
  * ```ts
- * import { ensureSpecCoverage } from '@doccov/sdk';
+ * import { ensureSpecCoverage } from '@driftdev/sdk';
  *
  * // Works with raw or enriched specs
  * const specWithCoverage = ensureSpecCoverage(rawSpec);

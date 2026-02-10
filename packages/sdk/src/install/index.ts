@@ -94,7 +94,7 @@ const DEFAULT_FALLBACK_ORDER: PackageManager[] = ['bun', 'npm'];
  *
  * @example
  * ```typescript
- * import { NodeFileSystem, installDependencies, createNodeCommandRunner } from '@doccov/sdk';
+ * import { NodeFileSystem, installDependencies, createNodeCommandRunner } from '@driftdev/sdk';
  *
  * const fs = new NodeFileSystem('/path/to/repo');
  * const result = await installDependencies(fs, '/path/to/repo', createNodeCommandRunner());

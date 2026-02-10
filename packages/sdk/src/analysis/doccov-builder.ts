@@ -8,14 +8,13 @@ import type {
   ForgottenExport,
   MissingDocRule,
   TypeReferenceLocation,
-} from '@doccov/spec';
-import { DRIFT_CATEGORIES } from '@doccov/spec';
+} from '@driftdev/spec';
+import { DRIFT_CATEGORIES } from '@driftdev/spec';
 import type { SpecExport } from '@openpkg-ts/spec';
-import type { StylePreset } from '../config/types';
 import { isFixableDrift } from '../fix';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';
 import { computeHealth, isExportDocumented } from './health';
-import type { DocRequirements } from './presets';
+import type { DocRequirements, StylePreset } from './presets';
 import { resolveRequirements } from './presets';
 import type { OpenPkgSpec } from './spec-types';
 

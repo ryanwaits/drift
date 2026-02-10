@@ -1,4 +1,4 @@
-import type { ApiSurfaceResult, DocumentationHealth } from '@doccov/spec';
+import type { ApiSurfaceResult, DocumentationHealth } from '@driftdev/spec';
 import type { CategorizedDrift, DriftCategory, SpecDocDrift } from '../analysis/drift/types';
 
 /**
@@ -7,39 +7,22 @@ import type { CategorizedDrift, DriftCategory, SpecDocDrift } from '../analysis/
 export const REPORT_VERSION = '1.0.0';
 
 /**
- * Default directory for DocCov outputs.
- */
-export const DEFAULT_REPORT_DIR = '.doccov';
-
-/**
- * Default path for cached DocCov reports.
- */
-export const DEFAULT_REPORT_PATH = '.doccov/report.json';
-
-/**
  * File extensions for each report format.
  */
 export const REPORT_EXTENSIONS: Record<string, string> = {
   json: 'json',
   markdown: 'md',
-  html: 'html',
   github: 'github.md',
 };
 
 /**
- * Get the default report path for a given format.
+ * Get the report path for a given format.
  *
- * @param format - The report format (json, markdown, html, github)
- * @param dir - The output directory (defaults to .doccov)
+ * @param format - The report format (json, markdown, github)
+ * @param dir - The output directory
  * @returns The full path to the report file
- *
- * @example
- * ```ts
- * getReportPath('markdown'); // '.doccov/report.md'
- * getReportPath('html', 'reports'); // 'reports/report.html'
- * ```
  */
-export function getReportPath(format: string, dir: string = DEFAULT_REPORT_DIR): string {
+export function getReportPath(format: string, dir: string): string {
   const ext = REPORT_EXTENSIONS[format] ?? format;
   return `${dir}/report.${ext}`;
 }
@@ -47,25 +30,17 @@ export function getReportPath(format: string, dir: string = DEFAULT_REPORT_DIR):
 /**
  * Get the report path for a diff comparison.
  *
- * Uses truncated hashes from both specs to create a unique, deterministic filename.
- *
  * @param baseHash - Hash of the base (before) spec
  * @param headHash - Hash of the head (after) spec
- * @param format - The report format (json, markdown, html, github)
- * @param dir - The output directory (defaults to .doccov)
+ * @param format - The report format (json, markdown, github)
+ * @param dir - The output directory
  * @returns The full path to the diff report file
- *
- * @example
- * ```ts
- * getDiffReportPath('abc123def456', 'xyz789uvw012', 'markdown');
- * // '.doccov/diff-abc123de-xyz789uv.md'
- * ```
  */
 export function getDiffReportPath(
   baseHash: string,
   headHash: string,
   format: string,
-  dir: string = DEFAULT_REPORT_DIR,
+  dir: string,
 ): string {
   const ext = REPORT_EXTENSIONS[format] ?? format;
   const hash = `${baseHash.slice(0, 8)}-${headHash.slice(0, 8)}`;
@@ -190,7 +165,7 @@ export interface ExportCoverageData {
 /**
  * DocCov report - a persistable coverage analysis result.
  *
- * This is the format saved to `.doccov/report.json` and returned
+ * This is the format saved as `report.json` and returned
  * by the `check` command with `--format json`.
  */
 export interface DocCovReport {

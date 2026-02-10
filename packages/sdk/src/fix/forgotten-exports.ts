@@ -4,7 +4,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { ApiSurfaceResult } from '@doccov/spec';
+import type { ApiSurfaceResult } from '@driftdev/spec';
 
 /** Fix for a forgotten export */
 export interface ForgottenExportFix {

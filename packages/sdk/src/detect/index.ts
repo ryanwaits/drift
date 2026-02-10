@@ -7,7 +7,7 @@
  *
  * @example
  * ```typescript
- * import { NodeFileSystem, analyzeProject } from '@doccov/sdk';
+ * import { NodeFileSystem, analyzeProject } from '@driftdev/sdk';
  *
  * const fs = new NodeFileSystem('/path/to/repo');
  * const project = await analyzeProject(fs);
@@ -72,7 +72,7 @@ import type { AnalyzeProjectOptions, FileSystem, ProjectInfo } from './types';
  *
  * @example
  * ```typescript
- * import { NodeFileSystem, analyzeProject } from '@doccov/sdk';
+ * import { NodeFileSystem, analyzeProject } from '@driftdev/sdk';
  *
  * // Single package
  * const singleFs = new NodeFileSystem('/path/to/package');

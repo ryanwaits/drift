@@ -61,7 +61,7 @@ export interface DiffWithDocsOptions {
  *
  * @example
  * ```ts
- * import { diffSpecWithDocs, parseMarkdownFiles } from '@doccov/sdk';
+ * import { diffSpecWithDocs, parseMarkdownFiles } from '@driftdev/sdk';
  * import type { OpenPkg } from '@openpkg-ts/spec';
  *
  * const oldSpec: OpenPkg = { openpkg: '0.2.0', meta: { name: 'my-pkg' }, exports: [] };

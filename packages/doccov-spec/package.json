@@ -1,5 +1,5 @@
 {
-  "name": "@doccov/spec",
+  "name": "@driftdev/spec",
   "version": "0.31.0",
   "description": "DocCov specification schema, types, and validation",
   "keywords": [

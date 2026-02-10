@@ -49,7 +49,7 @@ export interface ResolvedTarget {
  *
  * @example
  * ```typescript
- * import { NodeFileSystem, resolveTarget } from '@doccov/sdk';
+ * import { NodeFileSystem, resolveTarget } from '@driftdev/sdk';
  *
  * // Simple usage
  * const fs = new NodeFileSystem(process.cwd());

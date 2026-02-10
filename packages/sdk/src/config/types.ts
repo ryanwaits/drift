@@ -19,32 +19,6 @@ export interface DocsConfig {
 export type ExampleValidationMode = 'presence' | 'typecheck' | 'run';
 
 /**
- * Documentation style presets.
- *
- * - 'minimal': Only description required (default)
- * - 'verbose': Description, params, returns all required
- * - 'types-only': No documentation required (rely on TypeScript types)
- */
-export type StylePreset = 'minimal' | 'verbose' | 'types-only';
-
-/**
- * Fine-grained documentation requirements.
- * Use with `require` config to override preset defaults.
- */
-export interface DocRequirements {
-  /** Require description/summary */
-  description?: boolean;
-  /** Require @param tags for function parameters */
-  params?: boolean;
-  /** Require @returns tag for functions */
-  returns?: boolean;
-  /** Require @example blocks */
-  examples?: boolean;
-  /** Require @since tag */
-  since?: boolean;
-}
-
-/**
  * Schema extraction modes for validation libraries (Zod, Valibot, TypeBox, ArkType).
  *
  * - 'static': TypeScript Compiler API only (no runtime, always safe)
@@ -79,24 +53,8 @@ export interface CheckConfig {
   examples?: ExampleValidationMode | ExampleValidationMode[] | string;
   /** Minimum health score required (0-100). Unified metric combining coverage + accuracy. */
   minHealth?: number;
-  /** @deprecated Use minHealth instead */
-  minCoverage?: number;
-  /** @deprecated Use minHealth instead */
-  maxDrift?: number;
   /** API surface configuration */
   apiSurface?: ApiSurfaceConfig;
-  /**
-   * Documentation style preset.
-   * - 'minimal': Only description required (default)
-   * - 'verbose': Description, params, returns all required
-   * - 'types-only': No documentation required
-   */
-  style?: StylePreset;
-  /**
-   * Fine-grained documentation requirements.
-   * Overrides preset defaults for specific rules.
-   */
-  require?: DocRequirements;
 }
 
 /**
@@ -108,8 +66,6 @@ export interface DocCovConfig {
   include?: string[];
   /** Export exclude patterns */
   exclude?: string[];
-  /** Plugins (future) */
-  plugins?: unknown[];
   /** Documentation configuration */
   docs?: DocsConfig;
   /** Check command configuration */
@@ -137,7 +93,7 @@ export interface DocCovConfig {
  * @example
  * ```typescript
  * // doccov.config.ts
- * import { defineConfig } from '@doccov/sdk';
+ * import { defineConfig } from '@driftdev/sdk';
  *
  * export default defineConfig({
  *   include: ['MyClass', 'myFunction'],

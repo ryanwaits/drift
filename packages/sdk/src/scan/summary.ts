@@ -2,7 +2,7 @@
  * Utilities for extracting summary statistics from OpenPkg specs.
  */
 
-import type { DocCovSpec } from '@doccov/spec';
+import type { DocCovSpec } from '@driftdev/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { getExportAnalysis } from '../analysis/lookup';
 
@@ -53,7 +53,7 @@ export interface SpecSummary {
  *
  * @example
  * ```typescript
- * import { buildDocCovSpec, extractSpecSummary } from '@doccov/sdk';
+ * import { buildDocCovSpec, extractSpecSummary } from '@driftdev/sdk';
  *
  * const doccov = buildDocCovSpec({ openpkg: spec, openpkgPath: 'openpkg.json' });
  * const summary = extractSpecSummary(spec, doccov);

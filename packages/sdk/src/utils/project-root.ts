@@ -3,6 +3,7 @@
  */
 
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 /**
@@ -64,15 +65,35 @@ export function findProjectRoot(startDir: string): string {
   return path.resolve(startDir);
 }
 
+/** Override for test isolation */
+let _stateDirOverride: string | null = null;
+
 /**
- * Get the .doccov cache directory for a project.
+ * Override the state directory (for test isolation).
+ * Pass null to reset.
+ */
+export function _setStateDirOverride(dir: string | null): void {
+  _stateDirOverride = dir;
+}
+
+/**
+ * Get the state directory for a project: ~/.drift/projects/<slug>/
  *
- * Always uses the project root, not the package directory.
+ * Uses the project root to compute a deterministic slug.
  *
  * @param cwd - Current working directory or package directory
- * @returns Absolute path to the .doccov directory
+ * @returns Absolute path to the project state directory
  */
-export function getDoccovDir(cwd: string): string {
+export function getStateDir(cwd: string): string {
+  if (_stateDirOverride) return _stateDirOverride;
   const projectRoot = findProjectRoot(cwd);
-  return path.join(projectRoot, '.doccov');
+  const slug = projectRoot.replace(/\//g, '-').replace(/^-/, '-');
+  return path.join(os.homedir(), '.drift', 'projects', slug);
+}
+
+/**
+ * @deprecated Use getStateDir instead. Will be removed in next major.
+ */
+export function getDriftdevDir(cwd: string): string {
+  return getStateDir(cwd);
 }

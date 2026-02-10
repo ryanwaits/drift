@@ -1,4 +1,4 @@
-import type { DocCovSpec, DocumentationHealth } from '@doccov/spec';
+import type { DocCovSpec, DocumentationHealth } from '@driftdev/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 
 /**
@@ -140,7 +140,7 @@ export function createPackageResult(
  *
  * @example
  * ```ts
- * import { aggregateResults, createPackageResult } from '@doccov/sdk';
+ * import { aggregateResults, createPackageResult } from '@driftdev/sdk';
  *
  * const results = [
  *   createPackageResult(pkg1Openpkg, pkg1Doccov, 'packages/a/src/index.ts'),

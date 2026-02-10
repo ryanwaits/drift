@@ -1,10 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { DocCovSpec } from '@doccov/spec';
+import type { DocCovSpec } from '@driftdev/spec';
 import type { OpenPkg, SpecExport, SpecSignature, SpecType } from '@openpkg-ts/spec';
 import {
   type CoverageSummary,
-  DEFAULT_REPORT_PATH,
   type DocCovReport,
   type ExportCoverageData,
   REPORT_VERSION,
@@ -21,7 +20,7 @@ import { isExportDocumented } from './health';
  *
  * @example
  * ```ts
- * import { DocCov, generateReport } from '@doccov/sdk';
+ * import { DocCov, generateReport } from '@driftdev/sdk';
  *
  * const doccov = new DocCov();
  * const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
@@ -132,10 +131,10 @@ export function generateReportFromDocCov(openpkg: OpenPkg, doccov: DocCovSpec): 
 /**
  * Load a cached DocCov report from disk.
  *
- * @param reportPath - Path to the report file (defaults to .doccov/report.json)
+ * @param reportPath - Path to the report file
  * @returns The cached report, or null if not found
  */
-export function loadCachedReport(reportPath: string = DEFAULT_REPORT_PATH): DocCovReport | null {
+export function loadCachedReport(reportPath: string): DocCovReport | null {
   try {
     const fullPath = path.resolve(reportPath);
     if (!fs.existsSync(fullPath)) {
@@ -152,9 +151,9 @@ export function loadCachedReport(reportPath: string = DEFAULT_REPORT_PATH): DocC
  * Save a DocCov report to disk.
  *
  * @param report - The report to save
- * @param reportPath - Path to save the report (defaults to .doccov/report.json)
+ * @param reportPath - Path to save the report
  */
-export function saveReport(report: DocCovReport, reportPath: string = DEFAULT_REPORT_PATH): void {
+export function saveReport(report: DocCovReport, reportPath: string): void {
   const fullPath = path.resolve(reportPath);
   const dir = path.dirname(fullPath);
 
@@ -163,45 +162,6 @@ export function saveReport(report: DocCovReport, reportPath: string = DEFAULT_RE
   }
 
   fs.writeFileSync(fullPath, JSON.stringify(report, null, 2));
-}
-
-/**
- * Check if a cached report is still valid.
- *
- * A report is considered stale if:
- * - It doesn't exist
- * - The spec version has changed
- * - Source files have been modified since generation
- *
- * @param reportPath - Path to the report file
- * @param sourceFiles - Source files to check modification times against
- * @returns True if the cached report is still valid
- */
-export function isCachedReportValid(
-  reportPath: string = DEFAULT_REPORT_PATH,
-  sourceFiles: string[] = [],
-): boolean {
-  const report = loadCachedReport(reportPath);
-  if (!report) {
-    return false;
-  }
-
-  // Check if any source files have been modified since report generation
-  const reportTime = new Date(report.generatedAt).getTime();
-
-  for (const file of sourceFiles) {
-    try {
-      const stat = fs.statSync(file);
-      if (stat.mtimeMs > reportTime) {
-        return false;
-      }
-    } catch {
-      // File doesn't exist or can't be read - consider report invalid
-      return false;
-    }
-  }
-
-  return true;
 }
 
 // ============================================================================
@@ -342,7 +302,7 @@ function formatTypeToApiSurface(type: SpecType): string {
  *
  * @example
  * ```ts
- * import { DocCov, renderApiSurface } from '@doccov/sdk';
+ * import { DocCov, renderApiSurface } from '@driftdev/sdk';
  *
  * const doccov = new DocCov();
  * const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts');

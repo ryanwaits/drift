@@ -1,9 +1,6 @@
 /**
- * GitHub utilities for URL parsing and spec fetching.
- * Single source of truth for GitHub-related operations.
+ * GitHub utilities for URL parsing.
  */
-
-import type { OpenPkg } from '@openpkg-ts/spec';
 
 /**
  * Parsed components of a GitHub URL.
@@ -35,7 +32,7 @@ export interface ParsedGitHubUrl {
  *
  * @example
  * ```typescript
- * import { parseGitHubUrl } from '@doccov/sdk';
+ * import { parseGitHubUrl } from '@driftdev/sdk';
  *
  * const parsed = parseGitHubUrl('https://github.com/vercel/next.js/tree/canary');
  * // { owner: 'vercel', repo: 'next.js', ref: 'canary' }
@@ -83,152 +80,4 @@ export function parseGitHubUrl(input: string, defaultRef = 'main'): ParsedGitHub
   }
 
   return { owner, repo, ref };
-}
-
-/**
- * Build a clone URL from parsed components.
- *
- * @param parsed - Parsed GitHub URL components
- * @returns HTTPS clone URL
- *
- * @example
- * ```typescript
- * const cloneUrl = buildCloneUrl({ owner: 'vercel', repo: 'next.js', ref: 'main' });
- * // 'https://github.com/vercel/next.js.git'
- * ```
- */
-export function buildCloneUrl(parsed: ParsedGitHubUrl): string {
-  return `https://github.com/${parsed.owner}/${parsed.repo}.git`;
-}
-
-/**
- * Build a display-friendly URL (without protocol or .git suffix).
- *
- * @param parsed - Parsed GitHub URL components
- * @returns Display URL like 'github.com/owner/repo'
- *
- * @example
- * ```typescript
- * const displayUrl = buildDisplayUrl({ owner: 'vercel', repo: 'next.js', ref: 'main' });
- * // 'github.com/vercel/next.js'
- * ```
- */
-export function buildDisplayUrl(parsed: ParsedGitHubUrl): string {
-  return `github.com/${parsed.owner}/${parsed.repo}`;
-}
-
-/**
- * Build a raw.githubusercontent.com URL for a file.
- *
- * @param parsed - Parsed GitHub URL components
- * @param filePath - Path to the file in the repo
- * @returns Raw content URL
- */
-export function buildRawUrl(parsed: ParsedGitHubUrl, filePath: string): string {
-  return `https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/${parsed.ref}/${filePath}`;
-}
-
-/**
- * Fetch an OpenPkg spec from a GitHub repository.
- *
- * Tries the specified ref first, then falls back to 'master' if not found.
- *
- * @param parsed - Parsed GitHub URL components
- * @returns The OpenPkg spec, or null if not found
- *
- * @example
- * ```typescript
- * import { parseGitHubUrl, fetchSpecFromGitHub } from '@doccov/sdk';
- *
- * const parsed = parseGitHubUrl('vercel/next.js');
- * const spec = await fetchSpecFromGitHub(parsed);
- * if (spec) {
- *   console.log(`Coverage: ${spec.docs?.coverageScore}%`);
- * }
- * ```
- */
-export async function fetchSpecFromGitHub(parsed: ParsedGitHubUrl): Promise<OpenPkg | null> {
-  const urls = [
-    buildRawUrl(parsed, 'openpkg.json'),
-    // Fallback to master if the ref doesn't have the file
-    `https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/master/openpkg.json`,
-  ];
-
-  for (const url of urls) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        return (await response.json()) as OpenPkg;
-      }
-    } catch {
-      // Try next URL
-    }
-  }
-
-  return null;
-}
-
-/**
- * Options for fetching a spec from GitHub.
- */
-export interface FetchSpecOptions {
-  /** Git ref (branch or tag). Default: 'main' */
-  ref?: string;
-  /** Path to openpkg.json (for monorepos). Default: 'openpkg.json' */
-  path?: string;
-}
-
-/**
- * Fetch an OpenPkg spec from a GitHub repository by owner/repo/branch.
- *
- * Convenience function that creates ParsedGitHubUrl internally.
- *
- * @param owner - Repository owner
- * @param repo - Repository name
- * @param branchOrOptions - Branch name (default: 'main') or options object
- * @returns The OpenPkg spec, or null if not found
- */
-export async function fetchSpec(
-  owner: string,
-  repo: string,
-  branchOrOptions: string | FetchSpecOptions = 'main',
-): Promise<OpenPkg | null> {
-  const options =
-    typeof branchOrOptions === 'string'
-      ? { ref: branchOrOptions, path: 'openpkg.json' }
-      : { ref: branchOrOptions.ref ?? 'main', path: branchOrOptions.path ?? 'openpkg.json' };
-
-  const parsed: ParsedGitHubUrl = { owner, repo, ref: options.ref };
-  return fetchSpecFromGitHubWithPath(parsed, options.path);
-}
-
-/**
- * Fetch an OpenPkg spec from a GitHub repository with custom path support.
- *
- * @param parsed - Parsed GitHub URL components
- * @param specPath - Path to the openpkg.json file (default: 'openpkg.json')
- * @returns The OpenPkg spec, or null if not found
- */
-export async function fetchSpecFromGitHubWithPath(
-  parsed: ParsedGitHubUrl,
-  specPath = 'openpkg.json',
-): Promise<OpenPkg | null> {
-  const urls = [
-    buildRawUrl(parsed, specPath),
-    // Fallback to master if the ref doesn't have the file
-    `https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/master/${specPath}`,
-  ];
-
-  for (const url of urls) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        return (await response.json()) as OpenPkg;
-      }
-    } catch {
-      // Try next URL
-    }
-  }
-
-  return null;
 }

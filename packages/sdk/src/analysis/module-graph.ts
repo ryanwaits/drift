@@ -56,7 +56,7 @@ export interface ModuleGraph {
  *
  * @example
  * ```ts
- * import { buildModuleGraph } from '@doccov/sdk';
+ * import { buildModuleGraph } from '@driftdev/sdk';
  *
  * const graph = buildModuleGraph([pkg1Spec, pkg2Spec]);
  *

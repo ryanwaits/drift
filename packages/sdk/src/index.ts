@@ -7,16 +7,16 @@
  * @example
  * ```ts
  * // Core API (this module)
- * import { DocCov, buildDocCovSpec, computeDrift } from '@doccov/sdk';
+ * import { DocCov, buildDocCovSpec, computeDrift } from '@driftdev/sdk';
  *
  * // Analysis utilities
- * import { generateReport, computeSnapshot } from '@doccov/sdk/analysis';
+ * import { generateReport, computeSnapshot } from '@driftdev/sdk/analysis';
  *
  * // Type definitions
- * import type { DocCovReport, FilterOptions } from '@doccov/sdk/types';
+ * import type { DocCovReport, FilterOptions } from '@driftdev/sdk/types';
  * ```
  *
- * @module @doccov/sdk
+ * @module @driftdev/sdk
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -89,18 +89,9 @@ export type {
   CheckConfig,
   DocCovConfig,
   DocCovConfigInput,
-  DocRequirements,
   DocsConfig,
-  StylePreset,
 } from './config';
 export { defineConfig, docCovConfigSchema, normalizeConfig } from './config';
-// Presets for documentation style requirements
-export type { DocRequirements as ResolvedDocRequirements } from './analysis/presets';
-export {
-  DEFAULT_REQUIREMENTS,
-  PRESETS,
-  resolveRequirements,
-} from './analysis/presets';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Project Resolution & Detection
@@ -155,7 +146,8 @@ export {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type { MarkdownCodeBlock, MarkdownDocFile } from './markdown';
-export { findExportReferences, parseMarkdownFiles } from './markdown';
+export { discoverMarkdownFiles, findExportReferences, parseMarkdownFiles } from './markdown';
+export { detectProseDrift, type ProseDriftOptions } from './analysis/drift/prose-drift';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Report Types (commonly needed)
@@ -183,7 +175,7 @@ export { typecheckExamples } from './typecheck';
 // Context types
 export type { DetectedSchemaEntry } from './analysis/context';
 export type { ExportDriftResult } from './analysis/docs-coverage';
-// Analysis (migrate to @doccov/sdk/analysis)
+// Analysis (migrate to @driftdev/sdk/analysis)
 export {
   calculateAggregateCoverage,
   categorizeDrift,
@@ -281,13 +273,10 @@ export type {
 } from './extract/schema';
 // Schema extraction
 export {
-  extractSchemaOutputType,
   extractSchemaType,
   extractStandardSchemas,
   extractStandardSchemasFromProject,
   findAdapter,
-  getRegisteredAdapters,
-  getSupportedLibraries,
   isSchemaType,
   isStandardJSONSchema,
   resolveCompiledPath,
@@ -301,14 +290,7 @@ export type { ApplyEditsResult, FixType, JSDocParam, JSDocReturn, JSDocTag } fro
 export { applyPatchToJSDoc, generateFix } from './fix';
 export type { ParsedGitHubUrl } from './github';
 // GitHub
-export {
-  buildCloneUrl,
-  buildDisplayUrl,
-  buildRawUrl,
-  fetchSpec,
-  fetchSpecFromGitHub,
-  parseGitHubUrl,
-} from './github';
+export { parseGitHubUrl } from './github';
 export type { CommandResult, CommandRunner, InstallOptions, InstallResult } from './install';
 // Install
 export { createNodeCommandRunner, installDependencies } from './install';
@@ -368,8 +350,6 @@ export { typecheckExample } from './typecheck';
 export type { DriftReport, DriftReportSummary } from './types/report';
 // Report types (additional exports)
 export {
-  DEFAULT_REPORT_DIR,
-  DEFAULT_REPORT_PATH,
   getDiffReportPath,
   getReportPath,
   REPORT_EXTENSIONS,
@@ -384,4 +364,4 @@ export type {
 // Example runner
 export { runExample, runExamples, runExamplesWithPackage } from './utils/example-runner';
 // Project root detection
-export { findProjectRoot, getDoccovDir } from './utils/project-root';
+export { findProjectRoot, getDriftdevDir, getStateDir, _setStateDirOverride } from './utils/project-root';

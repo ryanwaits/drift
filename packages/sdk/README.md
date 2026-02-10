@@ -5,7 +5,7 @@ Programmatic API for documentation coverage analysis, drift detection, and spec 
 ## Install
 
 ```bash
-npm install @doccov/sdk
+bun add @doccov/sdk
 ```
 
 ## Quick Start
@@ -30,49 +30,77 @@ console.log(`Drift issues: ${spec.summary.drift.total}`);
 
 ## Core API
 
-### DocCov Class
+### Drift Detection
 
-Main analysis engine.
+15 drift types across 4 categories: structural, semantic, example, prose.
 
 ```typescript
-import { DocCov } from '@doccov/sdk';
+import { computeDrift, buildExportRegistry, detectProseDrift, discoverMarkdownFiles } from '@doccov/sdk';
 
-const doccov = new DocCov({
-  resolveExternalTypes: true,
-  maxDepth: 20,
-  useCache: true,
-});
+// JSDoc drift (param mismatches, type errors, broken links, etc.)
+const drift = computeDrift(spec);
+for (const [exportName, issues] of drift.exports) {
+  for (const issue of issues) {
+    console.log(`${exportName}: ${issue.issue}`);
+    console.log(`  file: ${issue.filePath}:${issue.line}`);
+  }
+}
 
-const { spec, diagnostics } = await doccov.analyzeFileWithDiagnostics(
-  'src/index.ts',
-  { filters: { visibility: ['public', 'beta'] } }
-);
+// Prose drift (markdown docs referencing non-existent exports)
+const registry = buildExportRegistry(spec);
+const markdownFiles = discoverMarkdownFiles(process.cwd());
+const proseIssues = detectProseDrift({ packageName: '@my/pkg', markdownFiles, registry });
 ```
+
+Every `SpecDocDrift` includes `filePath` and `line` for agent-driven fixes.
 
 ### Coverage Analysis
 
 ```typescript
 import { buildDocCovSpec, getExportDrift } from '@doccov/sdk';
 
-// Build DocCov spec with coverage data
 const doccovSpec = buildDocCovSpec({ openpkg, openpkgPath, packagePath });
 
 // Get drift for specific export
 const drifts = getExportDrift(someExport, doccovSpec);
 ```
 
+### Health Scoring
+
+```typescript
+import { computeHealth, isExportDocumented } from '@doccov/sdk';
+
+const health = computeHealth({
+  coverageScore: 88,
+  documentedExports: 243,
+  totalExports: 275,
+  driftIssues: 36,
+  fixableDrift: 20,
+  driftByCategory: { structural: 20, semantic: 10, example: 5, prose: 1 },
+});
+```
+
+### Markdown Discovery
+
+```typescript
+import { discoverMarkdownFiles, parseMarkdownFiles, findExportReferences } from '@doccov/sdk';
+
+// Auto-discover markdown files (README.md, docs/**/*.md)
+const files = discoverMarkdownFiles(process.cwd(), {
+  include: ['README.md', 'docs/**/*.md'],
+  exclude: ['node_modules/**'],
+});
+
+// Find export references in markdown
+const refs = findExportReferences(files, ['createUser', 'updateUser']);
+```
+
 ### Example Validation
 
 ```typescript
-import { runExamples, typecheckExamples, validateExamples } from '@doccov/sdk';
+import { validateExamples, typecheckExamples } from '@doccov/sdk';
 
-// Run @example blocks
-const results = await runExamples(spec.exports, { cwd: process.cwd() });
-
-// Typecheck examples
-const typeErrors = await typecheckExamples(spec.exports, { cwd: process.cwd() });
-
-// Full validation
+// Full validation (presence + typecheck + run)
 const validation = await validateExamples(spec, {
   validations: ['presence', 'typecheck', 'run'],
   targetDir: process.cwd(),
@@ -87,54 +115,71 @@ import { resolveTarget, NodeFileSystem } from '@doccov/sdk';
 const fs = new NodeFileSystem(process.cwd());
 const { entryFile, targetDir, packageInfo } = await resolveTarget(fs, {
   cwd: process.cwd(),
-  package: '@my/package', // For monorepos
 });
 ```
 
 ### History & Trends
 
 ```typescript
-import { saveSnapshot, loadSnapshots, getTrend } from '@doccov/sdk';
+import { saveSnapshot, loadSnapshots, getTrend, computeSnapshot } from '@doccov/sdk';
 
-// Save coverage snapshot
 saveSnapshot(computeSnapshot(spec), process.cwd());
-
-// Load history
 const snapshots = loadSnapshots(process.cwd());
-
-// Get trend analysis
 const trend = getTrend(spec, process.cwd());
-console.log(`Delta: ${trend.delta}%`);
+```
+
+### Categorize & Summarize
+
+```typescript
+import { categorizeDrift, getDriftSummary, groupDriftsByCategory } from '@doccov/sdk';
+
+const summary = getDriftSummary(drifts);
+// summary.total, summary.byCategory (structural/semantic/example/prose), summary.fixable
+
+const grouped = groupDriftsByCategory(drifts);
+// grouped.structural[], grouped.semantic[], grouped.example[], grouped.prose[]
 ```
 
 ## Exports
 
 ### Analysis
-- `DocCov` - Main analysis class
-- `buildDocCovSpec` - Build coverage spec
-- `getExportDrift` - Get drift for an export
-- `generateReport` - Generate coverage reports
+- `DocCov` — Main analysis class
+- `buildDocCovSpec` — Build coverage spec
+- `computeDrift` / `computeExportDrift` — Drift detection
+- `computeHealth` — Health score computation
+- `generateReport` — Generate coverage reports
+
+### Drift Detection
+- `detectProseDrift` — Markdown prose drift detection
+- `buildExportRegistry` — Build registry for cross-reference validation
+- `categorizeDrift` / `getDriftSummary` / `groupDriftsByCategory` — Categorization
+- `generateFix` / `applyPatchToJSDoc` — Auto-fix drift
+
+### Markdown
+- `discoverMarkdownFiles` — Auto-discover markdown files by glob patterns
+- `parseMarkdownFiles` — Parse markdown for code blocks
+- `findExportReferences` — Find export references in markdown
+- `diffSpecWithDocs` — Diff specs with doc impact analysis
 
 ### Examples
-- `runExamples` / `runExample` - Execute @example blocks
-- `typecheckExamples` - Type-check examples
-- `validateExamples` - Full example validation
+- `validateExamples` — Full example validation
+- `typecheckExamples` — Type-check examples
 
 ### Resolution
-- `resolveTarget` - Resolve entry points
-- `NodeFileSystem` - File system adapter
-- `detectPackageManager` - Detect npm/yarn/pnpm/bun
+- `resolveTarget` — Resolve entry points
+- `NodeFileSystem` — File system adapter
+- `detectPackageManager` — Detect npm/yarn/pnpm/bun
 
 ### History
-- `saveSnapshot` / `loadSnapshots` - Manage coverage history
-- `getTrend` / `getExtendedTrend` - Trend analysis
-- `pruneHistory` - Clean old snapshots
+- `saveSnapshot` / `loadSnapshots` — Manage coverage history
+- `getTrend` / `getExtendedTrend` — Trend analysis
+- `pruneHistory` — Clean old snapshots
 
-### Utilities
-- `diffSpecWithDocs` - Diff specs with doc impact
-- `parseMarkdownFiles` - Parse markdown for refs
-- `generateFix` / `applyPatchToJSDoc` - Auto-fix drift
+### Configuration
+- `defineConfig` — Type-safe config helper
+- `normalizeConfig` — Config normalization
+- `docCovConfigSchema` — Zod schema for validation
 
 ## License
 
-MIT
+BUSL-1.1

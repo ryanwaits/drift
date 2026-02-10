@@ -1,5 +1,5 @@
 {
-  "name": "@doccov/sdk",
+  "name": "@driftdev/sdk",
   "version": "0.32.0",
   "description": "DocCov SDK - Documentation coverage and drift detection for TypeScript",
   "keywords": [
@@ -47,12 +47,11 @@
     "dist"
   ],
   "dependencies": {
-    "@doccov/spec": "^0.31.0",
+    "@driftdev/spec": "^0.31.0",
     "@openpkg-ts/sdk": "^0.37.0",
     "@openpkg-ts/spec": "^0.37.0",
     "@vercel/sandbox": "^1.0.3",
     "mdast": "^3.0.0",
-    "minimatch": "^10.1.1",
     "remark-mdx": "^3.1.0",
     "remark-parse": "^11.0.0",
     "typescript": "^5.0.0",

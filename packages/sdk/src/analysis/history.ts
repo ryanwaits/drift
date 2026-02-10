@@ -6,17 +6,17 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { OpenPkg } from '@openpkg-ts/spec';
-import { getDoccovDir } from '../utils/project-root';
+import { getStateDir } from '../utils/project-root';
 import { isExportDocumented } from './health';
 
-/** Directory for storing history snapshots (relative to .doccov) */
-export const HISTORY_DIR = '.doccov/history';
+/** Directory for storing history snapshots (relative to state dir) */
+export const HISTORY_DIR = 'history';
 
 /**
  * Get the history directory path (uses project root).
  */
 function getHistoryDir(cwd: string): string {
-  return path.join(getDoccovDir(cwd), 'history');
+  return path.join(getStateDir(cwd), 'history');
 }
 
 /**
@@ -152,7 +152,7 @@ export function computeSnapshot(
 /**
  * Save a coverage snapshot to history.
  *
- * Uses project root for .doccov location (walks up from cwd to find root).
+ * Uses ~/.drift/projects/<slug>/ for storage.
  *
  * @param snapshot - The snapshot to save
  * @param cwd - Working directory (will resolve to project root)
@@ -172,7 +172,7 @@ export function saveSnapshot(snapshot: CoverageSnapshot, cwd: string): void {
 /**
  * Load all historical snapshots.
  *
- * Uses project root for .doccov location (walks up from cwd to find root).
+ * Uses ~/.drift/projects/<slug>/ for storage.
  *
  * @param cwd - Working directory (will resolve to project root)
  * @returns Array of snapshots sorted by timestamp (most recent first)
@@ -273,7 +273,7 @@ export function formatDelta(delta: number): string {
 /**
  * Prune old snapshots to keep history manageable.
  *
- * Uses project root for .doccov location (walks up from cwd to find root).
+ * Uses ~/.drift/projects/<slug>/ for storage.
  *
  * @param cwd - Working directory (will resolve to project root)
  * @param keepCount - Number of snapshots to keep (default: 100)

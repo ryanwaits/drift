@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { DocCovSpec } from '@doccov/spec';
+import type { DocCovSpec } from '@driftdev/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { aggregateResults, createPackageResult, type PackageResult } from '../src/analysis/batch';
 

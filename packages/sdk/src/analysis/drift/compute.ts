@@ -155,5 +155,15 @@ export function computeExportDrift(
     drifts.push(...detectBrokenLinks(entry, registry, { moduleGraph: options?.moduleGraph }));
   }
 
+  // Stamp source location from the entry onto all drifts that don't already have one
+  const filePath = entry.source?.file;
+  const line = entry.source?.line;
+  if (filePath) {
+    for (const d of drifts) {
+      if (!d.filePath) d.filePath = filePath;
+      if (!d.line && line) d.line = line;
+    }
+  }
+
   return drifts;
 }

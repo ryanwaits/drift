@@ -26,6 +26,8 @@ export {
   hasNonAssertionComments,
   parseAssertions,
 } from './example-drift';
+// Prose drift detection
+export { detectProseDrift, type ProseDriftOptions } from './prose-drift';
 // Parameter drift detection
 export { detectOptionalityDrift, detectParamDrift, detectParamTypeDrift } from './param-drift';
 // Semantic drift detection

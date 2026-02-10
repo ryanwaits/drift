@@ -3,7 +3,7 @@
  *
  * @example
  * ```ts
- * import type { DocCovReport, FilterOptions } from '@doccov/sdk/types';
+ * import type { DocCovReport, FilterOptions } from '@driftdev/sdk/types';
  * ```
  *
  * @module types
@@ -16,8 +16,6 @@ export type { FilterOptions, ReleaseTag } from '../filtering/types';
 // Report types
 export {
   type CoverageSummary,
-  DEFAULT_REPORT_DIR,
-  DEFAULT_REPORT_PATH,
   type DocCovReport,
   type DriftReport,
   type DriftReportSummary,

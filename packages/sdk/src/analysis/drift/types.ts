@@ -21,7 +21,8 @@ export type DriftType =
   | 'example-syntax-error'
   | 'example-runtime-error'
   | 'example-assertion-failed'
-  | 'broken-link';
+  | 'broken-link'
+  | 'prose-broken-reference';
 
 export type SpecDocDrift = {
   type: DriftType;
@@ -33,12 +34,16 @@ export type SpecDocDrift = {
   actual?: string;
   /** Actionable suggestion for fixing the drift */
   suggestion?: string;
+  /** Source file path (for prose drift) */
+  filePath?: string;
+  /** Source line number (for prose drift) */
+  line?: number;
 };
 
 /**
  * Drift categories group related drift types for progressive disclosure.
  */
-export type DriftCategory = 'structural' | 'semantic' | 'example';
+export type DriftCategory = 'structural' | 'semantic' | 'example' | 'prose';
 
 /**
  * Maps each drift type to its category.
@@ -63,6 +68,9 @@ export const DRIFT_CATEGORIES: Record<DriftType, DriftCategory> = {
   'example-syntax-error': 'example',
   'example-runtime-error': 'example',
   'example-assertion-failed': 'example',
+
+  // Prose: markdown documentation references
+  'prose-broken-reference': 'prose',
 };
 
 /**
@@ -72,6 +80,7 @@ export const DRIFT_CATEGORY_LABELS: Record<DriftCategory, string> = {
   structural: 'Signature mismatches',
   semantic: 'Metadata issues',
   example: 'Example problems',
+  prose: 'Prose references',
 };
 
 /**
@@ -81,6 +90,7 @@ export const DRIFT_CATEGORY_DESCRIPTIONS: Record<DriftCategory, string> = {
   structural: "JSDoc types or parameters don't match the actual code signature",
   semantic: 'Deprecation, visibility, or reference issues',
   example: "@example code has errors or doesn't work correctly",
+  prose: 'Markdown docs import or reference non-existent exports',
 };
 
 export type SpecDocsMetadata = {

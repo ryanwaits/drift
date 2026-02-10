@@ -3,7 +3,7 @@
  *
  * @example
  * ```ts
- * import { computeDrift, buildDocCovSpec, generateReport } from '@doccov/sdk/analysis';
+ * import { computeDrift, buildDocCovSpec, generateReport } from '@driftdev/sdk/analysis';
  * ```
  *
  * @module analysis
@@ -37,6 +37,8 @@ export {
   hasNonAssertionComments,
   parseAssertions,
 } from './docs-coverage';
+// Prose drift detection
+export { detectProseDrift, type ProseDriftOptions } from './drift/prose-drift';
 // History and trends
 export {
   type CoverageSnapshot,
@@ -72,7 +74,6 @@ export { buildModuleGraph, findSymbolModule, symbolExistsInGraph } from './modul
 export {
   generateReport,
   generateReportFromDocCov,
-  isCachedReportValid,
   loadCachedReport,
   renderApiSurface,
   saveReport,

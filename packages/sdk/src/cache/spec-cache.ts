@@ -1,14 +1,14 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { OpenPkg } from '@openpkg-ts/spec';
-import { getDoccovDir } from '../utils/project-root';
+import { getStateDir } from '../utils/project-root';
 import { diffHashes, hashFile, hashFiles } from './hash';
 
 /** Current cache format version - bump when spec extraction logic changes */
 export const CACHE_VERSION = '1.3.0';
 
-/** Default cache file path */
-export const SPEC_CACHE_FILE = '.doccov/cache/spec.cache.json';
+/** Default cache file path (relative to state dir) */
+export const SPEC_CACHE_FILE = 'cache/spec.cache.json';
 
 /**
  * Configuration that affects spec generation output.
@@ -141,14 +141,14 @@ export interface CacheContext {
 /**
  * Load cached spec from disk.
  *
- * Uses project root for cache location (walks up from cwd to find root).
+ * Uses ~/.drift/projects/<slug>/ for storage.
  *
  * @param cwd - Working directory (will resolve to project root)
  * @returns Cached spec, or null if not found or invalid JSON
  */
 export function loadSpecCache(cwd: string): SpecCache | null {
   try {
-    const cachePath = path.join(getDoccovDir(cwd), 'cache', 'spec.cache.json');
+    const cachePath = path.join(getStateDir(cwd), 'cache', 'spec.cache.json');
     if (!fs.existsSync(cachePath)) {
       return null;
     }
@@ -162,7 +162,7 @@ export function loadSpecCache(cwd: string): SpecCache | null {
 /**
  * Save spec to cache.
  *
- * Uses project root for cache location (walks up from cwd to find root).
+ * Uses ~/.drift/projects/<slug>/ for storage.
  *
  * @param spec - OpenPkg spec to cache
  * @param context - Cache context with file paths and config
@@ -195,7 +195,7 @@ export function saveSpecCache(spec: OpenPkg, context: CacheContext): void {
     forgottenExports,
   };
 
-  const cachePath = path.join(getDoccovDir(cwd), 'cache', 'spec.cache.json');
+  const cachePath = path.join(getStateDir(cwd), 'cache', 'spec.cache.json');
   const dir = path.dirname(cachePath);
 
   if (!fs.existsSync(dir)) {
@@ -265,13 +265,13 @@ export function validateSpecCache(cache: SpecCache, context: CacheContext): Cach
 /**
  * Clear the spec cache.
  *
- * Uses project root for cache location (walks up from cwd to find root).
+ * Uses ~/.drift/projects/<slug>/ for storage.
  *
  * @param cwd - Working directory (will resolve to project root)
  * @returns True if cache was deleted, false if it didn't exist
  */
 export function clearSpecCache(cwd: string): boolean {
-  const cachePath = path.join(getDoccovDir(cwd), 'cache', 'spec.cache.json');
+  const cachePath = path.join(getStateDir(cwd), 'cache', 'spec.cache.json');
   if (fs.existsSync(cachePath)) {
     fs.unlinkSync(cachePath);
     return true;
@@ -282,11 +282,11 @@ export function clearSpecCache(cwd: string): boolean {
 /**
  * Get cache file path for a given working directory.
  *
- * Uses project root for cache location (walks up from cwd to find root).
+ * Uses ~/.drift/projects/<slug>/ for storage.
  *
  * @param cwd - Working directory (will resolve to project root)
  * @returns Absolute path to cache file
  */
 export function getSpecCachePath(cwd: string): string {
-  return path.join(getDoccovDir(cwd), 'cache', 'spec.cache.json');
+  return path.join(getStateDir(cwd), 'cache', 'spec.cache.json');
 }

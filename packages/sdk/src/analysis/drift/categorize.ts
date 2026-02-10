@@ -54,6 +54,7 @@ export function groupDriftsByCategory(
     structural: [],
     semantic: [],
     example: [],
+    prose: [],
   };
 
   for (const drift of drifts) {
@@ -86,6 +87,7 @@ export function getDriftSummary(drifts: SpecDocDrift[]): DriftSummary {
       structural: grouped.structural.length,
       semantic: grouped.semantic.length,
       example: grouped.example.length,
+      prose: grouped.prose.length,
     },
     fixable: drifts.filter((d) => isFixableDrift(d)).length,
   };
@@ -119,6 +121,9 @@ export function formatDriftSummaryLine(summary: DriftSummary): string {
   }
   if (summary.byCategory.example > 0) {
     parts.push(`${summary.byCategory.example} example`);
+  }
+  if (summary.byCategory.prose > 0) {
+    parts.push(`${summary.byCategory.prose} prose`);
   }
 
   const fixableNote = summary.fixable > 0 ? ` (${summary.fixable} auto-fixable)` : '';

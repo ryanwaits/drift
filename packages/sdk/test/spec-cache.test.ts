@@ -14,6 +14,7 @@ import {
   saveSpecCache,
   validateSpecCache,
 } from '../src/cache/spec-cache';
+import { _setStateDirOverride } from '../src/utils/project-root';
 import { createSpec } from './test-helpers';
 
 describe('validateSpecCache', () => {
@@ -21,6 +22,7 @@ describe('validateSpecCache', () => {
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'doccov-cache-test-'));
+    _setStateDirOverride(tempDir);
     // Create minimal test files
     fs.writeFileSync(path.join(tempDir, 'tsconfig.json'), '{}');
     fs.writeFileSync(path.join(tempDir, 'package.json'), '{"name":"test"}');
@@ -28,6 +30,7 @@ describe('validateSpecCache', () => {
   });
 
   afterEach(() => {
+    _setStateDirOverride(null);
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
@@ -244,12 +247,14 @@ describe('saveSpecCache / loadSpecCache', () => {
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'doccov-cache-test-'));
+    _setStateDirOverride(tempDir);
     fs.writeFileSync(path.join(tempDir, 'tsconfig.json'), '{}');
     fs.writeFileSync(path.join(tempDir, 'package.json'), '{"name":"test"}');
     fs.writeFileSync(path.join(tempDir, 'index.ts'), 'export const x = 1;');
   });
 
   afterEach(() => {
+    _setStateDirOverride(null);
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
@@ -285,7 +290,7 @@ describe('saveSpecCache / loadSpecCache', () => {
 
     saveSpecCache(spec, context);
 
-    expect(fs.existsSync(path.join(tempDir, '.doccov', 'cache'))).toBe(true);
+    expect(fs.existsSync(path.join(tempDir, 'cache'))).toBe(true);
   });
 
   test('returns null for missing cache', () => {
@@ -294,7 +299,7 @@ describe('saveSpecCache / loadSpecCache', () => {
   });
 
   test('returns null for invalid JSON', () => {
-    const cacheDir = path.join(tempDir, '.doccov', 'cache');
+    const cacheDir = path.join(tempDir, 'cache');
     fs.mkdirSync(cacheDir, { recursive: true });
     fs.writeFileSync(path.join(cacheDir, 'spec.cache.json'), 'not valid json');
 
@@ -308,12 +313,14 @@ describe('clearSpecCache', () => {
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'doccov-cache-test-'));
+    _setStateDirOverride(tempDir);
     fs.writeFileSync(path.join(tempDir, 'tsconfig.json'), '{}');
     fs.writeFileSync(path.join(tempDir, 'package.json'), '{"name":"test"}');
     fs.writeFileSync(path.join(tempDir, 'index.ts'), 'export const x = 1;');
   });
 
   afterEach(() => {
+    _setStateDirOverride(null);
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 

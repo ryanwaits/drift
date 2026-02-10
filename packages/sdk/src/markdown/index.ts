@@ -29,6 +29,8 @@ export {
   hasAddedMembers,
   hasRemovedMembers,
 } from './member-diff';
+// Discovery
+export { discoverMarkdownFiles, type DiscoverOptions } from './discover';
 export {
   blockReferencesExport,
   extractFunctionCalls,
