@@ -70,6 +70,7 @@ export function registerConfigCommand(program: Command): void {
 
   cmd
     .command('list')
+    .alias('show')
     .description('Show all config values')
     .action(() => {
       const startTime = Date.now();
