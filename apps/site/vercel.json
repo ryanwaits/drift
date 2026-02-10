@@ -1,4 +1,0 @@
-{
-  "framework": "nextjs",
-  "buildCommand": "cd ../../apps/platform/ui && bun run build && cd ../../site && bun run build"
-}
