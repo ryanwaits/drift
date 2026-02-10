@@ -1,95 +1,178 @@
-# DocCov Usage Guide
+# Usage Guide
 
 ## Quick Start
 
 1. Install the CLI:
 ```bash
-npm install -g @doccov/cli
+bun add -g @doccov/cli
 ```
 
-2. Check documentation coverage:
+2. Run a full scan:
 ```bash
-doccov check --min-coverage 80
+drift scan
 ```
 
-3. Generate an OpenPkg spec:
+3. Check documentation coverage:
 ```bash
-doccov generate --output openpkg.json
+drift coverage --min 80
 ```
 
 ## CLI Commands
 
-### `doccov check`
+### `drift scan`
 
-Validate documentation coverage and detect drift.
+Run coverage + lint + prose drift + health in one pass.
 
 ```bash
-doccov check [entry] [options]
+drift scan [entry] [options]
 ```
 
 Options:
-- `--min-coverage <percentage>` - Minimum docs coverage percentage (0-100), default: 80
-- `--require-examples` - Require at least one `@example` for every export
-- `--no-external-types` - Skip external type resolution from node_modules
-- `--cwd <dir>` - Working directory
-- `--package <name>` - Target package name (for monorepos)
+- `--min <n>` — Minimum health threshold (exit 1 if below)
+- `--ci` — Strict mode: exit 1 on any issue
+- `--all` — Run across all workspace packages
+- `--private` — Include private packages
 
-Examples:
 ```bash
-# Basic coverage check
-doccov check
-
-# Strict mode: require examples and 90% coverage
-doccov check --min-coverage 90 --require-examples
-
-# Check a specific package in a monorepo
-doccov check --package @myorg/utils
+drift scan
+drift scan --min 80
+drift scan --all --private
 ```
 
-### `doccov generate`
+### `drift coverage`
 
-Generate an OpenPkg specification file.
+Documentation coverage score.
 
 ```bash
-doccov generate [entry] [options]
+drift coverage [entry] [options]
 ```
 
 Options:
-- `-o, --output <file>` - Output file (default: `openpkg.json`)
-- `--include <ids>` - Filter exports by identifier
-- `--exclude <ids>` - Exclude exports by identifier
-- `--show-diagnostics` - Print TypeScript diagnostics
-- `--no-external-types` - Skip external type resolution
-- `--cwd <dir>` - Working directory
-- `-p, --package <name>` - Target package name (for monorepos)
+- `--min <n>` — Minimum coverage % (exit 1 if below)
+- `--all` — Run across all workspace packages
 
-Examples:
 ```bash
-# Generate spec with auto-detected entry
-doccov generate
-
-# Custom output file
-doccov generate -o api-spec.json
-
-# Only include specific exports
-doccov generate --include "createUser,updateUser,deleteUser"
+drift coverage --min 80
+drift coverage --all
 ```
 
-### `doccov init`
+### `drift lint`
 
-Create a DocCov configuration file.
+Cross-reference JSDoc vs code signatures. Detects 15 drift types including prose drift (broken import references in markdown).
 
 ```bash
-doccov init [options]
+drift lint [entry] [options]
 ```
 
 Options:
-- `--format <format>` - Config format: auto, mjs, js, cjs
-- `--cwd <dir>` - Working directory
+- `--all` — Run across all workspace packages
+- `--private` — Include private packages
 
-## Configuration File
+```bash
+drift lint
+drift lint --json         # includes filePath/line for agent-driven fixes
+drift lint --all
+```
 
-Create `doccov.config.ts` (or `.js`, `.mjs`, `.cjs`) in your project root:
+### `drift health`
+
+Documentation health score (default command — bare `drift` runs this).
+
+```bash
+drift health [entry] [options]
+```
+
+Options:
+- `--min <n>` — Minimum health threshold
+- `--all` — Run across all workspace packages
+
+### `drift examples`
+
+Validate @example blocks.
+
+```bash
+drift examples [entry] [options]
+```
+
+Options:
+- `--typecheck` — Type-check examples
+- `--run` — Execute examples in sandbox
+- `--min <n>` — Minimum example coverage %
+- `--all` — Run across all workspace packages
+
+```bash
+drift examples
+drift examples --typecheck --run
+drift examples --min 50
+```
+
+### `drift extract`
+
+Extract full API spec as JSON.
+
+```bash
+drift extract [entry] [options]
+```
+
+Options:
+- `-o <file>` — Write to file
+- `--only <patterns>` — Include exports matching glob
+- `--ignore <patterns>` — Exclude exports matching glob
+- `--all` — Extract all workspace packages
+
+### `drift ci`
+
+CI checks with GitHub integration.
+
+```bash
+drift ci [options]
+```
+
+Options:
+- `--all` — Check all packages, not just changed
+- `--private` — Include private packages
+
+Features:
+- Auto-detects changed packages via `git diff`
+- Posts PR comments with results
+- Writes GitHub step summaries
+- Appends to history
+- Generates `.doccov/context.md`
+
+### `drift init`
+
+Create configuration file.
+
+```bash
+drift init
+```
+
+### Agent Discovery
+
+```bash
+drift --capabilities    # JSON list of all commands + flags
+```
+
+## Configuration
+
+### drift.config.json
+
+```json
+{
+  "entry": "src/index.ts",
+  "coverage": {
+    "min": 80,
+    "ratchet": true
+  },
+  "lint": true,
+  "docs": {
+    "include": ["README.md", "docs/**/*.md"],
+    "exclude": ["node_modules/**"]
+  }
+}
+```
+
+### doccov.config.ts
 
 ```typescript
 import { defineConfig } from '@doccov/cli/config';
@@ -97,62 +180,47 @@ import { defineConfig } from '@doccov/cli/config';
 export default defineConfig({
   include: ['createUser', 'updateUser'],
   exclude: ['internalHelper'],
+  docs: {
+    include: ['docs/**/*.md'],
+  },
+  check: {
+    examples: ['presence', 'typecheck'],
+  },
 });
 ```
 
 ## Understanding the Output
 
-The generated `openpkg.json` contains:
-
-1. **meta** - Package metadata (name, version, description)
-2. **exports** - All exported functions, classes, variables, types
-3. **types** - Detailed type definitions referenced by exports
-4. **docs** - Documentation coverage metadata
-
-### Coverage Metadata
-
-Each export includes documentation coverage info:
+All commands return `{ok, data, meta}` JSON when piped or with `--json`:
 
 ```json
 {
-  "name": "createUser",
-  "kind": "function",
-  "docs": {
-    "coverageScore": 75,
-    "missing": ["examples"],
-    "drift": [
-      {
-        "type": "param-mismatch",
-        "target": "userId",
-        "issue": "JSDoc documents parameter \"userId\" which is not present in the signature.",
-        "suggestion": "id"
-      }
-    ]
-  }
+  "ok": true,
+  "data": {
+    "coverage": { "score": 88, "documented": 243, "total": 275, "undocumented": 32 },
+    "lint": { "issues": [...], "count": 36 },
+    "health": 89,
+    "pass": true
+  },
+  "meta": { "command": "scan", "duration": 7845, "version": "0.34.3" }
 }
 ```
 
-### Type Reference System
+### Drift Issues
 
-OpenPkg follows OpenAPI's approach to type references:
+Each lint issue includes enough context for agents to fix:
 
-#### Primitive Types
-Always inline:
-```json
-{ "type": "string" }
-{ "type": "number" }
-```
-
-#### Named Types
-Use `$ref`:
 ```json
 {
-  "parameters": [{
-    "name": "user",
-    "schema": { "$ref": "#/types/User" }
-  }]
+  "export": "createUser",
+  "issue": "JSDoc documents parameter 'userId' which is not present in the signature.",
+  "location": "userId",
+  "filePath": "docs/api.md",
+  "line": 42
 }
 ```
+
+`filePath` and `line` appear on prose drift issues (markdown references to non-existent exports).
 
 ## SDK Usage
 
@@ -165,55 +233,38 @@ const doccov = new DocCov();
 const result = await doccov.analyzeFileWithDiagnostics('src/index.ts');
 
 console.log(`Package: ${result.spec.meta.name}`);
-console.log(`Coverage: ${result.spec.docs?.coverageScore}%`);
 console.log(`Exports: ${result.spec.exports.length}`);
 ```
 
-### With Filters
+### Drift Detection
 
 ```typescript
-const result = await doccov.analyzeFileWithDiagnostics('src/index.ts', {
-  filters: {
-    include: ['createUser', 'updateUser'],
-    exclude: ['_internal*'],
-  },
-});
-```
+import { computeDrift, buildExportRegistry, detectProseDrift, discoverMarkdownFiles } from '@doccov/sdk';
 
-### Checking for Drift
-
-```typescript
-for (const exp of result.spec.exports) {
-  const drift = exp.docs?.drift ?? [];
-  if (drift.length > 0) {
-    console.log(`\n${exp.name} has ${drift.length} drift issue(s):`);
-    for (const d of drift) {
-      console.log(`  - ${d.issue}`);
-      if (d.suggestion) {
-        console.log(`    Suggestion: ${d.suggestion}`);
-      }
-    }
+// JSDoc drift
+const drift = computeDrift(spec);
+for (const [name, issues] of drift.exports) {
+  for (const d of issues) {
+    console.log(`${name}: ${d.issue}`);
   }
 }
+
+// Prose drift (broken markdown references)
+const registry = buildExportRegistry(spec);
+const mdFiles = discoverMarkdownFiles(process.cwd());
+const proseIssues = detectProseDrift({ packageName: '@my/pkg', markdownFiles: mdFiles, registry });
 ```
 
-## Spec Validation
+### Spec Validation
 
 ```typescript
 import { normalize, validateSpec, diffSpec } from '@openpkg-ts/spec';
 
-// Validate a spec
 const normalized = normalize(spec);
 const result = validateSpec(normalized);
-if (!result.ok) {
-  console.error('Validation failed:', result.errors);
-}
 
-// Diff two specs
 const diff = diffSpec(oldSpec, newSpec);
 console.log('Breaking changes:', diff.breaking);
-console.log('New exports:', diff.nonBreaking);
-console.log('Docs-only changes:', diff.docsOnly);
 ```
 
 ## CI Integration
@@ -229,22 +280,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npm ci
-      - run: npx @doccov/cli check --min-coverage 80
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bunx @doccov/cli scan --min 80
 ```
 
-### Pre-commit Hook
+### Simple CI
 
 ```bash
-# .husky/pre-commit
-npx doccov check --min-coverage 80
+# Fail if health below 80% or any lint issues
+drift scan --min 80 --ci
 ```
-
-## Next Steps
-
-- Add a DocCov badge to your README
-- Set up PR comments for coverage changes
-- Configure stricter thresholds as your docs improve

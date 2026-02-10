@@ -4,7 +4,7 @@
   "commit": false,
   "fixed": [],
   "linked": [
-    ["@doccov/sdk", "@doccov/cli", "@doccov/spec"]
+    ["@driftdev/sdk", "@driftdev/cli", "@driftdev/spec"]
   ],
   "access": "public",
   "baseBranch": "main",
