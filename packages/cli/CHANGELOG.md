@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.34.3
+
+### Patch Changes
+
+- feat(cli): auto-scan packages in report command when no history exists
+
 ## 0.34.2
 
 ### Patch Changes

@@ -4,8 +4,9 @@ import { fileURLToPath } from 'node:url';
 import type { Command } from 'commander';
 import { loadConfig } from '../config/loader';
 import { renderReport } from '../formatters/report';
-import { readHistory, type HistoryEntry } from '../utils/history';
+import { appendHistory, readHistory, type HistoryEntry } from '../utils/history';
 import { formatError, formatOutput } from '../utils/output';
+import { getCommitSha, scanAllPackages } from '../utils/scan-packages';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -68,11 +69,23 @@ export function registerReportCommand(program: Command): void {
 
       try {
         const { config } = loadConfig();
-        const entries = readHistory();
+        let entries = readHistory();
 
         if (entries.length === 0) {
-          formatError('report', 'No history found. Run `drift ci` first to build history.', startTime, version);
-          return;
+          const cwd = process.cwd();
+          const results = await scanAllPackages(cwd);
+          const now = new Date().toISOString().slice(0, 10);
+          const commit = getCommitSha();
+          const newEntries: HistoryEntry[] = results.map((r) => ({
+            date: now,
+            package: r.name,
+            coverage: r.coverage,
+            lint: r.lintIssues,
+            exports: r.exports,
+            ...(commit ? { commit } : {}),
+          }));
+          appendHistory(newEntries);
+          entries = newEntries;
         }
 
         const trends = buildTrends(entries);

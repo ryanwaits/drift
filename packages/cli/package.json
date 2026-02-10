@@ -1,6 +1,6 @@
 {
   "name": "@doccov/cli",
-  "version": "0.34.2",
+  "version": "0.34.3",
   "description": "DocCov CLI - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",
