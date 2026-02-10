@@ -37,7 +37,7 @@ function getPackageInfo(cwd: string): { name?: string; version?: string } {
 
 export function registerHealthCommand(program: Command): void {
   program
-    .command('health [entry]', { isDefault: true })
+    .command('health [entry]')
     .description('Show documentation health score (default command)')
     .option('--min <n>', 'Minimum health threshold (exit 1 if below)')
     .option('--all', 'Run across all workspace packages')

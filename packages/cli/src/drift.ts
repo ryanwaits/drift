@@ -26,7 +26,7 @@ import { registerReportCommand } from './commands/report';
 import { registerSemverCommand } from './commands/semver';
 import { registerValidateCommand } from './commands/validate';
 import { setNoCache } from './cache/spec-cache';
-import { setConfigPath } from './config/loader';
+import { loadConfig, setConfigPath } from './config/loader';
 import { extractCapabilities } from './utils/capabilities';
 import { setOutputMode } from './utils/render';
 
@@ -99,6 +99,14 @@ if (process.argv.includes('--capabilities')) {
   const caps = extractCapabilities(program);
   process.stdout.write(`${JSON.stringify(caps, null, 2)}\n`);
   process.exit(0);
+}
+
+// Smart default: bare `drift` runs init if no config, health otherwise
+const userArgs = process.argv.slice(2).filter((a) => !a.startsWith('-'));
+if (userArgs.length === 0) {
+  const { configPath } = loadConfig();
+  const subcommand = configPath ? 'health' : 'init';
+  process.argv.splice(2, 0, subcommand);
 }
 
 program.parseAsync().catch(() => {
