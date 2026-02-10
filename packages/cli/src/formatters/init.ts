@@ -1,7 +1,7 @@
-import { c, sym, coverageColor, indent, table, padLeft } from '../utils/render';
+import { c, sym, coverageColor, indent, table } from '../utils/render';
 
 interface InitData {
-  packages: Array<{ name: string; entry: string; exports: number; coverage: number }>;
+  packages: Array<{ name: string; entry: string; exports: number; coverage: number; health: number }>;
   config: object;
   configPath: string;
   ciPath: string | null;
@@ -15,10 +15,11 @@ export function renderInit(data: InitData): string {
   lines.push(indent(`${data.isMonorepo ? 'Monorepo' : 'Project'} scan  ${c.gray(`${data.packages.length} package${data.packages.length === 1 ? '' : 's'}`)}`));
   lines.push('');
 
-  const header = ['PACKAGE', 'ENTRY', 'EXPORTS', 'COVERAGE'];
+  const header = ['Package', 'Exports', 'Coverage', 'Health'];
   const rows = data.packages.map((pkg) => {
-    const color = coverageColor(pkg.coverage);
-    return [pkg.name, pkg.entry, String(pkg.exports), color(`${pkg.coverage}%`)];
+    const covColor = coverageColor(pkg.coverage);
+    const healthColor = coverageColor(pkg.health);
+    return [pkg.name, String(pkg.exports), covColor(`${pkg.coverage}%`), healthColor(`${pkg.health}%`)];
   });
   lines.push(indent(table([header, ...rows])));
   lines.push('');

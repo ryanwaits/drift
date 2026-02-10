@@ -8,6 +8,7 @@ import { ensureProjectDir, getGlobalConfigPath, getGlobalDir } from '../config/g
 import { renderInit } from '../formatters/init';
 import { detectEntry } from '../utils/detect-entry';
 import { formatError, formatOutput } from '../utils/output';
+import { Spinner } from '../utils/progress/spinner';
 import { detectWorkspaces, resolveGlobs } from '../utils/workspaces';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -25,6 +26,7 @@ interface PackageScan {
   entry: string;
   exports: number;
   coverage: number;
+  health: number;
 }
 
 async function scanPackage(cwd: string, pkgDir: string): Promise<PackageScan | null> {
@@ -51,7 +53,9 @@ async function scanPackage(cwd: string, pkgDir: string): Promise<PackageScan | n
       if (exp.description && exp.description.trim().length > 0) documented++;
     }
     const coverage = total > 0 ? Math.round((documented / total) * 100) : 100;
-    return { name, entry: path.relative(cwd, entryFile), exports: total, coverage };
+    // Health with no lint data = coverage * 0.5 + accuracy(100%) * 0.5
+    const health = Math.round(coverage * 0.5 + 100 * 0.5);
+    return { name, entry: path.relative(cwd, entryFile), exports: total, coverage, health };
   } catch {
     return null;
   }
@@ -83,11 +87,15 @@ export function registerInitCommand(program: Command): void {
         const packageDirs = isMonorepo ? resolveGlobs(cwd, workspaces) : ['.'];
 
         // Scan all packages
+        const spin = new Spinner({ style: 'dots' });
+        spin.start('Scanning packages…');
         const packages: PackageScan[] = [];
         for (const dir of packageDirs) {
+          spin.update(`Scanning ${dir}…`);
           const result = await scanPackage(cwd, dir);
           if (result) packages.push(result);
         }
+        spin.success(`Scanned ${packages.length} package${packages.length === 1 ? '' : 's'}`);
 
         if (packages.length === 0) {
           formatError('init', 'No TypeScript packages found', startTime, version);
