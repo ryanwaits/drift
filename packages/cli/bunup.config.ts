@@ -1,7 +1,7 @@
 import { defineConfig } from 'bunup';
 
 export default defineConfig({
-  entry: ['src/drift.ts', 'src/config/index.ts'],
+  entry: ['src/drift.ts'],
   dts: true,
   clean: true,
   splitting: false,

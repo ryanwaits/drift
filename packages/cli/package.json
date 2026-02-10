@@ -1,19 +1,19 @@
 {
   "name": "@driftdev/cli",
   "version": "0.35.1",
-  "description": "DocCov CLI - Documentation coverage and drift detection for TypeScript",
+  "description": "Drift CLI - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",
     "cli",
     "documentation",
-    "doccov",
+    "drift",
     "docs-coverage",
     "drift-detection"
   ],
-  "homepage": "https://github.com/doccov/doccov#readme",
+  "homepage": "https://github.com/driftdev/drift#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/doccov/doccov.git",
+    "url": "git+https://github.com/driftdev/drift.git",
     "directory": "packages/cli"
   },
   "license": "MIT",
@@ -28,10 +28,6 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./config": {
-      "import": "./dist/config/index.js",
-      "types": "./dist/config/index.d.ts"
     }
   },
   "scripts": {
