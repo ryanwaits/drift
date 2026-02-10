@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.34.1
+
+### Patch Changes
+
+- e4d5a97: Include skipped private package names in `--all` batch JSON output and human-readable tables
+
 ## 0.34.0
 
 ### Minor Changes
