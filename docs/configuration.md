@@ -64,7 +64,6 @@ Applied when no project-local config is found. Useful for personal defaults.
 | `coverage.min` | `number` (0-100) | none | Minimum coverage threshold (exit 1 if below) |
 | `coverage.ratchet` | `boolean` | `false` | Ratchet: effective min = max(min, highest ever recorded) |
 | `lint` | `boolean` | `true` | Enable lint checks |
-| `ignore` | `string[]` | `[]` | Glob patterns to ignore from analysis |
 | `docs.include` | `string[]` | `["README.md", "docs/**/*.md", "docs/**/*.mdx"]` | Glob patterns for markdown discovery (prose drift) |
 | `docs.exclude` | `string[]` | `["node_modules/**", "dist/**", ".git/**"]` | Glob patterns to exclude from markdown discovery |
 

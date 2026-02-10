@@ -11,7 +11,8 @@ import { detectEntry } from '../utils/detect-entry';
 import { getGitHubContext, getPRNumber, postOrUpdatePRComment, writeStepSummary } from '../utils/github';
 import { writeContext } from '../utils/context-writer';
 import { appendHistory, readHistory } from '../utils/history';
-import { formatError, formatOutput } from '../utils/output';
+import { formatError, formatOutput, type OutputNext } from '../utils/output';
+import { computeRatchetMin } from '../utils/ratchet';
 import { detectWorkspaces, resolveGlobs } from '../utils/workspaces';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -111,7 +112,11 @@ export function registerCiCommand(program: Command): void {
 
         if (packageDirs.length === 0) packageDirs = allDirs;
 
-        const minThreshold = config.coverage?.min ?? 0;
+        let minThreshold = config.coverage?.min ?? 0;
+        if (minThreshold > 0 && config.coverage?.ratchet) {
+          const ratchet = computeRatchetMin(minThreshold);
+          minThreshold = ratchet.effectiveMin;
+        }
         const results: PackageResult[] = [];
         const skipped: string[] = [];
         const commit = gh.sha?.slice(0, 7) ?? getCommitSha();
@@ -225,7 +230,17 @@ export function registerCiCommand(program: Command): void {
         }
 
         const data = { results, pass: allPass, min: minThreshold, ...(skipped.length > 0 ? { skipped } : {}) };
-        formatOutput('ci', data, startTime, version, renderCi);
+
+        let next: OutputNext | undefined;
+        const totalLint = results.reduce((s, r) => s + r.lintIssues, 0);
+        const failedPkgs = results.filter((r) => !r.pass);
+        if (failedPkgs.length > 0) {
+          next = { suggested: 'drift scan --all', reason: `${failedPkgs.length} package${failedPkgs.length === 1 ? '' : 's'} failed checks` };
+        } else if (totalLint > 0) {
+          next = { suggested: 'drift lint --all', reason: `${totalLint} lint issue${totalLint === 1 ? '' : 's'} across packages` };
+        }
+
+        formatOutput('ci', data, startTime, version, renderCi, next);
 
         if (!allPass) process.exitCode = 1;
       } catch (err) {

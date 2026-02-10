@@ -15,8 +15,6 @@ export interface DriftConfig {
   };
   /** Enable lint checks (default true) */
   lint?: boolean;
-  /** Glob patterns to ignore from analysis */
-  ignore?: string[];
   /** Markdown docs discovery patterns */
   docs?: {
     include?: string[];
@@ -67,12 +65,6 @@ export function validateConfig(raw: unknown): { ok: true; config: DriftConfig } 
 
   if (obj.lint !== undefined && typeof obj.lint !== 'boolean') {
     errors.push('"lint" must be a boolean');
-  }
-
-  if (obj.ignore !== undefined) {
-    if (!Array.isArray(obj.ignore) || !obj.ignore.every((i) => typeof i === 'string')) {
-      errors.push('"ignore" must be an array of strings');
-    }
   }
 
   if (obj.docs !== undefined) {

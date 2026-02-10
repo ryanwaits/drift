@@ -9,7 +9,7 @@ import { renderBatchCoverage } from '../formatters/batch';
 import { renderHealth } from '../formatters/health';
 import { detectEntry } from '../utils/detect-entry';
 import { computeHealth } from '../utils/health';
-import { formatError, formatOutput } from '../utils/output';
+import { formatError, formatOutput, type OutputNext } from '../utils/output';
 import { computeRatchetMin } from '../utils/ratchet';
 import { shouldRenderHuman } from '../utils/render';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
@@ -121,7 +121,14 @@ export function registerHealthCommand(program: Command): void {
           min = ratchet.effectiveMin;
         }
 
-        formatOutput('health', { ...data, min }, startTime, version, renderHealth);
+        let next: OutputNext | undefined;
+        if (issues.length > 0) {
+          next = { suggested: 'drift lint', reason: `${issues.length} drift issue${issues.length === 1 ? '' : 's'} found` };
+        } else if (total - documented > 0) {
+          next = { suggested: 'drift list --undocumented', reason: `${total - documented} exports lack documentation` };
+        }
+
+        formatOutput('health', { ...data, min }, startTime, version, renderHealth, next);
 
         // Threshold check
         if (min !== undefined && health.health < min) {

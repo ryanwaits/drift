@@ -1,11 +1,11 @@
-# @doccov/cli
+# @driftdev/cli
 
 Command-line interface for documentation coverage analysis and drift detection. Ships as the `drift` binary.
 
 ## Install
 
 ```bash
-bun add -g @doccov/cli
+bun add -g @driftdev/cli
 ```
 
 ## Quick Start
@@ -68,13 +68,15 @@ Entry auto-detects from `package.json` — works in any TypeScript project.
 | `drift semver <old> <new>` | Recommend semver bump |
 | `drift changelog <old> <new>` | Generate changelog |
 
-### Plumbing
+### Setup & Plumbing
 
 | Command | Description |
 |---------|-------------|
+| `drift init` | Create configuration file |
+| `drift config` | Manage config (list, get, set) |
+| `drift context` | Generate agent context file |
 | `drift report` | Documentation trends from history |
 | `drift release` | Pre-release documentation audit |
-| `drift init` | Create configuration file |
 | `drift cache` | Cache management (clear, status) |
 
 ### Discovery
@@ -101,7 +103,6 @@ Run coverage + lint + prose drift + health in one pass.
 ```bash
 drift scan                    # single package
 drift scan --min 80           # fail if health below 80%
-drift scan --ci               # strict: fail on any issue
 drift scan --all              # all workspace packages
 drift scan --all --private    # include private packages
 ```
@@ -157,7 +158,7 @@ drift ci --all                # check all packages
 drift ci --private            # include private packages
 ```
 
-Generates `.doccov/context.md` — machine-readable project state for agents.
+Generates `~/.drift/projects/<slug>/context.md` — machine-readable project state for agents.
 
 ## Configuration
 
@@ -178,26 +179,11 @@ Generates `.doccov/context.md` — machine-readable project state for agents.
 }
 ```
 
-### doccov.config.ts
-
-```ts
-import { defineConfig } from '@doccov/cli';
-
-export default defineConfig({
-  check: {
-    minHealth: 80,
-    examples: ['presence', 'typecheck'],
-    style: 'minimal',
-  },
-  docs: {
-    include: ['docs/**/*.md'],
-  },
-});
-```
+See [Configuration docs](../../docs/configuration.md) for all keys and `drift config` commands.
 
 ## Output Format
 
-All commands return `{ok, data, meta}` JSON when piped or with `--json`:
+All commands return structured JSON when piped or with `--json`:
 
 ```json
 {

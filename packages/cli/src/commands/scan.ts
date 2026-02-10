@@ -9,6 +9,7 @@ import { renderBatchScan, renderScan } from '../formatters/scan';
 import { detectEntry } from '../utils/detect-entry';
 import { computeHealth } from '../utils/health';
 import { formatError, formatOutput, type OutputNext } from '../utils/output';
+import { computeRatchetMin } from '../utils/ratchet';
 import { shouldRenderHuman } from '../utils/render';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
 
@@ -55,10 +56,9 @@ export function registerScanCommand(program: Command): void {
     .command('scan [entry]')
     .description('Run coverage + lint + prose drift in one pass')
     .option('--min <n>', 'Minimum health threshold (exit 1 if below)')
-    .option('--ci', 'Strict mode: exit 1 on any issue')
     .option('--all', 'Run across all workspace packages')
     .option('--private', 'Include private packages in --all mode')
-    .action(async (entry: string | undefined, options: { min?: string; ci?: boolean; all?: boolean; private?: boolean }) => {
+    .action(async (entry: string | undefined, options: { min?: string; all?: boolean; private?: boolean }) => {
       const startTime = Date.now();
       const version = getVersion();
 
@@ -108,7 +108,11 @@ export function registerScanCommand(program: Command): void {
           }
 
           const data = { packages: rows, ...(skipped.length > 0 ? { skipped } : {}) };
-          formatOutput('scan', data, startTime, version, renderBatchScan);
+          const totalIssues = rows.reduce((s, r) => s + r.lintIssues, 0);
+          const batchNext: OutputNext | undefined = totalIssues > 0
+            ? { suggested: 'drift-fix skill', reason: `${totalIssues} issues across ${rows.filter(r => r.lintIssues > 0).length} packages` }
+            : undefined;
+          formatOutput('scan', data, startTime, version, renderBatchScan, batchNext);
           if (anyFail) process.exitCode = 1;
           return;
         }
@@ -172,8 +176,12 @@ export function registerScanCommand(program: Command): void {
         const h = computeHealth(total, documented, healthIssues);
         const pkg = getPackageInfo(process.cwd());
 
-        const min = options.min ? parseInt(options.min, 10) : undefined;
-        const pass = (min === undefined || h.health >= min) && (!options.ci || issues.length === 0);
+        let min = options.min ? parseInt(options.min, 10) : config.coverage?.min;
+        if (min !== undefined && config.coverage?.ratchet) {
+          const ratchet = computeRatchetMin(min);
+          min = ratchet.effectiveMin;
+        }
+        const pass = min === undefined || h.health >= min;
 
         const data: ScanResult = {
           coverage: { score: coverageScore, documented, total, undocumented: total - documented },
@@ -200,7 +208,7 @@ export function registerScanCommand(program: Command): void {
 
         if (!pass) {
           if (!shouldRenderHuman()) {
-            process.stderr.write(`scan failed: health ${h.health}%${min ? ` (need ${min}%)` : ''}, ${issues.length} issues\n`);
+            process.stderr.write(`scan failed: health ${h.health}%${min !== undefined ? ` (need ${min}%)` : ''}, ${issues.length} issues\n`);
           }
           process.exitCode = 1;
         }

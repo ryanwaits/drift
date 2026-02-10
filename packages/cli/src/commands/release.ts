@@ -8,7 +8,8 @@ import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderRelease } from '../formatters/release';
 import { detectEntry } from '../utils/detect-entry';
-import { formatError, formatOutput } from '../utils/output';
+import { formatError, formatOutput, type OutputNext } from '../utils/output';
+import { computeRatchetMin } from '../utils/ratchet';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -71,7 +72,11 @@ export function registerReleaseCommand(program: Command): void {
         }
         const documented = total - undocumented.length;
         const coverage = total > 0 ? Math.round((documented / total) * 100) : 100;
-        const minThreshold = config.coverage?.min ?? 0;
+        let minThreshold = config.coverage?.min ?? 0;
+        if (minThreshold > 0 && config.coverage?.ratchet) {
+          const ratchet = computeRatchetMin(minThreshold);
+          minThreshold = ratchet.effectiveMin;
+        }
         const coveragePass = coverage >= minThreshold;
 
         // Lint
@@ -113,7 +118,16 @@ export function registerReleaseCommand(program: Command): void {
           min: minThreshold,
         };
 
-        formatOutput('release', data, startTime, version, renderRelease);
+        let next: OutputNext | undefined;
+        if (!ready) {
+          if (!lintPass) {
+            next = { suggested: 'drift lint', reason: `${lintIssues} lint issue${lintIssues === 1 ? '' : 's'} blocking release` };
+          } else if (!coveragePass) {
+            next = { suggested: 'drift list --undocumented', reason: `coverage ${coverage}% below ${minThreshold}%` };
+          }
+        }
+
+        formatOutput('release', data, startTime, version, renderRelease, next);
         if (!ready) process.exitCode = 1;
       } catch (err) {
         formatError('release', err instanceof Error ? err.message : String(err), startTime, version);
