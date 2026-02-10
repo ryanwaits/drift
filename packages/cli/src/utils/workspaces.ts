@@ -6,6 +6,7 @@ export interface WorkspacePackage {
   name: string;
   dir: string;
   entry: string;
+  private?: boolean;
 }
 
 /**
@@ -63,24 +64,33 @@ export function discoverPackages(cwd: string): WorkspacePackage[] | null {
     const absDir = path.join(cwd, dir);
     if (!existsSync(absDir)) continue;
 
-    // Read package name
+    // Read package name + private field
     let name = dir;
+    let isPrivate = false;
     const pkgPath = path.join(absDir, 'package.json');
     if (existsSync(pkgPath)) {
       try {
         const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
         if (pkg.name) name = pkg.name;
+        if (pkg.private === true) isPrivate = true;
       } catch {}
     }
 
     // Detect entry
     try {
       const entry = detectEntry(absDir);
-      packages.push({ name, dir, entry });
+      packages.push({ name, dir, entry, ...(isPrivate ? { private: true } : {}) });
     } catch {
       // Skip packages without detectable entry
     }
   }
 
   return packages;
+}
+
+/**
+ * Filter out private packages. Used by --all commands that skip private by default.
+ */
+export function filterPublic(packages: WorkspacePackage[]): WorkspacePackage[] {
+  return packages.filter((p) => !p.private);
 }

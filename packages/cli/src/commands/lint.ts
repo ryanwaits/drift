@@ -10,7 +10,7 @@ import { renderLint } from '../formatters/lint';
 import { detectEntry } from '../utils/detect-entry';
 import { formatError, formatOutput } from '../utils/output';
 import { shouldRenderHuman } from '../utils/render';
-import { discoverPackages } from '../utils/workspaces';
+import { discoverPackages, filterPublic } from '../utils/workspaces';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,14 +33,16 @@ export function registerLintCommand(program: Command): void {
     .command('lint [entry]')
     .description('Cross-reference JSDoc against code for accuracy issues')
     .option('--all', 'Run across all workspace packages')
-    .action(async (entry: string | undefined, options: { all?: boolean }) => {
+    .option('--private', 'Include private packages in --all mode')
+    .action(async (entry: string | undefined, options: { all?: boolean; private?: boolean }) => {
       const startTime = Date.now();
       const version = getVersion();
 
       try {
         // --all batch mode
         if (options.all) {
-          const packages = discoverPackages(process.cwd());
+          let packages = discoverPackages(process.cwd());
+          if (packages && !options.private) packages = filterPublic(packages);
           if (!packages || packages.length === 0) {
             formatError('lint', 'No workspace packages found', startTime, version);
             return;

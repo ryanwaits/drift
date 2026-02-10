@@ -12,7 +12,7 @@ import { computeHealth } from '../utils/health';
 import { formatError, formatOutput } from '../utils/output';
 import { computeRatchetMin } from '../utils/ratchet';
 import { shouldRenderHuman } from '../utils/render';
-import { discoverPackages } from '../utils/workspaces';
+import { discoverPackages, filterPublic } from '../utils/workspaces';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -41,14 +41,16 @@ export function registerHealthCommand(program: Command): void {
     .description('Show documentation health score (default command)')
     .option('--min <n>', 'Minimum health threshold (exit 1 if below)')
     .option('--all', 'Run across all workspace packages')
-    .action(async (entry: string | undefined, options: { min?: string; all?: boolean }) => {
+    .option('--private', 'Include private packages in --all mode')
+    .action(async (entry: string | undefined, options: { min?: string; all?: boolean; private?: boolean }) => {
       const startTime = Date.now();
       const version = getVersion();
 
       try {
         // --all batch mode — reuse coverage-style aggregate for health
         if (options.all) {
-          const packages = discoverPackages(process.cwd());
+          let packages = discoverPackages(process.cwd());
+          if (packages && !options.private) packages = filterPublic(packages);
           if (!packages || packages.length === 0) {
             formatError('health', 'No workspace packages found', startTime, version);
             return;

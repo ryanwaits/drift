@@ -8,7 +8,7 @@ import { cachedExtract } from '../cache/cached-extract';
 import { renderExtract } from '../formatters/extract';
 import { detectEntry } from '../utils/detect-entry';
 import { formatError, formatOutput } from '../utils/output';
-import { discoverPackages } from '../utils/workspaces';
+import { discoverPackages, filterPublic } from '../utils/workspaces';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,14 +31,16 @@ export function registerExtractCommand(program: Command): void {
     .option('--ignore <patterns>', 'Exclude exports matching glob (comma-separated)')
     .option('--max-depth <n>', 'Max type resolution depth', '10')
     .option('--all', 'Extract from all workspace packages')
-    .action(async (entry: string | undefined, options: { output?: string; only?: string; ignore?: string; maxDepth?: string; all?: boolean }) => {
+    .option('--private', 'Include private packages in --all mode')
+    .action(async (entry: string | undefined, options: { output?: string; only?: string; ignore?: string; maxDepth?: string; all?: boolean; private?: boolean }) => {
       const startTime = Date.now();
       const version = getVersion();
 
       try {
         // --all batch mode
         if (options.all) {
-          const packages = discoverPackages(process.cwd());
+          let packages = discoverPackages(process.cwd());
+          if (packages && !options.private) packages = filterPublic(packages);
           if (!packages || packages.length === 0) {
             formatError('extract', 'No workspace packages found', startTime, version);
             return;

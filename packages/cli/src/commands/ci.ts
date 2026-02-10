@@ -88,7 +88,8 @@ export function registerCiCommand(program: Command): void {
     .command('ci')
     .description('Run CI checks on changed packages')
     .option('--all', 'Check all packages, not just changed ones')
-    .action(async (options: { all?: boolean }) => {
+    .option('--private', 'Include private packages')
+    .action(async (options: { all?: boolean; private?: boolean }) => {
       const startTime = Date.now();
       const version = getVersion();
       const cwd = process.cwd();
@@ -117,15 +118,20 @@ export function registerCiCommand(program: Command): void {
           const absDir = dir === '.' ? cwd : path.join(cwd, dir);
           if (!existsSync(absDir)) continue;
 
-          // Read package name
+          // Read package name + private field
           let name = dir;
+          let isPrivate = false;
           const pkgPath = path.join(absDir, 'package.json');
           if (existsSync(pkgPath)) {
             try {
               const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
               if (pkg.name) name = pkg.name;
+              if (pkg.private === true) isPrivate = true;
             } catch {}
           }
+
+          // Skip private packages unless --private flag
+          if (isPrivate && !options.private) continue;
 
           try {
             const entryFile = detectEntry(absDir);
