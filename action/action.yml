@@ -109,7 +109,7 @@ runs:
         if [ -n "${{ inputs.package }}" ]; then
           SPEC_ARGS="--package ${{ inputs.package }}"
         fi
-        doccov spec $SPEC_ARGS
+        drift extract $SPEC_ARGS
 
     - name: Verify spec exists
       if: inputs.skip-spec == 'true'
@@ -138,7 +138,7 @@ runs:
         if [ "${{ inputs.require-examples }}" = "true" ]; then
           ARGS="$ARGS --examples presence"
         fi
-        doccov check $ARGS
+        drift health $ARGS
 
     - name: Auto-commit spec (PRs only)
       if: github.event_name == 'pull_request' && inputs.auto-commit-spec == 'true'
@@ -184,7 +184,7 @@ runs:
           if [ -n "${{ inputs.package }}" ]; then
             SPEC_ARGS="--package ${{ inputs.package }}"
           fi
-          doccov spec $SPEC_ARGS 2>/dev/null || true
+          drift extract $SPEC_ARGS 2>/dev/null || true
           if [ -f "$SPEC_PATH/openpkg.json" ]; then
             cp "$SPEC_PATH/openpkg.json" /tmp/openpkg-base.json
             cp "$SPEC_PATH/doccov.json" /tmp/doccov-base.json 2>/dev/null || true
@@ -212,7 +212,7 @@ runs:
           if [ -n "${{ inputs.docs-glob }}" ]; then
             DIFF_ARGS="$DIFF_ARGS --docs '${{ inputs.docs-glob }}'"
           fi
-          DIFF=$(eval "doccov diff /tmp/openpkg-base.json /tmp/openpkg-head.json $DIFF_ARGS")
+          DIFF=$(eval "drift diff /tmp/openpkg-base.json /tmp/openpkg-head.json $DIFF_ARGS")
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$DIFF" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -228,7 +228,7 @@ runs:
           if [ -n "${{ inputs.docs-glob }}" ]; then
             DIFF_ARGS="$DIFF_ARGS --docs '${{ inputs.docs-glob }}'"
           fi
-          eval "doccov diff /tmp/openpkg-base.json /tmp/openpkg-head.json $DIFF_ARGS" || true
+          eval "drift diff /tmp/openpkg-base.json /tmp/openpkg-head.json $DIFF_ARGS" || true
         fi
 
     - name: Check strict conditions
@@ -241,7 +241,7 @@ runs:
           if [ -n "${{ inputs.docs-glob }}" ]; then
             DIFF_ARGS="$DIFF_ARGS --docs '${{ inputs.docs-glob }}'"
           fi
-          eval "doccov diff /tmp/openpkg-base.json /tmp/openpkg-head.json $DIFF_ARGS"
+          eval "drift diff /tmp/openpkg-base.json /tmp/openpkg-head.json $DIFF_ARGS"
         fi
 
     - name: Generate PR comment
@@ -259,7 +259,7 @@ runs:
             COMMENT_ARGS="$COMMENT_ARGS --docs '${{ inputs.docs-glob }}'"
           fi
 
-          COMMENT=$(eval "doccov diff /tmp/openpkg-base.json /tmp/openpkg-head.json $COMMENT_ARGS")
+          COMMENT=$(eval "drift diff /tmp/openpkg-base.json /tmp/openpkg-head.json $COMMENT_ARGS")
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$COMMENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT

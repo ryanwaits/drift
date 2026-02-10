@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.33.0
+
+### Minor Changes
+
+- Remove old `doccov` binary and legacy commands (check, spec, trends). Only the `drift` binary remains with all 18 commands. `bunx @doccov/cli` now defaults to `drift`.
+
 ## 0.32.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@doccov/cli",
-  "version": "0.32.0",
+  "version": "0.33.0",
   "description": "DocCov CLI - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",
@@ -22,7 +22,6 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "doccov": "./dist/cli.js",
     "drift": "./dist/drift.js"
   },
   "exports": {
@@ -38,7 +37,7 @@
   "scripts": {
     "build": "bunup",
     "dev": "bunup --watch",
-    "cli": "bun run src/cli.ts",
+    "cli": "bun run src/drift.ts",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
