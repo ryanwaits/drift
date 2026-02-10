@@ -41,9 +41,14 @@ export function registerLintCommand(program: Command): void {
       try {
         // --all batch mode
         if (options.all) {
-          let packages = discoverPackages(process.cwd());
-          if (packages && !options.private) packages = filterPublic(packages);
-          if (!packages || packages.length === 0) {
+          const allPackages = discoverPackages(process.cwd());
+          if (!allPackages || allPackages.length === 0) {
+            formatError('lint', 'No workspace packages found', startTime, version);
+            return;
+          }
+          const skipped = options.private ? [] : allPackages.filter((p) => p.private).map((p) => p.name);
+          const packages = options.private ? allPackages : filterPublic(allPackages);
+          if (packages.length === 0) {
             formatError('lint', 'No workspace packages found', startTime, version);
             return;
           }
@@ -57,7 +62,7 @@ export function registerLintCommand(program: Command): void {
             rows.push({ name: pkg.name, exports: (spec.exports ?? []).length, issues });
             totalIssues += issues;
           }
-          const data = { packages: rows, aggregate: { count: totalIssues } };
+          const data = { packages: rows, aggregate: { count: totalIssues }, ...(skipped.length > 0 ? { skipped } : {}) };
           formatOutput('lint', data, startTime, version, renderBatchLint);
           if (totalIssues > 0) process.exitCode = 1;
           return;

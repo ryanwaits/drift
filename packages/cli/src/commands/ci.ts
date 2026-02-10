@@ -112,6 +112,7 @@ export function registerCiCommand(program: Command): void {
 
         const minThreshold = config.coverage?.min ?? 0;
         const results: PackageResult[] = [];
+        const skipped: string[] = [];
         const commit = gh.sha?.slice(0, 7) ?? getCommitSha();
 
         for (const dir of packageDirs) {
@@ -131,7 +132,10 @@ export function registerCiCommand(program: Command): void {
           }
 
           // Skip private packages unless --private flag
-          if (isPrivate && !options.private) continue;
+          if (isPrivate && !options.private) {
+            skipped.push(name);
+            continue;
+          }
 
           try {
             const entryFile = detectEntry(absDir);
@@ -204,7 +208,7 @@ export function registerCiCommand(program: Command): void {
           }
         }
 
-        const data = { results, pass: allPass, min: minThreshold };
+        const data = { results, pass: allPass, min: minThreshold, ...(skipped.length > 0 ? { skipped } : {}) };
         formatOutput('ci', data, startTime, version, renderCi);
 
         if (!allPass) process.exitCode = 1;

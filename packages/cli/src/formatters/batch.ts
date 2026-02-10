@@ -17,7 +17,7 @@ export interface BatchListRow {
   count: number;
 }
 
-export function renderBatchCoverage(data: { packages: BatchCoverageRow[]; aggregate: { score: number; documented: number; total: number } }): string {
+export function renderBatchCoverage(data: { packages: BatchCoverageRow[]; aggregate: { score: number; documented: number; total: number }; skipped?: string[] }): string {
   const lines: string[] = [''];
   const rows = data.packages;
 
@@ -32,11 +32,14 @@ export function renderBatchCoverage(data: { packages: BatchCoverageRow[]; aggreg
 
   lines.push('');
   lines.push(indent(`${c.bold('Total')}: ${data.aggregate.score}% (${data.aggregate.documented}/${data.aggregate.total})`));
+  if (data.skipped && data.skipped.length > 0) {
+    lines.push(indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`));
+  }
   lines.push('');
   return lines.join('\n');
 }
 
-export function renderBatchLint(data: { packages: BatchLintRow[]; aggregate: { count: number } }): string {
+export function renderBatchLint(data: { packages: BatchLintRow[]; aggregate: { count: number }; skipped?: string[] }): string {
   const lines: string[] = [''];
   const rows = data.packages;
 
@@ -50,6 +53,9 @@ export function renderBatchLint(data: { packages: BatchLintRow[]; aggregate: { c
 
   lines.push('');
   lines.push(indent(`${c.bold('Total')}: ${data.aggregate.count} issue${data.aggregate.count === 1 ? '' : 's'}`));
+  if (data.skipped && data.skipped.length > 0) {
+    lines.push(indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`));
+  }
   lines.push('');
   return lines.join('\n');
 }

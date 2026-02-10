@@ -36,9 +36,14 @@ export function registerCoverageCommand(program: Command): void {
       try {
         // --all batch mode
         if (options.all) {
-          let packages = discoverPackages(process.cwd());
-          if (packages && !options.private) packages = filterPublic(packages);
-          if (!packages || packages.length === 0) {
+          const allPackages = discoverPackages(process.cwd());
+          if (!allPackages || allPackages.length === 0) {
+            formatError('coverage', 'No workspace packages found', startTime, version);
+            return;
+          }
+          const skipped = options.private ? [] : allPackages.filter((p) => p.private).map((p) => p.name);
+          const packages = options.private ? allPackages : filterPublic(allPackages);
+          if (packages.length === 0) {
             formatError('coverage', 'No workspace packages found', startTime, version);
             return;
           }
@@ -56,7 +61,7 @@ export function registerCoverageCommand(program: Command): void {
             totalAll += exps.length;
           }
           const aggScore = totalAll > 0 ? Math.round((totalDoc / totalAll) * 100) : 100;
-          const data = { packages: rows, aggregate: { score: aggScore, documented: totalDoc, total: totalAll } };
+          const data = { packages: rows, aggregate: { score: aggScore, documented: totalDoc, total: totalAll }, ...(skipped.length > 0 ? { skipped } : {}) };
           formatOutput('coverage', data, startTime, version, renderBatchCoverage);
           const minT = options.min ? parseInt(options.min, 10) : undefined;
           if (minT !== undefined && aggScore < minT) process.exitCode = 1;
