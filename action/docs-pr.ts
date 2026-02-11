@@ -1,76 +1,20 @@
 /**
- * Standalone docs-sync script for GitHub Actions.
+ * Standalone docs-pr script for GitHub Actions.
  * Runs after a PR merge with breaking changes — creates PRs on remote docs repos.
  *
  * Env: GITHUB_TOKEN, ANTHROPIC_API_KEY, GITHUB_EVENT_PATH
  */
 
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { $ } from 'bun';
 import { query } from '@anthropic-ai/claude-agent-sdk';
-
-// --- Types ---
-
-interface BreakingChange {
-  name: string;
-  kind: string;
-  severity: string;
-  reason: string;
-}
-
-interface RemoteDocsTarget {
-  repo: string;
-  branch?: string;
-}
-
-interface MergeEvent {
-  pull_request: {
-    merged: boolean;
-    merge_commit_sha: string;
-    number: number;
-    base: { ref: string };
-  };
-  repository: { full_name: string };
-}
-
-// --- Config ---
-
-function readDocsRemote(cwd: string): RemoteDocsTarget[] {
-  const configPath = resolve(cwd, 'drift.config.json');
-  if (existsSync(configPath)) {
-    try {
-      const raw = JSON.parse(readFileSync(configPath, 'utf-8'));
-      return raw.docs?.remote ?? [];
-    } catch {
-      return [];
-    }
-  }
-
-  const pkgPath = resolve(cwd, 'package.json');
-  if (existsSync(pkgPath)) {
-    try {
-      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-      return pkg.drift?.docs?.remote ?? [];
-    } catch {
-      return [];
-    }
-  }
-
-  return [];
-}
-
-// --- Breaking changes detection ---
-
-async function getBreakingChanges(cwd: string, baseSha: string): Promise<BreakingChange[]> {
-  try {
-    const result = await $`drift breaking --base ${baseSha} --json`.cwd(cwd).quiet().nothrow().text();
-    const parsed = JSON.parse(result);
-    return (parsed.data?.breaking ?? []) as BreakingChange[];
-  } catch {
-    return [];
-  }
-}
+import {
+  type BreakingChange,
+  type RemoteDocsTarget,
+  parseMergeEvent,
+  readDocsRemote,
+  getBreakingChanges,
+  formatChangesList,
+} from './shared';
 
 // --- Prompts ---
 
@@ -106,11 +50,7 @@ function buildDocsSyncUserPrompt(opts: {
   sourcePR: number;
   branchName: string;
 }): string {
-  const changes = opts.breakingChanges
-    .map((c) => {
-      return `- \`${c.name}\` (${c.kind}): ${c.reason}`;
-    })
-    .join('\n');
+  const changes = formatChangesList(opts.breakingChanges);
 
   return `The following breaking changes were merged in ${opts.sourceRepo}#${opts.sourcePR}:
 
@@ -166,7 +106,7 @@ async function syncDocsRepo(
       },
     })) {
       if ('result' in message) {
-        console.log(`[docs-sync] Done for ${target.repo}: ${(message.result as string).slice(0, 200)}`);
+        console.log(`[docs-pr] Done for ${target.repo}: ${(message.result as string).slice(0, 200)}`);
       }
     }
   } finally {
@@ -177,45 +117,41 @@ async function syncDocsRepo(
 // --- Main ---
 
 async function main(): Promise<void> {
-  const token = process.env.GITHUB_TOKEN;
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  const eventPath = process.env.GITHUB_EVENT_PATH;
-
-  if (!token || !anthropicKey || !eventPath) {
-    console.error('[docs-sync] Missing required env: GITHUB_TOKEN, ANTHROPIC_API_KEY, GITHUB_EVENT_PATH');
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error('[docs-pr] Missing ANTHROPIC_API_KEY');
     process.exit(1);
   }
 
-  const event: MergeEvent = JSON.parse(readFileSync(eventPath, 'utf-8'));
-  const pr = event.pull_request;
-  if (!pr?.merged || !pr.merge_commit_sha) {
-    console.log('[docs-sync] Not a merged PR, skipping');
+  const ctx = parseMergeEvent();
+  if (!ctx) {
+    console.log('[docs-pr] Not a merged PR or missing env, skipping');
     process.exit(0);
   }
 
+  const { event, token } = ctx;
+  const pr = event.pull_request;
   const sourceRepo = event.repository.full_name;
   const cwd = process.cwd();
 
-  // Detect breaking changes: compare merge commit against its parent
   const breakingChanges = await getBreakingChanges(cwd, `${pr.merge_commit_sha}^1`);
   if (breakingChanges.length === 0) {
-    console.log('[docs-sync] No breaking changes, skipping');
+    console.log('[docs-pr] No breaking changes, skipping');
     process.exit(0);
   }
-  console.log(`[docs-sync] ${breakingChanges.length} breaking changes found`);
+  console.log(`[docs-pr] ${breakingChanges.length} breaking changes found`);
 
   const targets = readDocsRemote(cwd);
   if (targets.length === 0) {
-    console.log('[docs-sync] No docs.remote targets configured, skipping');
+    console.log('[docs-pr] No docs.remote targets configured, skipping');
     process.exit(0);
   }
 
   for (const target of targets) {
-    console.log(`[docs-sync] Syncing ${target.repo}`);
+    console.log(`[docs-pr] Syncing ${target.repo}`);
     try {
       await syncDocsRepo(target, breakingChanges, sourceRepo, pr.number, token);
     } catch (err) {
-      console.error(`[docs-sync] Failed for ${target.repo}:`, err);
+      console.error(`[docs-pr] Failed for ${target.repo}:`, err);
     }
   }
 }
