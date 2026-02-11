@@ -13,10 +13,10 @@ import { query } from '@anthropic-ai/claude-agent-sdk';
 // --- Types ---
 
 interface BreakingChange {
-  export: string;
-  type: string;
-  before?: string;
-  after?: string;
+  name: string;
+  kind: string;
+  severity: string;
+  reason: string;
 }
 
 interface RemoteDocsTarget {
@@ -64,9 +64,9 @@ function readDocsRemote(cwd: string): RemoteDocsTarget[] {
 
 async function getBreakingChanges(cwd: string, baseSha: string): Promise<BreakingChange[]> {
   try {
-    const result = await $`drift breaking --base ${baseSha} --json`.cwd(cwd).quiet().text();
+    const result = await $`drift breaking --base ${baseSha} --json`.cwd(cwd).quiet().nothrow().text();
     const parsed = JSON.parse(result);
-    return (parsed.breakingChanges ?? parsed) as BreakingChange[];
+    return (parsed.data?.breaking ?? []) as BreakingChange[];
   } catch {
     return [];
   }
@@ -108,10 +108,7 @@ function buildDocsSyncUserPrompt(opts: {
 }): string {
   const changes = opts.breakingChanges
     .map((c) => {
-      let desc = `- \`${c.export}\` (${c.type})`;
-      if (c.before) desc += `\n  Before: \`${c.before}\``;
-      if (c.after) desc += `\n  After: \`${c.after}\``;
-      return desc;
+      return `- \`${c.name}\` (${c.kind}): ${c.reason}`;
     })
     .join('\n');
 
