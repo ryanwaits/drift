@@ -31,10 +31,26 @@ inputs:
     description: 'Anthropic API key for docs sync on merge (optional)'
     required: false
     default: ''
-  docs-sync:
-    description: 'Enable docs sync on merge'
+  docs-pr:
+    description: 'Create AI-generated PRs on remote docs repos on merge (requires anthropic-key)'
     required: false
-    default: 'true'
+    default: 'false'
+  docs-issue:
+    description: 'Create issues on remote docs repos for breaking changes (no AI needed)'
+    required: false
+    default: 'false'
+  validate-examples:
+    description: 'Type-check @example JSDoc blocks on PRs'
+    required: false
+    default: 'false'
+  release-gate:
+    description: 'Run drift release check on GitHub Release publish'
+    required: false
+    default: 'false'
+  release-changelog:
+    description: 'Append API changelog to GitHub Release body'
+    required: false
+    default: 'false'
 
 outputs:
   coverage:
@@ -73,10 +89,27 @@ runs:
         fi
         drift ci $ARGS
 
-    - name: Docs sync on merge
+    - name: Validate examples
+      if: >
+        github.event_name == 'pull_request'
+        && github.event.action != 'closed'
+        && inputs.validate-examples == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        ARGS="--typecheck"
+        if [ "${{ inputs.check-all }}" = "true" ]; then
+          ARGS="$ARGS --all"
+        fi
+        if [ "${{ inputs.include-private }}" = "true" ]; then
+          ARGS="$ARGS --private"
+        fi
+        drift examples $ARGS
+
+    - name: Docs PR on merge
       if: >
         github.event.pull_request.merged == true
-        && inputs.docs-sync == 'true'
+        && inputs.docs-pr == 'true'
         && inputs.anthropic-key != ''
       shell: bash
       working-directory: ${{ inputs.working-directory }}
@@ -86,4 +119,54 @@ runs:
       run: |
         cd $GITHUB_ACTION_PATH
         bun install
-        bun run docs-sync.ts
+        bun run docs-pr.ts
+
+    - name: Docs issue on merge
+      if: >
+        github.event.pull_request.merged == true
+        && inputs.docs-issue == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: bun run $GITHUB_ACTION_PATH/docs-issue.ts
+
+    - name: Release gate
+      if: >
+        github.event_name == 'release'
+        && inputs.release-gate == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        ARGS=""
+        if [ "${{ inputs.check-all }}" = "true" ]; then
+          ARGS="$ARGS --all"
+        fi
+        drift release $ARGS
+
+    - name: Append API changelog to release
+      if: >
+        github.event_name == 'release'
+        && inputs.release-changelog == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        TAG="${{ github.event.release.tag_name }}"
+        PREV_TAG=$(git tag --sort=-v:refname | grep -A1 "^${TAG}$" | tail -1)
+        if [ -z "$PREV_TAG" ] || [ "$PREV_TAG" = "$TAG" ]; then
+          echo "No previous tag found, skipping changelog"
+          exit 0
+        fi
+        CHANGELOG=$(drift changelog --base "$PREV_TAG" --format md 2>/dev/null || echo "")
+        if [ -n "$CHANGELOG" ]; then
+          EXISTING=$(gh release view "$TAG" --json body -q .body)
+          gh release edit "$TAG" --notes "${EXISTING}
+
+        ---
+
+        ### API Changes (drift)
+
+        ${CHANGELOG}"
+        fi
