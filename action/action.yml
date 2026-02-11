@@ -45,6 +45,11 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
     - name: Setup Bun
       uses: oven-sh/setup-bun@v2
 
@@ -66,7 +71,7 @@ runs:
         if [ "${{ inputs.include-private }}" = "true" ]; then
           ARGS="$ARGS --private"
         fi
-        drift ci $ARGS --min ${{ inputs.min-coverage }}
+        drift ci $ARGS
 
     - name: Docs sync on merge
       if: >
@@ -80,5 +85,5 @@ runs:
         ANTHROPIC_API_KEY: ${{ inputs.anthropic-key }}
       run: |
         cd $GITHUB_ACTION_PATH
-        bun install --frozen-lockfile
+        bun install
         bun run docs-sync.ts

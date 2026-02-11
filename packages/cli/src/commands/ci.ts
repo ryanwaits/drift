@@ -162,7 +162,8 @@ export function registerCiCommand(program: Command): void {
     .description('Run CI checks on changed packages')
     .option('--all', 'Check all packages, not just changed ones')
     .option('--private', 'Include private packages')
-    .action(async (options: { all?: boolean; private?: boolean }) => {
+    .option('--min <number>', 'Minimum coverage percentage (0-100)')
+    .action(async (options: { all?: boolean; private?: boolean; min?: string }) => {
       const startTime = Date.now();
       const version = getVersion();
       const cwd = process.cwd();
@@ -183,7 +184,7 @@ export function registerCiCommand(program: Command): void {
 
         if (packageDirs.length === 0) packageDirs = allDirs;
 
-        let minThreshold = config.coverage?.min ?? 0;
+        let minThreshold = options.min ? Number(options.min) : (config.coverage?.min ?? 0);
         if (minThreshold > 0 && config.coverage?.ratchet) {
           const ratchet = computeRatchetMin(minThreshold);
           minThreshold = ratchet.effectiveMin;
