@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.38.0
+
+### Minor Changes
+
+- Add monorepo support to `drift breaking` and `drift diff` commands with `--all` and `--private` flags
+
 ## 0.37.0
 
 ### Minor Changes
