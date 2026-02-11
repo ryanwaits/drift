@@ -110,6 +110,70 @@ export function renderBatchExamples(data: { packages: BatchExamplesRow[]; aggreg
   return lines.join('\n');
 }
 
+export interface BatchDiffRow {
+  name: string;
+  breaking: number;
+  added: number;
+  changed: number;
+}
+
+export function renderBatchDiff(data: { packages: BatchDiffRow[]; aggregate: { breaking: number; added: number; changed: number }; skipped?: string[] }): string {
+  const lines: string[] = [''];
+  const rows = data.packages;
+
+  const nameW = Math.max(7, ...rows.map((r) => r.name.length));
+  lines.push(indent(`${c.gray(pad('PACKAGE', nameW))}  ${c.gray(pad('BREAKING', 8))}  ${c.gray(pad('ADDED', 5))}  ${c.gray('CHANGED')}`));
+
+  for (const r of rows) {
+    const bStr = pad(String(r.breaking), 8);
+    const aStr = pad(String(r.added), 5);
+    const cStr = String(r.changed);
+    const breaking = r.breaking === 0 ? c.green(bStr) : c.red(bStr);
+    const added = r.added === 0 ? aStr : c.green(aStr);
+    const changed = r.changed === 0 ? cStr : c.yellow(cStr);
+    lines.push(indent(`${pad(r.name, nameW)}  ${breaking}  ${added}  ${changed}`));
+  }
+
+  lines.push('');
+  const parts: string[] = [];
+  if (data.aggregate.breaking > 0) parts.push(`${data.aggregate.breaking} breaking`);
+  if (data.aggregate.added > 0) parts.push(`${data.aggregate.added} added`);
+  if (data.aggregate.changed > 0) parts.push(`${data.aggregate.changed} changed`);
+  lines.push(indent(`${c.bold('Total')}: ${parts.length > 0 ? parts.join(', ') : 'no changes'}`));
+  if (data.skipped && data.skipped.length > 0) {
+    lines.push(indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`));
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+export interface BatchBreakingRow {
+  name: string;
+  breaking: Array<{ name: string; reason?: string; severity?: string }>;
+  count: number;
+}
+
+export function renderBatchBreaking(data: { packages: BatchBreakingRow[]; aggregate: { count: number }; skipped?: string[] }): string {
+  const lines: string[] = [''];
+  const rows = data.packages;
+
+  const nameW = Math.max(7, ...rows.map((r) => r.name.length));
+  lines.push(indent(`${c.gray(pad('PACKAGE', nameW))}  ${c.gray('BREAKING')}`));
+
+  for (const r of rows) {
+    const count = r.count === 0 ? c.green('0') : c.red(String(r.count));
+    lines.push(indent(`${pad(r.name, nameW)}  ${count}`));
+  }
+
+  lines.push('');
+  lines.push(indent(`${c.bold('Total')}: ${data.aggregate.count} breaking change${data.aggregate.count === 1 ? '' : 's'}`));
+  if (data.skipped && data.skipped.length > 0) {
+    lines.push(indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`));
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
 function pad(s: string, w: number): string {
   return s + ' '.repeat(Math.max(0, w - s.length));
 }
