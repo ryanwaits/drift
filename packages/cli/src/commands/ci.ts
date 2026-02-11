@@ -4,10 +4,12 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Command } from 'commander';
 import { computeDrift } from '@driftdev/sdk';
+import { diffSpec, categorizeBreakingChanges } from '@openpkg-ts/spec';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderCi } from '../formatters/ci';
 import { detectEntry } from '../utils/detect-entry';
+import { extractSpecFromRef } from '../utils/git-extract';
 import { getGitHubContext, getPRNumber, postOrUpdatePRComment, writeStepSummary } from '../utils/github';
 import { writeContext } from '../utils/context-writer';
 import { appendHistory, readHistory } from '../utils/history';
@@ -33,6 +35,8 @@ interface PackageResult {
   lintPass: boolean;
   exports: number;
   pass: boolean;
+  diff?: { breaking: Array<{ name: string; reason?: string }>; added: string[]; changed: string[] };
+  undocumented?: string[];
 }
 
 function getChangedFiles(baseRef: string): string[] {
@@ -69,19 +73,86 @@ function filterChangedPackages(allDirs: string[], changedFiles: string[]): strin
   });
 }
 
-function buildMarkdownTable(results: PackageResult[], pass: boolean): string {
+function buildPRComment(results: PackageResult[], pass: boolean, commit: string | null): string {
   const lines: string[] = [];
-  lines.push('## Drift CI Results\n');
+  const multi = results.length > 1;
+
+  lines.push('## Drift CI\n');
+
+  // Metrics table (always shown)
   lines.push('| Package | Exports | Coverage | Lint | Status |');
   lines.push('|---------|---------|----------|------|--------|');
   for (const r of results) {
-    const cov = r.coveragePass ? `${r.coverage}%` : `${r.coverage}% ❌`;
-    const lint = r.lintPass ? `${r.lintIssues} issues` : `${r.lintIssues} issues ❌`;
-    const status = r.pass ? '✅' : '❌';
+    const cov = r.coveragePass ? `${r.coverage}%` : `${r.coverage}% :x:`;
+    const lint = r.lintPass ? `${r.lintIssues}` : `${r.lintIssues} :x:`;
+    const status = r.pass ? ':white_check_mark:' : ':x:';
     lines.push(`| ${r.name} | ${r.exports} | ${cov} | ${lint} | ${status} |`);
   }
+
+  // API Changes section
+  const apiEntries: string[] = [];
+  for (const r of results) {
+    if (!r.diff) continue;
+    const { breaking, added, changed } = r.diff;
+    if (breaking.length === 0 && added.length === 0 && changed.length === 0) continue;
+    const pkgLines: string[] = [];
+    if (multi) pkgLines.push(`\n**${r.name}**`);
+    for (const name of added) pkgLines.push(`- :heavy_plus_sign: Added: \`${name}\``);
+    for (const name of changed) pkgLines.push(`- :pencil2: Changed: \`${name}\``);
+    for (const b of breaking) pkgLines.push(`- :x: Removed: \`${b.name}\``);
+    apiEntries.push(pkgLines.join('\n'));
+  }
+  if (apiEntries.length > 0) {
+    const total = results.reduce((s, r) => s + (r.diff ? r.diff.breaking.length + r.diff.added.length + r.diff.changed.length : 0), 0);
+    lines.push('');
+    lines.push(`<details>\n<summary>API Changes (${total})</summary>\n`);
+    lines.push(apiEntries.join('\n'));
+    lines.push('\n</details>');
+  }
+
+  // Breaking Changes section
+  const breakingEntries: string[] = [];
+  for (const r of results) {
+    if (!r.diff?.breaking.length) continue;
+    const pkgLines: string[] = [];
+    if (multi) pkgLines.push(`\n**${r.name}**`);
+    for (const b of r.diff.breaking) {
+      pkgLines.push(`- \`${b.name}\`${b.reason ? `: ${b.reason}` : ''}`);
+    }
+    breakingEntries.push(pkgLines.join('\n'));
+  }
+  if (breakingEntries.length > 0) {
+    const total = results.reduce((s, r) => s + (r.diff?.breaking.length ?? 0), 0);
+    lines.push('');
+    lines.push(`<details>\n<summary>Breaking Changes (${total})</summary>\n`);
+    lines.push(breakingEntries.join('\n'));
+    lines.push('\n</details>');
+  }
+
+  // Undocumented Exports section
+  const undocEntries: string[] = [];
+  for (const r of results) {
+    if (!r.undocumented?.length) continue;
+    const pkgLines: string[] = [];
+    if (multi) pkgLines.push(`\n**${r.name}**`);
+    for (const name of r.undocumented) pkgLines.push(`- \`${name}\``);
+    undocEntries.push(pkgLines.join('\n'));
+  }
+  if (undocEntries.length > 0) {
+    const total = results.reduce((s, r) => s + (r.undocumented?.length ?? 0), 0);
+    lines.push('');
+    lines.push(`<details>\n<summary>Undocumented Exports (${total})</summary>\n`);
+    lines.push(undocEntries.join('\n'));
+    lines.push('\n</details>');
+  }
+
+  // Footer
   lines.push('');
-  lines.push(pass ? '**All checks passed.**' : '**Some checks failed.**');
+  lines.push('---');
+  const ts = new Date().toISOString();
+  const sha = commit ?? '';
+  lines.push(`*[Drift](https://github.com/driftdev/drift) · ${ts}${sha ? ` · ${sha}` : ''}*`);
+
   return lines.join('\n');
 }
 
@@ -165,6 +236,31 @@ export function registerCiCommand(program: Command): void {
             }
             const lintPass = config.lint === false || lintIssues === 0;
 
+            // Diff / breaking / undocumented (PR context only)
+            let diff: PackageResult['diff'];
+            let undocumented: PackageResult['undocumented'];
+
+            if (gh.isPR && gh.baseRef) {
+              try {
+                const relEntry = path.relative(cwd, detectEntry(absDir));
+                const oldSpec = await extractSpecFromRef(`origin/${gh.baseRef}`, relEntry, cwd);
+                const diffResult = diffSpec(oldSpec, spec);
+                const breaking = categorizeBreakingChanges(diffResult.breaking, oldSpec, spec);
+                diff = {
+                  breaking: breaking.map((b) => ({ name: b.name, reason: b.reason })),
+                  added: diffResult.nonBreaking,
+                  changed: diffResult.docsOnly,
+                };
+              } catch {
+                // Entry doesn't exist at base ref (new package) — skip diff
+              }
+
+              const undoc = exports
+                .filter((e: { description?: string }) => !e.description?.trim())
+                .map((e: { name: string }) => e.name);
+              if (undoc.length > 0) undocumented = undoc;
+            }
+
             results.push({
               name,
               coverage,
@@ -173,6 +269,8 @@ export function registerCiCommand(program: Command): void {
               lintPass,
               exports: total,
               pass: coveragePass && lintPass,
+              diff,
+              undocumented,
             });
           } catch {
             results.push({
@@ -219,7 +317,7 @@ export function registerCiCommand(program: Command): void {
 
         // PR comment / step summary (13.2)
         if (gh.isPR && gh.token && gh.repository) {
-          const md = buildMarkdownTable(results, allPass);
+          const md = buildPRComment(results, allPass, commit);
           writeStepSummary(md);
           const prNumber = getPRNumber(gh.eventPath);
           if (prNumber) {
