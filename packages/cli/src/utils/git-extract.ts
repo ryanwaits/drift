@@ -11,6 +11,18 @@ import { extract } from '@openpkg-ts/sdk';
 import { normalize } from '@openpkg-ts/spec';
 
 /**
+ * Get the git repository root directory.
+ */
+function getGitRoot(cwd: string): string {
+  return execSync('git rev-parse --show-toplevel', {
+    encoding: 'utf-8',
+    cwd,
+    timeout: 5000,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  }).trim();
+}
+
+/**
  * List all source files tracked at a given ref under a directory prefix.
  */
 function listFilesAtRef(ref: string, prefix: string, cwd: string): string[] {
@@ -74,9 +86,11 @@ export async function extractSpecFromRef(
   entry: string,
   cwd = process.cwd(),
 ): Promise<ReturnType<typeof normalize>> {
-  // Resolve entry relative to cwd
-  const relEntry = path.relative(cwd, path.resolve(cwd, entry));
-  const entryDir = path.dirname(relEntry);
+  // Git paths are always repo-root-relative, so resolve against git root
+  const gitRoot = getGitRoot(cwd);
+  const absEntry = path.resolve(cwd, entry);
+  const repoRelEntry = path.relative(gitRoot, absEntry);
+  const entryDir = path.dirname(repoRelEntry);
 
   // Determine source prefix to checkout (the directory containing the entry)
   // For monorepos: packages/sdk/src/index.ts → packages/sdk/
@@ -86,17 +100,15 @@ export async function extractSpecFromRef(
   const tmpDir = mkdtempSync(path.join(os.tmpdir(), 'drift-git-'));
 
   try {
-    // List and checkout all source files at ref
+    // List and checkout all source files at ref (paths must be repo-root-relative)
     const prefixes = srcPrefix === '.' ? [''] : [srcPrefix];
-    // Always include root config files
     const rootFiles = ['tsconfig.json', 'tsconfig.base.json', 'package.json'];
 
     for (const prefix of prefixes) {
-      const files = listFilesAtRef(ref, prefix || '.', cwd);
+      const files = listFilesAtRef(ref, prefix || '.', gitRoot);
       for (const file of files) {
-        // Only checkout .ts/.tsx/.json files
         if (!file.match(/\.(ts|tsx|json|js|mjs|cjs)$/)) continue;
-        const content = getFileAtRef(ref, file, cwd);
+        const content = getFileAtRef(ref, file, gitRoot);
         if (content === null) continue;
         const destPath = path.join(tmpDir, file);
         mkdirSync(path.dirname(destPath), { recursive: true });
@@ -108,7 +120,7 @@ export async function extractSpecFromRef(
     for (const rootFile of rootFiles) {
       const dest = path.join(tmpDir, rootFile);
       if (!existsSync(dest)) {
-        const content = getFileAtRef(ref, rootFile, cwd);
+        const content = getFileAtRef(ref, rootFile, gitRoot);
         if (content) {
           writeFileSync(dest, content);
         }
@@ -122,9 +134,18 @@ export async function extractSpecFromRef(
       symlinkSync(nmSrc, nmDest, 'dir');
     }
 
+    // Also try root node_modules if cwd differs from git root
+    if (cwd !== gitRoot) {
+      const rootNm = path.join(gitRoot, 'node_modules');
+      const rootNmDest = path.join(tmpDir, 'node_modules');
+      if (existsSync(rootNm) && !existsSync(rootNmDest)) {
+        symlinkSync(rootNm, rootNmDest, 'dir');
+      }
+    }
+
     // If entry is inside a nested package, also symlink its node_modules
     if (srcPrefix !== '.') {
-      const nestedNm = path.join(cwd, srcPrefix, 'node_modules');
+      const nestedNm = path.join(gitRoot, srcPrefix, 'node_modules');
       const nestedDest = path.join(tmpDir, srcPrefix, 'node_modules');
       if (existsSync(nestedNm) && !existsSync(nestedDest)) {
         symlinkSync(nestedNm, nestedDest, 'dir');
@@ -139,9 +160,9 @@ export async function extractSpecFromRef(
     }
 
     // Extract
-    const entryFile = path.join(tmpDir, relEntry);
+    const entryFile = path.join(tmpDir, repoRelEntry);
     if (!existsSync(entryFile)) {
-      throw new Error(`Entry file not found at ref ${ref}: ${relEntry}`);
+      throw new Error(`Entry file not found at ref ${ref}: ${repoRelEntry}`);
     }
 
     const result = await extract({ entryFile });
