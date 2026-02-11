@@ -1,6 +1,6 @@
 {
   "name": "@driftdev/cli",
-  "version": "0.36.0",
+  "version": "0.37.0",
   "description": "Drift CLI - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",

@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.37.0
+
+### Minor Changes
+
+- Add diff, breaking changes, and undocumented export analysis to `drift ci`. Structured PR comments with collapsible sections. Remove agent server in favor of GitHub Action docs-sync.
+
 ## 0.36.0
 
 ### Minor Changes
