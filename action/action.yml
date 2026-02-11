@@ -27,6 +27,14 @@ inputs:
     description: 'Include private packages'
     required: false
     default: 'false'
+  anthropic-key:
+    description: 'Anthropic API key for docs sync on merge (optional)'
+    required: false
+    default: ''
+  docs-sync:
+    description: 'Enable docs sync on merge'
+    required: false
+    default: 'true'
 
 outputs:
   coverage:
@@ -37,16 +45,15 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
 
     - name: Install Drift CLI
       shell: bash
-      run: npm install -g @driftdev/cli
+      run: bun install -g @driftdev/cli
 
     - name: Run drift ci
+      if: github.event_name == 'pull_request'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
@@ -60,3 +67,18 @@ runs:
           ARGS="$ARGS --private"
         fi
         drift ci $ARGS --min ${{ inputs.min-coverage }}
+
+    - name: Docs sync on merge
+      if: >
+        github.event.pull_request.merged == true
+        && inputs.docs-sync == 'true'
+        && inputs.anthropic-key != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic-key }}
+      run: |
+        cd $GITHUB_ACTION_PATH
+        bun install --frozen-lockfile
+        bun run docs-sync.ts
