@@ -3,6 +3,13 @@
  * Loaded from drift.config.json or package.json "drift" key.
  */
 
+export interface RemoteDocsTarget {
+  /** Target repo in "owner/repo" format */
+  repo: string;
+  /** Target branch (defaults to repo's default branch) */
+  branch?: string;
+}
+
 export interface DriftConfig {
   /** Entry point override (otherwise auto-detected) */
   entry?: string;
@@ -19,6 +26,8 @@ export interface DriftConfig {
   docs?: {
     include?: string[];
     exclude?: string[];
+    /** Remote repos to sync docs on breaking changes */
+    remote?: RemoteDocsTarget[];
   };
 }
 
@@ -77,6 +86,25 @@ export function validateConfig(raw: unknown): { ok: true; config: DriftConfig } 
       }
       if (docs.exclude !== undefined && (!Array.isArray(docs.exclude) || !docs.exclude.every((i) => typeof i === 'string'))) {
         errors.push('"docs.exclude" must be an array of strings');
+      }
+      if (docs.remote !== undefined) {
+        if (!Array.isArray(docs.remote)) {
+          errors.push('"docs.remote" must be an array');
+        } else {
+          for (let i = 0; i < docs.remote.length; i++) {
+            const target = docs.remote[i] as Record<string, unknown>;
+            if (typeof target !== 'object' || target === null) {
+              errors.push(`"docs.remote[${i}]" must be an object`);
+              continue;
+            }
+            if (typeof target.repo !== 'string' || !/^[^/]+\/[^/]+$/.test(target.repo)) {
+              errors.push(`"docs.remote[${i}].repo" must be in "owner/repo" format`);
+            }
+            if (target.branch !== undefined && typeof target.branch !== 'string') {
+              errors.push(`"docs.remote[${i}].branch" must be a string`);
+            }
+          }
+        }
       }
     }
   }
