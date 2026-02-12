@@ -49,7 +49,7 @@ export const DRIFT_CATEGORY_DESCRIPTIONS: Record<DriftCategory, string> = {
   example: "@example code has errors or doesn't work correctly",
 };
 
-export type DocCovDrift = {
+export type DriftIssue = {
   type: DriftType;
   target?: string;
   issue: string;
@@ -135,14 +135,14 @@ export type DocumentationHealth = {
 };
 
 // ============================================================================
-// DocCov Spec (doccov.json schema)
+// Drift Spec (drift.json schema)
 // ============================================================================
 
-export type DocCovSpecVersion = '0.1.0' | '1.0.0';
+export type DriftSpecVersion = '0.1.0' | '1.0.0';
 
-export type DocCovSpec = {
+export type DriftSpec = {
   $schema?: string;
-  doccov: DocCovSpecVersion;
+  drift: DriftSpecVersion;
 
   /** Reference to source openpkg spec */
   source: {
@@ -155,7 +155,7 @@ export type DocCovSpec = {
   generatedAt: string;
 
   /** Aggregate coverage summary */
-  summary: DocCovSummary;
+  summary: DriftSummary;
 
   /** Per-export analysis, keyed by openpkg export ID */
   exports: Record<string, ExportAnalysis>;
@@ -164,7 +164,7 @@ export type DocCovSpec = {
   apiSurface?: ApiSurfaceResult;
 };
 
-export type DocCovSummary = {
+export type DriftSummary = {
   /**
    * Overall coverage score (0-100)
    * @deprecated Use `health.completeness.score` instead. Will be removed in next major.
@@ -224,7 +224,7 @@ export type ExportAnalysis = {
   missing?: MissingDocRule[];
 
   /** Drift issues */
-  drift?: DocCovDrift[];
+  drift?: DriftIssue[];
 
   /** Example validation results */
   examples?: ExampleAnalysis;

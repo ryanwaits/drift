@@ -3,10 +3,10 @@
 export { SCHEMA_URL, SCHEMA_VERSION } from './constants';
 export type {
   ApiSurfaceResult,
-  DocCovDrift,
-  DocCovSpec,
-  DocCovSpecVersion,
-  DocCovSummary,
+  DriftIssue,
+  DriftSpec,
+  DriftSpecVersion,
+  DriftSummary,
   DocumentationHealth,
   DriftCategory,
   DriftType,
@@ -26,11 +26,11 @@ export {
 } from './types';
 
 // Validation
-export type { DocCovSchemaVersion, DocCovSpecError } from './validate';
+export type { DriftSchemaVersion, DriftSpecError } from './validate';
 export {
-  assertDocCovSpec,
-  getAvailableDocCovVersions,
-  getDocCovValidationErrors,
+  assertDriftSpec,
+  getAvailableDriftVersions,
+  getDriftValidationErrors,
   LATEST_VERSION,
-  validateDocCovSpec,
+  validateDriftSpec,
 } from './validate';

@@ -1,20 +1,20 @@
 {
   "name": "@driftdev/spec",
   "version": "0.36.0",
-  "description": "DocCov specification schema, types, and validation",
+  "description": "Drift specification schema, types, and validation",
   "keywords": [
-    "doccov",
+    "drift",
     "documentation",
     "coverage",
     "json-schema",
     "validation",
     "typescript"
   ],
-  "homepage": "https://github.com/doccov/doccov#readme",
+  "homepage": "https://github.com/ryanwaits/drift#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/doccov/doccov.git",
-    "directory": "packages/doccov-spec"
+    "url": "git+https://github.com/ryanwaits/drift.git",
+    "directory": "packages/spec"
   },
   "license": "MIT",
   "author": "Ryan Waits",

@@ -2,14 +2,14 @@ import type { ValidateFunction } from 'ajv';
 import Ajv from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 
-import schemaV100 from '../schemas/v1.0.0/doccov.schema.json';
-import type { DocCovSpec } from './types';
+import schemaV100 from '../schemas/v1.0.0/drift.schema.json';
+import type { DriftSpec } from './types';
 
-export type DocCovSchemaVersion = '1.0.0' | 'latest';
+export type DriftSchemaVersion = '1.0.0' | 'latest';
 
-export const LATEST_VERSION: DocCovSchemaVersion = '1.0.0';
+export const LATEST_VERSION: DriftSchemaVersion = '1.0.0';
 
-export type DocCovSpecError = {
+export type DriftSpecError = {
   instancePath: string;
   message: string;
   keyword: string;
@@ -26,9 +26,9 @@ const ajv = new Ajv({
 });
 addFormats(ajv);
 
-const validatorCache = new Map<string, ValidateFunction<DocCovSpec>>();
+const validatorCache = new Map<string, ValidateFunction<DriftSpec>>();
 
-function getValidator(version: DocCovSchemaVersion = 'latest'): ValidateFunction<DocCovSpec> {
+function getValidator(version: DriftSchemaVersion = 'latest'): ValidateFunction<DriftSpec> {
   const resolvedVersion = version === 'latest' ? LATEST_VERSION : version;
 
   let validator = validatorCache.get(resolvedVersion);
@@ -44,15 +44,15 @@ function getValidator(version: DocCovSchemaVersion = 'latest'): ValidateFunction
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: Ajv schema type is dynamically loaded
-  validator = ajv.compile<DocCovSpec>(schema as any);
+  validator = ajv.compile<DriftSpec>(schema as any);
   validatorCache.set(resolvedVersion, validator);
   return validator;
 }
 
-export function validateDocCovSpec(
+export function validateDriftSpec(
   spec: unknown,
-  version: DocCovSchemaVersion = 'latest',
-): { ok: true } | { ok: false; errors: DocCovSpecError[] } {
+  version: DriftSchemaVersion = 'latest',
+): { ok: true } | { ok: false; errors: DriftSpecError[] } {
   const validate = getValidator(version);
   const ok = validate(spec);
 
@@ -60,7 +60,7 @@ export function validateDocCovSpec(
     return { ok: true };
   }
 
-  const errors = (validate.errors ?? []).map<DocCovSpecError>((error) => ({
+  const errors = (validate.errors ?? []).map<DriftSpecError>((error) => ({
     instancePath: error.instancePath ?? '',
     message: error.message ?? 'invalid',
     keyword: error.keyword ?? 'unknown',
@@ -72,27 +72,27 @@ export function validateDocCovSpec(
   };
 }
 
-export function assertDocCovSpec(
+export function assertDriftSpec(
   spec: unknown,
-  version: DocCovSchemaVersion = 'latest',
-): asserts spec is DocCovSpec {
-  const result = validateDocCovSpec(spec, version);
+  version: DriftSchemaVersion = 'latest',
+): asserts spec is DriftSpec {
+  const result = validateDriftSpec(spec, version);
   if (!result.ok) {
     const details = result.errors
       .map((error) => `- ${error.instancePath || '/'} ${error.message}`)
       .join('\n');
-    throw new Error(`Invalid DocCovSpec:\n${details}`);
+    throw new Error(`Invalid DriftSpec:\n${details}`);
   }
 }
 
-export function getDocCovValidationErrors(
+export function getDriftValidationErrors(
   spec: unknown,
-  version: DocCovSchemaVersion = 'latest',
-): DocCovSpecError[] {
-  const result = validateDocCovSpec(spec, version);
+  version: DriftSchemaVersion = 'latest',
+): DriftSpecError[] {
+  const result = validateDriftSpec(spec, version);
   return result.ok ? [] : result.errors;
 }
 
-export function getAvailableDocCovVersions(): string[] {
+export function getAvailableDriftVersions(): string[] {
   return Object.keys(schemas);
 }

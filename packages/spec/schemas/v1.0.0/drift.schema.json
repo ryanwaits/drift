@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://unpkg.com/@doccov/spec/schemas/v1.0.0/doccov.schema.json",
-  "title": "DocCov Specification",
+  "$id": "https://unpkg.com/@driftdev/spec/schemas/v1.0.0/drift.schema.json",
+  "title": "Drift Specification",
   "description": "Documentation coverage analysis specification",
   "type": "object",
-  "required": ["doccov", "source", "generatedAt", "summary", "exports"],
+  "required": ["drift", "source", "generatedAt", "summary", "exports"],
   "properties": {
     "$schema": { "type": "string" },
-    "doccov": { "const": "1.0.0" },
+    "drift": { "const": "1.0.0" },
     "source": { "$ref": "#/$defs/source" },
     "generatedAt": { "type": "string", "format": "date-time" },
     "summary": { "$ref": "#/$defs/summary" },
