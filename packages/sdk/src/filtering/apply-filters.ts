@@ -255,7 +255,7 @@ export const applyFilters = (
     types: filteredTypes.length > 0 ? filteredTypes : spec.types ? [] : undefined,
   };
 
-  // Note: Coverage is computed separately via buildDocCovSpec(), not during filtering
+  // Note: Coverage is computed separately via buildDriftSpec(), not during filtering
   const filteredSpec: OpenPkgSpec = baseSpec;
 
   const changed =

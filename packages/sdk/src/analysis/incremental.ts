@@ -10,7 +10,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import type { DocCovDrift, ExportAnalysis, MissingDocRule } from '@driftdev/spec';
+import type { DriftIssue, ExportAnalysis, MissingDocRule } from '@driftdev/spec';
 
 /**
  * Result from analyzing a single export incrementally.
@@ -25,7 +25,7 @@ export interface IncrementalExportResult {
   /** Missing documentation rules */
   missing?: MissingDocRule[];
   /** Drift issues detected */
-  drift?: DocCovDrift[];
+  drift?: DriftIssue[];
   /** Number of overloads (if > 1) */
   overloadCount?: number;
   /** Timestamp when this result was written */
@@ -82,7 +82,7 @@ export class IncrementalAnalyzer {
 
   constructor(options: IncrementalAnalyzerOptions = {}) {
     const tempDir = options.tempDir ?? os.tmpdir();
-    const prefix = options.prefix ?? 'doccov';
+    const prefix = options.prefix ?? 'drift';
     this.tempPath = path.join(tempDir, `${prefix}-${Date.now()}-${process.pid}.ndjson`);
   }
 
@@ -277,11 +277,11 @@ export class IncrementalAnalyzer {
 
 /**
  * Find any orphaned temp files from previous crashed runs.
- * Returns paths to .ndjson files that match the doccov pattern.
+ * Returns paths to .ndjson files that match the drift pattern.
  */
 export function findOrphanedTempFiles(
   tempDir: string = os.tmpdir(),
-  prefix: string = 'doccov',
+  prefix: string = 'drift',
 ): string[] {
   try {
     const files = fs.readdirSync(tempDir);
@@ -300,7 +300,7 @@ export function findOrphanedTempFiles(
  */
 export function cleanupOrphanedTempFiles(
   tempDir: string = os.tmpdir(),
-  prefix: string = 'doccov',
+  prefix: string = 'drift',
   maxAge: number = 60 * 60 * 1000,
 ): number {
   const files = findOrphanedTempFiles(tempDir, prefix);

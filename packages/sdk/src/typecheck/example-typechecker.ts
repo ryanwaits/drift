@@ -133,7 +133,7 @@ export function typecheckExample(
 
   // Create virtual file content with export names for imports
   const virtualSource = createVirtualSource(cleanCode, packageName, exportNames);
-  const virtualFileName = path.join(packagePath, '__doccov_example__.ts');
+  const virtualFileName = path.join(packagePath, '__drift_example__.ts');
 
   // Calculate line offset (for import statement we added)
   // Only offset if we added an import (example didn't already have one)

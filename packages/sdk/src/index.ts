@@ -1,5 +1,5 @@
 /**
- * DocCov SDK - Documentation coverage and drift detection for TypeScript.
+ * Drift SDK - Documentation coverage and drift detection for TypeScript.
  *
  * This is the main entry point with core functionality.
  * For specialized utilities, use subpath imports:
@@ -7,13 +7,13 @@
  * @example
  * ```ts
  * // Core API (this module)
- * import { DocCov, buildDocCovSpec, computeDrift } from '@driftdev/sdk';
+ * import { Drift, buildDriftSpec, computeDrift } from '@driftdev/sdk';
  *
  * // Analysis utilities
  * import { generateReport, computeSnapshot } from '@driftdev/sdk/analysis';
  *
  * // Type definitions
- * import type { DocCovReport, FilterOptions } from '@driftdev/sdk/types';
+ * import type { DriftReport, FilterOptions } from '@driftdev/sdk/types';
  * ```
  *
  * @module @driftdev/sdk
@@ -23,9 +23,9 @@
 // Core Analysis API
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type { BuildDocCovOptions } from './analysis/doccov-builder';
-// DocCov spec builder
-export { buildDocCovSpec } from './analysis/doccov-builder';
+export type { BuildDriftOptions } from './analysis/drift-builder';
+// Drift spec builder
+export { buildDriftSpec } from './analysis/drift-builder';
 export type {
   CategorizedDrift,
   DriftCategory,
@@ -78,19 +78,19 @@ export {
   IncrementalAnalyzer,
 } from './analysis/incremental';
 export type { AnalysisResult, AnalyzeOptions, Diagnostic, ForgottenExportResult } from './analyzer';
-export { analyze, analyzeFile, DocCov } from './analyzer';
-export type { DocCovOptions } from './options';
+export { analyze, analyzeFile, Drift } from './analyzer';
+export type { DriftOptions } from './options';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type {
-  DocCovConfig,
-  DocCovConfigInput,
+  DriftConfig,
+  DriftConfigInput,
   DocsConfig,
 } from './config';
-export { defineConfig, docCovConfigSchema, normalizeConfig } from './config';
+export { defineConfig, driftConfigSchema, normalizeConfig } from './config';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Project Resolution & Detection
@@ -152,7 +152,7 @@ export { detectProseDrift, type ProseDriftOptions } from './analysis/drift/prose
 // Report Types (commonly needed)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type { CoverageSummary, DocCovReport, ExportCoverageData } from './types/report';
+export type { CoverageSummary, DriftReport, ExportCoverageData } from './types/report';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Filter Types (commonly needed)
@@ -202,7 +202,7 @@ export {
   renderSparkline,
   saveSnapshot,
 } from './analysis/history';
-export { generateReportFromDocCov, loadCachedReport, saveReport } from './analysis/report';
+export { generateReportFromDrift, loadCachedReport, saveReport } from './analysis/report';
 export type { CacheContext, CacheValidationResult, SpecCache, SpecCacheConfig } from './cache';
 // Cache (for advanced usage)
 export {
@@ -324,7 +324,7 @@ export {
 export type { TypecheckOptions } from './typecheck';
 // Typecheck (additional exports)
 export { typecheckExample } from './typecheck';
-export type { DriftReport, DriftReportSummary } from './types/report';
+export type { DriftReportSummary } from './types/report';
 // Report types (additional exports)
 export {
   getDiffReportPath,

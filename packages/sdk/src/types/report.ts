@@ -2,7 +2,7 @@ import type { ApiSurfaceResult, DocumentationHealth } from '@driftdev/spec';
 import type { CategorizedDrift, DriftCategory, SpecDocDrift } from '../analysis/drift/types';
 
 /**
- * DocCov report schema version.
+ * Drift report schema version.
  */
 export const REPORT_VERSION = '1.0.0';
 
@@ -163,12 +163,12 @@ export interface ExportCoverageData {
 }
 
 /**
- * DocCov report - a persistable coverage analysis result.
+ * Drift report - a persistable coverage analysis result.
  *
  * This is the format saved as `report.json` and returned
  * by the `check` command with `--format json`.
  */
-export interface DocCovReport {
+export interface DriftReport {
   /**
    * JSON Schema reference for validation.
    */

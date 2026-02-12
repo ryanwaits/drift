@@ -1,5 +1,5 @@
 /**
- * Configuration types for DocCov.
+ * Configuration types for Drift.
  * These types are shared between CLI and API.
  */
 
@@ -19,9 +19,9 @@ export interface DocsConfig {
 export type ExampleValidationMode = 'presence' | 'typecheck' | 'run';
 
 /**
- * Normalized DocCov configuration.
+ * Normalized Drift configuration.
  */
-export interface DocCovConfig {
+export interface DriftConfig {
   /** Export include patterns */
   include?: string[];
   /** Export exclude patterns */
@@ -31,7 +31,7 @@ export interface DocCovConfig {
 }
 
 /**
- * Define a DocCov configuration.
+ * Define a Drift configuration.
  * Helper function for type-safe configuration in drift.config.ts.
  *
  * @param config - Configuration object
@@ -48,6 +48,6 @@ export interface DocCovConfig {
  * });
  * ```
  */
-export function defineConfig(config: DocCovConfig): DocCovConfig {
+export function defineConfig(config: DriftConfig): DriftConfig {
   return config;
 }

@@ -63,7 +63,7 @@ export async function runExample(
   // When running with package install, cwd is the temp working directory
   const tmpFile = path.join(
     cwd,
-    `doccov-example-${Date.now()}-${Math.random().toString(36).slice(2)}.ts`,
+    `drift-example-${Date.now()}-${Math.random().toString(36).slice(2)}.ts`,
   );
 
   try {
@@ -270,14 +270,14 @@ export async function runExamplesWithPackage(
   // Create temp working directory
   const workDir = path.join(
     os.tmpdir(),
-    `doccov-examples-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `drift-examples-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
 
   try {
     fs.mkdirSync(workDir, { recursive: true });
 
     // Write package.json for ESM support
-    const pkgJson = { name: 'doccov-example-runner', type: 'module' };
+    const pkgJson = { name: 'drift-example-runner', type: 'module' };
     fs.writeFileSync(path.join(workDir, 'package.json'), JSON.stringify(pkgJson, null, 2));
 
     // Detect or use specified package manager

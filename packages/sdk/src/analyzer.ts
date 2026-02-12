@@ -18,8 +18,8 @@ import {
 import { extractPackageSpec } from './extractor';
 import { applyFilters } from './filtering/apply-filters';
 import type { FilterOptions } from './filtering/types';
-import type { DocCovOptions, NormalizedDocCovOptions } from './options';
-import { normalizeDocCovOptions } from './options';
+import type { DriftOptions, NormalizedDriftOptions } from './options';
+import { normalizeDriftOptions } from './options';
 import { ts } from './ts-module';
 
 export interface Diagnostic {
@@ -73,11 +73,11 @@ export interface AnalyzeOptions {
   filters?: FilterOptions;
 }
 
-export class DocCov {
-  private readonly options: NormalizedDocCovOptions;
+export class Drift {
+  private readonly options: NormalizedDriftOptions;
 
-  constructor(options: DocCovOptions = {}) {
-    this.options = normalizeDocCovOptions(options);
+  constructor(options: DriftOptions = {}) {
+    this.options = normalizeDriftOptions(options);
   }
 
   async analyze(
@@ -425,14 +425,14 @@ export class DocCov {
 }
 
 export async function analyze(code: string, options: AnalyzeOptions = {}): Promise<OpenPkgSpec> {
-  return new DocCov().analyze(code, 'temp.ts', options);
+  return new Drift().analyze(code, 'temp.ts', options);
 }
 
 export async function analyzeFile(
   filePath: string,
   options: AnalyzeOptions = {},
 ): Promise<OpenPkgSpec> {
-  return new DocCov().analyzeFile(filePath, options);
+  return new Drift().analyzeFile(filePath, options);
 }
 
 function resolvePackageDir(entryFile: string): string {

@@ -1,19 +1,19 @@
 {
   "name": "@driftdev/sdk",
   "version": "0.36.0",
-  "description": "DocCov SDK - Documentation coverage and drift detection for TypeScript",
+  "description": "Drift SDK - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",
     "documentation",
     "sdk",
-    "doccov",
+    "drift",
     "docs-coverage",
     "drift-detection"
   ],
-  "homepage": "https://github.com/doccov/doccov#readme",
+  "homepage": "https://github.com/ryanwaits/drift#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/doccov/doccov.git",
+    "url": "git+https://github.com/ryanwaits/drift.git",
     "directory": "packages/sdk"
   },
   "license": "BUSL-1.1",

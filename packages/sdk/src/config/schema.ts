@@ -1,9 +1,9 @@
 /**
- * Zod validation schema for DocCov configuration.
+ * Zod validation schema for Drift configuration.
  * Used by CLI for config file validation.
  */
 import { z } from 'zod';
-import type { DocCovConfig, DocsConfig } from './types';
+import type { DriftConfig, DocsConfig } from './types';
 
 const stringList: z.ZodUnion<[z.ZodString, z.ZodArray<z.ZodString, 'many'>]> = z.union([
   z.string(),
@@ -23,7 +23,7 @@ const docsConfigSchema: z.ZodObject<{
   exclude: stringList.optional(),
 });
 
-export const docCovConfigSchema: z.ZodObject<{
+export const driftConfigSchema: z.ZodObject<{
   include: z.ZodOptional<typeof stringList>;
   exclude: z.ZodOptional<typeof stringList>;
   docs: z.ZodOptional<typeof docsConfigSchema>;
@@ -34,7 +34,7 @@ export const docCovConfigSchema: z.ZodObject<{
   docs: docsConfigSchema.optional(),
 });
 
-export type DocCovConfigInput = z.infer<typeof docCovConfigSchema>;
+export type DriftConfigInput = z.infer<typeof driftConfigSchema>;
 
 const normalizeList = (value?: string | string[]): string[] | undefined => {
   if (!value) {
@@ -47,7 +47,7 @@ const normalizeList = (value?: string | string[]): string[] | undefined => {
   return normalized.length > 0 ? normalized : undefined;
 };
 
-export const normalizeConfig = (input: DocCovConfigInput): DocCovConfig => {
+export const normalizeConfig = (input: DriftConfigInput): DriftConfig => {
   const include = normalizeList(input.include);
   const exclude = normalizeList(input.exclude);
 

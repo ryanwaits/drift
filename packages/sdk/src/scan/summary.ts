@@ -2,7 +2,7 @@
  * Utilities for extracting summary statistics from OpenPkg specs.
  */
 
-import type { DocCovSpec } from '@driftdev/spec';
+import type { DriftSpec } from '@driftdev/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { getExportAnalysis } from '../analysis/lookup';
 
@@ -40,7 +40,7 @@ export interface SpecSummary {
 }
 
 /**
- * Extract a summary from OpenPkg spec + DocCov spec composition.
+ * Extract a summary from OpenPkg spec + Drift spec composition.
  *
  * This consolidates the logic previously duplicated in:
  * - CLI scan.ts (drift collection)
@@ -48,26 +48,26 @@ export interface SpecSummary {
  * - API scan-stream.ts (inline extraction script)
  *
  * @param openpkg - The pure OpenPkg spec
- * @param doccov - The DocCov spec with analysis data
+ * @param driftSpec - The Drift spec with analysis data
  * @returns Summary of documentation coverage
  *
  * @example
  * ```typescript
- * import { buildDocCovSpec, extractSpecSummary } from '@driftdev/sdk';
+ * import { buildDriftSpec, extractSpecSummary } from '@driftdev/sdk';
  *
- * const doccov = buildDocCovSpec({ openpkg: spec, openpkgPath: 'openpkg.json' });
- * const summary = extractSpecSummary(spec, doccov);
+ * const driftSpec = buildDriftSpec({ openpkg: spec, openpkgPath: 'openpkg.json' });
+ * const summary = extractSpecSummary(spec, driftSpec);
  * console.log(`Coverage: ${summary.coverage}%`);
  * console.log(`Undocumented: ${summary.undocumented.length}`);
  * ```
  */
-export function extractSpecSummary(openpkg: OpenPkg, doccov: DocCovSpec): SpecSummary {
+export function extractSpecSummary(openpkg: OpenPkg, driftSpec: DriftSpec): SpecSummary {
   const exports = openpkg.exports ?? [];
   const undocumented: string[] = [];
   const drift: SummaryDriftIssue[] = [];
 
   for (const exp of exports) {
-    const analysis = getExportAnalysis(exp, doccov);
+    const analysis = getExportAnalysis(exp, driftSpec);
     if (!analysis) continue;
 
     // Track undocumented or partially documented exports
@@ -89,7 +89,7 @@ export function extractSpecSummary(openpkg: OpenPkg, doccov: DocCovSpec): SpecSu
   }
 
   return {
-    coverage: doccov.summary.score,
+    coverage: driftSpec.summary.score,
     exportCount: exports.length,
     typeCount: openpkg.types?.length ?? 0,
     driftCount: drift.length,

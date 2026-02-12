@@ -1,8 +1,8 @@
 import type {
   ApiSurfaceResult,
-  DocCovDrift,
-  DocCovSpec,
-  DocCovSummary,
+  DriftIssue,
+  DriftSpec,
+  DriftSummary,
   DriftCategory,
   ExportAnalysis,
   ForgottenExport,
@@ -39,7 +39,7 @@ export interface ExtractForgottenExport {
   fix?: string;
 }
 
-export interface BuildDocCovOptions {
+export interface BuildDriftOptions {
   openpkgPath: string;
   openpkg: OpenPkgSpec;
   packagePath?: string;
@@ -78,17 +78,17 @@ const YIELD_BATCH_SIZE = 5;
 /** Intermediate analysis result for a single export */
 interface ExportAnalysisIntermediate {
   coverage: CoverageResult;
-  drifts: DocCovDrift[];
+  drifts: DriftIssue[];
   exp: SpecExport;
 }
 
 /**
- * Build a DocCov spec from an OpenPkg spec.
+ * Build a Drift spec from an OpenPkg spec.
  *
  * @param options - Build options
- * @returns DocCov specification with coverage analysis
+ * @returns Drift specification with coverage analysis
  */
-export async function buildDocCovSpec(options: BuildDocCovOptions): Promise<DocCovSpec> {
+export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftSpec> {
   const {
     openpkg,
     openpkgPath,
@@ -175,7 +175,7 @@ export async function buildDocCovSpec(options: BuildDocCovOptions): Promise<DocC
     }
 
     // Merge all drifts from all overloads
-    const allDrifts: DocCovDrift[] = [];
+    const allDrifts: DriftIssue[] = [];
     for (const r of overloads) {
       allDrifts.push(...r.drifts);
     }
@@ -230,7 +230,7 @@ export async function buildDocCovSpec(options: BuildDocCovOptions): Promise<DocC
     driftByCategory,
   });
 
-  const summary: DocCovSummary = {
+  const summary: DriftSummary = {
     score: coverageScore,
     totalExports: exportCount,
     documentedExports: documentedCount,
@@ -252,7 +252,7 @@ export async function buildDocCovSpec(options: BuildDocCovOptions): Promise<DocC
   );
 
   return {
-    doccov: '1.0.0',
+    drift: '1.0.0',
     source: {
       file: openpkgPath,
       specVersion: openpkg.openpkg,
@@ -409,15 +409,15 @@ function computeExportCoverage(exp: SpecExport, requirements: DocRequirements): 
 }
 
 /**
- * Convert SDK drift to DocCov drift with category and fixable flags.
+ * Convert SDK drift to Drift issue with category and fixable flags.
  */
 function toCategorizedDrift(drift: {
   type: string;
   target?: string;
   issue: string;
   suggestion?: string;
-}): DocCovDrift {
-  const driftType = drift.type as DocCovDrift['type'];
+}): DriftIssue {
+  const driftType = drift.type as DriftIssue['type'];
   const specDrift = { ...drift, type: driftType };
   return {
     type: driftType,

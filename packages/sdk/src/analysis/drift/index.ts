@@ -1,4 +1,4 @@
-// Drift types and constants (doccov-specific, moved from @openpkg-ts/spec v0.4.0)
+// Drift types and constants (drift-specific, moved from @openpkg-ts/spec v0.4.0)
 
 // Categorization utilities
 export {

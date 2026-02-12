@@ -3,7 +3,7 @@
  * Consolidates config and override filters.
  */
 
-import type { DocCovConfig } from '../config/types';
+import type { DriftConfig } from '../config/types';
 import type { FilterOptions } from './types';
 
 /**
@@ -82,7 +82,7 @@ export function parseListFlag(value?: string | string[]): string[] | undefined {
  * ```
  */
 export function mergeFilters(
-  config: DocCovConfig | null,
+  config: DriftConfig | null,
   overrides: FilterOptions,
 ): ResolvedFilters {
   const configInclude = config?.include;

@@ -104,7 +104,7 @@ export function generateFix(
  *
  * @param exportEntry - The export to generate fixes for
  * @param existingPatch - Optional existing JSDoc patch to merge with
- * @param driftList - Optional drift list from DocCovSpec (if not provided, reads from exportEntry.docs?.drift for backward compat)
+ * @param driftList - Optional drift list from DriftSpec (if not provided, reads from exportEntry.docs?.drift for backward compat)
  */
 export function generateFixesForExport(
   exportEntry: SpecExport,

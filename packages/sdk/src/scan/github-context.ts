@@ -117,7 +117,7 @@ async function fetchRepoMetadata(
 
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github.v3+json',
-    'User-Agent': 'DocCov-Scanner',
+    'User-Agent': 'Drift-Scanner',
   };
   if (authToken) {
     headers.Authorization = `Bearer ${authToken}`;
@@ -388,7 +388,7 @@ export async function listWorkspacePackages(
       const url = `https://api.github.com/repos/${owner}/${repo}/contents/${baseDir}?ref=${ref}`;
       const headers: Record<string, string> = {
         Accept: 'application/vnd.github.v3+json',
-        'User-Agent': 'DocCov-Scanner',
+        'User-Agent': 'Drift-Scanner',
       };
       if (authToken) {
         headers.Authorization = `Bearer ${authToken}`;

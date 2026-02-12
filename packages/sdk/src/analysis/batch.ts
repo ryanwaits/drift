@@ -1,4 +1,4 @@
-import type { DocCovSpec, DocumentationHealth } from '@driftdev/spec';
+import type { DriftSpec, DocumentationHealth } from '@driftdev/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 
 /**
@@ -51,9 +51,9 @@ export interface PackageResult {
   openpkg: OpenPkg;
 
   /**
-   * The full DocCov spec (for detailed reporting).
+   * The full Drift spec (for detailed reporting).
    */
-  doccov: DocCovSpec;
+  driftSpec: DriftSpec;
 }
 
 /**
@@ -100,20 +100,20 @@ export interface BatchResult {
  * Create a PackageResult from analyzed specs.
  *
  * @param openpkg - The OpenPkg spec
- * @param doccov - The DocCov spec with coverage analysis
+ * @param driftSpec - The Drift spec with coverage analysis
  * @param entryPath - Path to the entry point that was analyzed
  * @returns PackageResult for batch aggregation
  */
 export function createPackageResult(
   openpkg: OpenPkg,
-  doccov: DocCovSpec,
+  driftSpec: DriftSpec,
   entryPath: string,
 ): PackageResult {
-  const totalExports = doccov.summary.totalExports;
-  const documented = doccov.summary.health?.completeness.documented ?? 0;
-  const health = doccov.summary.health?.score ?? doccov.summary.score;
-  const driftCount = doccov.summary.drift.total;
-  const coverageScore = doccov.summary.score;
+  const totalExports = driftSpec.summary.totalExports;
+  const documented = driftSpec.summary.health?.completeness.documented ?? 0;
+  const health = driftSpec.summary.health?.score ?? driftSpec.summary.score;
+  const driftCount = driftSpec.summary.drift.total;
+  const coverageScore = driftSpec.summary.score;
 
   return {
     name: openpkg.meta.name,
@@ -125,7 +125,7 @@ export function createPackageResult(
     driftCount,
     coverageScore,
     openpkg,
-    doccov,
+    driftSpec,
   };
 }
 

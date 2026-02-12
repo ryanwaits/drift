@@ -1,12 +1,12 @@
 /**
- * Configuration module - types and validation for DocCov configuration.
+ * Configuration module - types and validation for Drift configuration.
  */
 
 // Zod schema for config validation (used by CLI)
-export type { DocCovConfigInput } from './schema';
-export { docCovConfigSchema, normalizeConfig } from './schema';
+export type { DriftConfigInput } from './schema';
+export { driftConfigSchema, normalizeConfig } from './schema';
 export type {
-  DocCovConfig,
+  DriftConfig,
   DocsConfig,
   ExampleValidationMode,
 } from './types';

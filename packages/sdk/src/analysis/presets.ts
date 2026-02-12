@@ -1,5 +1,5 @@
 /**
- * Documentation style presets for DocCov.
+ * Documentation style presets for Drift.
  *
  * Presets define expected documentation patterns that vary by project.
  * Some projects require verbose docs with @param/@returns for every function,

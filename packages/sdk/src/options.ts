@@ -16,7 +16,7 @@ function findRepoRoot(startDir: string): string {
   return startDir;
 }
 
-export interface DocCovOptions {
+export interface DriftOptions {
   includePrivate?: boolean;
   followImports?: boolean;
   maxDepth?: number;
@@ -27,7 +27,7 @@ export interface DocCovOptions {
   cwd?: string;
 }
 
-export type NormalizedDocCovOptions = DocCovOptions & {
+export type NormalizedDriftOptions = DriftOptions & {
   includePrivate: boolean;
   followImports: boolean;
   maxDepth: number;
@@ -39,7 +39,7 @@ export type NormalizedDocCovOptions = DocCovOptions & {
 export const DEFAULT_MAX_TYPE_DEPTH = 4;
 
 const DEFAULT_OPTIONS: Pick<
-  NormalizedDocCovOptions,
+  NormalizedDriftOptions,
   'includePrivate' | 'followImports' | 'maxDepth' | 'useCache'
 > = {
   includePrivate: false,
@@ -48,7 +48,7 @@ const DEFAULT_OPTIONS: Pick<
   useCache: true,
 };
 
-export function normalizeDocCovOptions(options: DocCovOptions = {}): NormalizedDocCovOptions {
+export function normalizeDriftOptions(options: DriftOptions = {}): NormalizedDriftOptions {
   return {
     ...DEFAULT_OPTIONS,
     ...options,

@@ -3,19 +3,19 @@
  *
  * @example
  * ```ts
- * import { computeDrift, buildDocCovSpec, generateReport } from '@driftdev/sdk/analysis';
+ * import { computeDrift, buildDriftSpec, generateReport } from '@driftdev/sdk/analysis';
  * ```
  *
  * @module analysis
  */
 
 // Context types
-// DocCov spec builder
+// Drift spec builder
 export {
-  type BuildDocCovOptions,
-  buildDocCovSpec,
+  type BuildDriftOptions,
+  buildDriftSpec,
   type ExtractForgottenExport,
-} from './doccov-builder';
+} from './drift-builder';
 // Drift detection and categorization
 export {
   buildExportRegistry,
@@ -72,7 +72,7 @@ export { buildModuleGraph, findSymbolModule, symbolExistsInGraph } from './modul
 // Report generation
 export {
   generateReport,
-  generateReportFromDocCov,
+  generateReportFromDrift,
   loadCachedReport,
   renderApiSurface,
   saveReport,

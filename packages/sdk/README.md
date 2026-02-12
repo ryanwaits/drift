@@ -11,14 +11,14 @@ bun add @driftdev/sdk
 ## Quick Start
 
 ```typescript
-import { DocCov, buildDocCovSpec } from '@driftdev/sdk';
+import { Drift, buildDriftSpec } from '@driftdev/sdk';
 
 // Analyze a package
-const doccov = new DocCov();
-const result = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+const drift = new Drift();
+const result = await drift.analyzeFileWithDiagnostics('src/index.ts');
 
 // Build coverage spec
-const spec = buildDocCovSpec({
+const spec = buildDriftSpec({
   openpkg: result.spec,
   openpkgPath: 'src/index.ts',
   packagePath: process.cwd(),
@@ -57,12 +57,12 @@ Every `SpecDocDrift` includes `filePath` and `line` for agent-driven fixes.
 ### Coverage Analysis
 
 ```typescript
-import { buildDocCovSpec, getExportDrift } from '@driftdev/sdk';
+import { buildDriftSpec, getExportDrift } from '@driftdev/sdk';
 
-const doccovSpec = buildDocCovSpec({ openpkg, openpkgPath, packagePath });
+const driftSpec = buildDriftSpec({ openpkg, openpkgPath, packagePath });
 
 // Get drift for specific export
-const drifts = getExportDrift(someExport, doccovSpec);
+const drifts = getExportDrift(someExport, driftSpec);
 ```
 
 ### Health Scoring
@@ -143,8 +143,8 @@ const grouped = groupDriftsByCategory(drifts);
 ## Exports
 
 ### Analysis
-- `DocCov` — Main analysis class
-- `buildDocCovSpec` — Build coverage spec
+- `Drift` — Main analysis class
+- `buildDriftSpec` — Build coverage spec
 - `computeDrift` / `computeExportDrift` — Drift detection
 - `computeHealth` — Health score computation
 - `generateReport` — Generate coverage reports
@@ -177,7 +177,7 @@ const grouped = groupDriftsByCategory(drifts);
 
 ### Configuration
 - `normalizeConfig` — Config normalization
-- `docCovConfigSchema` — Zod schema for validation
+- `driftConfigSchema` — Zod schema for validation
 
 ## License
 

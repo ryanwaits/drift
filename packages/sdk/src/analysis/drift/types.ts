@@ -1,7 +1,7 @@
 import type { SpecSchema, SpecTag } from '@openpkg-ts/spec';
 
 // ============================================================================
-// Doccov-specific Drift Types (moved from @openpkg-ts/spec v0.4.0)
+// Drift-specific Drift Types (moved from @openpkg-ts/spec v0.4.0)
 // ============================================================================
 
 /**

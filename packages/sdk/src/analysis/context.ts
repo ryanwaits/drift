@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import type * as ts from 'typescript';
-import type { DocCovOptions, NormalizedDocCovOptions } from '../options';
-import { normalizeDocCovOptions } from '../options';
+import type { DriftOptions, NormalizedDriftOptions } from '../options';
+import { normalizeDriftOptions } from '../options';
 import { createProgram } from '@openpkg-ts/sdk';
 
 export interface AnalysisContext {
@@ -12,7 +12,7 @@ export interface AnalysisContext {
   sourceFile: ts.SourceFile;
   compilerOptions: ts.CompilerOptions;
   compilerHost: ts.CompilerHost;
-  options: NormalizedDocCovOptions;
+  options: NormalizedDriftOptions;
   configPath?: string;
 }
 
@@ -20,7 +20,7 @@ export interface AnalysisContextInput {
   entryFile: string;
   packageDir?: string;
   content?: string;
-  options?: DocCovOptions;
+  options?: DriftOptions;
 }
 
 export function createAnalysisContext({
@@ -30,7 +30,7 @@ export function createAnalysisContext({
   options,
 }: AnalysisContextInput): AnalysisContext {
   const baseDir = packageDir ?? path.dirname(entryFile);
-  const normalizedOptions: NormalizedDocCovOptions = normalizeDocCovOptions(options);
+  const normalizedOptions: NormalizedDriftOptions = normalizeDriftOptions(options);
 
   const programResult = createProgram({ entryFile, baseDir, content });
 

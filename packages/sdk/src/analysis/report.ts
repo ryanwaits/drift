@@ -1,29 +1,29 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { DocCovSpec } from '@driftdev/spec';
+import type { DriftSpec } from '@driftdev/spec';
 import type { OpenPkg, SpecExport, SpecSignature, SpecType } from '@openpkg-ts/spec';
 import {
   type CoverageSummary,
-  type DocCovReport,
+  type DriftReport,
   type ExportCoverageData,
   REPORT_VERSION,
 } from '../types/report';
-import { buildDocCovSpec } from './doccov-builder';
+import { buildDriftSpec } from './drift-builder';
 import { isExportDocumented } from './health';
 
 /**
- * Generate a DocCov report from an OpenPkg spec.
+ * Generate a Drift report from an OpenPkg spec.
  *
  * @param spec - The pure OpenPkg spec to analyze
  * @param openpkgPath - Path to the openpkg spec file (for source tracking)
- * @returns A DocCov report with coverage analysis
+ * @returns A Drift report with coverage analysis
  *
  * @example
  * ```ts
- * import { DocCov, generateReport } from '@driftdev/sdk';
+ * import { Drift, generateReport } from '@driftdev/sdk';
  *
- * const doccov = new DocCov();
- * const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+ * const drift = new Drift();
+ * const { spec } = await drift.analyzeFileWithDiagnostics('src/index.ts');
  * const report = generateReport(spec);
  *
  * console.log(`Coverage: ${report.coverage.score}%`);
@@ -32,23 +32,23 @@ import { isExportDocumented } from './health';
 export async function generateReport(
   spec: OpenPkg,
   openpkgPath = 'openpkg.json',
-): Promise<DocCovReport> {
-  const doccov = await buildDocCovSpec({ openpkg: spec, openpkgPath });
-  return generateReportFromDocCov(spec, doccov);
+): Promise<DriftReport> {
+  const driftSpec = await buildDriftSpec({ openpkg: spec, openpkgPath });
+  return generateReportFromDrift(spec, driftSpec);
 }
 
 /**
- * Generate a DocCov report from OpenPkg spec + DocCov spec composition.
+ * Generate a Drift report from OpenPkg spec + Drift spec composition.
  *
- * Use this when you've already called buildDocCovSpec() and want to avoid
+ * Use this when you've already called buildDriftSpec() and want to avoid
  * recomputing coverage data.
  *
  * @param openpkg - The pure OpenPkg spec
- * @param doccov - The DocCov spec with analysis data
- * @returns A DocCov report with coverage analysis
+ * @param driftSpec - The Drift spec with analysis data
+ * @returns A Drift report with coverage analysis
  */
-export function generateReportFromDocCov(openpkg: OpenPkg, doccov: DocCovSpec): DocCovReport {
-  // Build per-export coverage data from doccov.exports (already handles overload grouping)
+export function generateReportFromDrift(openpkg: OpenPkg, driftSpec: DriftSpec): DriftReport {
+  // Build per-export coverage data from driftSpec.exports (already handles overload grouping)
   const exportsData: Record<string, ExportCoverageData> = {};
   const missingByRule: Record<string, number> = {};
 
@@ -65,8 +65,8 @@ export function generateReportFromDocCov(openpkg: OpenPkg, doccov: DocCovSpec): 
   let documentedExports = 0;
   let totalDrift = 0;
 
-  // Iterate over doccov exports (grouped by name)
-  for (const [exportId, analysis] of Object.entries(doccov.exports)) {
+  // Iterate over driftSpec exports (grouped by name)
+  for (const [exportId, analysis] of Object.entries(driftSpec.exports)) {
     const openpkgExp = openpkgExportsById.get(exportId);
     const data: ExportCoverageData = {
       name: openpkgExp?.name ?? exportId,
@@ -99,23 +99,23 @@ export function generateReportFromDocCov(openpkg: OpenPkg, doccov: DocCovSpec): 
   }
 
   const coverage: CoverageSummary = {
-    score: doccov.summary.score,
-    totalExports: doccov.summary.totalExports,
+    score: driftSpec.summary.score,
+    totalExports: driftSpec.summary.totalExports,
     documentedExports,
     missingByRule,
     driftCount: totalDrift,
     driftSummary:
-      doccov.summary.drift.total > 0
+      driftSpec.summary.drift.total > 0
         ? {
-            total: doccov.summary.drift.total,
-            fixable: doccov.summary.drift.fixable,
-            byCategory: doccov.summary.drift.byCategory,
+            total: driftSpec.summary.drift.total,
+            fixable: driftSpec.summary.drift.fixable,
+            byCategory: driftSpec.summary.drift.byCategory,
           }
         : undefined,
   };
 
   return {
-    $schema: 'https://doccov.com/schemas/v1.0.0/report.schema.json',
+    $schema: 'https://drift.dev/schemas/v1.0.0/report.schema.json',
     version: REPORT_VERSION,
     generatedAt: new Date().toISOString(),
     spec: {
@@ -124,36 +124,36 @@ export function generateReportFromDocCov(openpkg: OpenPkg, doccov: DocCovSpec): 
     },
     coverage,
     exports: exportsData,
-    apiSurface: doccov.apiSurface,
+    apiSurface: driftSpec.apiSurface,
   };
 }
 
 /**
- * Load a cached DocCov report from disk.
+ * Load a cached Drift report from disk.
  *
  * @param reportPath - Path to the report file
  * @returns The cached report, or null if not found
  */
-export function loadCachedReport(reportPath: string): DocCovReport | null {
+export function loadCachedReport(reportPath: string): DriftReport | null {
   try {
     const fullPath = path.resolve(reportPath);
     if (!fs.existsSync(fullPath)) {
       return null;
     }
     const content = fs.readFileSync(fullPath, 'utf-8');
-    return JSON.parse(content) as DocCovReport;
+    return JSON.parse(content) as DriftReport;
   } catch {
     return null;
   }
 }
 
 /**
- * Save a DocCov report to disk.
+ * Save a Drift report to disk.
  *
  * @param report - The report to save
  * @param reportPath - Path to save the report
  */
-export function saveReport(report: DocCovReport, reportPath: string): void {
+export function saveReport(report: DriftReport, reportPath: string): void {
   const fullPath = path.resolve(reportPath);
   const dir = path.dirname(fullPath);
 
@@ -302,10 +302,10 @@ function formatTypeToApiSurface(type: SpecType): string {
  *
  * @example
  * ```ts
- * import { DocCov, renderApiSurface } from '@driftdev/sdk';
+ * import { Drift, renderApiSurface } from '@driftdev/sdk';
  *
- * const doccov = new DocCov();
- * const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+ * const drift = new Drift();
+ * const { spec } = await drift.analyzeFileWithDiagnostics('src/index.ts');
  * const apiSurface = renderApiSurface(spec);
  *
  * fs.writeFileSync('api-surface.md', apiSurface);
@@ -319,7 +319,7 @@ export function renderApiSurface(spec: OpenPkg): string {
   lines.push(`# API Surface: ${spec.meta.name}${version}`);
   lines.push('');
   lines.push('> This file is auto-generated. Do not edit manually.');
-  lines.push('> Run `doccov spec --format api-surface` to regenerate.');
+  lines.push('> Run `drift spec --format api-surface` to regenerate.');
   lines.push('');
 
   // Group exports by kind and sort alphabetically
