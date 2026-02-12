@@ -1,8 +1,8 @@
 /**
- * Tests for buildDocCovSpec() function with progress callback.
+ * Tests for buildDriftSpec() function with progress callback.
  */
 import { describe, expect, test } from 'bun:test';
-import { buildDocCovSpec } from '../src/analysis/doccov-builder';
+import { buildDriftSpec } from '../src/analysis/drift-builder';
 import type { OpenPkgSpec } from '../src/analysis/spec-types';
 
 /**
@@ -34,13 +34,13 @@ function createSpecWithExports(count: number): OpenPkgSpec {
   };
 }
 
-describe('buildDocCovSpec', () => {
+describe('buildDriftSpec', () => {
   describe('onProgress callback', () => {
     test('invoked for each export', async () => {
       const spec = createSpecWithExports(10);
       const progressCalls: Array<{ current: number; total: number; item: string }> = [];
 
-      await buildDocCovSpec({
+      await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
         onProgress: (current, total, item) => {
@@ -56,7 +56,7 @@ describe('buildDocCovSpec', () => {
     test('no callback errors when onProgress not provided', async () => {
       const spec = createSpecWithExports(5);
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
@@ -73,7 +73,7 @@ describe('buildDocCovSpec', () => {
         yieldOccurred = true;
       });
 
-      await buildDocCovSpec({
+      await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
@@ -89,7 +89,7 @@ describe('buildDocCovSpec', () => {
     test('computes correct export count', async () => {
       const spec = createSpecWithExports(15);
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
@@ -97,15 +97,15 @@ describe('buildDocCovSpec', () => {
       expect(result.summary.totalExports).toBe(15);
     });
 
-    test('returns valid DocCovSpec structure', async () => {
+    test('returns valid DriftSpec structure', async () => {
       const spec = createSpecWithExports(3);
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
 
-      expect(result.doccov).toBe('1.0.0');
+      expect(result.drift).toBe('1.0.0');
       expect(result.source.file).toBe('test.json');
       expect(result.source.packageName).toBe('test-package');
       expect(result.summary).toBeDefined();
@@ -130,7 +130,7 @@ describe('buildDocCovSpec', () => {
         ],
       };
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
@@ -151,7 +151,7 @@ describe('buildDocCovSpec', () => {
         ],
       };
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
@@ -167,7 +167,7 @@ describe('buildDocCovSpec', () => {
       const spec = createSpecWithExports(exportCount);
       const progressCalls: number[] = [];
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'large-package.json',
         onProgress: (current, _total, _item) => {
@@ -194,13 +194,13 @@ describe('buildDocCovSpec', () => {
 
       // Start a concurrent promise
       const concurrentPromise = (async () => {
-        // This should be able to run during buildDocCovSpec's yields
+        // This should be able to run during buildDriftSpec's yields
         await new Promise((r) => setImmediate(r));
         concurrentTaskRan = true;
       })();
 
-      // Run buildDocCovSpec
-      await buildDocCovSpec({
+      // Run buildDriftSpec
+      await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
@@ -249,7 +249,7 @@ describe('buildDocCovSpec', () => {
         ],
       };
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
@@ -289,7 +289,7 @@ describe('buildDocCovSpec', () => {
         ],
       };
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
@@ -318,7 +318,7 @@ describe('buildDocCovSpec', () => {
         ],
       };
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
@@ -355,7 +355,7 @@ describe('buildDocCovSpec', () => {
         ],
       };
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
@@ -383,7 +383,7 @@ describe('buildDocCovSpec', () => {
         ],
       };
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
@@ -407,7 +407,7 @@ describe('buildDocCovSpec', () => {
         ],
       };
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
       });
@@ -432,7 +432,7 @@ describe('buildDocCovSpec', () => {
       ];
 
       // Without entryExportNames - all forgotten exports reported
-      const resultWithout = await buildDocCovSpec({
+      const resultWithout = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
         forgottenExports,
@@ -441,7 +441,7 @@ describe('buildDocCovSpec', () => {
       expect(resultWithout.apiSurface?.forgotten.length).toBe(3);
 
       // With entryExportNames - TypeInEntry should be filtered out
-      const resultWith = await buildDocCovSpec({
+      const resultWith = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
         forgottenExports,
@@ -469,7 +469,7 @@ describe('buildDocCovSpec', () => {
         { name: 'ActuallyForgotten', referencedBy: [], isExternal: false },
       ];
 
-      const result = await buildDocCovSpec({
+      const result = await buildDriftSpec({
         openpkg: spec,
         openpkgPath: 'test.json',
         forgottenExports,

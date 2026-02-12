@@ -13,7 +13,7 @@ describe('IncrementalAnalyzer', () => {
   let tempDir: string;
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'doccov-test-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'drift-test-'));
   });
 
   afterEach(() => {
@@ -227,7 +227,7 @@ describe('orphaned temp file utilities', () => {
   let tempDir: string;
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'doccov-orphan-test-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'drift-orphan-test-'));
   });
 
   afterEach(() => {
@@ -236,19 +236,19 @@ describe('orphaned temp file utilities', () => {
 
   test('findOrphanedTempFiles finds matching files', () => {
     // Create some test files
-    fs.writeFileSync(path.join(tempDir, 'doccov-123.ndjson'), '');
-    fs.writeFileSync(path.join(tempDir, 'doccov-456.ndjson'), '');
+    fs.writeFileSync(path.join(tempDir, 'drift-123.ndjson'), '');
+    fs.writeFileSync(path.join(tempDir, 'drift-456.ndjson'), '');
     fs.writeFileSync(path.join(tempDir, 'other-file.txt'), '');
 
-    const files = findOrphanedTempFiles(tempDir, 'doccov');
+    const files = findOrphanedTempFiles(tempDir, 'drift');
     expect(files).toHaveLength(2);
-    expect(files.every((f) => f.includes('doccov'))).toBe(true);
+    expect(files.every((f) => f.includes('drift'))).toBe(true);
   });
 
   test('cleanupOrphanedTempFiles removes old files', async () => {
     // Create files with different ages
-    const oldFile = path.join(tempDir, 'doccov-old.ndjson');
-    const newFile = path.join(tempDir, 'doccov-new.ndjson');
+    const oldFile = path.join(tempDir, 'drift-old.ndjson');
+    const newFile = path.join(tempDir, 'drift-new.ndjson');
 
     fs.writeFileSync(oldFile, '');
     fs.writeFileSync(newFile, '');
@@ -258,7 +258,7 @@ describe('orphaned temp file utilities', () => {
     fs.utimesSync(oldFile, twoHoursAgo, twoHoursAgo);
 
     // Clean up files older than 1 hour
-    const cleaned = cleanupOrphanedTempFiles(tempDir, 'doccov', 60 * 60 * 1000);
+    const cleaned = cleanupOrphanedTempFiles(tempDir, 'drift', 60 * 60 * 1000);
 
     expect(cleaned).toBe(1);
     expect(fs.existsSync(oldFile)).toBe(false);
@@ -266,7 +266,7 @@ describe('orphaned temp file utilities', () => {
   });
 
   test('cleanupOrphanedTempFiles handles empty directory', () => {
-    const cleaned = cleanupOrphanedTempFiles(tempDir, 'doccov');
+    const cleaned = cleanupOrphanedTempFiles(tempDir, 'drift');
     expect(cleaned).toBe(0);
   });
 });

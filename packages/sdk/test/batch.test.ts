@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { DocCovSpec } from '@driftdev/spec';
+import type { DriftSpec } from '@driftdev/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { aggregateResults, createPackageResult, type PackageResult } from '../src/analysis/batch';
 
@@ -11,12 +11,12 @@ function createMockOpenPkg(name: string, version: string): OpenPkg {
   };
 }
 
-// Minimal mock DocCov spec
-function createMockDocCov(
+// Minimal mock Drift spec
+function createMockDriftSpec(
   totalExports: number,
   health: number,
   driftTotal: number,
-): DocCovSpec {
+): DriftSpec {
   return {
     summary: {
       totalExports,
@@ -36,9 +36,9 @@ describe('batch analysis', () => {
   describe('createPackageResult', () => {
     test('creates result from specs', () => {
       const openpkg = createMockOpenPkg('@test/pkg-a', '1.0.0');
-      const doccov = createMockDocCov(10, 80, 2);
+      const driftSpec = createMockDriftSpec(10, 80, 2);
 
-      const result = createPackageResult(openpkg, doccov, 'packages/a/src/index.ts');
+      const result = createPackageResult(openpkg, driftSpec, 'packages/a/src/index.ts');
 
       expect(result.name).toBe('@test/pkg-a');
       expect(result.version).toBe('1.0.0');
@@ -69,7 +69,7 @@ describe('batch analysis', () => {
         driftCount: 3,
         coverageScore: 75,
         openpkg: createMockOpenPkg('@test/single', '1.0.0'),
-        doccov: createMockDocCov(20, 75, 3),
+        driftSpec: createMockDriftSpec(20, 75, 3),
       };
 
       const batch = aggregateResults([result]);
@@ -93,7 +93,7 @@ describe('batch analysis', () => {
           driftCount: 2,
           coverageScore: 90,
           openpkg: createMockOpenPkg('@test/pkg-a', '1.0.0'),
-          doccov: createMockDocCov(100, 90, 2),
+          driftSpec: createMockDriftSpec(100, 90, 2),
         },
         {
           name: '@test/pkg-b',
@@ -105,7 +105,7 @@ describe('batch analysis', () => {
           driftCount: 5,
           coverageScore: 60,
           openpkg: createMockOpenPkg('@test/pkg-b', '1.0.0'),
-          doccov: createMockDocCov(50, 60, 5),
+          driftSpec: createMockDriftSpec(50, 60, 5),
         },
       ];
 
@@ -131,7 +131,7 @@ describe('batch analysis', () => {
           driftCount: 0,
           coverageScore: 0,
           openpkg: createMockOpenPkg('@test/empty', '1.0.0'),
-          doccov: createMockDocCov(0, 0, 0),
+          driftSpec: createMockDriftSpec(0, 0, 0),
         },
         {
           name: '@test/real',
@@ -143,7 +143,7 @@ describe('batch analysis', () => {
           driftCount: 1,
           coverageScore: 80,
           openpkg: createMockOpenPkg('@test/real', '1.0.0'),
-          doccov: createMockDocCov(10, 80, 1),
+          driftSpec: createMockDriftSpec(10, 80, 1),
         },
       ];
 

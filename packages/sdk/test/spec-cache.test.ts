@@ -21,7 +21,7 @@ describe('validateSpecCache', () => {
   let tempDir: string;
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'doccov-cache-test-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'drift-cache-test-'));
     _setStateDirOverride(tempDir);
     // Create minimal test files
     fs.writeFileSync(path.join(tempDir, 'tsconfig.json'), '{}');
@@ -246,7 +246,7 @@ describe('saveSpecCache / loadSpecCache', () => {
   let tempDir: string;
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'doccov-cache-test-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'drift-cache-test-'));
     _setStateDirOverride(tempDir);
     fs.writeFileSync(path.join(tempDir, 'tsconfig.json'), '{}');
     fs.writeFileSync(path.join(tempDir, 'package.json'), '{"name":"test"}');
@@ -312,7 +312,7 @@ describe('clearSpecCache', () => {
   let tempDir: string;
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'doccov-cache-test-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'drift-cache-test-'));
     _setStateDirOverride(tempDir);
     fs.writeFileSync(path.join(tempDir, 'tsconfig.json'), '{}');
     fs.writeFileSync(path.join(tempDir, 'package.json'), '{"name":"test"}');
