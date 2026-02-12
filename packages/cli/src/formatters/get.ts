@@ -1,4 +1,16 @@
-import { c, padRight, indent } from '../utils/render';
+import { c, indent, padRight } from '../utils/render';
+
+interface SchemaLike {
+  parameters?: Array<{ name: string; schema?: SchemaLike; required?: boolean }>;
+  returns?: SchemaLike;
+  properties?: Record<string, SchemaLike>;
+  required?: string[];
+  $ref?: string;
+  type?: string;
+  items?: SchemaLike;
+  anyOf?: SchemaLike[];
+  [key: string]: unknown;
+}
 
 interface GetData {
   export: {
@@ -10,9 +22,9 @@ interface GetData {
     returns?: { type?: string; description?: string };
     members?: Array<{ name: string; type?: string; required?: boolean; description?: string }>;
     deprecated?: boolean;
-    schema?: any;
+    schema?: SchemaLike;
   };
-  types?: Record<string, any>;
+  types?: Record<string, SchemaLike>;
 }
 
 export function renderGet(data: GetData): string {
@@ -20,7 +32,11 @@ export function renderGet(data: GetData): string {
   const exp = data.export;
 
   // Header
-  lines.push(indent(`${c.bold(exp.name)}${' '.repeat(Math.max(2, 50 - exp.name.length))}${c.gray(exp.kind)}`));
+  lines.push(
+    indent(
+      `${c.bold(exp.name)}${' '.repeat(Math.max(2, 50 - exp.name.length))}${c.gray(exp.kind)}`,
+    ),
+  );
 
   if (exp.deprecated) {
     lines.push(indent(c.yellow('deprecated')));
@@ -83,11 +99,19 @@ export function renderGet(data: GetData): string {
       const props = extractPropsFromSchema(typeSchema);
       if (props.length > 0) {
         lines.push('');
-        lines.push(indent(`  ${c.bold(typeName)}${' '.repeat(Math.max(2, 40 - typeName.length))}${c.gray('interface')}`));
+        lines.push(
+          indent(
+            `  ${c.bold(typeName)}${' '.repeat(Math.max(2, 40 - typeName.length))}${c.gray('interface')}`,
+          ),
+        );
         lines.push(indent(`  ${'-'.repeat(typeName.length)}`));
         const shownProps = props.slice(0, 50);
         for (const p of shownProps) {
-          lines.push(indent(`  ${padRight(p.name, 20)}${padRight(p.type, 20)}${c.gray(p.required ? 'required' : 'optional')}`));
+          lines.push(
+            indent(
+              `  ${padRight(p.name, 20)}${padRight(p.type, 20)}${c.gray(p.required ? 'required' : 'optional')}`,
+            ),
+          );
         }
         if (props.length > 50) {
           lines.push(indent(c.gray(`  ... ${props.length - 50} more`)));
@@ -100,41 +124,47 @@ export function renderGet(data: GetData): string {
   return lines.join('\n');
 }
 
-function extractParams(schema: any): Array<{ name: string; type?: string; required?: boolean }> {
+function extractParams(
+  schema: SchemaLike | undefined,
+): Array<{ name: string; type?: string; required?: boolean }> {
   if (!schema?.parameters) return [];
-  return (schema.parameters as any[]).map((p: any) => ({
+  return schema.parameters.map((p) => ({
     name: p.name,
     type: formatType(p.schema),
     required: p.required !== false,
   }));
 }
 
-function extractReturns(schema: any): { type?: string } | null {
+function extractReturns(schema: SchemaLike | undefined): { type?: string } | null {
   if (!schema?.returns) return null;
   return { type: formatType(schema.returns) };
 }
 
-function extractMembers(schema: any): Array<{ name: string; type?: string; required?: boolean }> {
+function extractMembers(
+  schema: SchemaLike | undefined,
+): Array<{ name: string; type?: string; required?: boolean }> {
   if (!schema?.properties) return [];
   const required = new Set(schema.required ?? []);
-  return Object.entries(schema.properties).map(([name, prop]: [string, any]) => ({
+  return Object.entries(schema.properties).map(([name, prop]: [string, SchemaLike]) => ({
     name,
     type: formatType(prop),
     required: required.has(name),
   }));
 }
 
-function extractPropsFromSchema(schema: any): Array<{ name: string; type: string; required: boolean }> {
+function extractPropsFromSchema(
+  schema: SchemaLike | undefined,
+): Array<{ name: string; type: string; required: boolean }> {
   if (!schema?.properties) return [];
   const required = new Set(schema.required ?? []);
-  return Object.entries(schema.properties).map(([name, prop]: [string, any]) => ({
+  return Object.entries(schema.properties).map(([name, prop]: [string, SchemaLike]) => ({
     name,
     type: formatType(prop),
     required: required.has(name),
   }));
 }
 
-function formatType(schema: any): string {
+function formatType(schema: SchemaLike | undefined): string {
   if (!schema) return 'unknown';
   if (schema.$ref) return schema.$ref.replace('#/types/', '');
   if (schema.type === 'array' && schema.items) return `${formatType(schema.items)}[]`;

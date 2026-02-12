@@ -32,7 +32,10 @@ export function fuzzyMatch(query: string, name: string): number {
   return 0;
 }
 
-export function fuzzySearch(query: string, items: { name: string }[]): { name: string; score: number }[] {
+export function fuzzySearch(
+  query: string,
+  items: { name: string }[],
+): { name: string; score: number }[] {
   return items
     .map((item) => ({ name: item.name, score: fuzzyMatch(query, item.name) }))
     .filter((r) => r.score > 0)
@@ -82,7 +85,14 @@ function levenshtein(a: string, b: string): number {
  */
 export function looksLikeFilePath(s: string): boolean {
   if (s.includes('/') || s.includes('\\')) return true;
-  if (s.endsWith('.ts') || s.endsWith('.tsx') || s.endsWith('.js') || s.endsWith('.mts') || s.endsWith('.cts')) return true;
+  if (
+    s.endsWith('.ts') ||
+    s.endsWith('.tsx') ||
+    s.endsWith('.js') ||
+    s.endsWith('.mts') ||
+    s.endsWith('.cts')
+  )
+    return true;
   if (s.startsWith('.')) return true;
   return false;
 }

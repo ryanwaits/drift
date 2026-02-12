@@ -1,4 +1,4 @@
-import { c, sym, padRight, indent } from '../utils/render';
+import { c, indent, padRight, sym } from '../utils/render';
 
 interface ListExport {
   name: string;
@@ -29,9 +29,10 @@ export function renderList(data: ListData): string {
 
   // Empty state with active filter
   if (total === 0 && data.filter) {
-    const msg = data.filter === 'undocumented'
-      ? `${c.green(sym.ok)} All exports are documented`
-      : `${c.green(sym.ok)} No drifted exports found`;
+    const msg =
+      data.filter === 'undocumented'
+        ? `${c.green(sym.ok)} All exports are documented`
+        : `${c.green(sym.ok)} No drifted exports found`;
     lines.push(indent(msg));
     lines.push('');
     return lines.join('\n');
@@ -56,17 +57,23 @@ export function renderList(data: ListData): string {
   const shown = exports.slice(0, limit);
   const remaining = total - shown.length;
 
-  lines.push(indent(`${c.gray(padRight('NAME', 36))}${c.gray(padRight('KIND', 14))}${c.gray('DOCS')}`));
+  lines.push(
+    indent(`${c.gray(padRight('NAME', 36))}${c.gray(padRight('KIND', 14))}${c.gray('DOCS')}`),
+  );
   for (const exp of shown) {
     const name = exp.deprecated ? c.dim(exp.name) : exp.name;
     const docsStatus = exp.description
-      ? exp.deprecated ? c.yellow('deprecated') : c.green(sym.ok)
+      ? exp.deprecated
+        ? c.yellow('deprecated')
+        : c.green(sym.ok)
       : c.gray(sym.dash);
     lines.push(indent(`${padRight(name, 36)}${padRight(exp.kind, 14)}${docsStatus}`));
   }
 
   if (remaining > 0) {
-    lines.push(indent(`${c.gray('...')}${' '.repeat(33)}${' '.repeat(14)}${c.gray(`+${remaining} more`)}`));
+    lines.push(
+      indent(`${c.gray('...')}${' '.repeat(33)}${' '.repeat(14)}${c.gray(`+${remaining} more`)}`),
+    );
   }
 
   lines.push('');

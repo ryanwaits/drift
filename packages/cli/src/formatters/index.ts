@@ -3,19 +3,19 @@
  * Each function takes command data and returns a string.
  */
 
-export { renderList } from './list';
-export { renderCoverage } from './coverage';
-export { renderLint } from './lint';
-export { renderGet } from './get';
-export { renderDiff } from './diff';
+export { renderBatchCoverage, renderBatchLint, renderBatchList } from './batch';
 export { renderBreaking } from './breaking';
-export { renderSemver } from './semver';
 export { renderChangelog } from './changelog';
-export { renderExtract } from './extract';
-export { renderValidate } from './validate';
-export { renderFilter } from './filter';
-export { renderInit } from './init';
 export { renderCi } from './ci';
+export { renderCoverage } from './coverage';
+export { renderDiff } from './diff';
+export { renderExtract } from './extract';
+export { renderFilter } from './filter';
+export { renderGet } from './get';
+export { renderInit } from './init';
+export { renderLint } from './lint';
+export { renderList } from './list';
 export { renderRelease } from './release';
 export { renderReport } from './report';
-export { renderBatchCoverage, renderBatchLint, renderBatchList } from './batch';
+export { renderSemver } from './semver';
+export { renderValidate } from './validate';

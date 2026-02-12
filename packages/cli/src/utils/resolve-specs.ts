@@ -54,17 +54,17 @@ export async function resolveSpecs(opts: {
 
     const oldSpec = await extractSpecFromRef(opts.base, relEntry, cwd);
 
-    let newSpec;
-    if (opts.head) {
-      if (!validateRef(opts.head)) {
-        throw new Error(`Invalid git ref: ${opts.head}`);
+    const newSpec = await (async () => {
+      if (opts.head) {
+        if (!validateRef(opts.head)) {
+          throw new Error(`Invalid git ref: ${opts.head}`);
+        }
+        return extractSpecFromRef(opts.head, relEntry, cwd);
       }
-      newSpec = await extractSpecFromRef(opts.head, relEntry, cwd);
-    } else {
       // Current working tree
       const result = await extract({ entryFile });
-      newSpec = normalize(result.spec);
-    }
+      return normalize(result.spec);
+    })();
 
     return { oldSpec, newSpec };
   }

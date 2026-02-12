@@ -31,14 +31,21 @@ export function renderExamples(data: ExampleValidationResult): string {
   // Typecheck section
   if (data.typecheck) {
     const { passed, failed, errors } = data.typecheck;
-    const status = failed === 0 ? c.green(`${passed} passed`) : `${c.green(`${passed} passed`)}  ${c.red(`${failed} failed`)}`;
+    const status =
+      failed === 0
+        ? c.green(`${passed} passed`)
+        : `${c.green(`${passed} passed`)}  ${c.red(`${failed} failed`)}`;
     lines.push(indent(`${c.gray('TYPECHECK')}  ${status}`));
 
     if (errors.length > 0) {
       const shown = errors.slice(0, 10);
       for (const err of shown) {
         const loc = err.error.line ? `, line ${err.error.line}` : '';
-        lines.push(indent(`  ${c.red(err.exportName)} (example[${err.exampleIndex}]${loc}): ${err.error.message}`));
+        lines.push(
+          indent(
+            `  ${c.red(err.exportName)} (example[${err.exampleIndex}]${loc}): ${err.error.message}`,
+          ),
+        );
       }
       const remaining = errors.length - shown.length;
       if (remaining > 0) {
@@ -58,7 +65,10 @@ export function renderExamples(data: ExampleValidationResult): string {
         lines.push(indent(`  ${c.red(installError)}`));
       }
     } else {
-      const status = failed === 0 ? c.green(`${passed} passed`) : `${c.green(`${passed} passed`)}  ${c.red(`${failed} failed`)}`;
+      const status =
+        failed === 0
+          ? c.green(`${passed} passed`)
+          : `${c.green(`${passed} passed`)}  ${c.red(`${failed} failed`)}`;
       lines.push(indent(`${c.gray('RUNTIME')}  ${status}`));
 
       if (drifts.length > 0) {

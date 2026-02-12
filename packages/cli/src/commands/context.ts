@@ -2,13 +2,18 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Command } from 'commander';
 import { computeDrift } from '@driftdev/sdk';
+import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderContext } from '../formatters/context';
+import {
+  type ContextData,
+  type PackageContext,
+  renderContextMarkdown,
+  writeContext,
+} from '../utils/context-writer';
 import { detectEntry } from '../utils/detect-entry';
-import { type ContextData, type PackageContext, renderContextMarkdown, writeContext } from '../utils/context-writer';
 import { readHistory } from '../utils/history';
 import { formatError, formatOutput } from '../utils/output';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
@@ -17,7 +22,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getVersion(): string {
   try {
-    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+    return (
+      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
+    );
   } catch {
     return '0.0.0';
   }
@@ -38,49 +45,100 @@ export function registerContextCommand(program: Command): void {
     .option('--all', 'Include all workspace packages')
     .option('--private', 'Include private packages in --all mode')
     .option('--output <path>', 'Output path (default: ~/.drift/projects/<slug>/context.md)')
-    .action(async (entry: string | undefined, options: { all?: boolean; private?: boolean; output?: string }) => {
-      const startTime = Date.now();
-      const version = getVersion();
-      const cwd = process.cwd();
+    .action(
+      async (
+        entry: string | undefined,
+        options: { all?: boolean; private?: boolean; output?: string },
+      ) => {
+        const startTime = Date.now();
+        const version = getVersion();
+        const cwd = process.cwd();
 
-      try {
-        const { config } = loadConfig();
-        const commit = getCommitSha();
-        const history = readHistory(cwd);
-        const packages: PackageContext[] = [];
+        try {
+          const { config } = loadConfig();
+          const commit = getCommitSha();
+          const history = readHistory(cwd);
+          const packages: PackageContext[] = [];
 
-        if (options.all || !entry) {
-          // Multi-package: discover workspace packages
-          const allPackages = discoverPackages(cwd);
-          const pkgs = allPackages && allPackages.length > 0
-            ? (options.private ? allPackages : filterPublic(allPackages))
-            : null;
+          if (options.all || !entry) {
+            // Multi-package: discover workspace packages
+            const allPackages = discoverPackages(cwd);
+            const pkgs =
+              allPackages && allPackages.length > 0
+                ? options.private
+                  ? allPackages
+                  : filterPublic(allPackages)
+                : null;
 
-          if (pkgs && pkgs.length > 0) {
-            for (const pkg of pkgs) {
-              try {
-                const { spec } = await cachedExtract(pkg.entry);
-                const exports = spec.exports ?? [];
-                let documented = 0;
-                const undocumented: string[] = [];
-                for (const exp of exports) {
-                  if (exp.description?.trim()) documented++;
-                  else undocumented.push(exp.name);
+            if (pkgs && pkgs.length > 0) {
+              for (const pkg of pkgs) {
+                try {
+                  const { spec } = await cachedExtract(pkg.entry);
+                  const exports = spec.exports ?? [];
+                  let documented = 0;
+                  const undocumented: string[] = [];
+                  for (const exp of exports) {
+                    if (exp.description?.trim()) documented++;
+                    else undocumented.push(exp.name);
+                  }
+                  const coverage =
+                    exports.length > 0 ? Math.round((documented / exports.length) * 100) : 100;
+                  const driftResult = computeDrift(spec);
+                  let lintIssues = 0;
+                  for (const [, drifts] of driftResult.exports) lintIssues += drifts.length;
+                  packages.push({
+                    name: pkg.name,
+                    coverage,
+                    lintIssues,
+                    exports: exports.length,
+                    documented,
+                    undocumented,
+                  });
+                } catch {
+                  packages.push({
+                    name: pkg.name,
+                    coverage: 0,
+                    lintIssues: 0,
+                    exports: 0,
+                    documented: 0,
+                    undocumented: [],
+                  });
                 }
-                const coverage = exports.length > 0 ? Math.round((documented / exports.length) * 100) : 100;
-                const driftResult = computeDrift(spec);
-                let lintIssues = 0;
-                for (const [, drifts] of driftResult.exports) lintIssues += drifts.length;
-                packages.push({ name: pkg.name, coverage, lintIssues, exports: exports.length, documented, undocumented });
-              } catch {
-                packages.push({ name: pkg.name, coverage: 0, lintIssues: 0, exports: 0, documented: 0, undocumented: [] });
               }
+            } else {
+              // Single package fallback
+              const entryFile = config.entry ? path.resolve(cwd, config.entry) : detectEntry();
+              const { spec } = await cachedExtract(entryFile);
+              const exports = spec.exports ?? [];
+              let documented = 0;
+              const undocumented: string[] = [];
+              for (const exp of exports) {
+                if (exp.description?.trim()) documented++;
+                else undocumented.push(exp.name);
+              }
+              const coverage =
+                exports.length > 0 ? Math.round((documented / exports.length) * 100) : 100;
+              const driftResult = computeDrift(spec);
+              let lintIssues = 0;
+              for (const [, drifts] of driftResult.exports) lintIssues += drifts.length;
+
+              const pkgJsonPath = path.resolve(cwd, 'package.json');
+              let name = path.basename(cwd);
+              try {
+                name = JSON.parse(readFileSync(pkgJsonPath, 'utf-8')).name ?? name;
+              } catch {}
+              packages.push({
+                name,
+                coverage,
+                lintIssues,
+                exports: exports.length,
+                documented,
+                undocumented,
+              });
             }
           } else {
-            // Single package fallback
-            const entryFile = config.entry
-              ? path.resolve(cwd, config.entry)
-              : detectEntry();
+            // Single entry
+            const entryFile = path.resolve(cwd, entry);
             const { spec } = await cachedExtract(entryFile);
             const exports = spec.exports ?? [];
             let documented = 0;
@@ -89,56 +147,55 @@ export function registerContextCommand(program: Command): void {
               if (exp.description?.trim()) documented++;
               else undocumented.push(exp.name);
             }
-            const coverage = exports.length > 0 ? Math.round((documented / exports.length) * 100) : 100;
+            const coverage =
+              exports.length > 0 ? Math.round((documented / exports.length) * 100) : 100;
             const driftResult = computeDrift(spec);
             let lintIssues = 0;
             for (const [, drifts] of driftResult.exports) lintIssues += drifts.length;
 
             const pkgJsonPath = path.resolve(cwd, 'package.json');
             let name = path.basename(cwd);
-            try { name = JSON.parse(readFileSync(pkgJsonPath, 'utf-8')).name ?? name; } catch {}
-            packages.push({ name, coverage, lintIssues, exports: exports.length, documented, undocumented });
+            try {
+              name = JSON.parse(readFileSync(pkgJsonPath, 'utf-8')).name ?? name;
+            } catch {}
+            packages.push({
+              name,
+              coverage,
+              lintIssues,
+              exports: exports.length,
+              documented,
+              undocumented,
+            });
           }
-        } else {
-          // Single entry
-          const entryFile = path.resolve(cwd, entry);
-          const { spec } = await cachedExtract(entryFile);
-          const exports = spec.exports ?? [];
-          let documented = 0;
-          const undocumented: string[] = [];
-          for (const exp of exports) {
-            if (exp.description?.trim()) documented++;
-            else undocumented.push(exp.name);
+
+          const contextData: ContextData = { packages, history, config, commit: commit ?? null };
+
+          // Write context file
+          if (options.output) {
+            const { mkdirSync, writeFileSync } = await import('node:fs');
+            const dir = path.dirname(options.output);
+            mkdirSync(dir, { recursive: true });
+            writeFileSync(options.output, renderContextMarkdown(contextData));
+          } else {
+            writeContext(cwd, contextData);
           }
-          const coverage = exports.length > 0 ? Math.round((documented / exports.length) * 100) : 100;
-          const driftResult = computeDrift(spec);
-          let lintIssues = 0;
-          for (const [, drifts] of driftResult.exports) lintIssues += drifts.length;
 
-          const pkgJsonPath = path.resolve(cwd, 'package.json');
-          let name = path.basename(cwd);
-          try { name = JSON.parse(readFileSync(pkgJsonPath, 'utf-8')).name ?? name; } catch {}
-          packages.push({ name, coverage, lintIssues, exports: exports.length, documented, undocumented });
+          const { getProjectDir } = await import('../config/global');
+          const outputPath = options.output ?? path.join(getProjectDir(cwd), 'context.md');
+          const data = {
+            path: outputPath,
+            packages: packages.map((p) => p.name),
+            generated: new Date().toISOString(),
+          };
+          formatOutput('context', data, startTime, version, renderContext);
+        } catch (err) {
+          formatError(
+            'context',
+            err instanceof Error ? err.message : String(err),
+            startTime,
+            version,
+          );
         }
-
-        const contextData: ContextData = { packages, history, config, commit: commit ?? null };
-
-        // Write context file
-        if (options.output) {
-          const { mkdirSync, writeFileSync } = await import('node:fs');
-          const dir = path.dirname(options.output);
-          mkdirSync(dir, { recursive: true });
-          writeFileSync(options.output, renderContextMarkdown(contextData));
-        } else {
-          writeContext(cwd, contextData);
-        }
-
-        const { getProjectDir } = await import('../config/global');
-        const outputPath = options.output ?? path.join(getProjectDir(cwd), 'context.md');
-        const data = { path: outputPath, packages: packages.map((p) => p.name), generated: new Date().toISOString() };
-        formatOutput('context', data, startTime, version, renderContext);
-      } catch (err) {
-        formatError('context', err instanceof Error ? err.message : String(err), startTime, version);
-      }
-    });
+      },
+    );
 }

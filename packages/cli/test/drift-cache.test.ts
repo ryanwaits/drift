@@ -1,6 +1,6 @@
-import { describe, expect, test, setDefaultTimeout, beforeAll, afterAll } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test } from 'bun:test';
 import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, rmSync, writeFileSync, utimesSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 
 setDefaultTimeout(120000);
@@ -8,7 +8,10 @@ setDefaultTimeout(120000);
 const CLI = path.resolve(__dirname, '../src/drift.ts');
 const CACHE_DIR = path.resolve(__dirname, 'fixtures/.tmp-cache-test');
 
-function run(args: string, opts?: { expectFail?: boolean; cwd?: string }): { stdout: string; exitCode: number } {
+function run(
+  args: string,
+  opts?: { expectFail?: boolean; cwd?: string },
+): { stdout: string; exitCode: number } {
   try {
     const stdout = execSync(`bun run ${CLI} ${args}`, {
       encoding: 'utf-8',
@@ -52,7 +55,7 @@ describe('spec cache', () => {
     const env1 = JSON.parse(first.stdout.trim());
     expect(env1.ok).toBe(true);
     expect(env1.data.score).toBe(100);
-    const duration1 = env1.meta.duration;
+    const _duration1 = env1.meta.duration;
 
     // Cache should now have an entry
     const status = run('cache status --json');

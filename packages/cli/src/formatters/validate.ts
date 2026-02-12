@@ -11,7 +11,9 @@ export function renderValidate(data: ValidateData): string {
   if (data.valid) {
     lines.push(indent(`${c.green('ok')} Valid spec`));
   } else {
-    lines.push(indent(`${c.red('x')} ${data.errors.length} error${data.errors.length === 1 ? '' : 's'}`));
+    lines.push(
+      indent(`${c.red('x')} ${data.errors.length} error${data.errors.length === 1 ? '' : 's'}`),
+    );
     lines.push('');
     for (const err of data.errors) {
       lines.push(indent(`  ${err}`));

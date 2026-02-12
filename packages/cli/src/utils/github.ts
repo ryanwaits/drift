@@ -40,7 +40,7 @@ export function getPRNumber(eventPath: string | null): number | null {
 export function writeStepSummary(markdown: string): void {
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
   if (summaryPath) {
-    appendFileSync(summaryPath, markdown + '\n');
+    appendFileSync(summaryPath, `${markdown}\n`);
   }
 }
 

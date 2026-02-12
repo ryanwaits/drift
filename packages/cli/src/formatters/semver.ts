@@ -1,4 +1,4 @@
-import { c, indent } from '../utils/render';
+import { c } from '../utils/render';
 
 interface SemverData {
   bump: string;

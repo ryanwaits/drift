@@ -12,7 +12,7 @@ export function fetchUser(id: string): User {
  * @param content - Message content
  * @param recipient {number} - The recipient
  */
-export function sendMessage(content: string, recipient: string): void {}
+export function sendMessage(_content: string, _recipient: string): void {}
 
 /**
  * Calculates total with a broken link.

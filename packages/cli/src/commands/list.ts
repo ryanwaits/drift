@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listExports } from '@openpkg-ts/sdk';
 import { computeDrift } from '@driftdev/sdk';
-import { cachedExtract } from '../cache/cached-extract';
+import { listExports } from '@openpkg-ts/sdk';
 import type { Command } from 'commander';
+import { cachedExtract } from '../cache/cached-extract';
 import { renderBatchList } from '../formatters/batch';
 import { renderList } from '../formatters/list';
 import { detectEntry } from '../utils/detect-entry';
@@ -16,7 +16,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getVersion(): string {
   try {
-    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+    return (
+      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
+    );
   } catch {
     return '0.0.0';
   }
@@ -56,11 +58,13 @@ export function registerListCommand(program: Command): void {
             const res = await listExports({ entryFile: pkg.entry });
             let filtered = res.exports;
             if (options.undocumented) {
-              filtered = filtered.filter((e) => !e.description || e.description.trim().length === 0);
+              filtered = filtered.filter(
+                (e) => !e.description || e.description.trim().length === 0,
+              );
             }
             rows.push({ name: pkg.name, count: filtered.length });
           }
-          const filter = options.undocumented ? 'undocumented' as const : undefined;
+          const filter = options.undocumented ? ('undocumented' as const) : undefined;
           formatOutput('list', { packages: rows, filter }, startTime, version, renderBatchList);
           return;
         }
@@ -111,9 +115,11 @@ export function registerListCommand(program: Command): void {
           exports = matches.map((m) => exports.find((e) => e.name === m.name)!);
         }
 
-        const filter = options.undocumented ? 'undocumented' as const
-          : options.drifted ? 'drifted' as const
-          : undefined;
+        const filter = options.undocumented
+          ? ('undocumented' as const)
+          : options.drifted
+            ? ('drifted' as const)
+            : undefined;
 
         const data = {
           exports: exports.map((e) => ({

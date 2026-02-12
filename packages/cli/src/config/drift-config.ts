@@ -46,7 +46,9 @@ export function mergeDefaults(config: DriftConfig): DriftConfig {
   };
 }
 
-export function validateConfig(raw: unknown): { ok: true; config: DriftConfig } | { ok: false; errors: string[] } {
+export function validateConfig(
+  raw: unknown,
+): { ok: true; config: DriftConfig } | { ok: false; errors: string[] } {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
     return { ok: false, errors: ['Config must be a JSON object'] };
   }
@@ -81,10 +83,16 @@ export function validateConfig(raw: unknown): { ok: true; config: DriftConfig } 
       errors.push('"docs" must be an object');
     } else {
       const docs = obj.docs as Record<string, unknown>;
-      if (docs.include !== undefined && (!Array.isArray(docs.include) || !docs.include.every((i) => typeof i === 'string'))) {
+      if (
+        docs.include !== undefined &&
+        (!Array.isArray(docs.include) || !docs.include.every((i) => typeof i === 'string'))
+      ) {
         errors.push('"docs.include" must be an array of strings');
       }
-      if (docs.exclude !== undefined && (!Array.isArray(docs.exclude) || !docs.exclude.every((i) => typeof i === 'string'))) {
+      if (
+        docs.exclude !== undefined &&
+        (!Array.isArray(docs.exclude) || !docs.exclude.every((i) => typeof i === 'string'))
+      ) {
         errors.push('"docs.exclude" must be an array of strings');
       }
       if (docs.remote !== undefined) {

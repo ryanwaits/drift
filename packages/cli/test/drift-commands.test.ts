@@ -1,12 +1,18 @@
+import { describe, expect, setDefaultTimeout, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { describe, expect, test, setDefaultTimeout } from 'bun:test';
 
 setDefaultTimeout(30000);
+
 import * as path from 'node:path';
-import { listExports, getExport, filterSpec } from '@openpkg-ts/sdk';
-import { normalize, validateSpec, diffSpec, categorizeBreakingChanges, recommendSemverBump } from '@openpkg-ts/spec';
-import { extract } from '@openpkg-ts/sdk';
 import { computeDrift } from '@driftdev/sdk';
+import { extract, filterSpec, getExport, listExports } from '@openpkg-ts/sdk';
+import {
+  categorizeBreakingChanges,
+  diffSpec,
+  normalize,
+  recommendSemverBump,
+  validateSpec,
+} from '@openpkg-ts/spec';
 
 const FIXTURE = path.resolve(__dirname, 'fixtures/sample/src/index.ts');
 const CLEAN = path.resolve(__dirname, 'fixtures/clean/src/index.ts');

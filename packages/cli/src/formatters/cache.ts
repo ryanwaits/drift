@@ -31,7 +31,9 @@ export function renderCacheClear(data: { removed: number }): string {
   const lines: string[] = [];
   lines.push('');
   if (data.removed > 0) {
-    lines.push(indent(`${c.green('✓')} Cleared ${data.removed} cached spec${data.removed === 1 ? '' : 's'}`));
+    lines.push(
+      indent(`${c.green('✓')} Cleared ${data.removed} cached spec${data.removed === 1 ? '' : 's'}`),
+    );
   } else {
     lines.push(indent(`${c.gray('Cache already empty')}`));
   }

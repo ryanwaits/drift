@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { categorizeBreakingChanges, diffSpec, recommendSemverBump } from '@openpkg-ts/spec';
 import type { Command } from 'commander';
-import { diffSpec, categorizeBreakingChanges, recommendSemverBump } from '@openpkg-ts/spec';
 import { renderChangelog } from '../formatters/changelog';
 import { formatError, formatOutput } from '../utils/output';
 import { shouldRenderHuman } from '../utils/render';
@@ -12,7 +12,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getVersion(): string {
   try {
-    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+    return (
+      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
+    );
   } catch {
     return '0.0.0';
   }
@@ -72,38 +74,60 @@ export function registerChangelogCommand(program: Command): void {
     .option('--base <ref>', 'Git ref for old spec')
     .option('--head <ref>', 'Git ref for new spec (default: working tree)')
     .option('--entry <file>', 'Entry file for git ref extraction')
-    .action(async (oldPath: string | undefined, newPath: string | undefined, options: { format: string; base?: string; head?: string; entry?: string }) => {
-      const startTime = Date.now();
-      const version = getVersion();
+    .action(
+      async (
+        oldPath: string | undefined,
+        newPath: string | undefined,
+        options: { format: string; base?: string; head?: string; entry?: string },
+      ) => {
+        const startTime = Date.now();
+        const version = getVersion();
 
-      try {
-        const args = [oldPath, newPath].filter(Boolean) as string[];
-        const { oldSpec, newSpec } = await resolveSpecs({ args, base: options.base, head: options.head, entry: options.entry });
+        try {
+          const args = [oldPath, newPath].filter(Boolean) as string[];
+          const { oldSpec, newSpec } = await resolveSpecs({
+            args,
+            base: options.base,
+            head: options.head,
+            entry: options.entry,
+          });
 
-        const diff = diffSpec(oldSpec, newSpec);
-        const breaking = categorizeBreakingChanges(diff.breaking, oldSpec, newSpec);
-        const { bump } = recommendSemverBump(diff);
+          const diff = diffSpec(oldSpec, newSpec);
+          const breaking = categorizeBreakingChanges(diff.breaking, oldSpec, newSpec);
+          const { bump } = recommendSemverBump(diff);
 
-        if (options.format === 'json') {
-          const data = {
-            bump,
-            breaking: breaking.map((b) => ({ name: b.name, reason: b.reason, severity: b.severity })),
-            added: diff.nonBreaking,
-            changed: diff.docsOnly,
-          };
-          formatOutput('changelog', data, startTime, version, renderChangelog);
-        } else {
-          const md = generateMarkdown(breaking, diff.nonBreaking, diff.docsOnly, bump);
-          const data = { markdown: md, bump };
-          formatOutput('changelog', data, startTime, version, renderChangelog);
+          if (options.format === 'json') {
+            const data = {
+              bump,
+              breaking: breaking.map((b) => ({
+                name: b.name,
+                reason: b.reason,
+                severity: b.severity,
+              })),
+              added: diff.nonBreaking,
+              changed: diff.docsOnly,
+            };
+            formatOutput('changelog', data, startTime, version, renderChangelog);
+          } else {
+            const md = generateMarkdown(breaking, diff.nonBreaking, diff.docsOnly, bump);
+            const data = { markdown: md, bump };
+            formatOutput('changelog', data, startTime, version, renderChangelog);
+          }
+
+          if (!shouldRenderHuman()) {
+            const total = diff.breaking.length + diff.nonBreaking.length + diff.docsOnly.length;
+            process.stderr.write(
+              `changelog: ${total} change${total === 1 ? '' : 's'}, ${bump} bump\n`,
+            );
+          }
+        } catch (err) {
+          formatError(
+            'changelog',
+            err instanceof Error ? err.message : String(err),
+            startTime,
+            version,
+          );
         }
-
-        if (!shouldRenderHuman()) {
-          const total = diff.breaking.length + diff.nonBreaking.length + diff.docsOnly.length;
-          process.stderr.write(`changelog: ${total} change${total === 1 ? '' : 's'}, ${bump} bump\n`);
-        }
-      } catch (err) {
-        formatError('changelog', err instanceof Error ? err.message : String(err), startTime, version);
-      }
-    });
+      },
+    );
 }

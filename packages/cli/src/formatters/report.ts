@@ -1,4 +1,4 @@
-import { c, sym, coverageColor, indent } from '../utils/render';
+import { c, coverageColor, indent, sym } from '../utils/render';
 import { sparkline } from '../utils/sparkline';
 
 interface PackageTrend {
@@ -33,7 +33,11 @@ export function renderReport(data: ReportData): string {
     lines.push(indent(`${trend.name}`));
     lines.push(indent(`  ${spark}  ${trend.first}% -> ${color(`${trend.last}%`)}  (${deltaStr})`));
     if (trend.latestLint > 0) {
-      lines.push(indent(`  ${c.yellow(`${trend.latestLint} lint issue${trend.latestLint === 1 ? '' : 's'}`)}`));
+      lines.push(
+        indent(
+          `  ${c.yellow(`${trend.latestLint} lint issue${trend.latestLint === 1 ? '' : 's'}`)}`,
+        ),
+      );
     }
   }
   lines.push('');

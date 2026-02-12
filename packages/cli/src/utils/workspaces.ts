@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { detectEntry } from './detect-entry';
 
@@ -19,7 +19,8 @@ export function detectWorkspaces(cwd: string): string[] | null {
   try {
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
     if (Array.isArray(pkg.workspaces)) return pkg.workspaces;
-    if (pkg.workspaces?.packages && Array.isArray(pkg.workspaces.packages)) return pkg.workspaces.packages;
+    if (pkg.workspaces?.packages && Array.isArray(pkg.workspaces.packages))
+      return pkg.workspaces.packages;
   } catch {}
   return null;
 }

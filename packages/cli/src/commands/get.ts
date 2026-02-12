@@ -7,13 +7,15 @@ import { renderGet } from '../formatters/get';
 import { detectEntry } from '../utils/detect-entry';
 import { fuzzyTop } from '../utils/fuzzy';
 import { formatError, formatOutput } from '../utils/output';
-import { shouldRenderHuman, c, indent } from '../utils/render';
+import { c, indent, shouldRenderHuman } from '../utils/render';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getVersion(): string {
   try {
-    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+    return (
+      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
+    );
   } catch {
     return '0.0.0';
   }
@@ -62,14 +64,25 @@ export function registerGetCommand(program: Command): void {
             process.stdout.write(lines.join('\n'));
             process.exitCode = 1;
           } else if (suggestions.length > 0) {
-            formatError('get', `Export '${exportName}' not found. Similar: ${suggestions.join(', ')}`, startTime, version);
+            formatError(
+              'get',
+              `Export '${exportName}' not found. Similar: ${suggestions.join(', ')}`,
+              startTime,
+              version,
+            );
           } else {
             formatError('get', `Export '${exportName}' not found`, startTime, version);
           }
           return;
         }
 
-        formatOutput('get', { export: result.export, types: result.types }, startTime, version, renderGet);
+        formatOutput(
+          'get',
+          { export: result.export, types: result.types },
+          startTime,
+          version,
+          renderGet,
+        );
       } catch (err) {
         formatError('get', err instanceof Error ? err.message : String(err), startTime, version);
       }

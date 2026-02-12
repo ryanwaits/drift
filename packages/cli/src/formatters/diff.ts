@@ -1,4 +1,4 @@
-import { c, sym, indent, separator } from '../utils/render';
+import { c, indent, separator, sym } from '../utils/render';
 
 interface DiffData {
   breaking: Array<{ name: string; reason?: string; severity?: string }>;

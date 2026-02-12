@@ -6,9 +6,17 @@
  */
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import * as path from 'node:path';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import * as os from 'node:os';
+import * as path from 'node:path';
 import { getProjectDir } from '../config/global';
 
 let _noCache = false;
@@ -75,7 +83,12 @@ function walkMaxMtime(dir: string): number {
   let max = 0;
   try {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules' && entry.name !== 'dist') {
+      if (
+        entry.isDirectory() &&
+        !entry.name.startsWith('.') &&
+        entry.name !== 'node_modules' &&
+        entry.name !== 'dist'
+      ) {
         const sub = walkMaxMtime(path.join(dir, entry.name));
         if (sub > max) max = sub;
       } else if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx'))) {

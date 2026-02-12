@@ -2,16 +2,21 @@ import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Command } from 'commander';
 import { computeDrift } from '@driftdev/sdk';
-import { diffSpec, categorizeBreakingChanges } from '@openpkg-ts/spec';
+import { categorizeBreakingChanges, diffSpec } from '@openpkg-ts/spec';
+import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderCi } from '../formatters/ci';
+import { writeContext } from '../utils/context-writer';
 import { detectEntry } from '../utils/detect-entry';
 import { extractSpecFromRef } from '../utils/git-extract';
-import { getGitHubContext, getPRNumber, postOrUpdatePRComment, writeStepSummary } from '../utils/github';
-import { writeContext } from '../utils/context-writer';
+import {
+  getGitHubContext,
+  getPRNumber,
+  postOrUpdatePRComment,
+  writeStepSummary,
+} from '../utils/github';
 import { appendHistory, readHistory } from '../utils/history';
 import { formatError, formatOutput, type OutputNext } from '../utils/output';
 import { computeRatchetMin } from '../utils/ratchet';
@@ -21,7 +26,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getVersion(): string {
   try {
-    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+    return (
+      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
+    );
   } catch {
     return '0.0.0';
   }
@@ -68,12 +75,12 @@ function detectPackageDirs(cwd: string): string[] {
 function filterChangedPackages(allDirs: string[], changedFiles: string[]): string[] {
   if (changedFiles.length === 0) return allDirs;
   return allDirs.filter((dir) => {
-    const prefix = dir === '.' ? '' : dir + '/';
+    const prefix = dir === '.' ? '' : `${dir}/`;
     return changedFiles.some((f) => prefix === '' || f.startsWith(prefix));
   });
 }
 
-function buildPRComment(results: PackageResult[], pass: boolean, commit: string | null): string {
+function buildPRComment(results: PackageResult[], _pass: boolean, commit: string | null): string {
   const lines: string[] = [];
   const multi = results.length > 1;
 
@@ -103,7 +110,11 @@ function buildPRComment(results: PackageResult[], pass: boolean, commit: string 
     apiEntries.push(pkgLines.join('\n'));
   }
   if (apiEntries.length > 0) {
-    const total = results.reduce((s, r) => s + (r.diff ? r.diff.breaking.length + r.diff.added.length + r.diff.changed.length : 0), 0);
+    const total = results.reduce(
+      (s, r) =>
+        s + (r.diff ? r.diff.breaking.length + r.diff.added.length + r.diff.changed.length : 0),
+      0,
+    );
     lines.push('');
     lines.push(`<details>\n<summary>API Changes (${total})</summary>\n`);
     lines.push(apiEntries.join('\n'));
@@ -328,15 +339,26 @@ export function registerCiCommand(program: Command): void {
           }
         }
 
-        const data = { results, pass: allPass, min: minThreshold, ...(skipped.length > 0 ? { skipped } : {}) };
+        const data = {
+          results,
+          pass: allPass,
+          min: minThreshold,
+          ...(skipped.length > 0 ? { skipped } : {}),
+        };
 
         let next: OutputNext | undefined;
         const totalLint = results.reduce((s, r) => s + r.lintIssues, 0);
         const failedPkgs = results.filter((r) => !r.pass);
         if (failedPkgs.length > 0) {
-          next = { suggested: 'drift scan --all', reason: `${failedPkgs.length} package${failedPkgs.length === 1 ? '' : 's'} failed checks` };
+          next = {
+            suggested: 'drift scan --all',
+            reason: `${failedPkgs.length} package${failedPkgs.length === 1 ? '' : 's'} failed checks`,
+          };
         } else if (totalLint > 0) {
-          next = { suggested: 'drift lint --all', reason: `${totalLint} lint issue${totalLint === 1 ? '' : 's'} across packages` };
+          next = {
+            suggested: 'drift lint --all',
+            reason: `${totalLint} lint issue${totalLint === 1 ? '' : 's'} across packages`,
+          };
         }
 
         formatOutput('ci', data, startTime, version, renderCi, next);

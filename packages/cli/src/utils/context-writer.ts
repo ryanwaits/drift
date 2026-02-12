@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { getProjectDir } from '../config/global';
 import type { DriftConfig } from '../config/drift-config';
+import { getProjectDir } from '../config/global';
 import type { HistoryEntry } from './history';
 
 export interface PackageContext {
@@ -86,7 +86,9 @@ export function renderContextMarkdown(data: ContextData): string {
       lines.push(`- **${pkg.name}**: coverage ${pkg.coverage}% (min ${minCov}%)`);
     }
     for (const pkg of withIssues) {
-      lines.push(`- **${pkg.name}**: ${pkg.lintIssues} lint issue${pkg.lintIssues === 1 ? '' : 's'}`);
+      lines.push(
+        `- **${pkg.name}**: ${pkg.lintIssues} lint issue${pkg.lintIssues === 1 ? '' : 's'}`,
+      );
     }
     // Top offenders by issue count
     const sorted = [...withIssues].sort((a, b) => b.lintIssues - a.lintIssues);
@@ -106,8 +108,10 @@ export function renderContextMarkdown(data: ContextData): string {
   if (data.config.coverage?.min) lines.push(`- **Min coverage**: ${data.config.coverage.min}%`);
   lines.push(`- **Lint**: ${data.config.lint !== false ? 'enabled' : 'disabled'}`);
   if (data.config.coverage?.ratchet) lines.push('- **Ratchet**: enabled');
-  if (data.config.docs?.include) lines.push(`- **Docs include**: ${data.config.docs.include.join(', ')}`);
-  if (data.config.docs?.exclude) lines.push(`- **Docs exclude**: ${data.config.docs.exclude.join(', ')}`);
+  if (data.config.docs?.include)
+    lines.push(`- **Docs include**: ${data.config.docs.include.join(', ')}`);
+  if (data.config.docs?.exclude)
+    lines.push(`- **Docs exclude**: ${data.config.docs.exclude.join(', ')}`);
   lines.push('');
 
   return lines.join('\n');

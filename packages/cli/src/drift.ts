@@ -4,28 +4,28 @@ import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
-import { registerHealthCommand } from './commands/health';
+import { setNoCache } from './cache/spec-cache';
 import { registerBreakingCommand } from './commands/breaking';
 import { registerCacheCommand } from './commands/cache';
 import { registerChangelogCommand } from './commands/changelog';
 import { registerCiCommand } from './commands/ci';
+import { registerConfigCommand } from './commands/config';
+import { registerContextCommand } from './commands/context';
 import { registerCoverageCommand } from './commands/coverage';
-import { registerExamplesCommand } from './commands/examples';
 import { registerDiffCommand } from './commands/diff';
+import { registerExamplesCommand } from './commands/examples';
 import { registerExtractCommand } from './commands/extract';
 import { registerFilterCommand } from './commands/filter';
 import { registerGetCommand } from './commands/get';
-import { registerConfigCommand } from './commands/config';
-import { registerContextCommand } from './commands/context';
+import { registerHealthCommand } from './commands/health';
 import { registerInitCommand } from './commands/init';
 import { registerLintCommand } from './commands/lint';
-import { registerScanCommand } from './commands/scan';
 import { registerListCommand } from './commands/list';
 import { registerReleaseCommand } from './commands/release';
 import { registerReportCommand } from './commands/report';
+import { registerScanCommand } from './commands/scan';
 import { registerSemverCommand } from './commands/semver';
 import { registerValidateCommand } from './commands/validate';
-import { setNoCache } from './cache/spec-cache';
 import { loadConfig, setConfigPath } from './config/loader';
 import { extractCapabilities } from './utils/capabilities';
 import { setOutputMode } from './utils/render';
@@ -104,9 +104,7 @@ if (process.argv.includes('--capabilities')) {
 // Smart default: bare `drift` runs init if no config, health otherwise
 // Skip if user passed --help/-h/--version/-V (let commander handle those)
 const rawArgs = process.argv.slice(2);
-const hasHelpOrVersion = rawArgs.some((a) =>
-  ['-h', '--help', '-V', '--version'].includes(a),
-);
+const hasHelpOrVersion = rawArgs.some((a) => ['-h', '--help', '-V', '--version'].includes(a));
 const userArgs = rawArgs.filter((a) => !a.startsWith('-'));
 if (userArgs.length === 0 && !hasHelpOrVersion) {
   const { configPath } = loadConfig();

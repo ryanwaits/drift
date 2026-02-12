@@ -2,8 +2,8 @@ import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Command } from 'commander';
 import { computeDrift } from '@driftdev/sdk';
+import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderRelease } from '../formatters/release';
@@ -15,7 +15,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getVersion(): string {
   try {
-    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+    return (
+      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
+    );
   } catch {
     return '0.0.0';
   }
@@ -23,10 +25,12 @@ function getVersion(): string {
 
 function getLastTag(): string | null {
   try {
-    return execSync('git describe --tags --abbrev=0 2>/dev/null', {
-      encoding: 'utf-8',
-      timeout: 5000,
-    }).trim() || null;
+    return (
+      execSync('git describe --tags --abbrev=0 2>/dev/null', {
+        encoding: 'utf-8',
+        timeout: 5000,
+      }).trim() || null
+    );
   } catch {
     return null;
   }
@@ -92,7 +96,7 @@ export function registerReleaseCommand(program: Command): void {
         const lintPass = config.lint === false || lintIssues === 0;
 
         // Semver sanity (compare against last tag if spec exists)
-        let semverWarning: string | null = null;
+        const semverWarning: string | null = null;
         const lastTag = getLastTag();
         const pkgVersion = getPackageVersion(cwd);
 
@@ -121,16 +125,27 @@ export function registerReleaseCommand(program: Command): void {
         let next: OutputNext | undefined;
         if (!ready) {
           if (!lintPass) {
-            next = { suggested: 'drift lint', reason: `${lintIssues} lint issue${lintIssues === 1 ? '' : 's'} blocking release` };
+            next = {
+              suggested: 'drift lint',
+              reason: `${lintIssues} lint issue${lintIssues === 1 ? '' : 's'} blocking release`,
+            };
           } else if (!coveragePass) {
-            next = { suggested: 'drift list --undocumented', reason: `coverage ${coverage}% below ${minThreshold}%` };
+            next = {
+              suggested: 'drift list --undocumented',
+              reason: `coverage ${coverage}% below ${minThreshold}%`,
+            };
           }
         }
 
         formatOutput('release', data, startTime, version, renderRelease, next);
         if (!ready) process.exitCode = 1;
       } catch (err) {
-        formatError('release', err instanceof Error ? err.message : String(err), startTime, version);
+        formatError(
+          'release',
+          err instanceof Error ? err.message : String(err),
+          startTime,
+          version,
+        );
       }
     });
 }

@@ -1,8 +1,14 @@
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  buildExportRegistry,
+  computeDrift,
+  detectProseDrift,
+  discoverMarkdownFiles,
+  isFixableDrift,
+} from '@driftdev/sdk';
 import type { Command } from 'commander';
-import { buildExportRegistry, computeDrift, detectProseDrift, discoverMarkdownFiles, isFixableDrift } from '@driftdev/sdk';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderBatchLint } from '../formatters/batch';
@@ -16,7 +22,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getVersion(): string {
   try {
-    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+    return (
+      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
+    );
   } catch {
     return '0.0.0';
   }
@@ -48,7 +56,9 @@ export function registerLintCommand(program: Command): void {
             formatError('lint', 'No workspace packages found', startTime, version);
             return;
           }
-          const skipped = options.private ? [] : allPackages.filter((p) => p.private).map((p) => p.name);
+          const skipped = options.private
+            ? []
+            : allPackages.filter((p) => p.private).map((p) => p.name);
           const packages = options.private ? allPackages : filterPublic(allPackages);
           if (packages.length === 0) {
             formatError('lint', 'No workspace packages found', startTime, version);
@@ -64,7 +74,11 @@ export function registerLintCommand(program: Command): void {
             rows.push({ name: pkg.name, exports: (spec.exports ?? []).length, issues });
             totalIssues += issues;
           }
-          const data = { packages: rows, aggregate: { count: totalIssues }, ...(skipped.length > 0 ? { skipped } : {}) };
+          const data = {
+            packages: rows,
+            aggregate: { count: totalIssues },
+            ...(skipped.length > 0 ? { skipped } : {}),
+          };
           formatOutput('lint', data, startTime, version, renderBatchLint);
           if (totalIssues > 0) process.exitCode = 1;
           return;
@@ -132,9 +146,13 @@ export function registerLintCommand(program: Command): void {
             if (isFixableDrift(d)) fixableCount++;
           }
         }
-        const next: OutputNext | undefined = issues.length > 0
-          ? { suggested: 'drift-fix skill', reason: `${fixableCount} of ${issues.length} issues are auto-fixable` }
-          : undefined;
+        const next: OutputNext | undefined =
+          issues.length > 0
+            ? {
+                suggested: 'drift-fix skill',
+                reason: `${fixableCount} of ${issues.length} issues are auto-fixable`,
+              }
+            : undefined;
 
         formatOutput('lint', data, startTime, version, renderLint, next);
 

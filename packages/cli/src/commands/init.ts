@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Command } from 'commander';
 import { extract } from '@openpkg-ts/sdk';
 import { normalize } from '@openpkg-ts/spec';
+import type { Command } from 'commander';
 import { ensureProjectDir, getGlobalConfigPath, getGlobalDir } from '../config/global';
 import { renderInit } from '../formatters/init';
 import { detectEntry } from '../utils/detect-entry';
@@ -15,7 +15,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getVersion(): string {
   try {
-    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+    return (
+      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
+    );
   } catch {
     return '0.0.0';
   }
@@ -112,7 +114,7 @@ export function registerInitCommand(program: Command): void {
           const globalDir = getGlobalDir();
           if (!existsSync(globalDir)) mkdirSync(globalDir, { recursive: true });
         }
-        writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+        writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 
         // Ensure per-project dir
         ensureProjectDir(cwd);

@@ -3,7 +3,7 @@
  * Human output when TTY. JSON envelope when piped.
  */
 
-import { shouldRenderHuman, c } from './render';
+import { c, shouldRenderHuman } from './render';
 
 export interface OutputMeta {
   command: string;
@@ -57,7 +57,12 @@ export function formatOutput<T>(
 /**
  * Write error output. Human-readable when TTY, JSON envelope otherwise.
  */
-export function formatError(command: string, error: string, startTime: number, version: string): void {
+export function formatError(
+  command: string,
+  error: string,
+  startTime: number,
+  version: string,
+): void {
   const duration = Date.now() - startTime;
 
   if (shouldRenderHuman()) {

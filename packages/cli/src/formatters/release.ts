@@ -1,4 +1,4 @@
-import { c, sym, coverageColor, progressBar, indent } from '../utils/render';
+import { c, coverageColor, indent, progressBar, sym } from '../utils/render';
 
 interface ReleaseData {
   ready: boolean;
@@ -26,11 +26,19 @@ export function renderRelease(data: ReleaseData): string {
   // Coverage
   const covColor = coverageColor(data.coverage);
   const covIcon = data.coveragePass ? c.green(sym.ok) : c.red(sym.x);
-  lines.push(indent(`${covIcon} Coverage  ${covColor(`${data.coverage}%`)}  ${progressBar(data.coverage)}  (${data.documented}/${data.total})`));
+  lines.push(
+    indent(
+      `${covIcon} Coverage  ${covColor(`${data.coverage}%`)}  ${progressBar(data.coverage)}  (${data.documented}/${data.total})`,
+    ),
+  );
 
   // Lint
   const lintIcon = data.lintPass ? c.green(sym.ok) : c.red(sym.x);
-  lines.push(indent(`${lintIcon} Lint      ${data.lintPass ? c.green('clean') : c.red(`${data.lintIssues} issue${data.lintIssues === 1 ? '' : 's'}`)}`));
+  lines.push(
+    indent(
+      `${lintIcon} Lint      ${data.lintPass ? c.green('clean') : c.red(`${data.lintIssues} issue${data.lintIssues === 1 ? '' : 's'}`)}`,
+    ),
+  );
 
   lines.push('');
 

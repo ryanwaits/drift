@@ -1,7 +1,13 @@
-import { c, sym, coverageColor, indent, table } from '../utils/render';
+import { c, coverageColor, indent, sym, table } from '../utils/render';
 
 interface InitData {
-  packages: Array<{ name: string; entry: string; exports: number; coverage: number; health: number }>;
+  packages: Array<{
+    name: string;
+    entry: string;
+    exports: number;
+    coverage: number;
+    health: number;
+  }>;
   config: object;
   configPath: string;
   ciPath: string | null;
@@ -12,14 +18,23 @@ export function renderInit(data: InitData): string {
   const lines: string[] = [''];
 
   // Scan table
-  lines.push(indent(`${data.isMonorepo ? 'Monorepo' : 'Project'} scan  ${c.gray(`${data.packages.length} package${data.packages.length === 1 ? '' : 's'}`)}`));
+  lines.push(
+    indent(
+      `${data.isMonorepo ? 'Monorepo' : 'Project'} scan  ${c.gray(`${data.packages.length} package${data.packages.length === 1 ? '' : 's'}`)}`,
+    ),
+  );
   lines.push('');
 
   const header = ['Package', 'Exports', 'Coverage', 'Health'];
   const rows = data.packages.map((pkg) => {
     const covColor = coverageColor(pkg.coverage);
     const healthColor = coverageColor(pkg.health);
-    return [pkg.name, String(pkg.exports), covColor(`${pkg.coverage}%`), healthColor(`${pkg.health}%`)];
+    return [
+      pkg.name,
+      String(pkg.exports),
+      covColor(`${pkg.coverage}%`),
+      healthColor(`${pkg.health}%`),
+    ];
   });
   lines.push(indent(table([header, ...rows])));
   lines.push('');

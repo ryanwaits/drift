@@ -1,4 +1,4 @@
-import { c, progressBar, coverageColor, padRight, padLeft, indent } from '../utils/render';
+import { c, coverageColor, indent, progressBar } from '../utils/render';
 
 interface CoverageData {
   score: number;
@@ -12,7 +12,9 @@ export function renderCoverage(data: CoverageData): string {
   const color = coverageColor(data.score);
   const bar = progressBar(data.score);
 
-  lines.push(indent(`Coverage  ${color(`${data.score}%`)}  ${bar}  (${data.documented}/${data.total})`));
+  lines.push(
+    indent(`Coverage  ${color(`${data.score}%`)}  ${bar}  (${data.documented}/${data.total})`),
+  );
   lines.push('');
 
   if (data.undocumented.length > 0) {

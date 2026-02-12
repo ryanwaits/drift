@@ -1,5 +1,5 @@
 import type { ScanResult } from '../commands/scan';
-import { c, sym, coverageColor, indent, separator, table } from '../utils/render';
+import { c, coverageColor, indent, separator, sym, table } from '../utils/render';
 
 export function renderScan(data: ScanResult): string {
   const lines: string[] = [''];
@@ -13,8 +13,16 @@ export function renderScan(data: ScanResult): string {
   // Summary
   const hColor = coverageColor(data.health);
   lines.push(indent(`Health     ${hColor(`${data.health}%`)}`));
-  lines.push(indent(`Coverage   ${coverageColor(data.coverage.score)(`${data.coverage.score}%`)}  (${data.coverage.documented}/${data.coverage.total} exports)`));
-  lines.push(indent(`Lint       ${data.lint.count === 0 ? c.green('0 issues') : c.red(`${data.lint.count} issues`)}`));
+  lines.push(
+    indent(
+      `Coverage   ${coverageColor(data.coverage.score)(`${data.coverage.score}%`)}  (${data.coverage.documented}/${data.coverage.total} exports)`,
+    ),
+  );
+  lines.push(
+    indent(
+      `Lint       ${data.lint.count === 0 ? c.green('0 issues') : c.red(`${data.lint.count} issues`)}`,
+    ),
+  );
   lines.push('');
 
   // Issues (max 10)
@@ -74,7 +82,13 @@ export function renderBatchScan(data: BatchScanData): string {
   lines.push(table([headers, ...rows]));
 
   if (data.skipped && data.skipped.length > 0) {
-    lines.push(indent(c.gray(`Skipped ${data.skipped.length} private package${data.skipped.length === 1 ? '' : 's'}`)));
+    lines.push(
+      indent(
+        c.gray(
+          `Skipped ${data.skipped.length} private package${data.skipped.length === 1 ? '' : 's'}`,
+        ),
+      ),
+    );
   }
 
   lines.push('');

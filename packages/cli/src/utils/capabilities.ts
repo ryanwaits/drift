@@ -60,13 +60,37 @@ export function extractCapabilities(program: Command): Capabilities {
     commands,
     globalFlags: extractFlags(program),
     entities: [
-      { name: 'spec', description: 'Extracted TypeScript API spec', operations: { read: 'extract', list: 'list', get: 'get' } },
-      { name: 'drift-issue', description: 'Documentation drift issue', operations: { read: 'lint', list: 'scan' } },
-      { name: 'coverage', description: 'Documentation coverage metrics', operations: { read: 'coverage' } },
-      { name: 'config', description: 'Drift configuration', operations: { read: 'config get', list: 'config list', update: 'config set' } },
+      {
+        name: 'spec',
+        description: 'Extracted TypeScript API spec',
+        operations: { read: 'extract', list: 'list', get: 'get' },
+      },
+      {
+        name: 'drift-issue',
+        description: 'Documentation drift issue',
+        operations: { read: 'lint', list: 'scan' },
+      },
+      {
+        name: 'coverage',
+        description: 'Documentation coverage metrics',
+        operations: { read: 'coverage' },
+      },
+      {
+        name: 'config',
+        description: 'Drift configuration',
+        operations: { read: 'config get', list: 'config list', update: 'config set' },
+      },
       { name: 'context', description: 'Agent context file', operations: { create: 'context' } },
-      { name: 'history', description: 'Coverage/lint history over time', operations: { read: 'ci' } },
-      { name: 'examples', description: 'Example validation results', operations: { read: 'examples' } },
+      {
+        name: 'history',
+        description: 'Coverage/lint history over time',
+        operations: { read: 'ci' },
+      },
+      {
+        name: 'examples',
+        description: 'Example validation results',
+        operations: { read: 'examples' },
+      },
     ],
     workflows: {
       'detect-drift': ['extract', 'lint'],

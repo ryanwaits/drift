@@ -48,13 +48,7 @@ export function detectEntry(cwd = process.cwd()): string {
   }
 
   // 4. Fallback paths
-  const fallbacks = [
-    'src/index.ts',
-    'src/index.tsx',
-    'src/main.ts',
-    'index.ts',
-    'lib/index.ts',
-  ];
+  const fallbacks = ['src/index.ts', 'src/index.tsx', 'src/main.ts', 'index.ts', 'lib/index.ts'];
 
   for (const f of fallbacks) {
     const full = path.join(cwd, f);
@@ -69,7 +63,12 @@ export function detectEntry(cwd = process.cwd()): string {
     for (const dir of dirs) {
       lines.push(`    ${dir}`);
     }
-    lines.push('', '  Examples:', `    drift coverage --cwd ${dirs[0] ?? 'packages/foo'}`, '    drift coverage --all');
+    lines.push(
+      '',
+      '  Examples:',
+      `    drift coverage --cwd ${dirs[0] ?? 'packages/foo'}`,
+      '    drift coverage --all',
+    );
     throw new Error(lines.join('\n'));
   }
 

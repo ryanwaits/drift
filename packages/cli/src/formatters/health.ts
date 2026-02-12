@@ -1,5 +1,5 @@
 import type { HealthResult } from '../utils/health';
-import { c, sym, coverageColor, indent, separator } from '../utils/render';
+import { c, coverageColor, indent, separator, sym } from '../utils/render';
 
 interface HealthData extends HealthResult {
   packageName?: string;
@@ -22,12 +22,22 @@ export function renderHealth(data: HealthData): string {
   lines.push(indent(`Health   ${hColor(`${data.health}%`)}`));
 
   // 3. Breakdown
-  lines.push(indent(`${sym.branch} completeness  ${data.completeness}%  (${data.undocumented} missing docs)`));
-  lines.push(indent(`${sym.end} accuracy      ${data.accuracy}%  (${data.drifted} stale signatures)`));
+  lines.push(
+    indent(
+      `${sym.branch} completeness  ${data.completeness}%  (${data.undocumented} missing docs)`,
+    ),
+  );
+  lines.push(
+    indent(`${sym.end} accuracy      ${data.accuracy}%  (${data.drifted} stale signatures)`),
+  );
   lines.push('');
 
   // 4. Counts
-  lines.push(indent(`${data.totalExports} exports  ${c.gray(sym.dot)}  ${data.documented} documented  ${c.gray(sym.dot)}  ${data.drifted} drifted`));
+  lines.push(
+    indent(
+      `${data.totalExports} exports  ${c.gray(sym.dot)}  ${data.documented} documented  ${c.gray(sym.dot)}  ${data.drifted} drifted`,
+    ),
+  );
   lines.push('');
 
   // 5. Top issues (max 5)
@@ -48,14 +58,18 @@ export function renderHealth(data: HealthData): string {
   // 6. Verdict
   const min = data.min ?? 80;
   if (data.health < min) {
-    lines.push(indent(`${c.red(sym.x)} Health ${data.health}% below ${min === 80 ? 'default ' : ''}${min}%`));
+    lines.push(
+      indent(`${c.red(sym.x)} Health ${data.health}% below ${min === 80 ? 'default ' : ''}${min}%`),
+    );
   } else {
     lines.push(indent(`${c.green(sym.ok)} Health ${data.health}%`));
   }
 
   // 7. Next step
   if (data.health < 100) {
-    lines.push(indent(c.gray('Fix with /drift-fix in Claude Code, or see details: drift list --drifted')));
+    lines.push(
+      indent(c.gray('Fix with /drift-fix in Claude Code, or see details: drift list --drifted')),
+    );
   }
   lines.push('');
 

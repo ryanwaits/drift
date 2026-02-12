@@ -17,34 +17,57 @@ export interface BatchListRow {
   count: number;
 }
 
-export function renderBatchCoverage(data: { packages: BatchCoverageRow[]; aggregate: { score: number; documented: number; total: number }; skipped?: string[] }): string {
+export function renderBatchCoverage(data: {
+  packages: BatchCoverageRow[];
+  aggregate: { score: number; documented: number; total: number };
+  skipped?: string[];
+}): string {
   const lines: string[] = [''];
   const rows = data.packages;
 
   // Header
   const nameW = Math.max(7, ...rows.map((r) => r.name.length));
-  lines.push(indent(`${c.gray(pad('PACKAGE', nameW))}  ${c.gray(pad('EXPORTS', 7))}  ${c.gray('COVERAGE')}`));
+  lines.push(
+    indent(`${c.gray(pad('PACKAGE', nameW))}  ${c.gray(pad('EXPORTS', 7))}  ${c.gray('COVERAGE')}`),
+  );
 
   for (const r of rows) {
-    const score = r.score === 100 ? c.green(`${r.score}%`) : r.score >= 80 ? c.yellow(`${r.score}%`) : c.red(`${r.score}%`);
+    const score =
+      r.score === 100
+        ? c.green(`${r.score}%`)
+        : r.score >= 80
+          ? c.yellow(`${r.score}%`)
+          : c.red(`${r.score}%`);
     lines.push(indent(`${pad(r.name, nameW)}  ${pad(String(r.exports), 7)}  ${score}`));
   }
 
   lines.push('');
-  lines.push(indent(`${c.bold('Total')}: ${data.aggregate.score}% (${data.aggregate.documented}/${data.aggregate.total})`));
+  lines.push(
+    indent(
+      `${c.bold('Total')}: ${data.aggregate.score}% (${data.aggregate.documented}/${data.aggregate.total})`,
+    ),
+  );
   if (data.skipped && data.skipped.length > 0) {
-    lines.push(indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`));
+    lines.push(
+      indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`),
+    );
   }
   lines.push('');
   return lines.join('\n');
 }
 
-export function renderBatchLint(data: { packages: BatchLintRow[]; aggregate: { count: number }; skipped?: string[] }): string {
+export function renderBatchLint(data: {
+  packages: BatchLintRow[];
+  aggregate: { count: number };
+  skipped?: string[];
+}): string {
   const lines: string[] = [''];
   const rows = data.packages;
 
   const nameW = Math.max(7, ...rows.map((r) => r.name.length));
-  lines.push(indent(`${c.gray(pad('PACKAGE', nameW))}  ${c.gray(pad('EXPORTS', 7))}  ${c.gray('ISSUES')}`));
+  lines.push(
+    indent(`${c.gray(pad('PACKAGE', nameW))}  ${c.gray(pad('EXPORTS', 7))}  ${c.gray('ISSUES')}`),
+  );
 
   for (const r of rows) {
     const issues = r.issues === 0 ? c.green('0') : c.red(String(r.issues));
@@ -52,15 +75,24 @@ export function renderBatchLint(data: { packages: BatchLintRow[]; aggregate: { c
   }
 
   lines.push('');
-  lines.push(indent(`${c.bold('Total')}: ${data.aggregate.count} issue${data.aggregate.count === 1 ? '' : 's'}`));
+  lines.push(
+    indent(
+      `${c.bold('Total')}: ${data.aggregate.count} issue${data.aggregate.count === 1 ? '' : 's'}`,
+    ),
+  );
   if (data.skipped && data.skipped.length > 0) {
-    lines.push(indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`));
+    lines.push(
+      indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`),
+    );
   }
   lines.push('');
   return lines.join('\n');
 }
 
-export function renderBatchList(data: { packages: BatchListRow[]; filter?: 'undocumented' }): string {
+export function renderBatchList(data: {
+  packages: BatchListRow[];
+  filter?: 'undocumented';
+}): string {
   const lines: string[] = [''];
   const rows = data.packages;
   const columnLabel = data.filter === 'undocumented' ? 'UNDOCUMENTED' : 'EXPORTS';
@@ -69,9 +101,12 @@ export function renderBatchList(data: { packages: BatchListRow[]; filter?: 'undo
   lines.push(indent(`${c.gray(pad('PACKAGE', nameW))}  ${c.gray(columnLabel)}`));
 
   for (const r of rows) {
-    const countStr = data.filter === 'undocumented'
-      ? (r.count === 0 ? c.green('0') : c.yellow(String(r.count)))
-      : String(r.count);
+    const countStr =
+      data.filter === 'undocumented'
+        ? r.count === 0
+          ? c.green('0')
+          : c.yellow(String(r.count))
+        : String(r.count);
     lines.push(indent(`${pad(r.name, nameW)}  ${countStr}`));
   }
 
@@ -89,22 +124,39 @@ export interface BatchExamplesRow {
   score: number;
 }
 
-export function renderBatchExamples(data: { packages: BatchExamplesRow[]; aggregate: { score: number; withExamples: number; total: number }; skipped?: string[] }): string {
+export function renderBatchExamples(data: {
+  packages: BatchExamplesRow[];
+  aggregate: { score: number; withExamples: number; total: number };
+  skipped?: string[];
+}): string {
   const lines: string[] = [''];
   const rows = data.packages;
 
   const nameW = Math.max(7, ...rows.map((r) => r.name.length));
-  lines.push(indent(`${c.gray(pad('PACKAGE', nameW))}  ${c.gray(pad('EXPORTS', 7))}  ${c.gray('EXAMPLES')}`));
+  lines.push(
+    indent(`${c.gray(pad('PACKAGE', nameW))}  ${c.gray(pad('EXPORTS', 7))}  ${c.gray('EXAMPLES')}`),
+  );
 
   for (const r of rows) {
-    const score = r.score === 100 ? c.green(`${r.score}%`) : r.score >= 80 ? c.yellow(`${r.score}%`) : c.red(`${r.score}%`);
+    const score =
+      r.score === 100
+        ? c.green(`${r.score}%`)
+        : r.score >= 80
+          ? c.yellow(`${r.score}%`)
+          : c.red(`${r.score}%`);
     lines.push(indent(`${pad(r.name, nameW)}  ${pad(String(r.exports), 7)}  ${score}`));
   }
 
   lines.push('');
-  lines.push(indent(`${c.bold('Total')}: ${data.aggregate.score}% (${data.aggregate.withExamples}/${data.aggregate.total})`));
+  lines.push(
+    indent(
+      `${c.bold('Total')}: ${data.aggregate.score}% (${data.aggregate.withExamples}/${data.aggregate.total})`,
+    ),
+  );
   if (data.skipped && data.skipped.length > 0) {
-    lines.push(indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`));
+    lines.push(
+      indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`),
+    );
   }
   lines.push('');
   return lines.join('\n');
@@ -117,12 +169,20 @@ export interface BatchDiffRow {
   changed: number;
 }
 
-export function renderBatchDiff(data: { packages: BatchDiffRow[]; aggregate: { breaking: number; added: number; changed: number }; skipped?: string[] }): string {
+export function renderBatchDiff(data: {
+  packages: BatchDiffRow[];
+  aggregate: { breaking: number; added: number; changed: number };
+  skipped?: string[];
+}): string {
   const lines: string[] = [''];
   const rows = data.packages;
 
   const nameW = Math.max(7, ...rows.map((r) => r.name.length));
-  lines.push(indent(`${c.gray(pad('PACKAGE', nameW))}  ${c.gray(pad('BREAKING', 8))}  ${c.gray(pad('ADDED', 5))}  ${c.gray('CHANGED')}`));
+  lines.push(
+    indent(
+      `${c.gray(pad('PACKAGE', nameW))}  ${c.gray(pad('BREAKING', 8))}  ${c.gray(pad('ADDED', 5))}  ${c.gray('CHANGED')}`,
+    ),
+  );
 
   for (const r of rows) {
     const bStr = pad(String(r.breaking), 8);
@@ -141,7 +201,9 @@ export function renderBatchDiff(data: { packages: BatchDiffRow[]; aggregate: { b
   if (data.aggregate.changed > 0) parts.push(`${data.aggregate.changed} changed`);
   lines.push(indent(`${c.bold('Total')}: ${parts.length > 0 ? parts.join(', ') : 'no changes'}`));
   if (data.skipped && data.skipped.length > 0) {
-    lines.push(indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`));
+    lines.push(
+      indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`),
+    );
   }
   lines.push('');
   return lines.join('\n');
@@ -153,7 +215,11 @@ export interface BatchBreakingRow {
   count: number;
 }
 
-export function renderBatchBreaking(data: { packages: BatchBreakingRow[]; aggregate: { count: number }; skipped?: string[] }): string {
+export function renderBatchBreaking(data: {
+  packages: BatchBreakingRow[];
+  aggregate: { count: number };
+  skipped?: string[];
+}): string {
   const lines: string[] = [''];
   const rows = data.packages;
 
@@ -166,9 +232,15 @@ export function renderBatchBreaking(data: { packages: BatchBreakingRow[]; aggreg
   }
 
   lines.push('');
-  lines.push(indent(`${c.bold('Total')}: ${data.aggregate.count} breaking change${data.aggregate.count === 1 ? '' : 's'}`));
+  lines.push(
+    indent(
+      `${c.bold('Total')}: ${data.aggregate.count} breaking change${data.aggregate.count === 1 ? '' : 's'}`,
+    ),
+  );
   if (data.skipped && data.skipped.length > 0) {
-    lines.push(indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`));
+    lines.push(
+      indent(`${c.gray(`Skipped ${data.skipped.length} private: ${data.skipped.join(', ')}`)}`),
+    );
   }
   lines.push('');
   return lines.join('\n');

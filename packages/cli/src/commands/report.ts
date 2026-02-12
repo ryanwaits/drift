@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { Command } from 'commander';
 import { loadConfig } from '../config/loader';
 import { renderReport } from '../formatters/report';
-import { appendHistory, readHistory, type HistoryEntry } from '../utils/history';
+import { appendHistory, type HistoryEntry, readHistory } from '../utils/history';
 import { formatError, formatOutput } from '../utils/output';
 import { getCommitSha, scanAllPackages } from '../utils/scan-packages';
 
@@ -12,7 +12,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getVersion(): string {
   try {
-    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+    return (
+      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
+    );
   } catch {
     return '0.0.0';
   }
@@ -63,7 +65,7 @@ export function registerReportCommand(program: Command): void {
     .command('report')
     .description('Show documentation trends from history')
     .option('--all', 'Show all packages')
-    .action(async (options: { all?: boolean }) => {
+    .action(async (_options: { all?: boolean }) => {
       const startTime = Date.now();
       const version = getVersion();
 

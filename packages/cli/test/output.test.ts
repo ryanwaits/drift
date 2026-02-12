@@ -8,8 +8,8 @@ const origStderr = process.stderr.write;
 
 describe('formatOutput', () => {
   test('produces correct envelope shape', async () => {
-    process.stdout.write = stdoutWrite as any;
-    process.stderr.write = stderrWrite as any;
+    process.stdout.write = stdoutWrite as typeof process.stdout.write;
+    process.stderr.write = stderrWrite as typeof process.stderr.write;
 
     try {
       const { formatOutput } = await import('../src/utils/output');
@@ -26,14 +26,14 @@ describe('formatOutput', () => {
 
       // stdout should have received JSON
       expect(stdoutWrite).toHaveBeenCalledTimes(1);
-      const jsonOutput = (stdoutWrite.mock.calls[0] as any[])[0] as string;
+      const jsonOutput = (stdoutWrite.mock.calls[0] as unknown[])[0] as string;
       const parsed = JSON.parse(jsonOutput);
       expect(parsed.ok).toBe(true);
       expect(parsed.data.exports[0].name).toBe('foo');
 
       // stderr should have received human summary
       expect(stderrWrite).toHaveBeenCalledTimes(1);
-      const humanOutput = (stderrWrite.mock.calls[0] as any[])[0] as string;
+      const humanOutput = (stderrWrite.mock.calls[0] as unknown[])[0] as string;
       expect(humanOutput).toContain('drift extract');
     } finally {
       process.stdout.write = origStdout;

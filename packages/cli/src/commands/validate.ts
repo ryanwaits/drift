@@ -10,7 +10,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getVersion(): string {
   try {
-    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+    return (
+      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
+    );
   } catch {
     return '0.0.0';
   }
@@ -33,7 +35,12 @@ export function registerValidateCommand(program: Command): void {
 
         const data = {
           valid: result.ok,
-          errors: result.ok ? [] : result.errors.map((e: any) => `${e.instancePath || '/'}: ${e.message}`),
+          errors: result.ok
+            ? []
+            : result.errors.map(
+                (e: { instancePath?: string; message?: string }) =>
+                  `${e.instancePath || '/'}: ${e.message}`,
+              ),
         };
 
         formatOutput('validate', data, startTime, version, renderValidate);
@@ -42,7 +49,12 @@ export function registerValidateCommand(program: Command): void {
           process.exitCode = 1;
         }
       } catch (err) {
-        formatError('validate', err instanceof Error ? err.message : String(err), startTime, version);
+        formatError(
+          'validate',
+          err instanceof Error ? err.message : String(err),
+          startTime,
+          version,
+        );
       }
     });
 }

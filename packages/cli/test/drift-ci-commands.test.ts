@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeAll, afterAll } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { copyFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import * as path from 'node:path';
 import { getProjectDir } from '../src/config/global';

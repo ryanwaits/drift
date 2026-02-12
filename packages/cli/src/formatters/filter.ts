@@ -1,4 +1,4 @@
-import { c, padRight, indent } from '../utils/render';
+import { c, indent, padRight } from '../utils/render';
 
 interface FilterData {
   spec: { exports?: Array<{ name: string; kind?: string; deprecated?: boolean }> };
@@ -9,7 +9,9 @@ interface FilterData {
 export function renderFilter(data: FilterData): string {
   const lines: string[] = [''];
 
-  lines.push(indent(`${data.matched} match${data.matched === 1 ? '' : 'es'} of ${data.total} total`));
+  lines.push(
+    indent(`${data.matched} match${data.matched === 1 ? '' : 'es'} of ${data.total} total`),
+  );
   lines.push('');
 
   const exports = data.spec.exports ?? [];

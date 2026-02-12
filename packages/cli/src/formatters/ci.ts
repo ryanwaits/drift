@@ -1,4 +1,4 @@
-import { c, sym, coverageColor, indent, table, padLeft } from '../utils/render';
+import { c, coverageColor, indent, sym, table } from '../utils/render';
 
 interface CiData {
   results: Array<{

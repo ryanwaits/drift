@@ -2,16 +2,18 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Command } from 'commander';
-import { loadConfig } from '../config/loader';
 import { getGlobalConfigPath, getGlobalDir } from '../config/global';
-import { renderConfigList, renderConfigGet } from '../formatters/config';
+import { loadConfig } from '../config/loader';
+import { renderConfigGet, renderConfigList } from '../formatters/config';
 import { formatError, formatOutput } from '../utils/output';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getVersion(): string {
   try {
-    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+    return (
+      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
+    );
   } catch {
     return '0.0.0';
   }
@@ -50,7 +52,10 @@ function coerceValue(raw: string): unknown {
   return raw;
 }
 
-function flattenConfig(obj: Record<string, unknown>, prefix = ''): Array<{ key: string; value: unknown }> {
+function flattenConfig(
+  obj: Record<string, unknown>,
+  prefix = '',
+): Array<{ key: string; value: unknown }> {
   const entries: Array<{ key: string; value: unknown }> = [];
   for (const [key, value] of Object.entries(obj)) {
     const fullKey = prefix ? `${prefix}.${key}` : key;
@@ -64,9 +69,7 @@ function flattenConfig(obj: Record<string, unknown>, prefix = ''): Array<{ key: 
 }
 
 export function registerConfigCommand(program: Command): void {
-  const cmd = program
-    .command('config')
-    .description('Manage drift configuration');
+  const cmd = program.command('config').description('Manage drift configuration');
 
   cmd
     .command('list')
@@ -125,9 +128,15 @@ export function registerConfigCommand(program: Command): void {
         }
         const value = coerceValue(rawValue);
         setNestedValue(existing, key, value);
-        writeFileSync(configPath, JSON.stringify(existing, null, 2) + '\n');
+        writeFileSync(configPath, `${JSON.stringify(existing, null, 2)}\n`);
         const data = { key, value, configPath };
-        formatOutput('config', data, startTime, version, (d) => `  ${key} = ${JSON.stringify(d.value)}\n`);
+        formatOutput(
+          'config',
+          data,
+          startTime,
+          version,
+          (d) => `  ${key} = ${JSON.stringify(d.value)}\n`,
+        );
       } catch (err) {
         formatError('config', err instanceof Error ? err.message : String(err), startTime, version);
       }

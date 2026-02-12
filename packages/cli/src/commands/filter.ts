@@ -11,7 +11,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getVersion(): string {
   try {
-    return JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0';
+    return (
+      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
+    );
   } catch {
     return '0.0.0';
   }
@@ -21,7 +23,10 @@ export function registerFilterCommand(program: Command): void {
   program
     .command('filter <file>')
     .description('Filter exports in an OpenPkg spec by criteria')
-    .option('--kind <kinds>', 'Filter by kind (comma-separated: function,class,interface,type,enum,variable)')
+    .option(
+      '--kind <kinds>',
+      'Filter by kind (comma-separated: function,class,interface,type,enum,variable)',
+    )
     .option('--search <term>', 'Search by name or description')
     .option('--tag <tags>', 'Filter by tag name (comma-separated)')
     .option('--deprecated', 'Only deprecated exports')
@@ -54,7 +59,13 @@ export function registerFilterCommand(program: Command): void {
 
         const result = filterSpec(spec, criteria);
 
-        formatOutput('filter', { spec: result.spec, matched: result.matched, total: result.total }, startTime, version, renderFilter);
+        formatOutput(
+          'filter',
+          { spec: result.spec, matched: result.matched, total: result.total },
+          startTime,
+          version,
+          renderFilter,
+        );
       } catch (err) {
         formatError('filter', err instanceof Error ? err.message : String(err), startTime, version);
       }

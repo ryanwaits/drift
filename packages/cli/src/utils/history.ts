@@ -18,7 +18,7 @@ export interface HistoryEntry {
 export function appendHistory(entries: HistoryEntry[], cwd = process.cwd()): void {
   const dir = ensureProjectDir(cwd);
   const filePath = path.join(dir, 'history.jsonl');
-  const lines = entries.map((e) => JSON.stringify(e)).join('\n') + '\n';
+  const lines = `${entries.map((e) => JSON.stringify(e)).join('\n')}\n`;
   appendFileSync(filePath, lines);
 }
 

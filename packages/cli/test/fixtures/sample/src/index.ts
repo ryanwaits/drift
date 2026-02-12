@@ -64,7 +64,7 @@ export class ApiClient {
   }
 
   /** Send a GET request. */
-  async get(path: string): Promise<unknown> {
+  async get(_path: string): Promise<unknown> {
     return {};
   }
 }
