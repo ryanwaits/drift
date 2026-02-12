@@ -1,7 +1,6 @@
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { computeDrift } from '@driftdev/sdk';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
@@ -16,19 +15,8 @@ import {
 import { detectEntry } from '../utils/detect-entry';
 import { readHistory } from '../utils/history';
 import { formatError, formatOutput } from '../utils/output';
+import { getVersion } from '../utils/version';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function getVersion(): string {
-  try {
-    return (
-      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
-    );
-  } catch {
-    return '0.0.0';
-  }
-}
 
 function getCommitSha(): string | null {
   try {

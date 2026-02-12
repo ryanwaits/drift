@@ -1,6 +1,4 @@
-import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { computeDrift } from '@driftdev/sdk';
 import { listExports } from '@openpkg-ts/sdk';
 import type { Command } from 'commander';
@@ -10,19 +8,8 @@ import { renderList } from '../formatters/list';
 import { detectEntry } from '../utils/detect-entry';
 import { fuzzySearch, looksLikeFilePath } from '../utils/fuzzy';
 import { formatError, formatOutput } from '../utils/output';
+import { getVersion } from '../utils/version';
 import { discoverPackages } from '../utils/workspaces';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function getVersion(): string {
-  try {
-    return (
-      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
-    );
-  } catch {
-    return '0.0.0';
-  }
-}
 
 interface ListOptions {
   kind?: string;

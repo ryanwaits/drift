@@ -1,6 +1,4 @@
-import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { extract } from '@openpkg-ts/sdk';
 import { categorizeBreakingChanges, diffSpec, normalize } from '@openpkg-ts/spec';
 import type { Command } from 'commander';
@@ -10,19 +8,8 @@ import { extractSpecFromRef } from '../utils/git-extract';
 import { formatError, formatOutput } from '../utils/output';
 import { shouldRenderHuman } from '../utils/render';
 import { resolveSpecs } from '../utils/resolve-specs';
+import { getVersion } from '../utils/version';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function getVersion(): string {
-  try {
-    return (
-      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
-    );
-  } catch {
-    return '0.0.0';
-  }
-}
 
 export function registerBreakingCommand(program: Command): void {
   program

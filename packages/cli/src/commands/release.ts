@@ -1,7 +1,6 @@
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { computeDrift } from '@driftdev/sdk';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
@@ -10,18 +9,7 @@ import { renderRelease } from '../formatters/release';
 import { detectEntry } from '../utils/detect-entry';
 import { formatError, formatOutput, type OutputNext } from '../utils/output';
 import { computeRatchetMin } from '../utils/ratchet';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function getVersion(): string {
-  try {
-    return (
-      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
-    );
-  } catch {
-    return '0.0.0';
-  }
-}
+import { getVersion } from '../utils/version';
 
 function getLastTag(): string | null {
   try {

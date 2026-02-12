@@ -1,24 +1,10 @@
-import { readFileSync } from 'node:fs';
-import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { Command } from 'commander';
 import { loadConfig } from '../config/loader';
 import { renderReport } from '../formatters/report';
 import { appendHistory, type HistoryEntry, readHistory } from '../utils/history';
 import { formatError, formatOutput } from '../utils/output';
 import { getCommitSha, scanAllPackages } from '../utils/scan-packages';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function getVersion(): string {
-  try {
-    return (
-      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
-    );
-  } catch {
-    return '0.0.0';
-  }
-}
+import { getVersion } from '../utils/version';
 
 interface PackageTrend {
   name: string;

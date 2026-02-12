@@ -1,6 +1,4 @@
-import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { getExport, listExports } from '@openpkg-ts/sdk';
 import type { Command } from 'commander';
 import { renderGet } from '../formatters/get';
@@ -8,18 +6,7 @@ import { detectEntry } from '../utils/detect-entry';
 import { fuzzyTop } from '../utils/fuzzy';
 import { formatError, formatOutput } from '../utils/output';
 import { c, indent, shouldRenderHuman } from '../utils/render';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function getVersion(): string {
-  try {
-    return (
-      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
-    );
-  } catch {
-    return '0.0.0';
-  }
-}
+import { getVersion } from '../utils/version';
 
 export function registerGetCommand(program: Command): void {
   program

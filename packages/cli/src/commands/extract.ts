@@ -1,6 +1,4 @@
-import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { Drift } from '@driftdev/sdk';
 import { normalize } from '@openpkg-ts/spec';
 import type { Command } from 'commander';
@@ -8,19 +6,8 @@ import { cachedExtract } from '../cache/cached-extract';
 import { renderExtract } from '../formatters/extract';
 import { detectEntry } from '../utils/detect-entry';
 import { formatError, formatOutput } from '../utils/output';
+import { getVersion } from '../utils/version';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-function getVersion(): string {
-  try {
-    const pkg = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8'));
-    return pkg.version ?? '0.0.0';
-  } catch {
-    return '0.0.0';
-  }
-}
 
 export function registerExtractCommand(program: Command): void {
   program

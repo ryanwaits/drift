@@ -1,6 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { extract } from '@openpkg-ts/sdk';
 import { normalize } from '@openpkg-ts/spec';
 import type { Command } from 'commander';
@@ -9,19 +8,8 @@ import { renderInit } from '../formatters/init';
 import { detectEntry } from '../utils/detect-entry';
 import { formatError, formatOutput } from '../utils/output';
 import { Spinner } from '../utils/progress/spinner';
+import { getVersion } from '../utils/version';
 import { detectWorkspaces, resolveGlobs } from '../utils/workspaces';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function getVersion(): string {
-  try {
-    return (
-      JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version ?? '0.0.0'
-    );
-  } catch {
-    return '0.0.0';
-  }
-}
 
 interface PackageScan {
   name: string;
