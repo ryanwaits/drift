@@ -1,0 +1,96 @@
+/**
+ * Docskit code block styling.
+ * CodeHike theme variables + openpkg-code-* Tailwind color mappings.
+ */
+
+/* CodeHike custom theme (light default) */
+:root {
+  --ch-0: light;
+  --ch-1: #999999;
+  --ch-2: #c9555a;
+  --ch-3: #3a3a3a;
+  --ch-4: #3a3a3a;
+  --ch-5: #7c3aed;
+  --ch-6: #b8860b;
+  --ch-7: #c9555a;
+  --ch-8: #b8860b;
+  --ch-9: #c9555a;
+  --ch-10: #ebebeb;
+  --ch-11: #fde8e8;
+  --ch-12: #e8f5e8;
+  --ch-13: #fdf0d5;
+  --ch-14: #e8e8e8;
+  --ch-15: #999999;
+  --ch-16: #f5f5f5;
+  --ch-17: #d0d0d080;
+  --ch-18: #fdff0033;
+  --ch-19: #c9555a;
+  --ch-20: #d0d0e0;
+  --ch-21: #c9555a;
+  --ch-22: #ebebeb;
+  --ch-23: #e0e0e0;
+  --ch-24: #b0b0b0;
+  --ch-25: #b0b0b033;
+  --ch-26: #f5f5f5e6;
+}
+
+/* CodeHike dark theme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ch-0: dark;
+    --ch-1: #6a6a6a;
+    --ch-2: #e06c75;
+    --ch-3: #d4d4d4;
+    --ch-4: #d4d4d4;
+    --ch-5: #c678dd;
+    --ch-6: #e5c07b;
+    --ch-7: #c678dd;
+    --ch-8: #e5c07b;
+    --ch-9: #e06c75;
+    --ch-10: #3a3a3a;
+    --ch-11: #4a2020;
+    --ch-12: #204a20;
+    --ch-13: #4a3a10;
+    --ch-14: #3a3a3a;
+    --ch-15: #6a6a6a;
+    --ch-16: #1e1e1c;
+    --ch-17: #40404080;
+    --ch-18: #fdff0022;
+    --ch-19: #e06c75;
+    --ch-20: #3a3a50;
+    --ch-21: #e06c75;
+    --ch-22: #2a2a27;
+    --ch-23: #3a3a36;
+    --ch-24: #5a5a56;
+    --ch-25: #5a5a5633;
+    --ch-26: #1e1e1ce6;
+  }
+}
+
+/* openpkg-code-* Tailwind v4 color theme (maps to --ch-* vars) */
+@theme {
+  --color-openpkg-code-bg: var(--ch-16);
+  --color-openpkg-code-border: var(--ch-23);
+  --color-openpkg-code-header: var(--ch-22);
+  --color-openpkg-code-text-inactive: var(--ch-15);
+  --color-openpkg-code-text-active: var(--ch-4);
+  --color-openpkg-code-selection: var(--ch-20);
+  --color-openpkg-code-line-number: var(--ch-24);
+  --color-openpkg-code-accent: var(--ch-6);
+}
+
+/* Italic syntax tokens — comments and keywords */
+pre[data-ch] span[style*="--ch-1"] {
+  font-style: italic;
+}
+pre[data-ch] span[style*="--ch-7"] {
+  font-style: italic;
+}
+
+/* Selection utility */
+@layer utilities {
+  .selection\:bg-openpkg-code-selection::selection,
+  .selection\:bg-openpkg-code-selection *::selection {
+    background-color: var(--ch-20);
+  }
+}
