@@ -12,7 +12,7 @@ export function getGlobalDir(): string {
   return path.join(os.homedir(), '.drift');
 }
 
-/** Deterministic slug from absolute path — e.g. "-Users-ryanwaits-Code-projects-doccov" */
+/** Deterministic slug from absolute path — e.g. "-Users-ryanwaits-Code-projects-drift" */
 export function getProjectSlug(cwd = process.cwd()): string {
   const abs = path.resolve(cwd);
   return abs.replace(/\//g, '-').replace(/^-/, '-');

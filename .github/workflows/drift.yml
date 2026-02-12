@@ -5,7 +5,7 @@ on:
     branches: [main, master]
     paths:
       - 'packages/sdk/**'
-      - 'packages/doccov-spec/**'
+      - 'packages/spec/**'
       - 'packages/cli/**'
       - 'package.json'
       - 'bun.lock'
@@ -14,7 +14,7 @@ on:
     branches: [main, master]
     paths:
       - 'packages/sdk/**'
-      - 'packages/doccov-spec/**'
+      - 'packages/spec/**'
       - 'packages/cli/**'
       - 'package.json'
       - 'bun.lock'

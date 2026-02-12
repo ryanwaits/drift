@@ -1,4 +1,4 @@
-# DocCov Logo Concepts
+# Drift Logo Concepts
 
 Exploring logo directions that communicate: documentation + coverage + quality + developer tools.
 
@@ -245,17 +245,17 @@ Circle badge:
 
 ## Recommended Direction
 
-For DocCov, I'd recommend **Concept 4: The Brackets** (JSDoc style) or **Concept 2: The Coverage Meter**.
+For Drift, I'd recommend **Concept 4: The Brackets** (JSDoc style) or **Concept 2: The Coverage Meter**.
 
 ### Primary Logo: JSDoc Comment + Check
 
 ```
-   /** ✓ */  DocCov
+   /** ✓ */  Drift
 ```
 
 This is perfect because:
 1. **Instantly recognizable** to any JS/TS developer
-2. **Directly references JSDoc** - exactly what DocCov analyzes
+2. **Directly references JSDoc** - exactly what Drift analyzes
 3. **The checkmark** communicates validation/coverage
 4. **Minimal and scalable** - works at any size
 5. **Unique** - no other dev tool uses this
@@ -284,16 +284,16 @@ Ultra-minimal:
 ### With Wordmark
 
 ```
-   /** ✓ */  DocCov
+   /** ✓ */  Drift
 ```
 
 ```
    /** ✓ */
-   DocCov
+   Drift
 ```
 
 ```
-   *✓ DocCov
+   *✓ Drift
 ```
 
 ---
@@ -307,7 +307,7 @@ With our warm monochromatic palette, the logo would be:
 - **Accent version**: The checkmark could be `#16a34a` (green) to tie to coverage
 
 ```
-   /** ✓ */  DocCov
+   /** ✓ */  Drift
        ↑
      green (optional)
 ```
@@ -316,13 +316,13 @@ With our warm monochromatic palette, the logo would be:
 
 ## Wordmark Typography
 
-The "DocCov" text should be:
+The "Drift" text should be:
 - **Font**: IBM Plex Mono (matches the code-first aesthetic)
 - **Weight**: Medium (500) or Semibold (600)
-- **Case**: PascalCase "DocCov" (like JavaScript conventions)
+- **Case**: PascalCase "Drift" (like JavaScript conventions)
 
-Alternative: "doccov" in lowercase for a more modern, npm-package feel.
+Alternative: "drift" in lowercase for a more modern, npm-package feel.
 
 ```
-   /** ✓ */  doccov
+   /** ✓ */  drift
 ```

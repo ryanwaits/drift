@@ -8,7 +8,7 @@ The following packages are licensed under the MIT License:
 
 - **@openpkg-ts/spec** - OpenPkg JSON Schema, TypeScript types, and validation utilities
 - **@driftdev/cli** - Command-line interface for documentation coverage analysis
-- **docusaurus-plugin-doccov** - Docusaurus integration plugin
+- **docusaurus-plugin-drift** - Docusaurus integration plugin
 
 These packages are free to use, modify, and distribute for any purpose.
 See `packages/*/LICENSE` for the full MIT license text.
@@ -30,7 +30,7 @@ The following package is licensed under the Business Source License 1.1:
 - **Change Date**: November 26, 2028 - On this date, this version of the SDK
   will be re-licensed under the Apache License 2.0, making it fully open source.
 
-For commercial licensing inquiries, contact: licensing@doccov.com
+For commercial licensing inquiries, contact: licensing@drift.dev
 
 ## API Service
 

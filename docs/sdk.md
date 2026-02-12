@@ -10,19 +10,19 @@ bun add @driftdev/sdk
 
 ## Core API
 
-### `DocCov` -- Spec Extraction
+### `Drift` -- Spec Extraction
 
 Extract a typed API spec from a TypeScript entry point:
 
 ```typescript
-import { DocCov } from '@driftdev/sdk';
+import { Drift } from '@driftdev/sdk';
 
-const doccov = new DocCov({
+const drift = new Drift({
   resolveExternalTypes: true,
   maxDepth: 10,
 });
 
-const result = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+const result = await drift.analyzeFileWithDiagnostics('src/index.ts');
 const spec = result.spec;
 
 console.log(`${spec.exports.length} exports found`);
@@ -41,10 +41,10 @@ Options:
 Cross-reference JSDoc against code signatures:
 
 ```typescript
-import { DocCov, computeDrift } from '@driftdev/sdk';
+import { Drift, computeDrift } from '@driftdev/sdk';
 
-const doccov = new DocCov();
-const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+const drift = new Drift();
+const { spec } = await drift.analyzeFileWithDiagnostics('src/index.ts');
 
 const result = computeDrift(spec);
 
@@ -108,10 +108,10 @@ for (const issue of issues) {
 Generate a coverage report from a spec:
 
 ```typescript
-import { DocCov, generateReport } from '@driftdev/sdk';
+import { Drift, generateReport } from '@driftdev/sdk';
 
-const doccov = new DocCov();
-const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+const drift = new Drift();
+const { spec } = await drift.analyzeFileWithDiagnostics('src/index.ts');
 const report = await generateReport(spec);
 
 console.log(`Coverage: ${report.coverage.score}%`);
@@ -124,10 +124,10 @@ console.log(`Drift issues: ${report.coverage.driftCount}`);
 Validate `@example` blocks for presence, type-correctness, and runtime behavior:
 
 ```typescript
-import { DocCov, validateExamples } from '@driftdev/sdk';
+import { Drift, validateExamples } from '@driftdev/sdk';
 
-const doccov = new DocCov();
-const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+const drift = new Drift();
+const { spec } = await drift.analyzeFileWithDiagnostics('src/index.ts');
 
 const result = await validateExamples(spec.exports, {
   validations: ['presence', 'typecheck'],
@@ -192,7 +192,7 @@ import type {
   DriftCategory,         // 'structural' | 'semantic' | 'example' | 'prose'
   DriftResult,           // { exports: Map<string, SpecDocDrift[]> }
   ExportRegistry,        // Lookup table for cross-reference validation
-  DocCovReport,          // Full coverage report
+  DriftReport,          // Full coverage report
   CoverageSummary,       // Coverage stats
   HealthInput,           // Input to computeHealth
 } from '@driftdev/sdk';
@@ -207,7 +207,7 @@ The SDK also exposes subpath imports for specialized use:
 import { generateReport, computeSnapshot } from '@driftdev/sdk/analysis';
 
 // Type definitions
-import type { DocCovReport, FilterOptions } from '@driftdev/sdk/types';
+import type { DriftReport, FilterOptions } from '@driftdev/sdk/types';
 ```
 
 ## Constants

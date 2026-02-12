@@ -3,15 +3,16 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
     "build": "bun run build:spec && bun run build:sdk && bun run build:cli",
-    "build:spec": "cd packages/doccov-spec && bun run build",
+    "build:spec": "cd packages/spec && bun run build",
     "build:sdk": "cd packages/sdk && bun run build",
     "build:cli": "cd packages/cli && bun run build",
     "dev": "bun run --parallel dev:spec dev:sdk dev:cli",
-    "dev:spec": "cd packages/doccov-spec && bun run dev",
+    "dev:spec": "cd packages/spec && bun run dev",
     "dev:sdk": "cd packages/sdk && bun run dev",
     "dev:cli": "cd packages/cli && bun run dev",
     "lint": "bunx biome check packages/",
@@ -19,7 +20,9 @@
     "format": "bunx biome format --write packages/",
     "changeset": "changeset",
     "version": "changeset version && bun install",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "dev:site": "cd apps/site && bun dev",
+    "build:site": "cd apps/site && bun run build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.2",

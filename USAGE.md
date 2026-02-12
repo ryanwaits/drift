@@ -330,10 +330,10 @@ Each lint issue includes enough context for agents to fix:
 ### Basic Analysis
 
 ```typescript
-import { DocCov } from '@driftdev/sdk';
+import { Drift } from '@driftdev/sdk';
 
-const doccov = new DocCov();
-const result = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+const drift = new Drift();
+const result = await drift.analyzeFileWithDiagnostics('src/index.ts');
 
 console.log(`Package: ${result.spec.meta.name}`);
 console.log(`Exports: ${result.spec.exports.length}`);

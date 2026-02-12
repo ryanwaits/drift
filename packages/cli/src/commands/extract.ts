@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DocCov, NodeFileSystem, resolveTarget } from '@driftdev/sdk';
+import { Drift, NodeFileSystem, resolveTarget } from '@driftdev/sdk';
 import { normalize, validateSpec } from '@openpkg-ts/spec';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
@@ -66,7 +66,7 @@ export function registerExtractCommand(program: Command): void {
 
         if (hasFilters) {
           // Filters change output — skip cache
-          const doccov = new DocCov({
+          const drift = new Drift({
             resolveExternalTypes: true,
             maxDepth: options.maxDepth ? parseInt(options.maxDepth, 10) : 10,
             useCache: false,
@@ -74,7 +74,7 @@ export function registerExtractCommand(program: Command): void {
           const filters: Record<string, string[] | undefined> = {};
           if (options.only) filters.include = options.only.split(',').map((s: string) => s.trim());
           if (options.ignore) filters.exclude = options.ignore.split(',').map((s: string) => s.trim());
-          const result = await doccov.analyzeFileWithDiagnostics(entryFile, { filters });
+          const result = await drift.analyzeFileWithDiagnostics(entryFile, { filters });
           if (!result) {
             formatError('extract', 'Failed to extract spec', startTime, version);
             return;

@@ -102,8 +102,13 @@ if (process.argv.includes('--capabilities')) {
 }
 
 // Smart default: bare `drift` runs init if no config, health otherwise
-const userArgs = process.argv.slice(2).filter((a) => !a.startsWith('-'));
-if (userArgs.length === 0) {
+// Skip if user passed --help/-h/--version/-V (let commander handle those)
+const rawArgs = process.argv.slice(2);
+const hasHelpOrVersion = rawArgs.some((a) =>
+  ['-h', '--help', '-V', '--version'].includes(a),
+);
+const userArgs = rawArgs.filter((a) => !a.startsWith('-'));
+if (userArgs.length === 0 && !hasHelpOrVersion) {
   const { configPath } = loadConfig();
   const subcommand = configPath ? 'health' : 'init';
   process.argv.splice(2, 0, subcommand);
