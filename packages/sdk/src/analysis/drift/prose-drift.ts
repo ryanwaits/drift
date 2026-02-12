@@ -1,4 +1,4 @@
-import { extractImportsAST } from '../../markdown/ast-extractor';
+import { extractImportsAST, type ImportInfo } from '../../markdown/ast-extractor';
 import type { MarkdownDocFile } from '../../markdown/types';
 import type { ExportRegistry, SpecDocDrift } from './types';
 import { findClosestMatch } from './utils';
@@ -21,7 +21,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
 
   for (const file of markdownFiles) {
     for (const block of file.codeBlocks) {
-      let imports;
+      let imports: ImportInfo[];
       try {
         imports = extractImportsAST(block.code);
       } catch {

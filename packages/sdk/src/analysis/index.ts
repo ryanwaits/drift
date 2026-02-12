@@ -9,13 +9,6 @@
  * @module analysis
  */
 
-// Context types
-// Drift spec builder
-export {
-  type BuildDriftOptions,
-  buildDriftSpec,
-  type ExtractForgottenExport,
-} from './drift-builder';
 // Drift detection and categorization
 export {
   buildExportRegistry,
@@ -38,6 +31,13 @@ export {
 } from './docs-coverage';
 // Prose drift detection
 export { detectProseDrift, type ProseDriftOptions } from './drift/prose-drift';
+// Context types
+// Drift spec builder
+export {
+  type BuildDriftOptions,
+  buildDriftSpec,
+  type ExtractForgottenExport,
+} from './drift-builder';
 // History and trends
 export {
   type CoverageSnapshot,
@@ -56,32 +56,6 @@ export {
   saveSnapshot,
   type WeeklySummary,
 } from './history';
-// Lookup helpers for composition pattern
-export {
-  getExportAnalysis,
-  getExportDrift,
-  getExportMissing,
-  getExportScore,
-  isExportFullyDocumented,
-} from './lookup';
-
-// Module graph for cross-module @link validation
-export type { ModuleGraph, ModuleInfo } from './module-graph';
-export { buildModuleGraph, findSymbolModule, symbolExistsInGraph } from './module-graph';
-
-// Report generation
-export {
-  generateReport,
-  generateReportFromDrift,
-  loadCachedReport,
-  renderApiSurface,
-  saveReport,
-} from './report';
-
-
-// Spec types
-export type { OpenPkgSpec } from './spec-types';
-
 // Incremental analysis for crash recovery
 export {
   cleanupOrphanedTempFiles,
@@ -91,3 +65,24 @@ export {
   type IncrementalExportResult,
   type PartialAnalysisState,
 } from './incremental';
+// Lookup helpers for composition pattern
+export {
+  getExportAnalysis,
+  getExportDrift,
+  getExportMissing,
+  getExportScore,
+  isExportFullyDocumented,
+} from './lookup';
+// Module graph for cross-module @link validation
+export type { ModuleGraph, ModuleInfo } from './module-graph';
+export { buildModuleGraph, findSymbolModule, symbolExistsInGraph } from './module-graph';
+// Report generation
+export {
+  generateReport,
+  generateReportFromDrift,
+  loadCachedReport,
+  renderApiSurface,
+  saveReport,
+} from './report';
+// Spec types
+export type { OpenPkgSpec } from './spec-types';

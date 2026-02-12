@@ -10,9 +10,9 @@ export {
 // Core computation
 export {
   buildExportRegistry,
+  type ComputeDriftOptions,
   computeDrift,
   computeExportDrift,
-  type ComputeDriftOptions,
 } from './compute';
 // Coverage utilities
 export { calculateAggregateCoverage, ensureSpecCoverage } from './coverage';
@@ -26,10 +26,10 @@ export {
   hasNonAssertionComments,
   parseAssertions,
 } from './example-drift';
-// Prose drift detection
-export { detectProseDrift, type ProseDriftOptions } from './prose-drift';
 // Parameter drift detection
 export { detectOptionalityDrift, detectParamDrift, detectParamTypeDrift } from './param-drift';
+// Prose drift detection
+export { detectProseDrift, type ProseDriftOptions } from './prose-drift';
 // Semantic drift detection
 export {
   type BrokenLinkOptions,

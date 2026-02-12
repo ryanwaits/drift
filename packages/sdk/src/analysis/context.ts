@@ -1,8 +1,8 @@
 import * as path from 'node:path';
+import { createProgram } from '@openpkg-ts/sdk';
 import type * as ts from 'typescript';
 import type { DriftOptions, NormalizedDriftOptions } from '../options';
 import { normalizeDriftOptions } from '../options';
-import { createProgram } from '@openpkg-ts/sdk';
 
 export interface AnalysisContext {
   entryFile: string;

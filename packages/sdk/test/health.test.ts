@@ -2,8 +2,8 @@
  * Tests for computeHealth() function.
  */
 import { describe, expect, test } from 'bun:test';
-import { computeHealth, isExportDocumented, type HealthInput } from '../src/analysis/health';
 import type { SpecExport } from '@openpkg-ts/spec';
+import { computeHealth, type HealthInput, isExportDocumented } from '../src/analysis/health';
 
 /**
  * Create a minimal HealthInput for testing.

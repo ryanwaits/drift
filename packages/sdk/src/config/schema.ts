@@ -3,7 +3,7 @@
  * Used by CLI for config file validation.
  */
 import { z } from 'zod';
-import type { DriftConfig, DocsConfig } from './types';
+import type { DocsConfig, DriftConfig } from './types';
 
 const stringList: z.ZodUnion<[z.ZodString, z.ZodArray<z.ZodString, 'many'>]> = z.union([
   z.string(),

@@ -21,6 +21,8 @@ export {
   getDocsImpactSummary,
   hasDocsImpact,
 } from './diff-with-docs';
+// Discovery
+export { type DiscoverOptions, discoverMarkdownFiles } from './discover';
 // Member diff functions
 export type { MemberChange } from './member-diff';
 export {
@@ -29,8 +31,6 @@ export {
   hasAddedMembers,
   hasRemovedMembers,
 } from './member-diff';
-// Discovery
-export { discoverMarkdownFiles, type DiscoverOptions } from './discover';
 export {
   blockReferencesExport,
   extractFunctionCalls,

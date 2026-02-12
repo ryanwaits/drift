@@ -1,4 +1,3 @@
-import * as path from 'node:path';
 import { runAnalysis } from './analysis/run-analysis';
 import type { OpenPkgSpec } from './analysis/spec-types';
 import type { DriftOptions } from './options';

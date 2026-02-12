@@ -122,7 +122,7 @@ export class IncrementalAnalyzer {
         totalExpected: this.totalExpected,
         pid: process.pid,
       };
-      await this.fileHandle.appendFile(JSON.stringify(header) + '\n');
+      await this.fileHandle.appendFile(`${JSON.stringify(header)}\n`);
     }
   }
 
@@ -131,7 +131,7 @@ export class IncrementalAnalyzer {
    */
   async writeResult(result: IncrementalExportResult): Promise<void> {
     await this.init();
-    const line = JSON.stringify({ type: 'result', ...result }) + '\n';
+    const line = `${JSON.stringify({ type: 'result', ...result })}\n`;
     await this.fileHandle!.appendFile(line);
     this.resultCount++;
   }
@@ -176,8 +176,7 @@ export class IncrementalAnalyzer {
           if (parsed.type === 'header') {
             totalExpected = parsed.totalExpected;
           } else if (parsed.type === 'result') {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { type, ...result } = parsed;
+            const { type: _type, ...result } = parsed;
             results.push(result as IncrementalExportResult);
           }
         } catch {
@@ -255,8 +254,7 @@ export class IncrementalAnalyzer {
           if (parsed.type === 'header') {
             totalExpected = parsed.totalExpected;
           } else if (parsed.type === 'result') {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { type, ...result } = parsed;
+            const { type: _type, ...result } = parsed;
             results.push(result as IncrementalExportResult);
           }
         } catch {

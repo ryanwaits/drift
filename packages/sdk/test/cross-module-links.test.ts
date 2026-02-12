@@ -1,12 +1,16 @@
 /**
  * Tests for cross-module @link validation.
  */
+
+import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import { describe, expect, it } from 'vitest';
-import type { SpecExport } from '@openpkg-ts/spec';
-import type { OpenPkg } from '@openpkg-ts/spec';
-import { detectBrokenLinks, buildExportRegistry } from '../src/analysis/drift';
-import { buildModuleGraph, findSymbolModule, symbolExistsInGraph } from '../src/analysis/module-graph';
+import { detectBrokenLinks } from '../src/analysis/drift';
 import type { ExportRegistry } from '../src/analysis/drift/types';
+import {
+  buildModuleGraph,
+  findSymbolModule,
+  symbolExistsInGraph,
+} from '../src/analysis/module-graph';
 
 function createExport(overrides: Partial<SpecExport>): SpecExport {
   return {
@@ -17,7 +21,11 @@ function createExport(overrides: Partial<SpecExport>): SpecExport {
   };
 }
 
-function createSpec(name: string, exports: SpecExport[], types: { name: string; id?: string }[] = []): OpenPkg {
+function createSpec(
+  name: string,
+  exports: SpecExport[],
+  types: { name: string; id?: string }[] = [],
+): OpenPkg {
   return {
     meta: { name, version: '1.0.0' },
     exports,
@@ -118,9 +126,7 @@ describe('findSymbolModule', () => {
   });
 
   it('finds module for type', () => {
-    const graph = buildModuleGraph([
-      createSpec('types', [], [{ name: 'MyType' }]),
-    ]);
+    const graph = buildModuleGraph([createSpec('types', [], [{ name: 'MyType' }])]);
 
     expect(findSymbolModule(graph, 'MyType')).toBe('types');
   });
@@ -134,9 +140,7 @@ describe('findSymbolModule', () => {
 
 describe('symbolExistsInGraph', () => {
   it('returns true for existing symbol', () => {
-    const graph = buildModuleGraph([
-      createSpec('pkg', [createExport({ name: 'exists' })]),
-    ]);
+    const graph = buildModuleGraph([createSpec('pkg', [createExport({ name: 'exists' })])]);
 
     expect(symbolExistsInGraph(graph, 'exists')).toBe(true);
   });
@@ -209,9 +213,7 @@ describe('detectBrokenLinks with moduleGraph', () => {
       description: 'Uses {@link NonExistent}',
     });
     const registry = createRegistry(['localFn']);
-    const moduleGraph = buildModuleGraph([
-      createSpec('pkg', [createExport({ name: 'OtherFn' })]),
-    ]);
+    const moduleGraph = buildModuleGraph([createSpec('pkg', [createExport({ name: 'OtherFn' })])]);
 
     const drifts = detectBrokenLinks(entry, registry, { moduleGraph });
 
@@ -239,9 +241,7 @@ describe('detectBrokenLinks with moduleGraph', () => {
       description: 'Returns {@link Config} object',
     });
     const registry = createRegistry(['createConfig']);
-    const moduleGraph = buildModuleGraph([
-      createSpec('config', [], [{ name: 'Config' }]),
-    ]);
+    const moduleGraph = buildModuleGraph([createSpec('config', [], [{ name: 'Config' }])]);
 
     const drifts = detectBrokenLinks(entry, registry, { moduleGraph });
 

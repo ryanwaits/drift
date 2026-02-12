@@ -2,13 +2,7 @@
  * Tests for documentation style presets.
  */
 import { describe, expect, test } from 'bun:test';
-import {
-  DEFAULT_REQUIREMENTS,
-  PRESETS,
-  resolveRequirements,
-  type DocRequirements,
-  type StylePreset,
-} from '../src/analysis/presets';
+import { DEFAULT_REQUIREMENTS, PRESETS, resolveRequirements } from '../src/analysis/presets';
 
 describe('PRESETS', () => {
   test('minimal preset requires only description', () => {

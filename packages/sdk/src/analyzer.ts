@@ -1,15 +1,15 @@
 import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import type * as TS from 'typescript';
 import { createProgram } from '@openpkg-ts/sdk';
+import type * as TS from 'typescript';
 import type { AnalysisMetadataInternal } from './analysis/run-analysis';
 import { runAnalysis } from './analysis/run-analysis';
 import type { OpenPkgSpec } from './analysis/spec-types';
 import {
+  type CacheContext,
   type CachedDiagnostic,
   type CachedForgottenExport,
-  type CacheContext,
   type CacheValidationResult,
   loadSpecCache,
   saveSpecCache,

@@ -2,11 +2,7 @@
  * Tests for entry point detection utilities.
  */
 import { describe, expect, test } from 'bun:test';
-import {
-  findEntryPointForFile,
-  isPackageEntryPoint,
-  type FileSystem,
-} from '../src/detect';
+import { type FileSystem, findEntryPointForFile, isPackageEntryPoint } from '../src/detect';
 
 /**
  * Create a mock filesystem for testing.

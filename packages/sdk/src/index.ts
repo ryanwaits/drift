@@ -23,9 +23,9 @@
 // Core Analysis API
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type { BuildDriftOptions } from './analysis/drift-builder';
-// Drift spec builder
-export { buildDriftSpec } from './analysis/drift-builder';
+// Batch analysis
+export type { BatchResult, PackageResult } from './analysis/batch';
+export { aggregateResults, createPackageResult } from './analysis/batch';
 export type {
   CategorizedDrift,
   DriftCategory,
@@ -43,29 +43,14 @@ export {
   DRIFT_CATEGORY_DESCRIPTIONS,
   DRIFT_CATEGORY_LABELS,
 } from './analysis/docs-coverage';
+// Drift options
+export type { ComputeDriftOptions } from './analysis/drift/compute';
+export type { BuildDriftOptions } from './analysis/drift-builder';
+// Drift spec builder
+export { buildDriftSpec } from './analysis/drift-builder';
 // Health computation
 export type { HealthInput } from './analysis/health';
 export { computeHealth, isExportDocumented } from './analysis/health';
-// Lookup helpers (for composition pattern)
-export {
-  getExportAnalysis,
-  getExportDrift,
-  getExportMissing,
-  getExportScore,
-  isExportFullyDocumented,
-} from './analysis/lookup';
-// Report generation
-export { generateReport, renderApiSurface } from './analysis/report';
-// Batch analysis
-export type { BatchResult, PackageResult } from './analysis/batch';
-export { aggregateResults, createPackageResult } from './analysis/batch';
-// Module graph for cross-module @link validation
-export type { ModuleGraph, ModuleInfo } from './analysis/module-graph';
-export { buildModuleGraph, findSymbolModule, symbolExistsInGraph } from './analysis/module-graph';
-// Drift options
-export type { ComputeDriftOptions } from './analysis/drift/compute';
-// Spec types
-export type { OpenPkgSpec } from './analysis/spec-types';
 // Incremental analysis (crash recovery)
 export type {
   IncrementalAnalyzerOptions,
@@ -77,6 +62,21 @@ export {
   findOrphanedTempFiles,
   IncrementalAnalyzer,
 } from './analysis/incremental';
+// Lookup helpers (for composition pattern)
+export {
+  getExportAnalysis,
+  getExportDrift,
+  getExportMissing,
+  getExportScore,
+  isExportFullyDocumented,
+} from './analysis/lookup';
+// Module graph for cross-module @link validation
+export type { ModuleGraph, ModuleInfo } from './analysis/module-graph';
+export { buildModuleGraph, findSymbolModule, symbolExistsInGraph } from './analysis/module-graph';
+// Report generation
+export { generateReport, renderApiSurface } from './analysis/report';
+// Spec types
+export type { OpenPkgSpec } from './analysis/spec-types';
 export type { AnalysisResult, AnalyzeOptions, Diagnostic, ForgottenExportResult } from './analyzer';
 export { analyze, analyzeFile, Drift } from './analyzer';
 export type { DriftOptions } from './options';
@@ -86,9 +86,9 @@ export type { DriftOptions } from './options';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type {
+  DocsConfig,
   DriftConfig,
   DriftConfigInput,
-  DocsConfig,
 } from './config';
 export { defineConfig, driftConfigSchema, normalizeConfig } from './config';
 
@@ -144,9 +144,9 @@ export {
 // Markdown Analysis
 // ─────────────────────────────────────────────────────────────────────────────
 
+export { detectProseDrift, type ProseDriftOptions } from './analysis/drift/prose-drift';
 export type { MarkdownCodeBlock, MarkdownDocFile } from './markdown';
 export { discoverMarkdownFiles, findExportReferences, parseMarkdownFiles } from './markdown';
-export { detectProseDrift, type ProseDriftOptions } from './analysis/drift/prose-drift';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Report Types (commonly needed)
@@ -341,4 +341,9 @@ export type {
 // Example runner
 export { runExample, runExamples, runExamplesWithPackage } from './utils/example-runner';
 // Project root detection
-export { findProjectRoot, getDriftdevDir, getStateDir, _setStateDirOverride } from './utils/project-root';
+export {
+  _setStateDirOverride,
+  findProjectRoot,
+  getDriftdevDir,
+  getStateDir,
+} from './utils/project-root';

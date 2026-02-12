@@ -1,5 +1,4 @@
-import { globSync } from 'node:fs';
-import { readFileSync } from 'node:fs';
+import { globSync, readFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { parseMarkdownFile } from './parser';
 import type { MarkdownDocFile } from './types';
@@ -15,10 +14,7 @@ const DEFAULT_EXCLUDE = ['node_modules/**', 'dist/**', '.git/**'];
 /**
  * Discover and parse markdown files in a directory.
  */
-export function discoverMarkdownFiles(
-  cwd: string,
-  options?: DiscoverOptions,
-): MarkdownDocFile[] {
+export function discoverMarkdownFiles(cwd: string, options?: DiscoverOptions): MarkdownDocFile[] {
   const include = options?.include ?? DEFAULT_INCLUDE;
   const exclude = options?.exclude ?? DEFAULT_EXCLUDE;
   const seen = new Set<string>();

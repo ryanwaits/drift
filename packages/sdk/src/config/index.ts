@@ -6,8 +6,8 @@
 export type { DriftConfigInput } from './schema';
 export { driftConfigSchema, normalizeConfig } from './schema';
 export type {
-  DriftConfig,
   DocsConfig,
+  DriftConfig,
   ExampleValidationMode,
 } from './types';
 export { defineConfig } from './types';

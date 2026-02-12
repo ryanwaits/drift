@@ -138,7 +138,7 @@ describe('buildDriftSpec', () => {
       // Should only count non-internal exports
       expect(result.summary.totalExports).toBe(2);
       expect(Object.keys(result.exports)).toEqual(['publicFn', 'anotherPublic']);
-      expect(result.exports['internalFn']).toBeUndefined();
+      expect(result.exports.internalFn).toBeUndefined();
     });
 
     test('handles all @internal exports gracefully', async () => {

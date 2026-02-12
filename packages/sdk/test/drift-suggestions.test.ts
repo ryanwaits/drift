@@ -1,18 +1,19 @@
 /**
  * Tests for drift suggestion fields (expected, actual, suggestion).
  */
-import { describe, expect, it } from 'vitest';
+
 import type { SpecExport } from '@openpkg-ts/spec';
+import { describe, expect, it } from 'vitest';
 import {
+  detectAsyncMismatch,
+  detectDeprecatedDrift,
+  detectGenericConstraintDrift,
+  detectOptionalityDrift,
   detectParamDrift,
   detectParamTypeDrift,
-  detectOptionalityDrift,
-  detectReturnTypeDrift,
-  detectDeprecatedDrift,
-  detectVisibilityDrift,
-  detectAsyncMismatch,
   detectPropertyTypeDrift,
-  detectGenericConstraintDrift,
+  detectReturnTypeDrift,
+  detectVisibilityDrift,
 } from '../src/analysis/drift';
 
 function createExport(overrides: Partial<SpecExport>): SpecExport {
@@ -33,7 +34,13 @@ describe('drift suggestion fields', () => {
             parameters: [{ name: 'name' }, { name: 'age' }],
           },
         ],
-        tags: [{ name: 'param', text: '{string} invalidParam', param: { name: 'invalidParam', type: 'string' } }],
+        tags: [
+          {
+            name: 'param',
+            text: '{string} invalidParam',
+            param: { name: 'invalidParam', type: 'string' },
+          },
+        ],
       });
 
       const drifts = detectParamDrift(entry);
@@ -73,7 +80,13 @@ describe('drift suggestion fields', () => {
             parameters: [{ name: 'name', required: false }],
           },
         ],
-        tags: [{ name: 'param', text: '{string} name', param: { name: 'name', type: 'string', optional: false } }],
+        tags: [
+          {
+            name: 'param',
+            text: '{string} name',
+            param: { name: 'name', type: 'string', optional: false },
+          },
+        ],
       });
 
       const drifts = detectOptionalityDrift(entry);
@@ -91,7 +104,13 @@ describe('drift suggestion fields', () => {
             parameters: [{ name: 'name', required: true }],
           },
         ],
-        tags: [{ name: 'param', text: '{string} [name]', param: { name: 'name', type: 'string', optional: true } }],
+        tags: [
+          {
+            name: 'param',
+            text: '{string} [name]',
+            param: { name: 'name', type: 'string', optional: true },
+          },
+        ],
       });
 
       const drifts = detectOptionalityDrift(entry);

@@ -12,20 +12,30 @@ function createMockOpenPkg(name: string, version: string): OpenPkg {
 }
 
 // Minimal mock Drift spec
-function createMockDriftSpec(
-  totalExports: number,
-  health: number,
-  driftTotal: number,
-): DriftSpec {
+function createMockDriftSpec(totalExports: number, health: number, driftTotal: number): DriftSpec {
   return {
     summary: {
       totalExports,
       score: health,
-      drift: { total: driftTotal, fixable: 0, byCategory: { structural: 0, semantic: 0, example: 0 } },
+      drift: {
+        total: driftTotal,
+        fixable: 0,
+        byCategory: { structural: 0, semantic: 0, example: 0 },
+      },
       health: {
         score: health,
-        completeness: { score: health, total: totalExports, documented: Math.round(totalExports * health / 100), missing: {} },
-        accuracy: { score: 100, issues: driftTotal, fixable: 0, byCategory: { structural: 0, semantic: 0, example: 0 } },
+        completeness: {
+          score: health,
+          total: totalExports,
+          documented: Math.round((totalExports * health) / 100),
+          missing: {},
+        },
+        accuracy: {
+          score: 100,
+          issues: driftTotal,
+          fixable: 0,
+          byCategory: { structural: 0, semantic: 0, example: 0 },
+        },
       },
     },
     exports: {},

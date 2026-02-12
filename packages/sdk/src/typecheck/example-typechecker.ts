@@ -70,7 +70,12 @@ function createVirtualSource(
   // 1. Package name is provided
   // 2. Export names are provided
   // 3. Example doesn't already import from the package
-  if (packageName && exportNames && exportNames.length > 0 && !hasPackageImport(cleanCode, packageName)) {
+  if (
+    packageName &&
+    exportNames &&
+    exportNames.length > 0 &&
+    !hasPackageImport(cleanCode, packageName)
+  ) {
     lines.push(`import { ${exportNames.join(', ')} } from '${packageName}';`);
     lines.push('');
   }
@@ -137,7 +142,8 @@ export function typecheckExample(
 
   // Calculate line offset (for import statement we added)
   // Only offset if we added an import (example didn't already have one)
-  const addedImport = packageName !== undefined &&
+  const addedImport =
+    packageName !== undefined &&
     exportNames &&
     exportNames.length > 0 &&
     !hasPackageImport(cleanCode, packageName);

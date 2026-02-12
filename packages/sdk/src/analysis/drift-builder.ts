@@ -1,9 +1,9 @@
 import type {
   ApiSurfaceResult,
+  DriftCategory,
   DriftIssue,
   DriftSpec,
   DriftSummary,
-  DriftCategory,
   ExportAnalysis,
   ForgottenExport,
   MissingDocRule,

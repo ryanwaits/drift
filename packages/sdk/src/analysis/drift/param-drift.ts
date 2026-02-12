@@ -96,7 +96,10 @@ export function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
             target: documentedName,
             issue: `JSDoc documents property "${propertyPath}" on parameter "${prefix}" which does not exist.`,
             expected: documentedName,
-            actual: propsArray.length > 0 ? propsArray.map((p) => `${prefix}.${p}`).join(', ') : undefined,
+            actual:
+              propsArray.length > 0
+                ? propsArray.map((p) => `${prefix}.${p}`).join(', ')
+                : undefined,
             suggestion: suggestionText,
           });
           continue;
@@ -120,7 +123,7 @@ export function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
     // If there are other `@param options.X` docs where X matches actual params, this is the container
     if (!documentedName.includes('.')) {
       const isContainer = documentedParamNames.some((other) => {
-        if (!other.startsWith(documentedName + '.')) return false;
+        if (!other.startsWith(`${documentedName}.`)) return false;
         const prop = other.split('.')[1];
         return actualParamNames.has(prop);
       });

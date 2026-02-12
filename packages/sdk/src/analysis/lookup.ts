@@ -14,7 +14,10 @@ import type { SpecExport } from '@openpkg-ts/spec';
  * @param driftSpec - The Drift spec containing analysis data
  * @returns Export analysis or undefined if not found
  */
-export function getExportAnalysis(exp: SpecExport, driftSpec: DriftSpec): ExportAnalysis | undefined {
+export function getExportAnalysis(
+  exp: SpecExport,
+  driftSpec: DriftSpec,
+): ExportAnalysis | undefined {
   const id = exp.id ?? exp.name;
   return driftSpec.exports[id];
 }
