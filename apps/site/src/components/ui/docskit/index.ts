@@ -1,3 +1,4 @@
+export { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export { callout } from './callout';
 export {
   ClientCode,
@@ -23,6 +24,5 @@ export { HoverLink, hover, WithHover } from './hover';
 export { lineNumbers } from './line-numbers';
 export { link } from './link';
 export { mark } from './mark';
-export { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export { TooltipLink, tooltip } from './tooltip';
 export { wordWrap } from './word-wrap';

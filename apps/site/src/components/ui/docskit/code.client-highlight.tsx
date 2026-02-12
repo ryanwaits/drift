@@ -9,10 +9,17 @@ import {
   type RawCode,
 } from 'codehike/code';
 import { useEffect, useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStateOrLocalStorage } from '@/hooks/use-local-storage';
 import { cn } from '@/lib/utils';
-import { type CodeOptions, extractFlags, extractFlagsOnly, flagsToOptions, PRE_CLASSNAME, theme } from './code.config';
-import { CodeHeader } from './code-header';
+import {
+  type CodeOptions,
+  extractFlags,
+  extractFlagsOnly,
+  flagsToOptions,
+  PRE_CLASSNAME,
+  theme,
+} from './code.config';
 import { CopyButton } from './code.copy';
 import { getHandlers } from './code.handlers';
 import { CodeIcon } from './code.icon';
@@ -22,7 +29,7 @@ import {
   InlineCodeSkeleton,
   TerminalSkeleton,
 } from './code.skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CodeHeader } from './code-header';
 
 /**
  * Client-side code block with syntax highlighting.
@@ -54,7 +61,12 @@ export function ClientDocsKitCode(props: {
   if (!highlighted) {
     if (fallback) {
       return (
-        <div className={cn('rounded overflow-hidden relative border-openpkg-code-border flex flex-col border my-4 not-prose', wrapperClassName)}>
+        <div
+          className={cn(
+            'rounded overflow-hidden relative border-openpkg-code-border flex flex-col border my-4 not-prose',
+            wrapperClassName,
+          )}
+        >
           <CodeHeader title={title} icon={null} />
           <pre className={PRE_CLASSNAME}>
             <code className="px-4 block text-openpkg-code-text-active">{fallback}</code>

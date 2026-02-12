@@ -1,19 +1,16 @@
-import { PackageInstall } from "@/components/ui/docskit";
+import { PackageInstall } from '@/components/ui/docskit';
 
 async function getStarCount(): Promise<string> {
   try {
-    const res = await fetch(
-      "https://api.github.com/repos/ryanwaits/drift",
-      { next: { revalidate: 3600 } }
-    );
-    if (!res.ok) return "—";
+    const res = await fetch('https://api.github.com/repos/ryanwaits/drift', {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return '—';
     const data = await res.json();
     const count = data.stargazers_count as number;
-    return count >= 1000
-      ? `${(count / 1000).toFixed(1).replace(/\.0$/, "")}k`
-      : String(count);
+    return count >= 1000 ? `${(count / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(count);
   } catch {
-    return "—";
+    return '—';
   }
 }
 
@@ -27,10 +24,9 @@ export async function Hero() {
           drift
         </h1>
         <p className="mt-6 max-w-md text-lg leading-relaxed text-text-muted">
-          Documentation coverage for{" "}
-          <span className="font-medium text-text">TypeScript</span>. Scan for
-          missing JSDoc, outdated READMEs, and undocumented exports — in your{" "}
-          <span className="font-medium text-text">CLI</span> or{" "}
+          Documentation coverage for <span className="font-medium text-text">TypeScript</span>. Scan
+          for missing JSDoc, outdated READMEs, and undocumented exports — in your{' '}
+          <span className="font-medium text-text">CLI</span> or{' '}
           <span className="font-medium text-text">CI pipeline</span>.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
@@ -51,22 +47,11 @@ export async function Hero() {
 
       {/* Right — install block + badges */}
       <div className="flex flex-col justify-center gap-0">
-        <h4 className="font-serif text-2xl tracking-tight text-text">
-          Installation
-        </h4>
-        <PackageInstall
-          package="@driftdev/cli"
-          dev
-          managers={["bun", "npm", "pnpm"]}
-          copyButton
-        />
+        <h4 className="font-serif text-2xl tracking-tight text-text">Installation</h4>
+        <PackageInstall package="@driftdev/cli" dev managers={['bun', 'npm', 'pnpm']} copyButton />
         <div className="flex flex-wrap gap-3">
           <ShieldBadge label="stars" value={stars} />
-          <ShieldBadge
-            label="coverage"
-            value="100%"
-            variant="green"
-          />
+          <ShieldBadge label="coverage" value="100%" variant="green" />
           <ShieldBadge label="license" value="MIT" />
         </div>
       </div>
@@ -77,28 +62,26 @@ export async function Hero() {
 function ShieldBadge({
   label,
   value,
-  variant = "default",
+  variant = 'default',
 }: {
   label: string;
   value: string;
-  variant?: "default" | "green";
+  variant?: 'default' | 'green';
 }) {
   return (
     <span className="inline-flex items-center overflow-hidden rounded-md border border-border text-xs font-medium">
       <span
         className={
-          variant === "green"
-            ? "bg-[#2d3a2e] px-2.5 py-1 text-green-200"
-            : "bg-card-bg px-2.5 py-1 text-text-muted"
+          variant === 'green'
+            ? 'bg-[#2d3a2e] px-2.5 py-1 text-green-200'
+            : 'bg-card-bg px-2.5 py-1 text-text-muted'
         }
       >
         {label}
       </span>
       <span
         className={
-          variant === "green"
-            ? "bg-green-100 px-2.5 py-1 text-green-700"
-            : "px-2.5 py-1 text-text"
+          variant === 'green' ? 'bg-green-100 px-2.5 py-1 text-green-700' : 'px-2.5 py-1 text-text'
         }
       >
         {value}

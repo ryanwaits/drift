@@ -84,13 +84,7 @@ export const HoverLine: CustomLine = ({ annotation, ...props }) => {
   const anyHovered = hoveredNames.length > 0;
   const name = annotation?.query;
   const isHovered = name && hoveredNames[hoveredNames.length - 1] === name;
-  const opacity = isHovered
-    ? 1
-    : prevOpacity
-      ? prevOpacity
-      : anyHovered
-        ? 0.5
-        : 1;
+  const opacity = isHovered ? 1 : prevOpacity ? prevOpacity : anyHovered ? 0.5 : 1;
 
   return (
     <InnerLine

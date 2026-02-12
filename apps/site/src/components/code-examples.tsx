@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { ClientDocsKitCode } from "@/components/ui/docskit/code.client-highlight";
-import { cn } from "@/lib/utils";
+import { useState } from 'react';
+import { ClientDocsKitCode } from '@/components/ui/docskit/code.client-highlight';
+import { cn } from '@/lib/utils';
 
 type Variant = {
   id: string;
@@ -18,12 +18,12 @@ type Category = {
 
 const categories: Category[] = [
   {
-    id: "cli",
-    label: "CLI",
+    id: 'cli',
+    label: 'CLI',
     variants: [
       {
-        id: "scan",
-        label: "Scan a package",
+        id: 'scan',
+        label: 'Scan a package',
         code: {
           value: `$ drift scan --min 80
 
@@ -35,13 +35,13 @@ const categories: Category[] = [
   Lint       0 issues
 
   ok Scan passed`,
-          lang: "bash",
-          meta: "Terminal -c",
+          lang: 'bash',
+          meta: 'Terminal -c',
         },
       },
       {
-        id: "scan-all",
-        label: "Scan a monorepo",
+        id: 'scan-all',
+        label: 'Scan a monorepo',
         code: {
           value: `$ drift scan --all --min 80
 
@@ -56,13 +56,13 @@ const categories: Category[] = [
   Skipped 2 private packages
 
   ✗ Scan failed — minimum health 80`,
-          lang: "bash",
-          meta: "Terminal -c",
+          lang: 'bash',
+          meta: 'Terminal -c',
         },
       },
       {
-        id: "examples",
-        label: "Validate examples",
+        id: 'examples',
+        label: 'Validate examples',
         code: {
           value: `$ drift examples
 
@@ -80,13 +80,13 @@ const categories: Category[] = [
     ... +28 more
 
   Tip: drift examples --typecheck to compile-check examples`,
-          lang: "bash",
-          meta: "Terminal -c",
+          lang: 'bash',
+          meta: 'Terminal -c',
         },
       },
       {
-        id: "ci",
-        label: "CI pipeline checks",
+        id: 'ci',
+        label: 'CI pipeline checks',
         code: {
           value: `$ drift ci
 
@@ -100,19 +100,19 @@ const categories: Category[] = [
   @driftdev/core       70       96%       0     ok
 
   ok All checks passed`,
-          lang: "bash",
-          meta: "Terminal -c",
+          lang: 'bash',
+          meta: 'Terminal -c',
         },
       },
     ],
   },
   {
-    id: "agent",
-    label: "Agent",
+    id: 'agent',
+    label: 'Agent',
     variants: [
       {
-        id: "drift",
-        label: "Full monorepo audit",
+        id: 'drift',
+        label: 'Full monorepo audit',
         code: {
           value: `$ /drift
 
@@ -130,13 +130,13 @@ const categories: Category[] = [
   /drift enrich --cwd packages/action
 
 ✻ Cooked for 47s`,
-          lang: "bash",
-          meta: "Claude Code -c",
+          lang: 'bash',
+          meta: 'Claude Code -c',
         },
       },
       {
-        id: "enrich",
-        label: "Add missing JSDoc",
+        id: 'enrich',
+        label: 'Add missing JSDoc',
         code: {
           value: `$ /drift enrich --cwd packages/shared
 
@@ -156,13 +156,13 @@ const categories: Category[] = [
   Coverage 9% → 11%
 
 ✻ Cooked for 2m 14s`,
-          lang: "bash",
-          meta: "Claude Code -c",
+          lang: 'bash',
+          meta: 'Claude Code -c',
         },
       },
       {
-        id: "fix",
-        label: "Fix stale signatures",
+        id: 'fix',
+        label: 'Fix stale signatures',
         code: {
           value: `$ /drift fix
 
@@ -183,19 +183,19 @@ const categories: Category[] = [
   ok 0 issues — all fixed
 
 ✻ Cooked for 38s`,
-          lang: "bash",
-          meta: "Claude Code -c",
+          lang: 'bash',
+          meta: 'Claude Code -c',
         },
       },
     ],
   },
   {
-    id: "sdk",
-    label: "SDK",
+    id: 'sdk',
+    label: 'SDK',
     variants: [
       {
-        id: "analyze",
-        label: "Analyze & detect drift",
+        id: 'analyze',
+        label: 'Analyze & detect drift',
         code: {
           value: `import { buildDriftSpec, computeDrift } from '@driftdev/sdk'
 
@@ -205,13 +205,13 @@ const drift = computeDrift(spec)
 for (const [name, issues] of drift.exports) {
   console.log(\`\${name}: \${issues.length} issues\`)
 }`,
-          lang: "typescript",
-          meta: "analyze.ts -cn",
+          lang: 'typescript',
+          meta: 'analyze.ts -cn',
         },
       },
       {
-        id: "health",
-        label: "Full health check",
+        id: 'health',
+        label: 'Full health check',
         code: {
           value: `import { buildDriftSpec, computeDrift,
   computeHealth, validateExamples } from '@driftdev/sdk'
@@ -225,13 +225,13 @@ const examples = await validateExamples(spec.exports, {
 const { score, completeness, accuracy } = computeHealth({
   spec, drift, examples,
 })`,
-          lang: "typescript",
-          meta: "health.ts -cn",
+          lang: 'typescript',
+          meta: 'health.ts -cn',
         },
       },
       {
-        id: "diff",
-        label: "Diff specs & detect breaking",
+        id: 'diff',
+        label: 'Diff specs & detect breaking',
         code: {
           value: `import { diffSpecWithDocs, parseMarkdownFiles } from '@driftdev/sdk'
 
@@ -250,8 +250,8 @@ if (diff.docsImpact?.impactedFiles.length) {
   console.log('Docs needing updates:')
   diff.docsImpact.impactedFiles.forEach(f => console.log(\`  \${f.path}\`))
 }`,
-          lang: "typescript",
-          meta: "diff.ts -cn",
+          lang: 'typescript',
+          meta: 'diff.ts -cn',
         },
       },
     ],
@@ -273,9 +273,7 @@ export function CodeExamples() {
   return (
     <section id="overview" className="relative z-10 mx-auto max-w-3xl px-6 py-16 scroll-mt-8">
       <div className="mb-8 text-center">
-        <h2 className="font-serif text-4xl tracking-tight text-text sm:text-5xl">
-          Overview
-        </h2>
+        <h2 className="font-serif text-4xl tracking-tight text-text sm:text-5xl">Overview</h2>
         <p className="mx-auto mt-3 max-w-lg text-base text-text-muted">
           Everything you need to keep your documentation in sync with your code.
         </p>
@@ -289,10 +287,10 @@ export function CodeExamples() {
             type="button"
             onClick={() => handleCategoryChange(i)}
             className={cn(
-              "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+              'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all',
               categoryIndex === i
-                ? "bg-card-bg text-text shadow-sm"
-                : "text-text-muted hover:text-text"
+                ? 'bg-card-bg text-text shadow-sm'
+                : 'text-text-muted hover:text-text',
             )}
           >
             {cat.label}
@@ -302,10 +300,7 @@ export function CodeExamples() {
 
       {/* Code block */}
       <div className="min-w-0 text-[13px] leading-[1.5] [&>div]:!my-0">
-        <ClientDocsKitCode
-          key={`${category.id}-${variant.id}`}
-          codeblock={variant.code}
-        />
+        <ClientDocsKitCode key={`${category.id}-${variant.id}`} codeblock={variant.code} />
       </div>
 
       {/* Variant bubbles */}
@@ -316,10 +311,10 @@ export function CodeExamples() {
             type="button"
             onClick={() => setVariantIndex(i)}
             className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium transition-all",
+              'rounded-full border px-3 py-1 text-xs font-medium transition-all',
               variantIndex === i
-                ? "border-cta/40 bg-card-bg text-text"
-                : "border-border bg-page-bg text-text-muted hover:bg-card-bg/60"
+                ? 'border-cta/40 bg-card-bg text-text'
+                : 'border-border bg-page-bg text-text-muted hover:bg-card-bg/60',
             )}
           >
             {v.label}

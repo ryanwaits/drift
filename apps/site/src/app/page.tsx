@@ -1,9 +1,9 @@
-import { Nav } from "@/components/nav";
-import { Hero } from "@/components/hero";
-import { FeatureCards } from "@/components/feature-cards";
-import { CodeExamples } from "@/components/code-examples";
-import { FeaturesList } from "@/components/features-list";
-import { WavePattern } from "@/components/wave-pattern";
+import { CodeExamples } from '@/components/code-examples';
+import { FeatureCards } from '@/components/feature-cards';
+import { FeaturesList } from '@/components/features-list';
+import { Hero } from '@/components/hero';
+import { Nav } from '@/components/nav';
+import { WavePattern } from '@/components/wave-pattern';
 
 export default async function Home() {
   return (
