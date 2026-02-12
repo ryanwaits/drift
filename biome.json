@@ -2,7 +2,7 @@
   "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
   "files": {
     "ignoreUnknown": false,
-    "includes": ["packages/**", "!**/dist", "!**/node_modules", "!**/.drift"]
+    "includes": ["packages/**", "apps/**", "!**/dist", "!**/node_modules", "!**/.drift", "!**/.next"]
   },
   "linter": {
     "enabled": true,
@@ -19,6 +19,13 @@
       },
       "correctness": {
         "noChildrenProp": "off"
+      },
+      "a11y": {
+        "noSvgWithoutTitle": "warn",
+        "noStaticElementInteractions": "warn"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "warn"
       },
       "complexity": {
         "noBannedTypes": "error"
