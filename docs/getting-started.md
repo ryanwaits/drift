@@ -2,6 +2,24 @@
 
 Drift analyzes your TypeScript exports and checks that JSDoc, markdown docs, and `@example` blocks are accurate and complete.
 
+## Who This Is For
+
+- Maintainers of TypeScript packages with public APIs.
+- Teams that want PR-time docs quality gates, not manual release checks.
+- Engineers who need fast, file-level guidance for fixing stale docs.
+
+## Why Teams Use Drift
+
+- Prevent docs regressions before merge.
+- Keep examples and markdown aligned with shipped exports.
+- Turn docs quality into an objective CI signal.
+
+## How To Use This Guide
+
+1. Install Drift.
+2. Run an initial scan and inspect what failed.
+3. Add a CI threshold once your baseline is known.
+
 ## Install
 
 ```bash
@@ -18,13 +36,27 @@ This gives you the `drift` binary.
 
 ## First Run
 
-Navigate to any TypeScript package with a `package.json` and run:
+Navigate to a TypeScript package with an exported API surface (library, SDK, or CLI package) and run:
 
 ```bash
 drift scan
 ```
 
-Drift auto-detects your entry point from `package.json` `"main"`, `"module"`, or `"exports"` fields. No configuration needed.
+Drift auto-detects your entry point from `package.json` `"types"`, `"typings"`, `"exports"`, `"main"`, `"module"`, and `"bin"` fields. No configuration needed for standard package layouts.
+
+If your package has a custom layout, pass an explicit entry:
+
+```bash
+drift scan src/drift.ts
+```
+
+Recommended first pass:
+
+```bash
+drift scan
+drift lint
+drift list --undocumented
+```
 
 Example output:
 
@@ -56,7 +88,7 @@ JSON output (piped or `--json`):
     "packageName": "my-lib",
     "packageVersion": "1.2.0"
   },
-  "meta": { "command": "scan", "duration": 342, "version": "0.35.0" }
+  "meta": { "command": "scan", "duration": 342, "version": "0.38.0" }
 }
 ```
 
@@ -111,9 +143,11 @@ Drift stores all state in `~/.drift/` -- nothing is written to your project dire
 
 ## Further Reading
 
+- [Guide Map](./guide-map.md) -- pick the right doc by role and goal
 - [CLI Reference](./cli-reference.md) -- every command and flag
 - [Drift Detection](./drift-detection.md) -- what drift is and how detection works
 - [Coverage and Health](./coverage-and-health.md) -- scoring details
 - [CI Integration](./ci-integration.md) -- GitHub Actions setup
 - [Configuration](./configuration.md) -- config file locations and all keys
 - [SDK](./sdk.md) -- using `@driftdev/sdk` programmatically
+- [Pricing & Packaging](./pricing-packaging.md) -- OSS + BUSL + hosted plan proposal

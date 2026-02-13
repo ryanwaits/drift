@@ -2,6 +2,24 @@
 
 Drift uses JSON-only configuration. No code execution -- config is always a static JSON object.
 
+## Who Should Configure Drift
+
+- Teams enforcing docs thresholds in CI.
+- Monorepos with package-specific entry points.
+- Projects with non-default markdown docs locations.
+
+## Why Configure It
+
+- Set explicit quality gates (`coverage.min`, `coverage.ratchet`).
+- Make entry detection deterministic in custom layouts.
+- Control which docs files are included in prose drift detection.
+
+## How To Approach It
+
+1. Start with defaults and run `drift scan`.
+2. Add only the minimum keys you need.
+3. Keep team-wide policy in project config; keep personal defaults global.
+
 ## Config File Locations
 
 Drift searches for config in this order (first match wins):
@@ -134,9 +152,11 @@ drift config set coverage.ratchet true --project
 ## Entry Point Detection
 
 If `entry` is not set in config, drift auto-detects from `package.json`:
+- `"types"` / `"typings"` field
+- `"exports"` field (`.` entry)
 - `"main"` field
 - `"module"` field
-- `"exports"` field (`.` entry)
+- `"bin"` field (CLI packages)
 
 Falls back to common patterns like `src/index.ts`.
 

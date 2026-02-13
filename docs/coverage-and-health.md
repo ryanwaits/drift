@@ -2,6 +2,18 @@
 
 Drift provides two related metrics: **coverage** (completeness) and **health** (completeness + accuracy combined).
 
+## Who This Is For
+
+- Teams deciding what threshold should block CI.
+- Maintainers tracking docs quality over time.
+- Anyone interpreting Drift scores in PR or release workflows.
+
+## Why These Metrics Exist
+
+- Coverage alone can be gamed by stale docs.
+- Accuracy alone ignores undocumented exports.
+- Health combines both so teams optimize for useful documentation, not just volume.
+
 ## Coverage
 
 Coverage measures the percentage of exports that have a JSDoc description.

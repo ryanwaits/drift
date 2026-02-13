@@ -2,13 +2,31 @@
 
 Documentation coverage, drift detection, and docs sync for TypeScript projects.
 
+## Who Should Use This Action
+
+- Teams that merge TypeScript API changes via pull requests.
+- Repos where docs quality should be enforced before merge.
+- Maintainers who want automated docs follow-up on breaking changes.
+
+## Why Use It
+
+- Turns docs quality into a standard CI gate.
+- Adds structured PR feedback instead of ad-hoc review comments.
+- Extends to merge/release workflows for docs sync and release checks.
+
+## How To Adopt It
+
+1. Add the action to `pull_request` workflows.
+2. Set `min-coverage` to your current baseline.
+3. Enable optional merge/release workflows (`docs-pr`, `docs-issue`, `release-gate`) as needed.
+
 ## Quick Start
 
 ```yaml
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- uses: driftdev/drift/action@v1
+- uses: ryanwaits/drift/action@v1
 ```
 
 That's it for PR checks. Add inputs to enable merge/release workflows.
@@ -26,15 +44,8 @@ That's it for PR checks. Add inputs to enable merge/release workflows.
 | `anthropic-key` | Anthropic API key (required for `docs-pr`) | `''` |
 | `docs-pr` | AI-generated PRs on remote docs repos on merge | `false` |
 | `docs-issue` | Create issues on remote docs repos on merge | `false` |
-| `release-gate` | Validate coverage/lint/semver on release publish | `false` |
+| `release-gate` | Validate coverage/lint readiness on release publish | `false` |
 | `release-changelog` | Append API changelog to GitHub Release body | `false` |
-
-## Outputs
-
-| Output | Description |
-|--------|-------------|
-| `coverage` | Current coverage percentage |
-| `health` | Current health score |
 
 ## Workflows
 
@@ -70,7 +81,7 @@ Both require `docs.remote` in your drift config (see [Configuration](#configurat
 
 ### Release Workflows (`release` publish)
 
-**`release-gate`** — runs `drift release` to validate coverage, lint, and semver compliance before release. Fails the workflow if checks don't pass. Respects `check-all`.
+**`release-gate`** — runs `drift release` to validate coverage and lint readiness before release. Fails the workflow if checks don't pass. Respects `check-all`.
 
 **`release-changelog`** — appends API changelog to the GitHub Release body. Compares the release tag against the previous tag using `drift changelog --format md`.
 
@@ -92,7 +103,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: driftdev/drift/action@v1
+      - uses: ryanwaits/drift/action@v1
         with:
           github-token: ${{ secrets.CROSS_REPO_TOKEN }}
           min-coverage: 90

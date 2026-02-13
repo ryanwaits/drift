@@ -4,6 +4,24 @@ Binary: `drift`. Package: `@driftdev/cli`.
 
 All commands output human-readable text in a TTY, JSON envelopes when piped. Override with `--json` or `--human`.
 
+## Who This Is For
+
+- Engineers integrating Drift into CI or internal tooling.
+- Maintainers who need exact flags, exits, and JSON shapes.
+- Agent workflows that require stable machine-readable command contracts.
+
+## Why Use This Page
+
+- To look up exact command/flag behavior quickly.
+- To verify JSON response fields before scripting.
+- To understand exit-code behavior for CI gates.
+
+## How To Use It
+
+1. Start with [Getting Started](./getting-started.md) for first-run setup.
+2. Use this page as the detailed reference once Drift is already installed.
+3. Use `drift --capabilities` when you need machine-readable command discovery.
+
 ## Global Flags
 
 | Flag | Type | Description |
@@ -26,7 +44,7 @@ Every command wraps its output in this shape:
   "meta": {
     "command": "scan",
     "duration": 342,
-    "version": "0.35.0"
+    "version": "0.38.0"
   },
   "next": {
     "suggested": "drift-fix skill",
@@ -41,7 +59,7 @@ Error shape:
 {
   "ok": false,
   "error": "Entry file not found",
-  "meta": { "command": "scan", "duration": 12, "version": "0.35.0" }
+  "meta": { "command": "scan", "duration": 12, "version": "0.38.0" }
 }
 ```
 
@@ -469,7 +487,7 @@ drift report
 
 ### `drift init`
 
-Create a `drift.config.json` configuration file.
+Scan packages and generate drift config (`~/.drift/config.json` by default).
 
 | Flag | Type | Description |
 |------|------|-------------|

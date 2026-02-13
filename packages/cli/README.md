@@ -2,6 +2,18 @@
 
 Command-line interface for documentation coverage analysis and drift detection. Ships as the `drift` binary.
 
+## Who This CLI Is For
+
+- Maintainers of TypeScript libraries, SDKs, and CLI packages.
+- Teams that want docs quality enforced in CI.
+- Engineers building automation around machine-readable docs diagnostics.
+
+## Why Use It
+
+- Catch stale JSDoc, examples, and markdown references before release.
+- Enforce quality thresholds with standard exit codes.
+- Produce structured output that agents and tooling can act on directly.
+
 ## Install
 
 ```bash
@@ -24,7 +36,7 @@ drift lint
 drift examples
 ```
 
-Entry auto-detects from `package.json` — works in any TypeScript project.
+Entry auto-detects from `package.json` (`types`, `exports`, `main`, `module`, `bin`) for TypeScript packages with an exported API surface.
 
 ## Commands
 
@@ -189,7 +201,7 @@ All commands return structured JSON when piped or with `--json`:
 {
   "ok": true,
   "data": { "score": 88, "documented": 243, "total": 275 },
-  "meta": { "command": "coverage", "duration": 1234, "version": "0.34.3" }
+  "meta": { "command": "coverage", "duration": 1234, "version": "0.38.0" }
 }
 ```
 

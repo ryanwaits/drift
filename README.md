@@ -2,78 +2,64 @@
 
 > Your code changed. Your docs didn't.
 
-Detect documentation drift in TypeScript projects. 21 commands that catch when JSDoc, examples, and markdown fall out of sync with your actual API.
+Core job: fail PRs when docs drift.
+
+Detect documentation drift in TypeScript packages. Drift catches when JSDoc, examples, and markdown fall out of sync with your actual API.
 
 ## Quick Start
 
 ```bash
-# Full scan: coverage + lint + prose drift + health
+# Gate PRs/branches in CI
+drift ci --all --min 80
+
+# Full package scan (coverage + lint + prose drift + health)
 drift scan
 
-# Check documentation coverage
-drift coverage
-
-# Find JSDoc issues (param mismatches, broken links, type errors)
+# Triage issues locally
 drift lint
-
-# List all exports
-drift list
 ```
 
-Entry auto-detects from `package.json` — just `drift scan` in any TypeScript project.
+## Who It Helps
 
-## Commands
+- Teams shipping TypeScript libraries, SDKs, or CLI packages with public exports.
+- Maintainers who want CI to catch documentation regressions before merge.
+- DX/DevRel teams that need docs accuracy to scale with release velocity.
 
-### Composed (Human Surface)
+## Who It Does Not Help
 
-| Command | Description |
-|---------|-------------|
-| `drift scan [entry]` | Coverage + lint + prose drift + health in one pass |
-| `drift health [entry]` | Documentation health score (default command) |
-| `drift ci` | Run CI checks on changed packages |
+- Apps with no exported TypeScript API surface to document.
+- Teams that do not use JSDoc or markdown docs as part of their release workflow.
+- Repos that are not ready to enforce docs quality in CI.
 
-### Analysis (Agent Primitives)
+## Why It Matters
 
-| Command | Description |
-|---------|-------------|
-| `drift coverage [entry]` | Documentation coverage score + undocumented list |
-| `drift lint [entry]` | Cross-reference JSDoc vs code for accuracy issues |
-| `drift examples [entry]` | Validate @example blocks (presence, typecheck, run) |
+- Broken docs create support load, failed onboarding, and release risk.
+- Drift turns docs quality from a manual checklist into a repeatable CI gate.
+- You get machine-readable issues with file/line locations so fixes are fast.
 
-### Extraction
+## How To Adopt
 
-| Command | Description |
-|---------|-------------|
-| `drift extract [entry]` | Extract full API spec as JSON |
-| `drift list [entry]` | List all exports with kinds |
-| `drift get <name> [entry]` | Get single export detail + types |
+1. Run `drift scan` in your package and review issues.
+2. Set a baseline threshold: `drift ci --all --min 80`.
+3. Add the GitHub Action and enforce the gate on pull requests.
 
-### Spec Operations
+Entry auto-detects from `package.json` metadata (`types`, `exports`, `main`, `module`, `bin`).
 
-| Command | Description |
-|---------|-------------|
-| `drift validate <spec.json>` | Validate a spec file |
-| `drift filter <spec.json>` | Filter exports by `--kind`, `--search`, `--tag` |
+Best fit: libraries, SDKs, and CLI packages that publish an exported API surface.
 
-### Comparison
+If you only do one thing: run `drift ci --all --min 80` in pull requests and fail when coverage or lint falls below your bar.
 
-| Command | Description |
-|---------|-------------|
-| `drift diff <old> <new>` | What changed between two specs |
-| `drift breaking <old> <new>` | Detect breaking changes (exit 1 if found) |
-| `drift semver <old> <new>` | Recommend semver bump |
-| `drift changelog <old> <new>` | Generate changelog (markdown or JSON) |
+## Core 5 Commands
 
-### Plumbing
+| Command | When To Use It |
+|---------|----------------|
+| `drift ci --all --min 80` | Fail pull requests when docs quality drops |
+| `drift scan` | Run a full docs audit locally before opening a PR |
+| `drift lint` | Find signature/JSDoc mismatches with file and line data |
+| `drift coverage --min 80` | Enforce a documentation coverage floor |
+| `drift list --undocumented` | Build a backlog of missing docs work |
 
-| Command | Description |
-|---------|-------------|
-| `drift report` | Documentation trends from history |
-| `drift release` | Pre-release documentation audit |
-| `drift context` | Generate agent-readable project state |
-| `drift init` | Create configuration file |
-| `drift config` | Manage configuration (list, get, set) |
-| `drift cache` | Cache management |
+Need full command/flag details? See `docs/cli-reference.md` or run `drift --capabilities`.
 
 ## Output
 
@@ -90,7 +76,7 @@ drift coverage --min 80 || echo "Below threshold"
 
 ## AI Agent Usage
 
-drift ships as a [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code). Install the skill, then use `/drift` inside any TypeScript project:
+drift ships as a [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code). Install the skill, then use `/drift` inside any TypeScript package:
 
 ```
 /drift              # status check, auto-init if needed
@@ -142,7 +128,7 @@ drift extracts a machine-readable spec from your TypeScript, then runs analysis 
 
 ```yaml
 # GitHub Actions
-- uses: driftdev/drift@v1
+- uses: ryanwaits/drift/action@v1
   with:
     min-coverage: 80
 ```
@@ -156,6 +142,26 @@ drift coverage --min 80
 drift lint
 drift examples
 ```
+
+## Pricing & Packaging
+
+- CLI (`@driftdev/cli`): MIT, free
+- Spec (`@driftdev/spec`): MIT, free
+- SDK (`@driftdev/sdk`): BUSL-1.1 (source-available)
+- Hosted plans: org reporting + docs sync automation
+- Join Cloud Pro waitlist: https://github.com/ryanwaits/drift/issues/new?title=Cloud%20Pro%20Waitlist
+- Request Automation pilot: https://github.com/ryanwaits/drift/issues/new?title=Automation%20Pilot%20Request
+- Enterprise contact: https://github.com/ryanwaits/drift/issues/new?title=Enterprise%20Inquiry
+
+See `docs/pricing-packaging.md` for the one-page packaging proposal.
+
+## Choose A Guide
+
+- New to Drift: `docs/getting-started.md`
+- Setting CI gates: `docs/ci-integration.md`
+- Configuring thresholds and discovery: `docs/configuration.md`
+- Building custom tooling: `docs/sdk.md`
+- Full map by role: `docs/guide-map.md`
 
 ## Philosophy
 
@@ -173,4 +179,8 @@ Layer 2: drift CLI           (21 commands — composed + primitives + plumbing)
 
 ## License
 
-MIT
+Dual license by package:
+
+- `@driftdev/cli`: MIT
+- `@driftdev/spec`: MIT
+- `@driftdev/sdk`: BUSL-1.1

@@ -2,6 +2,24 @@
 
 Drift is when your documentation says one thing but your code does another. Drift detects these mismatches by comparing JSDoc annotations and markdown docs against actual TypeScript signatures.
 
+## Who This Is For
+
+- Maintainers debugging why `drift lint` or `drift scan` failed.
+- Teams defining a shared policy for docs quality issues.
+- Engineers deciding which drift classes should block merge.
+
+## Why This Matters
+
+- It converts vague "docs look wrong" feedback into concrete, typed issues.
+- It gives file/line-level diagnostics that can be fixed quickly.
+- It helps teams separate high-risk drift (signature mismatch) from lower-risk gaps.
+
+## How To Use This Page
+
+1. Learn the drift categories below.
+2. Map your common failures to a category.
+3. Set team expectations for which categories must be fixed before merge.
+
 ## How It Works
 
 1. **Extract** -- Drift parses your TypeScript entry point and builds a spec of all exports with their signatures, types, JSDoc, and `@example` blocks.
@@ -100,7 +118,7 @@ JSON output:
     ],
     "count": 2
   },
-  "meta": { "command": "lint", "duration": 450, "version": "0.35.0" },
+  "meta": { "command": "lint", "duration": 450, "version": "0.38.0" },
   "next": { "suggested": "drift-fix skill", "reason": "1 of 2 issues are auto-fixable" }
 }
 ```

@@ -2,6 +2,18 @@
 
 Programmatic API for documentation coverage analysis, drift detection, and spec generation.
 
+## Who This Package Is For
+
+- Teams building custom documentation quality automation.
+- Platform/DX engineers integrating Drift into internal tooling.
+- Services that need programmatic drift analysis, not just CLI output.
+
+## Why Use It
+
+- Build bespoke workflows (reporting, gating, docs sync) with one engine.
+- Access lower-level primitives for analysis, diffing, and validation.
+- Keep behavior consistent between local tools and CI services.
+
 ## Install
 
 ```bash

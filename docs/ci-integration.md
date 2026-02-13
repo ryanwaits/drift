@@ -2,6 +2,24 @@
 
 `drift ci` is purpose-built for CI pipelines. It detects changed packages, runs coverage + lint, posts PR comments, writes GitHub step summaries, and tracks history.
 
+## Who This Is For
+
+- Teams shipping TypeScript packages through pull requests.
+- Repos where docs drift should block merge.
+- Engineering teams that want per-package docs quality signals in monorepos.
+
+## Why Run Drift In CI
+
+- Catch stale docs at review time instead of after release.
+- Enforce a consistent documentation quality bar with thresholds.
+- Produce actionable output (package, export, file, line) for fast fixes.
+
+## How To Adopt
+
+1. Start with `drift ci` on pull requests.
+2. Set `coverage.min` (or `--min`) to your baseline threshold.
+3. Turn on `--all` for full-repo gates once package-level quality is stable.
+
 ## GitHub Actions
 
 ```yaml
@@ -89,6 +107,7 @@ In a monorepo, `drift ci` automatically:
 - Discovers workspace packages from `package.json` workspace globs.
 - Filters to only changed packages (based on `git diff`).
 - Skips private packages unless `--private` is set.
+- Skips packages with no detectable TypeScript entry point.
 - Reports per-package results.
 
 ```bash
@@ -123,7 +142,7 @@ drift ci --all --private
     "min": 80,
     "skipped": ["@scope/internal"]
   },
-  "meta": { "command": "ci", "duration": 2340, "version": "0.35.0" }
+  "meta": { "command": "ci", "duration": 2340, "version": "0.38.0" }
 }
 ```
 

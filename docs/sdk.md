@@ -2,6 +2,18 @@
 
 Package: `@driftdev/sdk`. Use it to integrate drift analysis into your own tools programmatically.
 
+## Who This Is For
+
+- Teams building custom docs tooling or CI/reporting workflows.
+- Platform engineers embedding Drift checks in internal automation.
+- Agents/services that need structured docs diagnostics.
+
+## Why Use The SDK
+
+- Compose Drift primitives directly in your own pipeline.
+- Get richer control than the CLI surface for advanced workflows.
+- Reuse one analysis engine across local tools, CI, and services.
+
 ## Install
 
 ```bash
