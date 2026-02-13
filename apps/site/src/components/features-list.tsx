@@ -63,14 +63,14 @@ const features = [
   },
   {
     prefix: '',
-    link: { label: 'GitHub Action', href: 'https://github.com/ryanwaits/drift' },
+    link: { label: 'GitHub Action', href: 'https://github.com/ryanwaits/drift/tree/main/action' },
     suffix: ' with PR comments, step summaries, and release gates',
     text: 'action',
   },
   {
     prefix: '',
-    link: { label: 'AI-powered doc sync', href: 'https://github.com/ryanwaits/drift' },
-    suffix: ' — auto-generates PRs to update external docs on breaking changes',
-    text: 'ai-sync',
+    link: { label: 'Hosted plans', href: '/pricing' },
+    suffix: ' for org-level reporting and docs sync automation at scale',
+    text: 'pricing',
   },
 ];

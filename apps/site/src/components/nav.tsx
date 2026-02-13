@@ -16,10 +16,16 @@ export function Nav() {
         </div>
         <div className="flex items-center gap-5 text-sm">
           <a
-            href="https://github.com/ryanwaits/drift"
+            href="https://github.com/ryanwaits/drift/tree/main/docs"
             className="text-text-muted transition-colors hover:text-text"
           >
             Docs
+          </a>
+          <a href="/pricing" className="text-text-muted transition-colors hover:text-text">
+            Pricing
+          </a>
+          <a href="/contact" className="text-text-muted transition-colors hover:text-text">
+            Contact
           </a>
           <a
             href="https://github.com/ryanwaits/drift"
@@ -43,11 +49,14 @@ function SearchIcon() {
       height="14"
       viewBox="0 0 24 24"
       fill="none"
+      role="img"
+      aria-label="Search"
       stroke="currentColor"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
+      <title>Search</title>
       <circle cx="11" cy="11" r="8" />
       <path d="m21 21-4.3-4.3" />
     </svg>

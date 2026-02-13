@@ -1,41 +1,40 @@
 const features = [
   {
-    label: 'CLI',
-    title: 'Scan & Report',
+    label: 'CI/CD',
+    title: 'PR Gate',
     description: (
       <>
-        Run scan to detect missing JSDoc, outdated README sections, and undocumented exports across
-        your entire package.
+        Run Drift in CI to fail pull requests when docs drift from shipped TypeScript API changes.
       </>
     ),
   },
   {
-    label: 'CI/CD',
-    title: 'GitHub Action',
+    label: 'CLI',
+    title: 'Triage Fast',
     description: (
       <>
-        Add to your CI pipeline. Block PRs with doc regressions and auto-generate fix suggestions as
-        review comments.
+        Use primitives like scan, lint, coverage, and diff to quickly find exactly what broke and
+        where.
+      </>
+    ),
+  },
+  {
+    label: 'Cloud',
+    title: 'Hosted Reporting',
+    description: (
+      <>
+        Add a paid hosted layer for drift dashboards, org-level trends, alerts, and multi-repo docs
+        sync automation.
       </>
     ),
   },
   {
     label: 'SDK',
-    title: 'Programmatic API',
+    title: 'Automation API',
     description: (
       <>
-        Use the TypeScript SDK to build custom doc tooling. Analyze coverage, generate reports, and
-        integrate with your workflow.
-      </>
-    ),
-  },
-  {
-    label: 'Spec',
-    title: 'Coverage Spec',
-    description: (
-      <>
-        A formal specification for measuring documentation coverage. Consistent scoring across
-        JSDoc, README, and examples.
+        Build custom workflows on top of Drift using the SDK and Action for CI checks, release
+        gates, and docs updates.
       </>
     ),
   },

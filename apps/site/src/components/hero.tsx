@@ -24,9 +24,8 @@ export async function Hero() {
           drift
         </h1>
         <p className="mt-6 max-w-md text-lg leading-relaxed text-text-muted">
-          Documentation coverage for <span className="font-medium text-text">TypeScript</span>. Scan
-          for missing JSDoc, outdated READMEs, and undocumented exports — in your{' '}
-          <span className="font-medium text-text">CLI</span> or{' '}
+          Fail PRs when docs drift. Drift checks exported TypeScript APIs for JSDoc accuracy,
+          missing coverage, and stale markdown references in your{' '}
           <span className="font-medium text-text">CI pipeline</span>.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
@@ -34,13 +33,19 @@ export async function Hero() {
             href="#overview"
             className="inline-flex h-10 items-center rounded-lg bg-cta px-5 text-sm font-medium text-white transition-opacity hover:opacity-90"
           >
-            Get Started
+            Gate PRs in CI
           </a>
           <a
-            href="https://github.com/ryanwaits/drift"
+            href="/pricing#start"
             className="inline-flex h-10 items-center rounded-lg border border-border px-5 text-sm font-medium text-text transition-colors hover:bg-card-bg"
           >
-            Documentation
+            Join Cloud Waitlist
+          </a>
+          <a
+            href="https://github.com/ryanwaits/drift/tree/main/docs"
+            className="inline-flex h-10 items-center rounded-lg border border-border px-5 text-sm font-medium text-text transition-colors hover:bg-card-bg"
+          >
+            View Docs
           </a>
         </div>
       </div>
@@ -52,7 +57,7 @@ export async function Hero() {
         <div className="flex flex-wrap gap-3">
           <ShieldBadge label="stars" value={stars} />
           <ShieldBadge label="coverage" value="100%" variant="green" />
-          <ShieldBadge label="license" value="MIT" />
+          <ShieldBadge label="license" value="MIT + BUSL" />
         </div>
       </div>
     </section>
