@@ -41,6 +41,9 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Build workspace packages
+        run: bun run build
+
       - name: Run CLI tests
         run: cd packages/cli && bun test
 
