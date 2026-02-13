@@ -42,24 +42,16 @@ jobs:
         run: bun install
 
       - name: Run CLI tests
-        env:
-          HOME: ${{ runner.temp }}
-        run: cd packages/cli && bun run test
+        run: cd packages/cli && bun test
 
       - name: Run SDK tests
-        env:
-          HOME: ${{ runner.temp }}
         run: cd packages/sdk && bun test
 
       - name: Scan thresholds
-        env:
-          HOME: ${{ runner.temp }}
         run: |
           bun run packages/cli/src/drift.ts scan --cwd packages/spec --min 10
           bun run packages/cli/src/drift.ts scan --cwd packages/cli --min 60
           bun run packages/cli/src/drift.ts scan --cwd packages/sdk --min 80
 
       - name: CI threshold
-        env:
-          HOME: ${{ runner.temp }}
         run: bun run packages/cli/src/drift.ts ci --all --min 10
