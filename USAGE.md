@@ -375,7 +375,7 @@ console.log('Breaking changes:', diff.breaking);
 ### GitHub Actions
 
 ```yaml
-- uses: driftdev/drift@v1
+- uses: ryanwaits/drift/action@v1
   with:
     min-coverage: 80
 ```

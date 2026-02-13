@@ -1,28 +1,30 @@
-name: Drift
+name: Drift Dogfood
 
 on:
   pull_request:
     branches: [main, master]
     paths:
-      - 'packages/sdk/**'
-      - 'packages/spec/**'
-      - 'packages/cli/**'
+      - 'packages/**'
+      - 'action/**'
+      - 'docs/**'
+      - '.github/workflows/drift.yml'
+      - 'README.md'
       - 'package.json'
       - 'bun.lock'
-      - '.github/workflows/drift.yml'
   push:
     branches: [main, master]
     paths:
-      - 'packages/sdk/**'
-      - 'packages/spec/**'
-      - 'packages/cli/**'
+      - 'packages/**'
+      - 'action/**'
+      - 'docs/**'
+      - '.github/workflows/drift.yml'
+      - 'README.md'
       - 'package.json'
       - 'bun.lock'
-      - '.github/workflows/drift.yml'
 
 jobs:
-  check:
-    name: Documentation Coverage
+  gate:
+    name: Dogfood Gate
     runs-on: ubuntu-latest
 
     steps:
@@ -39,105 +41,17 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Generate specs (head)
+      - name: Run CLI tests
+        run: cd packages/cli && bun test
+
+      - name: Run SDK tests
+        run: cd packages/sdk && bun test
+
+      - name: Scan thresholds
         run: |
-          bunx @driftdev/cli spec --package @driftdev/sdk
-          bunx @driftdev/cli spec --package @driftdev/spec
-        continue-on-error: true
+          bun run packages/cli/src/drift.ts scan --cwd packages/spec --min 10
+          bun run packages/cli/src/drift.ts scan --cwd packages/cli --min 60
+          bun run packages/cli/src/drift.ts scan --cwd packages/sdk --min 80
 
-      - name: Save head specs for diff
-        if: github.event_name == 'pull_request'
-        run: |
-          cp .drift/@driftdev/sdk/openpkg.json /tmp/sdk-head.json 2>/dev/null || true
-          cp .drift/@driftdev/spec/openpkg.json /tmp/spec-head.json 2>/dev/null || true
-
-      - name: Generate base specs
-        if: github.event_name == 'pull_request'
-        run: |
-          git checkout ${{ github.event.pull_request.base.sha }}
-          bunx @driftdev/cli spec --package @driftdev/sdk 2>/dev/null || true
-          bunx @driftdev/cli spec --package @driftdev/spec 2>/dev/null || true
-          cp .drift/@driftdev/sdk/openpkg.json /tmp/sdk-base.json 2>/dev/null || echo '{"openpkg":"0.4.0","exports":[]}' > /tmp/sdk-base.json
-          cp .drift/@driftdev/spec/openpkg.json /tmp/spec-base.json 2>/dev/null || echo '{"openpkg":"0.4.0","exports":[]}' > /tmp/spec-base.json
-          git checkout ${{ github.event.pull_request.head.sha }}
-          # Restore head specs
-          mkdir -p .drift/@driftdev/sdk .drift/@driftdev/spec
-          cp /tmp/sdk-head.json .drift/@driftdev/sdk/openpkg.json 2>/dev/null || true
-          cp /tmp/spec-head.json .drift/@driftdev/spec/openpkg.json 2>/dev/null || true
-        continue-on-error: true
-
-      - name: Run diff (SDK)
-        if: github.event_name == 'pull_request'
-        id: diff
-        run: |
-          if [ -f /tmp/sdk-base.json ] && [ -f /tmp/sdk-head.json ]; then
-            DIFF_OUTPUT=$(bunx @driftdev/cli diff /tmp/sdk-base.json /tmp/sdk-head.json --format json)
-            echo "diff<<EOF" >> $GITHUB_OUTPUT
-            echo "$DIFF_OUTPUT" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          fi
-        continue-on-error: true
-
-      - name: Check coverage
-        run: |
-          bunx @driftdev/cli check --package @driftdev/sdk --min-health 34
-          bunx @driftdev/cli check --package @driftdev/spec --min-health 10
-
-      - name: Comment on PR
-        if: github.event_name == 'pull_request' && steps.diff.outputs.diff
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const diff = JSON.parse(process.env.DIFF_OUTPUT || '{}');
-
-            const coverageEmoji = diff.coverageDelta > 0 ? '📈' : diff.coverageDelta < 0 ? '📉' : '➡️';
-            const deltaStr = diff.coverageDelta > 0 ? `+${diff.coverageDelta}` : String(diff.coverageDelta);
-
-            let body = `## ${coverageEmoji} Drift Report\n\n`;
-            body += `**Coverage:** ${diff.oldCoverage}% → ${diff.newCoverage}% (${deltaStr}%)\n\n`;
-
-            if (diff.newUndocumented?.length > 0) {
-              body += `### ⚠️ New Undocumented Exports\n`;
-              body += diff.newUndocumented.slice(0, 10).map(id => `- \`${id}\``).join('\n');
-              if (diff.newUndocumented.length > 10) {
-                body += `\n- ... and ${diff.newUndocumented.length - 10} more`;
-              }
-              body += '\n\n';
-            }
-
-            if (diff.driftIntroduced > 0) {
-              body += `### 🔀 Drift\n`;
-              body += `+${diff.driftIntroduced} new drift issue(s)\n\n`;
-            }
-
-            if (diff.driftResolved > 0) {
-              body += `✅ ${diff.driftResolved} drift issue(s) resolved\n\n`;
-            }
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const botComment = comments.find(c =>
-              c.user?.type === 'Bot' && c.body?.includes('Drift Report')
-            );
-
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body,
-              });
-            }
-        env:
-          DIFF_OUTPUT: ${{ steps.diff.outputs.diff }}
+      - name: CI threshold
+        run: bun run packages/cli/src/drift.ts ci --all --min 10

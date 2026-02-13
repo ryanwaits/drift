@@ -45,10 +45,7 @@ Search your docs for: ${searchTerms}
 Clone this repo and run:
 
 \`\`\`bash
-# With drift skill
-/drift fix-docs --source ${opts.sourceRepo}#${opts.sourcePR}
-
-# Or paste this prompt into Claude Code:
+# Paste this prompt into Claude Code:
 \`\`\`
 
 <details>

@@ -52,12 +52,6 @@ inputs:
     required: false
     default: 'false'
 
-outputs:
-  coverage:
-    description: 'Current coverage percentage'
-  health:
-    description: 'Current health score'
-
 runs:
   using: 'composite'
   steps:
@@ -75,6 +69,7 @@ runs:
 
     - name: Run drift ci
       if: github.event_name == 'pull_request' && github.event.action != 'closed'
+      id: drift_ci
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
@@ -87,7 +82,7 @@ runs:
         if [ "${{ inputs.include-private }}" = "true" ]; then
           ARGS="$ARGS --private"
         fi
-        drift ci $ARGS
+        drift ci $ARGS --min "${{ inputs.min-coverage }}"
 
     - name: Validate examples
       if: >
@@ -117,9 +112,8 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         ANTHROPIC_API_KEY: ${{ inputs.anthropic-key }}
       run: |
-        cd $GITHUB_ACTION_PATH
-        bun install
-        bun run docs-pr.ts
+        bun install --cwd $GITHUB_ACTION_PATH
+        bun run $GITHUB_ACTION_PATH/docs-pr.ts
 
     - name: Docs issue on merge
       if: >
@@ -128,6 +122,7 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
         GH_TOKEN: ${{ inputs.github-token }}
       run: bun run $GITHUB_ACTION_PATH/docs-issue.ts
 
