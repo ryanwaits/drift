@@ -89,8 +89,8 @@ const DEFAULT_FALLBACK_ORDER: PackageManager[] = ['bun', 'npm'];
  * @param fs - FileSystem implementation for package manager detection
  * @param cwd - Working directory to install in
  * @param runCommand - Function to run shell commands
- * @param options - Installation options
- * @returns Result of the installation attempt
+ * @param [options] - Installation options
+ * @returns Promise resolving to the result of the installation attempt
  *
  * @example
  * ```typescript

@@ -26,7 +26,7 @@ export interface ParsedGitHubUrl {
  * - git@github.com:owner/repo.git
  *
  * @param input - GitHub URL or shorthand
- * @param defaultRef - Default ref if not specified in URL (default: 'main')
+ * @param [defaultRef] - Default ref if not specified in URL (default: 'main')
  * @returns Parsed components
  * @throws Error if the URL format is invalid
  *

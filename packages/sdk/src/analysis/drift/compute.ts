@@ -91,7 +91,7 @@ export function buildExportRegistry(spec: OpenPkgSpec): ExportRegistry {
  * Compute drift for all exports in a spec.
  *
  * @param spec - The OpenPkg spec to analyze
- * @param options - Optional config including moduleGraph for cross-module validation
+ * @param [options] - Optional config including moduleGraph for cross-module validation
  * @returns Drift results per export
  */
 export function computeDrift(spec: OpenPkgSpec, options?: ComputeDriftOptions): DriftResult {
@@ -110,8 +110,8 @@ export function computeDrift(spec: OpenPkgSpec, options?: ComputeDriftOptions): 
  * Compute drift for a single export.
  *
  * @param entry - The export to analyze
- * @param registry - Registry of known exports and types for validation
- * @param options - Optional config including moduleGraph for cross-module validation
+ * @param [registry] - Registry of known exports and types for validation
+ * @param [options] - Optional config including moduleGraph for cross-module validation
  * @returns Array of drift issues detected
  */
 export function computeExportDrift(

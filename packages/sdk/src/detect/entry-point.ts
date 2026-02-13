@@ -18,8 +18,8 @@ import { readPackageJson, safeParseJson } from './utils';
  * 5. Common fallback paths
  *
  * @param fs - FileSystem implementation
- * @param packagePath - Path to package directory (default: ".")
- * @returns Entry point info
+ * @param [packagePath] - Path to package directory (default: ".")
+ * @returns Promise resolving to entry point info
  * @throws Error if no entry point can be found
  */
 export async function detectEntryPoint(fs: FileSystem, packagePath = '.'): Promise<EntryPointInfo> {
@@ -226,7 +226,7 @@ async function resolveToSource(
  *
  * @param fs - FileSystem implementation
  * @param filePath - Absolute or relative path to the source file
- * @returns Entry point info and package path, or null if not found
+ * @returns Promise resolving to entry point info and package path, or null if not found
  */
 export async function findEntryPointForFile(
   fs: FileSystem,
@@ -257,7 +257,7 @@ export async function findEntryPointForFile(
  *
  * @param fs - FileSystem implementation
  * @param filePath - Path to check
- * @returns True if the file is the package entry point
+ * @returns Promise resolving to true if the file is the package entry point
  */
 export async function isPackageEntryPoint(fs: FileSystem, filePath: string): Promise<boolean> {
   const result = await findEntryPointForFile(fs, filePath);

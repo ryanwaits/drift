@@ -53,8 +53,8 @@ function mapMemberChangeType(memberChangeType: MemberChange['changeType']): Docs
  *
  * @param diff - The spec diff result
  * @param markdownFiles - Parsed markdown files
- * @param newExportNames - All export names in the new spec (for missing docs detection)
- * @param memberChanges - Optional member-level changes for granular detection
+ * @param [newExportNames] - All export names in the new spec (for missing docs detection)
+ * @param [memberChanges] - Optional member-level changes for granular detection
  */
 export function analyzeDocsImpact(
   diff: SpecDiff,

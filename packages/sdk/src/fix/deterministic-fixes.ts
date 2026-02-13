@@ -103,8 +103,8 @@ export function generateFix(
  * Generate all fixes for an export's drift issues.
  *
  * @param exportEntry - The export to generate fixes for
- * @param existingPatch - Optional existing JSDoc patch to merge with
- * @param driftList - Optional drift list from DriftSpec (if not provided, reads from exportEntry.docs?.drift for backward compat)
+ * @param [existingPatch] - Optional existing JSDoc patch to merge with
+ * @param [driftList] - Optional drift list from DriftSpec (if not provided, reads from exportEntry.docs?.drift for backward compat)
  */
 export function generateFixesForExport(
   exportEntry: SpecExport,

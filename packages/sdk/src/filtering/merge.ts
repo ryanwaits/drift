@@ -37,7 +37,7 @@ function unique(values: string[]): string[] {
 /**
  * Parse a comma-separated list flag into an array.
  *
- * @param value - String or string array from CLI flag
+ * @param [value] - String or string array from CLI flag
  * @returns Parsed array, or undefined if empty
  *
  * @example

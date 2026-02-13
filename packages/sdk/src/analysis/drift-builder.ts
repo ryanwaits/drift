@@ -86,7 +86,7 @@ interface ExportAnalysisIntermediate {
  * Build a Drift spec from an OpenPkg spec.
  *
  * @param options - Build options
- * @returns Drift specification with coverage analysis
+ * @returns Promise resolving to a Drift specification with coverage analysis
  */
 export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftSpec> {
   const {

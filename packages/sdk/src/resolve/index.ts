@@ -44,7 +44,7 @@ export interface ResolvedTarget {
  *
  * @param fs - FileSystem implementation (NodeFileSystem or SandboxFileSystem)
  * @param options - Resolution options
- * @returns Resolved target info
+ * @returns Promise resolving to resolved target info
  * @throws Error if monorepo package not found, or entry point detection fails
  *
  * @example

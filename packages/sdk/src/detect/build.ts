@@ -47,8 +47,8 @@ const BUILD_TOOL_PATTERNS = [
  * Detect build configuration and exotic project indicators.
  *
  * @param fs - FileSystem implementation
- * @param packagePath - Path to package directory (default: ".")
- * @returns Build info including scripts and exotic indicators
+ * @param [packagePath] - Path to package directory (default: ".")
+ * @returns Promise resolving to build info including scripts and exotic indicators
  */
 export async function detectBuildInfo(fs: FileSystem, packagePath = '.'): Promise<BuildInfo> {
   const pkgJson = await readPackageJson(fs, packagePath);

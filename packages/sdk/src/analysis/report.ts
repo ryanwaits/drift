@@ -15,8 +15,8 @@ import { isExportDocumented } from './health';
  * Generate a Drift report from an OpenPkg spec.
  *
  * @param spec - The pure OpenPkg spec to analyze
- * @param openpkgPath - Path to the openpkg spec file (for source tracking)
- * @returns A Drift report with coverage analysis
+ * @param [openpkgPath] - Path to the openpkg spec file (for source tracking)
+ * @returns Promise resolving to a Drift report with coverage analysis
  *
  * @example
  * ```ts
@@ -319,7 +319,7 @@ export function renderApiSurface(spec: OpenPkg): string {
   lines.push(`# API Surface: ${spec.meta.name}${version}`);
   lines.push('');
   lines.push('> This file is auto-generated. Do not edit manually.');
-  lines.push('> Run `drift spec --format api-surface` to regenerate.');
+  lines.push('> Regenerate from source with `drift extract` in this package.');
   lines.push('');
 
   // Group exports by kind and sort alphabetically

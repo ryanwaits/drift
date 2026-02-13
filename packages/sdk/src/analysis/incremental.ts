@@ -294,7 +294,7 @@ export function findOrphanedTempFiles(
 /**
  * Clean up orphaned temp files older than maxAge.
  *
- * @param maxAge - Maximum age in milliseconds (default: 1 hour)
+ * @param [maxAge] - Maximum age in milliseconds (default: 1 hour)
  */
 export function cleanupOrphanedTempFiles(
   tempDir: string = os.tmpdir(),

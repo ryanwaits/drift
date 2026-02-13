@@ -65,8 +65,8 @@ import type { AnalyzeProjectOptions, FileSystem, ProjectInfo } from './types';
  * list of available packages.
  *
  * @param fs - FileSystem implementation (NodeFileSystem or SandboxFileSystem)
- * @param options - Options including targetPackage for monorepos
- * @returns Complete project info
+ * @param [options] - Options including targetPackage for monorepos
+ * @returns Promise that resolves to complete project info
  * @throws Error if monorepo detected without targetPackage specified
  * @throws Error if targetPackage not found in monorepo
  *

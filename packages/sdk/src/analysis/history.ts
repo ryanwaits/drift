@@ -209,7 +209,7 @@ export function loadSnapshots(cwd: string): CoverageSnapshot[] {
  *
  * @param spec - Current OpenPkg spec
  * @param cwd - Working directory
- * @param options - Optional git metadata
+ * @param [options] - Optional git metadata
  * @returns Trend data with history and delta
  */
 export function getTrend(
@@ -276,7 +276,7 @@ export function formatDelta(delta: number): string {
  * Uses ~/.drift/projects/<slug>/ for storage.
  *
  * @param cwd - Working directory (will resolve to project root)
- * @param keepCount - Number of snapshots to keep (default: 100)
+ * @param [keepCount] - Number of snapshots to keep (default: 100)
  * @returns Number of snapshots deleted
  */
 export function pruneHistory(cwd: string, keepCount = 100): number {
@@ -413,7 +413,7 @@ export function generateWeeklySummaries(snapshots: CoverageSnapshot[]): WeeklySu
  *
  * @param spec - Current OpenPkg spec
  * @param cwd - Working directory
- * @param options - Optional git metadata
+ * @param [options] - Optional git metadata
  * @returns Extended trend analysis
  */
 export function getExtendedTrend(

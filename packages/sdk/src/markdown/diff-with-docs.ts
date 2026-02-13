@@ -56,7 +56,7 @@ export interface DiffWithDocsOptions {
  *
  * @param oldSpec - Previous version of the spec
  * @param newSpec - Current version of the spec
- * @param options - Options including markdown files to analyze
+ * @param [options] - Options including markdown files to analyze
  * @returns Extended diff result with docs impact
  *
  * @example
