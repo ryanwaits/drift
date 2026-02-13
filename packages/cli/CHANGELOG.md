@@ -1,5 +1,21 @@
 # @doccov/cli
 
+## 0.39.0
+
+### Minor Changes
+
+- Improve release readiness and docs-quality workflows:
+
+  - Expand CLI entry detection to support richer `package.json` layouts (`exports`, `module`, `bin`) and CLI-style source resolution.
+  - Make `drift ci` skip packages with no detectable entry point instead of failing the entire run.
+  - Align package metadata and docs links with the canonical repository.
+  - Clarify SDK/docs guidance for API-surface regeneration and async return semantics.
+
+### Patch Changes
+
+- Updated dependencies
+  - @driftdev/sdk@0.39.0
+
 ## 0.38.0
 
 ### Minor Changes
