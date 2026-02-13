@@ -20,4 +20,10 @@ describe('detectEntry', () => {
     expect(entry).toContain('src/index.ts');
     expect(entry).not.toContain('dist/src');
   });
+
+  test('bin-based CLI layout resolves dist/drift.js to src/drift.ts', () => {
+    const cwd = path.join(FIXTURES, 'cli-bin-layout');
+    const entry = detectEntry(cwd);
+    expect(entry).toBe(path.join(cwd, 'src/drift.ts'));
+  });
 });

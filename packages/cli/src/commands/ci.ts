@@ -150,7 +150,7 @@ function buildPRComment(results: PackageResult[], _pass: boolean, commit: string
   lines.push('---');
   const ts = new Date().toISOString();
   const sha = commit ?? '';
-  lines.push(`*[Drift](https://github.com/driftdev/drift) · ${ts}${sha ? ` · ${sha}` : ''}*`);
+  lines.push(`*[Drift](https://github.com/ryanwaits/drift) · ${ts}${sha ? ` · ${sha}` : ''}*`);
 
   return lines.join('\n');
 }
@@ -214,8 +214,32 @@ export function registerCiCommand(program: Command): void {
             continue;
           }
 
+          let entryFile: string;
           try {
-            const entryFile = detectEntry(absDir);
+            entryFile = detectEntry(absDir);
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            if (
+              message.includes('Could not detect entry point') ||
+              message.includes('Monorepo detected')
+            ) {
+              skipped.push(`${name} (no detectable entry)`);
+              continue;
+            }
+
+            results.push({
+              name,
+              coverage: 0,
+              coveragePass: false,
+              lintIssues: 0,
+              lintPass: true,
+              exports: 0,
+              pass: false,
+            });
+            continue;
+          }
+
+          try {
             const { spec } = await cachedExtract(entryFile);
 
             // Coverage
@@ -242,7 +266,7 @@ export function registerCiCommand(program: Command): void {
 
             if (gh.isPR && gh.baseRef) {
               try {
-                const relEntry = path.relative(cwd, detectEntry(absDir));
+                const relEntry = path.relative(cwd, entryFile);
                 const oldSpec = await extractSpecFromRef(`origin/${gh.baseRef}`, relEntry, cwd);
                 const diffResult = diffSpec(oldSpec, spec);
                 const breaking = categorizeBreakingChanges(diffResult.breaking, oldSpec, spec);

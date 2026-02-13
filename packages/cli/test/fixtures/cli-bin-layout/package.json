@@ -1,0 +1,8 @@
+{
+  "name": "@test/cli-bin-layout",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "drift": "./dist/drift.js"
+  }
+}

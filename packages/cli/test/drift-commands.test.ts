@@ -168,7 +168,7 @@ describe('drift commands integration', () => {
       }
     }
 
-    expect(issues.length).toBe(3);
+    expect(issues.length).toBe(4);
 
     const exportNames = issues.map((i) => i.export);
     expect(exportNames).toContain('fetchUser');

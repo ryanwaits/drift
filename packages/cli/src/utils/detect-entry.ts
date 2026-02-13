@@ -7,9 +7,10 @@ import { detectWorkspaces, resolveGlobs } from './workspaces';
  *
  * Priority:
  * 1. package.json types/typings
- * 2. package.json exports["."].types
- * 3. package.json main (resolve .js → .ts)
- * 4. Fallback paths: src/index.ts, index.ts, etc.
+ * 2. package.json exports["."] (types/import/require/default)
+ * 3. package.json main/module (resolve .js → .ts)
+ * 4. package.json bin (resolve dist/bin files to source)
+ * 5. Fallback paths: src/index.ts, index.ts, etc.
  */
 export function detectEntry(cwd = process.cwd()): string {
   const pkgPath = path.join(cwd, 'package.json');
@@ -25,21 +26,28 @@ export function detectEntry(cwd = process.cwd()): string {
         if (resolved) return resolved;
       }
 
-      // 2. exports["."].types
+      // 2. exports["."] (types/import/require/default)
       if (pkg.exports && typeof pkg.exports === 'object') {
         const dot = pkg.exports['.'];
-        if (dot && typeof dot === 'object' && 'types' in dot) {
-          const t = dot.types;
-          if (t && typeof t === 'string') {
-            const resolved = resolveToSource(cwd, t);
-            if (resolved) return resolved;
-          }
+        for (const candidate of collectExportCandidates(dot)) {
+          const resolved = resolveToSource(cwd, candidate);
+          if (resolved) return resolved;
         }
       }
 
-      // 3. main
+      // 3. main/module
       if (pkg.main && typeof pkg.main === 'string') {
         const resolved = resolveToSource(cwd, pkg.main);
+        if (resolved) return resolved;
+      }
+      if (pkg.module && typeof pkg.module === 'string') {
+        const resolved = resolveToSource(cwd, pkg.module);
+        if (resolved) return resolved;
+      }
+
+      // 4. bin
+      for (const binPath of collectBinCandidates(pkg.bin)) {
+        const resolved = resolveToSource(cwd, binPath);
         if (resolved) return resolved;
       }
     } catch {
@@ -47,8 +55,16 @@ export function detectEntry(cwd = process.cwd()): string {
     }
   }
 
-  // 4. Fallback paths
-  const fallbacks = ['src/index.ts', 'src/index.tsx', 'src/main.ts', 'index.ts', 'lib/index.ts'];
+  // 5. Fallback paths
+  const fallbacks = [
+    'src/index.ts',
+    'src/index.tsx',
+    'src/main.ts',
+    'src/drift.ts',
+    'src/cli.ts',
+    'index.ts',
+    'lib/index.ts',
+  ];
 
   for (const f of fallbacks) {
     const full = path.join(cwd, f);
@@ -110,7 +126,24 @@ function resolveToSource(cwd: string, filePath: string): string | null {
         candidates.push(stripped.replace(/\.js$/, '.ts'));
         candidates.push(stripped.replace(/\.d\.ts$/, '.ts'));
       }
+
+      // dist/drift.js → src/drift.ts (CLI-style package entrypoints)
+      const rest = normalized.replace(new RegExp(`^${outDir}/`), '');
+      const fileName = path.basename(rest);
+      const stem = fileName
+        .replace(/\.d\.[mc]?ts$/, '')
+        .replace(/\.[mc]?js$/, '')
+        .replace(/\.[mc]?ts$/, '');
+      if (stem && stem !== 'index') {
+        candidates.push(`src/${stem}.ts`);
+      }
     }
+  }
+
+  // Extensionless entry paths
+  if (!/\.[a-z]+$/i.test(normalized)) {
+    candidates.push(`${normalized}.ts`);
+    candidates.push(`${normalized}.tsx`);
   }
 
   for (const c of candidates) {
@@ -121,4 +154,48 @@ function resolveToSource(cwd: string, filePath: string): string | null {
   }
 
   return null;
+}
+
+function collectExportCandidates(dotExport: unknown): string[] {
+  if (typeof dotExport === 'string') return [dotExport];
+  if (!dotExport || typeof dotExport !== 'object') return [];
+
+  const obj = dotExport as Record<string, unknown>;
+  const prioritizedKeys = ['types', 'import', 'default', 'require', 'module', 'node'];
+
+  const candidates: string[] = [];
+  for (const key of prioritizedKeys) {
+    candidates.push(...collectStringValues(obj[key]));
+  }
+  for (const [key, value] of Object.entries(obj)) {
+    if (prioritizedKeys.includes(key)) continue;
+    candidates.push(...collectStringValues(value));
+  }
+
+  return Array.from(new Set(candidates));
+}
+
+function collectBinCandidates(binField: unknown): string[] {
+  if (typeof binField === 'string') return [binField];
+  if (!binField || typeof binField !== 'object') return [];
+
+  const out: string[] = [];
+  for (const value of Object.values(binField as Record<string, unknown>)) {
+    if (typeof value === 'string') out.push(value);
+  }
+  return Array.from(new Set(out));
+}
+
+function collectStringValues(value: unknown, depth = 0): string[] {
+  if (depth > 4 || value === null || value === undefined) return [];
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectStringValues(item, depth + 1));
+  }
+  if (typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>).flatMap((item) =>
+      collectStringValues(item, depth + 1),
+    );
+  }
+  return [];
 }
