@@ -1,5 +1,15 @@
 # @doccov/sdk
 
+## 1.2.0
+
+### Minor Changes
+
+- 52872dd: Define drift-spec: language-agnostic input types (ApiSpec, ApiExport, ApiTag, etc.) and migrate all drift analysis to use them. openpkg-ts becomes one adapter via toApiSpec() converter. Exports new types from `@driftdev/sdk/types` for external adapter authors.
+
+### Patch Changes
+
+- 52872dd: Fix pre-existing TypeScript compilation errors: sync DriftCategory prose variant, fix Zod type arg, add globSync declaration, install @types/mdast, remove duplicate DriftReport interface.
+
 ## 1.1.0
 
 ### Minor Changes
