@@ -1,4 +1,4 @@
-import type { DriftSpec } from '@driftdev/spec';
+import type { DriftSpec } from '../spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 
 /**

@@ -2,7 +2,7 @@ import type { ValidateFunction } from 'ajv';
 import Ajv from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 
-import schemaV100 from '../schemas/v1.0.0/drift.schema.json';
+import schemaV100 from '../../schemas/v1.0.0/drift.schema.json';
 import type { DriftSpec } from './types';
 
 export type DriftSchemaVersion = '1.0.0' | 'latest';

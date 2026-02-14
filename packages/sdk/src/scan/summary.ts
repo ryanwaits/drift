@@ -2,7 +2,7 @@
  * Utilities for extracting summary statistics from OpenPkg specs.
  */
 
-import type { DriftSpec } from '@driftdev/spec';
+import type { DriftSpec } from '../spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { getExportAnalysis } from '../analysis/lookup';
 

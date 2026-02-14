@@ -1,4 +1,4 @@
-import type { ApiSurfaceResult, DocumentationHealth } from '@driftdev/spec';
+import type { ApiSurfaceResult, DocumentationHealth } from '../spec';
 import type { CategorizedDrift, DriftCategory, SpecDocDrift } from '../analysis/drift/types';
 
 /**

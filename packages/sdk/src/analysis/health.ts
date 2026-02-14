@@ -1,4 +1,4 @@
-import type { DocumentationHealth, DriftCategory, MissingDocRule } from '@driftdev/spec';
+import type { DocumentationHealth, DriftCategory, MissingDocRule } from '../spec';
 import type { SpecExport } from '@openpkg-ts/spec';
 
 /**

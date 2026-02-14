@@ -4,7 +4,7 @@
  * These utilities simplify accessing per-export coverage/drift data
  * when working with the composition pattern (OpenPkg + DriftSpec).
  */
-import type { DriftIssue, DriftSpec, ExportAnalysis, MissingDocRule } from '@driftdev/spec';
+import type { DriftIssue, DriftSpec, ExportAnalysis, MissingDocRule } from '../spec';
 import type { SpecExport } from '@openpkg-ts/spec';
 
 /**

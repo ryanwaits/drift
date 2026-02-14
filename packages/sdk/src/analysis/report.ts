@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { DriftSpec } from '@driftdev/spec';
+import type { DriftSpec } from '../spec';
 import type { OpenPkg, SpecExport, SpecSignature, SpecType } from '@openpkg-ts/spec';
 import {
   type CoverageSummary,

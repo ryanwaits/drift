@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.41.0
+
+### Minor Changes
+
+- Consolidate @driftdev/spec into @driftdev/sdk. Spec types, constants, and JSON schema validation are now exported directly from the SDK. The @driftdev/spec package is removed.
+
 ## 0.39.0
 
 ### Patch Changes

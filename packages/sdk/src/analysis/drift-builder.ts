@@ -8,8 +8,8 @@ import type {
   ForgottenExport,
   MissingDocRule,
   TypeReferenceLocation,
-} from '@driftdev/spec';
-import { DRIFT_CATEGORIES } from '@driftdev/spec';
+} from '../spec';
+import { DRIFT_CATEGORIES } from '../spec';
 import type { SpecExport } from '@openpkg-ts/spec';
 import { isFixableDrift } from '../fix';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';

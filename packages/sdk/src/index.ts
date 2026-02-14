@@ -20,6 +20,35 @@
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Spec Types & Validation (from consolidated @driftdev/spec)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type {
+  ApiSurfaceResult,
+  DocumentationHealth,
+  DriftIssue,
+  DriftSpec,
+  DriftSpecVersion,
+  ExampleAnalysis,
+  ExampleRuntimeDrift,
+  ExampleTypecheckError,
+  ExportAnalysis,
+  ForgottenExport,
+  MissingDocRule,
+  TypeReferenceLocation,
+} from './spec';
+export type { DriftSchemaVersion, DriftSpecError } from './spec';
+export {
+  assertDriftSpec,
+  getAvailableDriftVersions,
+  getDriftValidationErrors,
+  LATEST_VERSION,
+  SCHEMA_URL,
+  SCHEMA_VERSION,
+  validateDriftSpec,
+} from './spec';
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Core Analysis API
 // ─────────────────────────────────────────────────────────────────────────────
 

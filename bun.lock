@@ -40,13 +40,12 @@
     },
     "packages/cli": {
       "name": "@driftdev/cli",
-      "version": "0.40.0",
+      "version": "0.41.0",
       "bin": {
         "drift": "./dist/drift.js",
       },
       "dependencies": {
-        "@driftdev/sdk": "^0.39.0",
-        "@driftdev/spec": "^0.36.0",
+        "@driftdev/sdk": "^0.41.0",
         "@openpkg-ts/sdk": "^0.37.0",
         "@openpkg-ts/spec": "^0.37.0",
         "chalk": "^5.4.1",
@@ -68,12 +67,13 @@
     },
     "packages/sdk": {
       "name": "@driftdev/sdk",
-      "version": "0.39.0",
+      "version": "0.41.0",
       "dependencies": {
-        "@driftdev/spec": "^0.36.0",
         "@openpkg-ts/sdk": "^0.37.0",
         "@openpkg-ts/spec": "^0.37.0",
         "@vercel/sandbox": "^1.0.3",
+        "ajv": "^8.17.1",
+        "ajv-formats": "^3.0.1",
         "mdast": "^3.0.0",
         "remark-mdx": "^3.1.0",
         "remark-parse": "^11.0.0",
@@ -92,20 +92,6 @@
       },
       "peerDependencies": {
         "typescript": "^5",
-      },
-    },
-    "packages/spec": {
-      "name": "@driftdev/spec",
-      "version": "0.36.0",
-      "dependencies": {
-        "ajv": "^8.17.1",
-        "ajv-formats": "^3.0.1",
-      },
-      "devDependencies": {
-        "@types/bun": "latest",
-        "@types/node": "^20.0.0",
-        "bunup": "latest",
-        "typescript": "^5.0.0",
       },
     },
   },
@@ -192,8 +178,6 @@
     "@driftdev/config": ["@driftdev/config@workspace:packages/config"],
 
     "@driftdev/sdk": ["@driftdev/sdk@workspace:packages/sdk"],
-
-    "@driftdev/spec": ["@driftdev/spec@workspace:packages/spec"],
 
     "@emnapi/core": ["@emnapi/core@1.8.1", "", { "dependencies": { "@emnapi/wasi-threads": "1.1.0", "tslib": "^2.4.0" } }, "sha512-AvT9QFpxK0Zd8J0jopedNm+w/2fIzvtPKPjqyw9jwvBaReTTqPBk9Hixaz7KbjimP+QNz605/XnjFcDAL2pqBg=="],
 
@@ -1227,8 +1211,6 @@
 
     "@driftdev/sdk/@types/bun": ["@types/bun@1.3.9", "", { "dependencies": { "bun-types": "1.3.9" } }, "sha512-KQ571yULOdWJiMH+RIWIOZ7B2RXQGpL1YQrBtLIV3FqDcCu6FsbFUBwhdKUlCKUpS3PJDsHlJ1QKlpxoVR+xtw=="],
 
-    "@driftdev/spec/@types/bun": ["@types/bun@1.3.9", "", { "dependencies": { "bun-types": "1.3.9" } }, "sha512-KQ571yULOdWJiMH+RIWIOZ7B2RXQGpL1YQrBtLIV3FqDcCu6FsbFUBwhdKUlCKUpS3PJDsHlJ1QKlpxoVR+xtw=="],
-
     "@manypkg/find-root/@types/node": ["@types/node@12.20.55", "", {}, "sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ=="],
 
     "@manypkg/find-root/fs-extra": ["fs-extra@8.1.0", "", { "dependencies": { "graceful-fs": "^4.2.0", "jsonfile": "^4.0.0", "universalify": "^0.1.0" } }, "sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g=="],
@@ -1278,8 +1260,6 @@
     "@driftdev/cli/@types/bun/bun-types": ["bun-types@1.3.9", "", { "dependencies": { "@types/node": "*" } }, "sha512-+UBWWOakIP4Tswh0Bt0QD0alpTY8cb5hvgiYeWCMet9YukHbzuruIEeXC2D7nMJPB12kbh8C7XJykSexEqGKJg=="],
 
     "@driftdev/sdk/@types/bun/bun-types": ["bun-types@1.3.9", "", { "dependencies": { "@types/node": "*" } }, "sha512-+UBWWOakIP4Tswh0Bt0QD0alpTY8cb5hvgiYeWCMet9YukHbzuruIEeXC2D7nMJPB12kbh8C7XJykSexEqGKJg=="],
-
-    "@driftdev/spec/@types/bun/bun-types": ["bun-types@1.3.9", "", { "dependencies": { "@types/node": "*" } }, "sha512-+UBWWOakIP4Tswh0Bt0QD0alpTY8cb5hvgiYeWCMet9YukHbzuruIEeXC2D7nMJPB12kbh8C7XJykSexEqGKJg=="],
 
     "@tailwindcss/node/lightningcss/lightningcss-android-arm64": ["lightningcss-android-arm64@1.30.2", "", { "os": "android", "cpu": "arm64" }, "sha512-BH9sEdOCahSgmkVhBLeU7Hc9DWeZ1Eb6wNS6Da8igvUwAe0sqROHddIlvU06q3WyXVEOYDZ6ykBZQnjTbmo4+A=="],
 

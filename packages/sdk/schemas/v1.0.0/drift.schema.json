@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://unpkg.com/@driftdev/spec/schemas/v1.0.0/drift.schema.json",
+  "$id": "https://unpkg.com/@driftdev/sdk/schemas/v1.0.0/drift.schema.json",
   "title": "Drift Specification",
   "description": "Documentation coverage analysis specification",
   "type": "object",

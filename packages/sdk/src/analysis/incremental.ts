@@ -10,7 +10,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import type { DriftIssue, ExportAnalysis, MissingDocRule } from '@driftdev/spec';
+import type { DriftIssue, ExportAnalysis, MissingDocRule } from '../spec';
 
 /**
  * Result from analyzing a single export incrementally.

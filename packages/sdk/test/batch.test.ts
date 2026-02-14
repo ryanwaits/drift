@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { DriftSpec } from '@driftdev/spec';
+import type { DriftSpec } from '../src/spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { aggregateResults, createPackageResult, type PackageResult } from '../src/analysis/batch';
 

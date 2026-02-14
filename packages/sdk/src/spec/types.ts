@@ -111,7 +111,7 @@ export type DocumentationHealth = {
 
   /** Accuracy (drift) metrics */
   accuracy: {
-    /** Accuracy score (0-100) - penalized by drift issues */
+    /** Accuracy score (0-100) */
     score: number;
     /** Total drift issues found */
     issues: number;
