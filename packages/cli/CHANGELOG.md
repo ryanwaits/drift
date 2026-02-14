@@ -1,5 +1,18 @@
 # @doccov/cli
 
+## 1.0.0
+
+### Minor Changes
+
+- CLI: add formatWarning(), surface silent catches, next hints in human output, actionable entry detection errors, agent help epilog, workflow descriptions
+
+  SDK: remove convenience re-exports from barrel (use subpath imports: @driftdev/sdk/analysis, /history, /cache, /markdown, /examples, /types)
+
+### Patch Changes
+
+- Updated dependencies
+  - @driftdev/sdk@1.0.0
+
 ## 0.42.0
 
 ### Minor Changes
