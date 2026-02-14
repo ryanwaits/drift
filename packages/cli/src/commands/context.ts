@@ -17,7 +17,7 @@ import {
 } from '../utils/context-writer';
 import { detectEntry } from '../utils/detect-entry';
 import { readHistory } from '../utils/history';
-import { formatError, formatOutput } from '../utils/output';
+import { formatError, formatOutput, formatWarning } from '../utils/output';
 import { getVersion } from '../utils/version';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
 
@@ -117,7 +117,8 @@ export function registerContextCommand(program: Command): void {
                 try {
                   const { spec } = await cachedExtract(pkg.entry);
                   packages.push(buildPackageContext(pkg.name, spec));
-                } catch {
+                } catch (err) {
+                  formatWarning(`Extraction failed for ${pkg.name}: ${err instanceof Error ? err.message : String(err)}`);
                   packages.push({
                     name: pkg.name,
                     coverage: 0,

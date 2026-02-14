@@ -1,3 +1,4 @@
+import type { OutputNext } from '../utils/output';
 import { c, indent } from '../utils/render';
 
 interface LintIssue {
@@ -13,7 +14,7 @@ interface LintData {
   count: number;
 }
 
-export function renderLint(data: LintData): string {
+export function renderLint(data: LintData, next?: OutputNext): string {
   const lines: string[] = [''];
 
   if (data.count === 0) {
@@ -45,6 +46,9 @@ export function renderLint(data: LintData): string {
   }
 
   lines.push(indent(`${data.count} issue${data.count === 1 ? '' : 's'} found`));
+  if (next) {
+    lines.push(indent(c.gray(`-> Next: ${next.suggested}  (${next.reason})`)));
+  }
   lines.push('');
 
   return lines.join('\n');

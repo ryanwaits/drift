@@ -1,4 +1,5 @@
 import type { HealthResult } from '../utils/health';
+import type { OutputNext } from '../utils/output';
 import { c, coverageColor, indent, separator, sym } from '../utils/render';
 
 interface HealthData extends HealthResult {
@@ -7,7 +8,7 @@ interface HealthData extends HealthResult {
   min?: number;
 }
 
-export function renderHealth(data: HealthData): string {
+export function renderHealth(data: HealthData, next?: OutputNext): string {
   const lines: string[] = [''];
 
   // 1. Identity
@@ -66,10 +67,8 @@ export function renderHealth(data: HealthData): string {
   }
 
   // 7. Next step
-  if (data.health < 100) {
-    lines.push(
-      indent(c.gray('Fix with /drift-fix in Claude Code, or see details: drift list --drifted')),
-    );
+  if (next) {
+    lines.push(indent(c.gray(`-> Next: ${next.suggested}  (${next.reason})`)));
   }
   lines.push('');
 

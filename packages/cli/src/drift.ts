@@ -108,6 +108,8 @@ for (const cmd of program.commands) {
   }
 }
 
+program.addHelpText('after', '\nAgent mode:\n  drift --tools    JSON manifest of all commands for agent use\n');
+
 if (process.argv.includes('--tools')) {
   const caps = extractCapabilities(program);
   process.stdout.write(`${JSON.stringify(caps, null, 2)}\n`);

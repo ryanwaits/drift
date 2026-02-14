@@ -20,6 +20,11 @@ interface EntityInfo {
   operations: Record<string, string>;
 }
 
+interface WorkflowInfo {
+  steps: string[];
+  description: string;
+}
+
 export interface Capabilities {
   version: string;
   hint: string;
@@ -27,7 +32,7 @@ export interface Capabilities {
   commands: CommandInfo[];
   globalFlags: FlagInfo[];
   entities: EntityInfo[];
-  workflows: Record<string, string[]>;
+  workflows: Record<string, WorkflowInfo>;
 }
 
 function optionType(opt: Option): 'boolean' | 'string' | 'number' {
@@ -123,11 +128,11 @@ export function extractCapabilities(program: Command): Capabilities {
       },
     ],
     workflows: {
-      'detect-drift': ['extract', 'lint'],
-      'full-scan': ['scan'],
-      'detect-and-enrich': ['scan', 'context'],
-      'ci-pipeline': ['ci'],
-      'pre-release': ['scan', 'breaking', 'release'],
+      'detect-drift': { steps: ['extract', 'lint'], description: 'Find stale JSDoc and prose drift' },
+      'full-scan': { steps: ['scan'], description: 'Coverage + lint + prose in one pass' },
+      'detect-and-enrich': { steps: ['scan', 'context'], description: 'Scan and generate agent context' },
+      'ci-pipeline': { steps: ['ci'], description: 'Run CI checks on changed packages' },
+      'pre-release': { steps: ['scan', 'breaking', 'release'], description: 'Full pre-release quality gate' },
     },
   };
 }

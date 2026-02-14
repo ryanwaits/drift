@@ -8,7 +8,7 @@ import { renderBatchCoverage } from '../formatters/batch';
 import { renderHealth } from '../formatters/health';
 import { detectEntry } from '../utils/detect-entry';
 import { computeHealth } from '../utils/health';
-import { formatError, formatOutput, type OutputNext } from '../utils/output';
+import { formatError, formatOutput, formatWarning, type OutputNext } from '../utils/output';
 import { computeRatchetMin } from '../utils/ratchet';
 import { shouldRenderHuman } from '../utils/render';
 import { getVersion } from '../utils/version';
@@ -20,7 +20,8 @@ function getPackageInfo(cwd: string): { name?: string; version?: string } {
   try {
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
     return { name: pkg.name, version: pkg.version };
-  } catch {
+  } catch (err) {
+    formatWarning(`Could not parse package.json${err instanceof Error ? `: ${err.message}` : ''}`);
     return {};
   }
 }

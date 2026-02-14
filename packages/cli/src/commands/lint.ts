@@ -12,7 +12,7 @@ import { loadConfig } from '../config/loader';
 import { renderBatchLint } from '../formatters/batch';
 import { renderLint } from '../formatters/lint';
 import { detectEntry } from '../utils/detect-entry';
-import { formatError, formatOutput, type OutputNext } from '../utils/output';
+import { formatError, formatOutput, formatWarning, type OutputNext } from '../utils/output';
 import { shouldRenderHuman } from '../utils/render';
 import { getVersion } from '../utils/version';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
@@ -120,8 +120,8 @@ export function registerLintCommand(program: Command): void {
               });
             }
           }
-        } catch {
-          // silently skip prose detection if package.json unreadable
+        } catch (err) {
+          formatWarning(`Prose drift skipped: ${err instanceof Error ? err.message : String(err)}`);
         }
 
         const data = { issues, count: issues.length };

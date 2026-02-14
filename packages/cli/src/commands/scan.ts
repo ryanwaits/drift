@@ -12,7 +12,7 @@ import { loadConfig } from '../config/loader';
 import { renderBatchScan, renderScan } from '../formatters/scan';
 import { detectEntry } from '../utils/detect-entry';
 import { computeHealth } from '../utils/health';
-import { formatError, formatOutput, type OutputNext } from '../utils/output';
+import { formatError, formatOutput, formatWarning, type OutputNext } from '../utils/output';
 import { computeRatchetMin } from '../utils/ratchet';
 import { shouldRenderHuman } from '../utils/render';
 import { getVersion } from '../utils/version';
@@ -24,7 +24,8 @@ function getPackageInfo(cwd: string): { name?: string; version?: string } {
   try {
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
     return { name: pkg.name, version: pkg.version };
-  } catch {
+  } catch (err) {
+    formatWarning(`Could not parse package.json${err instanceof Error ? `: ${err.message}` : ''}`);
     return {};
   }
 }
@@ -181,7 +182,9 @@ export function registerScanCommand(program: Command): void {
                 });
               }
             }
-          } catch {}
+          } catch (err) {
+            formatWarning(`Prose drift skipped: ${err instanceof Error ? err.message : String(err)}`);
+          }
 
           // Health
           const healthIssues = issues.map((i) => ({ export: i.export, issue: i.issue }));

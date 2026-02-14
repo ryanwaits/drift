@@ -14,6 +14,14 @@ import { detectWorkspaces, resolveGlobs } from './workspaces';
  */
 export function detectEntry(cwd = process.cwd()): string {
   const pkgPath = path.join(cwd, 'package.json');
+  const tried: string[] = [];
+
+  function tryResolve(source: string, filePath: string): string | null {
+    const resolved = resolveToSource(cwd, filePath);
+    if (resolved) return resolved;
+    tried.push(`${source}: ${filePath} -> not found`);
+    return null;
+  }
 
   if (existsSync(pkgPath)) {
     try {
@@ -22,7 +30,7 @@ export function detectEntry(cwd = process.cwd()): string {
       // 1. types/typings
       const typesField = pkg.types || pkg.typings;
       if (typesField && typeof typesField === 'string') {
-        const resolved = resolveToSource(cwd, typesField);
+        const resolved = tryResolve('types', typesField);
         if (resolved) return resolved;
       }
 
@@ -30,24 +38,24 @@ export function detectEntry(cwd = process.cwd()): string {
       if (pkg.exports && typeof pkg.exports === 'object') {
         const dot = pkg.exports['.'];
         for (const candidate of collectExportCandidates(dot)) {
-          const resolved = resolveToSource(cwd, candidate);
+          const resolved = tryResolve('exports["."]', candidate);
           if (resolved) return resolved;
         }
       }
 
       // 3. main/module
       if (pkg.main && typeof pkg.main === 'string') {
-        const resolved = resolveToSource(cwd, pkg.main);
+        const resolved = tryResolve('main', pkg.main);
         if (resolved) return resolved;
       }
       if (pkg.module && typeof pkg.module === 'string') {
-        const resolved = resolveToSource(cwd, pkg.module);
+        const resolved = tryResolve('module', pkg.module);
         if (resolved) return resolved;
       }
 
       // 4. bin
       for (const binPath of collectBinCandidates(pkg.bin)) {
-        const resolved = resolveToSource(cwd, binPath);
+        const resolved = tryResolve('bin', binPath);
         if (resolved) return resolved;
       }
     } catch {
@@ -69,6 +77,7 @@ export function detectEntry(cwd = process.cwd()): string {
   for (const f of fallbacks) {
     const full = path.join(cwd, f);
     if (existsSync(full)) return full;
+    tried.push(`fallback: ${f} -> not found`);
   }
 
   // If this is a monorepo root, give a helpful workspace listing
@@ -88,9 +97,13 @@ export function detectEntry(cwd = process.cwd()): string {
     throw new Error(lines.join('\n'));
   }
 
-  throw new Error(
-    'Could not detect entry point.\n\n  Try: drift list src/index.ts\n    or: cd my-package && drift list',
-  );
+  const lines = ['Could not detect entry point.'];
+  if (tried.length > 0) {
+    lines.push('', '  Tried:');
+    for (const t of tried) lines.push(`    ${t}`);
+  }
+  lines.push('', '  Try: drift scan ./path/to/entry.ts');
+  throw new Error(lines.join('\n'));
 }
 
 function resolveToSource(cwd: string, filePath: string): string | null {

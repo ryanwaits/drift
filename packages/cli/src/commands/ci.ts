@@ -17,7 +17,7 @@ import {
   writeStepSummary,
 } from '../utils/github';
 import { appendHistory, readHistory } from '../utils/history';
-import { formatError, formatOutput, type OutputNext } from '../utils/output';
+import { formatError, formatOutput, formatWarning, type OutputNext } from '../utils/output';
 import { computeRatchetMin } from '../utils/ratchet';
 import { getVersion } from '../utils/version';
 import { detectWorkspaces, resolveGlobs } from '../utils/workspaces';
@@ -205,7 +205,9 @@ export function registerCiCommand(program: Command): void {
               const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
               if (pkg.name) name = pkg.name;
               if (pkg.private === true) isPrivate = true;
-            } catch {}
+            } catch (err) {
+              formatWarning(`Could not parse package.json for ${dir}${err instanceof Error ? `: ${err.message}` : ''}`);
+            }
           }
 
           // Skip private packages unless --private flag
@@ -296,7 +298,8 @@ export function registerCiCommand(program: Command): void {
               diff,
               undocumented,
             });
-          } catch {
+          } catch (err) {
+            formatWarning(`Analysis failed for ${name}: ${err instanceof Error ? err.message : String(err)}`);
             results.push({
               name,
               coverage: 0,

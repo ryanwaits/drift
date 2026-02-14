@@ -32,7 +32,7 @@ export function formatOutput<T>(
   data: T,
   startTime: number,
   version: string,
-  humanRenderer?: (data: T) => string,
+  humanRenderer?: (data: T, next?: OutputNext) => string,
   next?: OutputNext,
 ): OutputEnvelope<T> {
   const duration = Date.now() - startTime;
@@ -44,7 +44,7 @@ export function formatOutput<T>(
   };
 
   if (humanRenderer && shouldRenderHuman()) {
-    process.stdout.write(humanRenderer(data));
+    process.stdout.write(humanRenderer(data, next));
     process.stdout.write('\n');
   } else {
     process.stdout.write(`${JSON.stringify(envelope)}\n`);
@@ -62,11 +62,14 @@ export function formatError(
   error: string,
   startTime: number,
   version: string,
+  suggestion?: string,
 ): void {
   const duration = Date.now() - startTime;
 
   if (shouldRenderHuman()) {
-    process.stdout.write(`\n  ${c.red('x')} ${error}\n\n`);
+    process.stdout.write(`\n  ${c.red('x')} ${error}\n`);
+    if (suggestion) process.stdout.write(`  ${c.gray(suggestion)}\n`);
+    process.stdout.write('\n');
   } else {
     const envelope = {
       ok: false,
@@ -78,4 +81,15 @@ export function formatError(
   }
 
   process.exitCode = 1;
+}
+
+/**
+ * Write a warning to stderr. Does not affect exit code.
+ */
+export function formatWarning(message: string): void {
+  if (shouldRenderHuman()) {
+    process.stderr.write(`  ${c.yellow('!')} ${message}\n`);
+  } else {
+    process.stderr.write(`warning: ${message}\n`);
+  }
 }

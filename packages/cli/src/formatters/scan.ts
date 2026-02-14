@@ -1,7 +1,8 @@
 import type { ScanResult } from '../commands/scan';
+import type { OutputNext } from '../utils/output';
 import { c, coverageColor, indent, separator, sym, table } from '../utils/render';
 
-export function renderScan(data: ScanResult): string {
+export function renderScan(data: ScanResult, next?: OutputNext): string {
   const lines: string[] = [''];
 
   if (data.packageName) {
@@ -48,6 +49,9 @@ export function renderScan(data: ScanResult): string {
     lines.push(indent(`${c.green(sym.ok)} Scan passed`));
   } else {
     lines.push(indent(`${c.red(sym.x)} Scan failed`));
+  }
+  if (next) {
+    lines.push(indent(c.gray(`-> Next: ${next.suggested}  (${next.reason})`)));
   }
   lines.push('');
 
