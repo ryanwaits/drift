@@ -34,6 +34,22 @@
     "./types": {
       "import": "./dist/types/index.js",
       "types": "./dist/types/index.d.ts"
+    },
+    "./markdown": {
+      "import": "./dist/markdown/index.js",
+      "types": "./dist/markdown/index.d.ts"
+    },
+    "./examples": {
+      "import": "./dist/examples/index.js",
+      "types": "./dist/examples/index.d.ts"
+    },
+    "./history": {
+      "import": "./dist/history/index.js",
+      "types": "./dist/history/index.d.ts"
+    },
+    "./cache": {
+      "import": "./dist/cache/index.js",
+      "types": "./dist/cache/index.d.ts"
     }
   },
   "scripts": {

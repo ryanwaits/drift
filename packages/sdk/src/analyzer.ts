@@ -3,6 +3,8 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { createProgram } from '@openpkg-ts/sdk';
 import type * as TS from 'typescript';
+import type { BuildDriftOptions } from './analysis/drift-builder';
+import { buildDriftSpec } from './analysis/drift-builder';
 import type { AnalysisMetadataInternal } from './analysis/run-analysis';
 import { runAnalysis } from './analysis/run-analysis';
 import type { OpenPkgSpec } from './analysis/spec-types';
@@ -20,6 +22,7 @@ import { applyFilters } from './filtering/apply-filters';
 import type { FilterOptions } from './filtering/types';
 import type { DriftOptions, NormalizedDriftOptions } from './options';
 import { normalizeDriftOptions } from './options';
+import type { DriftSpec } from './spec';
 import { ts } from './ts-module';
 
 export interface Diagnostic {
@@ -73,11 +76,31 @@ export interface AnalyzeOptions {
   filters?: FilterOptions;
 }
 
+export type ScanOptions = Omit<BuildDriftOptions, 'openpkg' | 'openpkgPath' | 'packagePath'>;
+
 export class Drift {
   private readonly options: NormalizedDriftOptions;
 
   constructor(options: DriftOptions = {}) {
     this.options = normalizeDriftOptions(options);
+  }
+
+  async scan(entry: string, options?: ScanOptions): Promise<DriftSpec> {
+    const result = await this.analyzeFileWithDiagnostics(entry);
+    const resolvedEntry = path.resolve(entry);
+    return buildDriftSpec({
+      openpkg: result.spec,
+      openpkgPath: resolvedEntry,
+      packagePath: resolvePackageDir(resolvedEntry),
+      forgottenExports: result.forgottenExports?.map((fe) => ({
+        name: fe.name,
+        definedIn: fe.definedIn,
+        referencedBy: fe.referencedBy,
+        isExternal: fe.isExternal,
+        fix: fe.fix,
+      })),
+      ...options,
+    });
   }
 
   async analyze(
@@ -433,6 +456,10 @@ export async function analyzeFile(
   options: AnalyzeOptions = {},
 ): Promise<OpenPkgSpec> {
   return new Drift().analyzeFile(filePath, options);
+}
+
+export async function scan(entry: string, options?: ScanOptions): Promise<DriftSpec> {
+  return new Drift().scan(entry, options);
 }
 
 function resolvePackageDir(entryFile: string): string {
