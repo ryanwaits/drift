@@ -1,5 +1,18 @@
 # @doccov/cli
 
+## 1.3.0
+
+### Minor Changes
+
+- Add `--lang clarity` and `--abi` flags to `drift scan` for Clarity smart contract support
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies
+  - @driftdev/clarity-adapter@1.0.0
+  - @driftdev/sdk@1.3.0
+
 ## 1.0.0
 
 ### Minor Changes

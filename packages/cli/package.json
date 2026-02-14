@@ -1,6 +1,6 @@
 {
   "name": "@driftdev/cli",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "description": "Drift CLI - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",
@@ -44,7 +44,7 @@
   ],
   "dependencies": {
     "@driftdev/clarity-adapter": "workspace:*",
-    "@driftdev/sdk": "^1.0.0",
+    "@driftdev/sdk": "^1.3.0",
     "@openpkg-ts/sdk": "^0.37.0",
     "@openpkg-ts/spec": "^0.37.0",
     "chalk": "^5.4.1",

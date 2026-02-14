@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 1.3.0
+
+### Minor Changes
+
+- Accept ApiSpec directly in buildDriftSpec and generateReport
+
 ## 1.2.0
 
 ### Minor Changes
