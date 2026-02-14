@@ -1,0 +1,53 @@
+{
+  "name": "@driftdev/clarity-adapter",
+  "version": "0.1.0",
+  "description": "Clarity smart contract adapter for Drift - maps ClarityContract + ContractDoc to ApiSpec",
+  "keywords": [
+    "clarity",
+    "stacks",
+    "drift",
+    "documentation",
+    "smart-contracts"
+  ],
+  "homepage": "https://github.com/ryanwaits/drift#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryanwaits/drift.git",
+    "directory": "packages/adapters/clarity"
+  },
+  "license": "MIT",
+  "author": "Ryan Waits",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "bunup",
+    "dev": "bunup --watch",
+    "test": "bun test"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@secondlayer/clarity-docs": "^0.3.0",
+    "@secondlayer/clarity-types": "^0.5.0"
+  },
+  "peerDependencies": {
+    "@driftdev/sdk": "^1.2.0"
+  },
+  "devDependencies": {
+    "@driftdev/sdk": "workspace:*",
+    "@types/bun": "latest",
+    "bunup": "latest"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
