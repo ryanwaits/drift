@@ -1,5 +1,15 @@
 # @doccov/sdk
 
+## 1.1.0
+
+### Minor Changes
+
+- dca86f4: Add `prose-unresolved-member` drift detection — validates method/property calls in doc code blocks against exported type members. Includes five-layer false positive filtering: known exports, external imports, package-derived objects, JS built-in methods, and type member lookup.
+
+### Patch Changes
+
+- dca86f4: Fall back to plain markdown parsing when MDX parser fails on non-MDX syntax (e.g. Gitbook `{% %}` directives).
+
 ## 1.0.2
 
 ### Patch Changes
