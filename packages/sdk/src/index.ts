@@ -136,18 +136,22 @@ export { resolveTarget } from './resolve';
 
 export type {
   ExampleValidation,
+} from './examples/types';
+export type {
   ExampleValidationOptions,
   ExampleValidationResult,
-} from './examples';
-export { parseExamplesFlag, validateExamples } from './examples';
+} from './examples/validator';
+export { parseExamplesFlag } from './examples/types';
+export { validateExamples } from './examples/validator';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Markdown Analysis — @deprecated Use @driftdev/sdk/markdown
 // ─────────────────────────────────────────────────────────────────────────────
 
 export { detectProseDrift, type ProseDriftOptions } from './analysis/drift/prose-drift';
-export type { MarkdownCodeBlock, MarkdownDocFile } from './markdown';
-export { discoverMarkdownFiles, findExportReferences, parseMarkdownFiles } from './markdown';
+export type { MarkdownCodeBlock, MarkdownDocFile } from './markdown/types';
+export { discoverMarkdownFiles } from './markdown/discover';
+export { findExportReferences, parseMarkdownFiles } from './markdown/parser';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Report Types (commonly needed)

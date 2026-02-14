@@ -1,5 +1,17 @@
 # @doccov/sdk
 
+## 1.0.2
+
+### Patch Changes
+
+- Fix dogfood gate: bundler duplicate export errors, prose drift false positives on subpath imports, stale README imports, add content/\*_/_.md to default discovery
+
+## 1.0.1
+
+### Patch Changes
+
+- 8719ae0: Fix dogfood gate: bundler duplicate export errors, prose drift false positives on subpath imports, stale README imports, add content/\*_/_.md to default discovery
+
 ## 1.0.0
 
 ### Major Changes

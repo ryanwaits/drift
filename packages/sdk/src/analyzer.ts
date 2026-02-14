@@ -16,7 +16,7 @@ import {
   loadSpecCache,
   saveSpecCache,
   validateSpecCache,
-} from './cache';
+} from './cache/spec-cache';
 import { extractPackageSpec } from './extractor';
 import { applyFilters } from './filtering/apply-filters';
 import type { FilterOptions } from './filtering/types';

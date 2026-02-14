@@ -35,6 +35,8 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
       for (const imp of packageImports) {
         if (imp.kind === 'side-effect') continue;
         if (registry.all.has(imp.name)) continue;
+        // Skip subpath imports — registry only covers the main entry point
+        if (imp.from !== packageName) continue;
 
         const match = findClosestMatch(imp.name, registry.allNames);
         const suggestion = match

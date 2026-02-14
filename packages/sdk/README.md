@@ -133,7 +133,7 @@ const { entryFile, targetDir, packageInfo } = await resolveTarget(fs, {
 ### History & Trends
 
 ```typescript
-import { saveSnapshot, loadSnapshots, getTrend, computeSnapshot } from '@driftdev/sdk';
+import { saveSnapshot, loadSnapshots, getTrend, computeSnapshot } from '@driftdev/sdk/history';
 
 saveSnapshot(computeSnapshot(spec), process.cwd());
 const snapshots = loadSnapshots(process.cwd());
@@ -143,7 +143,7 @@ const trend = getTrend(spec, process.cwd());
 ### Categorize & Summarize
 
 ```typescript
-import { categorizeDrift, getDriftSummary, groupDriftsByCategory } from '@driftdev/sdk';
+import { categorizeDrift, getDriftSummary, groupDriftsByCategory } from '@driftdev/sdk/analysis';
 
 const summary = getDriftSummary(drifts);
 // summary.total, summary.byCategory (structural/semantic/example/prose)
@@ -164,7 +164,7 @@ const grouped = groupDriftsByCategory(drifts);
 ### Drift Detection
 - `detectProseDrift` — Markdown prose drift detection
 - `buildExportRegistry` — Build registry for cross-reference validation
-- `categorizeDrift` / `getDriftSummary` / `groupDriftsByCategory` — Categorization
+- `categorizeDrift` / `getDriftSummary` / `groupDriftsByCategory` — Categorization (via `@driftdev/sdk/analysis`)
 
 ### Markdown
 - `discoverMarkdownFiles` — Auto-discover markdown files by glob patterns
@@ -181,7 +181,7 @@ const grouped = groupDriftsByCategory(drifts);
 - `NodeFileSystem` — File system adapter
 - `detectPackageManager` — Detect npm/yarn/pnpm/bun
 
-### History
+### History (via `@driftdev/sdk/history`)
 - `saveSnapshot` / `loadSnapshots` — Manage coverage history
 - `getTrend` / `getExtendedTrend` — Trend analysis
 - `pruneHistory` — Clean old snapshots
