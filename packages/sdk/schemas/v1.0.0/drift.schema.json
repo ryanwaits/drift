@@ -56,14 +56,13 @@
     },
     "drift": {
       "type": "object",
-      "required": ["type", "issue", "category", "fixable"],
+      "required": ["type", "issue", "category"],
       "properties": {
         "type": { "$ref": "#/$defs/driftType" },
         "target": { "type": "string" },
         "issue": { "type": "string" },
         "suggestion": { "type": "string" },
-        "category": { "$ref": "#/$defs/driftCategory" },
-        "fixable": { "type": "boolean" }
+        "category": { "$ref": "#/$defs/driftCategory" }
       }
     },
     "summary": {
@@ -79,10 +78,9 @@
         },
         "drift": {
           "type": "object",
-          "required": ["total", "fixable", "byCategory"],
+          "required": ["total", "byCategory"],
           "properties": {
             "total": { "type": "integer", "minimum": 0 },
-            "fixable": { "type": "integer", "minimum": 0 },
             "byCategory": {
               "type": "object",
               "additionalProperties": { "type": "integer", "minimum": 0 }

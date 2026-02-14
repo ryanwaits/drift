@@ -88,7 +88,6 @@ describe('IncrementalAnalyzer', () => {
           target: 'options',
           issue: 'Missing docs for param',
           category: 'structural',
-          fixable: true,
         },
       ],
     });

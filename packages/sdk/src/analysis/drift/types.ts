@@ -204,7 +204,6 @@ export type SpecMemberWithType = {
  */
 export interface CategorizedDrift extends SpecDocDrift {
   category: DriftCategory;
-  fixable: boolean;
 }
 
 /**
@@ -213,7 +212,6 @@ export interface CategorizedDrift extends SpecDocDrift {
 export interface DriftSummary {
   total: number;
   byCategory: Record<DriftCategory, number>;
-  fixable: number;
 }
 
 /**

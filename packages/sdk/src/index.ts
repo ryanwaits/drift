@@ -7,13 +7,13 @@
  * @example
  * ```ts
  * // Core API (this module)
- * import { Drift, buildDriftSpec, computeDrift } from '@driftdev/sdk';
+ * import { Drift, scan, buildDriftSpec, computeDrift } from '@driftdev/sdk';
  *
- * // Analysis utilities
- * import { generateReport, computeSnapshot } from '@driftdev/sdk/analysis';
- *
- * // Type definitions
- * import type { DriftReport, FilterOptions } from '@driftdev/sdk/types';
+ * // Subpaths
+ * import { discoverMarkdownFiles } from '@driftdev/sdk/markdown';
+ * import { validateExamples } from '@driftdev/sdk/examples';
+ * import { computeSnapshot } from '@driftdev/sdk/history';
+ * import { loadSpecCache } from '@driftdev/sdk/cache';
  * ```
  *
  * @module @driftdev/sdk
@@ -106,8 +106,8 @@ export { buildModuleGraph, findSymbolModule, symbolExistsInGraph } from './analy
 export { generateReport, renderApiSurface } from './analysis/report';
 // Spec types
 export type { OpenPkgSpec } from './analysis/spec-types';
-export type { AnalysisResult, AnalyzeOptions, Diagnostic, ForgottenExportResult } from './analyzer';
-export { analyze, analyzeFile, Drift } from './analyzer';
+export type { AnalysisResult, AnalyzeOptions, Diagnostic, ForgottenExportResult, ScanOptions } from './analyzer';
+export { analyze, analyzeFile, Drift, scan } from './analyzer';
 export type { DriftOptions } from './options';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -131,7 +131,7 @@ export type { ResolvedTarget, ResolveTargetOptions } from './resolve';
 export { resolveTarget } from './resolve';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Example Validation
+// Example Validation — @deprecated Use @driftdev/sdk/examples
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type {
@@ -142,35 +142,7 @@ export type {
 export { parseExamplesFlag, validateExamples } from './examples';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Fix Utilities
-// ─────────────────────────────────────────────────────────────────────────────
-
-export type {
-  ApplyForgottenExportResult,
-  FixSuggestion,
-  ForgottenExportFix,
-  GenerateForgottenExportFixesOptions,
-  JSDocEdit,
-  JSDocPatch,
-} from './fix';
-export {
-  applyEdits,
-  applyForgottenExportFixes,
-  categorizeDrifts,
-  createSourceFile,
-  findJSDocLocation,
-  generateFixesForExport,
-  generateForgottenExportFixes,
-  groupFixesByFile,
-  isFixableDrift,
-  mergeFixes,
-  parseJSDocToPatch,
-  previewForgottenExportFixes,
-  serializeJSDoc,
-} from './fix';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Markdown Analysis
+// Markdown Analysis — @deprecated Use @driftdev/sdk/markdown
 // ─────────────────────────────────────────────────────────────────────────────
 
 export { detectProseDrift, type ProseDriftOptions } from './analysis/drift/prose-drift';
@@ -215,6 +187,7 @@ export {
   hasNonAssertionComments,
   parseAssertions,
 } from './analysis/docs-coverage';
+// @deprecated Use @driftdev/sdk/history
 export type {
   CoverageSnapshot,
   CoverageTrend,
@@ -232,8 +205,8 @@ export {
   saveSnapshot,
 } from './analysis/history';
 export { generateReportFromDrift, loadCachedReport, saveReport } from './analysis/report';
+// @deprecated Use @driftdev/sdk/cache
 export type { CacheContext, CacheValidationResult, SpecCache, SpecCacheConfig } from './cache';
-// Cache (for advanced usage)
 export {
   CACHE_VERSION,
   clearSpecCache,
@@ -291,9 +264,6 @@ export { extractPackageSpec } from './extractor';
 export type { FilterSource, ResolvedFilters } from './filtering/merge';
 // Filtering
 export { mergeFilters, parseListFlag } from './filtering/merge';
-export type { ApplyEditsResult, FixType, JSDocParam, JSDocReturn, JSDocTag } from './fix';
-// Fix (additional exports)
-export { applyPatchToJSDoc, generateFix } from './fix';
 export type { ParsedGitHubUrl } from './github';
 // GitHub
 export { parseGitHubUrl } from './github';

@@ -21,8 +21,7 @@ function createHealthInput(overrides: Partial<HealthInput> = {}): HealthInput {
       throws: 0,
     },
     driftIssues: 0,
-    fixableDrift: 0,
-    driftByCategory: {
+        driftByCategory: {
       structural: 0,
       semantic: 0,
       example: 0,
@@ -75,8 +74,7 @@ describe('computeHealth', () => {
         documentedExports: 20,
         totalExports: 24,
         driftIssues: 4,
-        fixableDrift: 2,
-        driftByCategory: {
+                driftByCategory: {
           structural: 3,
           semantic: 1,
           example: 0,
@@ -89,7 +87,6 @@ describe('computeHealth', () => {
       expect(result.completeness.score).toBe(85);
       expect(result.accuracy.score).toBe(92);
       expect(result.accuracy.issues).toBe(4);
-      expect(result.accuracy.fixable).toBe(2);
     });
 
     test('moderate docs (70%), light drift → ~67% health', () => {
@@ -128,8 +125,7 @@ describe('computeHealth', () => {
         documentedExports: 10,
         totalExports: 20,
         driftIssues: 10,
-        fixableDrift: 5,
-        driftByCategory: {
+                driftByCategory: {
           structural: 6,
           semantic: 2,
           example: 2,
@@ -377,8 +373,7 @@ describe('computeHealth', () => {
     test('includes all accuracy fields', () => {
       const input = createHealthInput({
         driftIssues: 5,
-        fixableDrift: 3,
-        driftByCategory: {
+                driftByCategory: {
           structural: 2,
           semantic: 2,
           example: 1,
@@ -388,7 +383,6 @@ describe('computeHealth', () => {
       const result = computeHealth(input);
 
       expect(result.accuracy.issues).toBe(5);
-      expect(result.accuracy.fixable).toBe(3);
       expect(result.accuracy.byCategory.structural).toBe(2);
       expect(result.accuracy.byCategory.semantic).toBe(2);
       expect(result.accuracy.byCategory.example).toBe(1);

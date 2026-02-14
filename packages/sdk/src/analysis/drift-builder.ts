@@ -11,7 +11,6 @@ import type {
 } from '../spec';
 import { DRIFT_CATEGORIES } from '../spec';
 import type { SpecExport } from '@openpkg-ts/spec';
-import { isFixableDrift } from '../fix';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';
 import { computeHealth, isExportDocumented } from './health';
 import type { DocRequirements, StylePreset } from './presets';
@@ -154,7 +153,6 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
     example: 0,
   };
   let totalDrift = 0;
-  let fixableDrift = 0;
 
   for (const [name, overloads] of byName) {
     // Find best coverage score across overloads (highest = most documented)
@@ -212,7 +210,6 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
     for (const d of allDrifts) {
       driftByCategory[d.category]++;
       totalDrift++;
-      if (d.fixable) fixableDrift++;
     }
   }
 
@@ -226,7 +223,6 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
     totalExports: exportCount,
     missingByRule,
     driftIssues: totalDrift,
-    fixableDrift,
     driftByCategory,
   });
 
@@ -237,7 +233,6 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
     missingByRule,
     drift: {
       total: totalDrift,
-      fixable: fixableDrift,
       byCategory: driftByCategory,
     },
     health,
@@ -409,7 +404,7 @@ function computeExportCoverage(exp: SpecExport, requirements: DocRequirements): 
 }
 
 /**
- * Convert SDK drift to Drift issue with category and fixable flags.
+ * Convert SDK drift to Drift issue with category.
  */
 function toCategorizedDrift(drift: {
   type: string;
@@ -418,13 +413,11 @@ function toCategorizedDrift(drift: {
   suggestion?: string;
 }): DriftIssue {
   const driftType = drift.type as DriftIssue['type'];
-  const specDrift = { ...drift, type: driftType };
   return {
     type: driftType,
     target: drift.target,
     issue: drift.issue,
     suggestion: drift.suggestion,
     category: DRIFT_CATEGORIES[driftType],
-    fixable: isFixableDrift(specDrift),
   };
 }

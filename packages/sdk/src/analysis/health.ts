@@ -33,8 +33,6 @@ export interface HealthInput {
   missingByRule: Record<MissingDocRule, number>;
   /** Total drift issues */
   driftIssues: number;
-  /** Fixable drift issues */
-  fixableDrift: number;
   /** Drift by category */
   driftByCategory: Record<DriftCategory, number>;
   /** Example validation results (optional) */
@@ -57,7 +55,6 @@ export function computeHealth(input: HealthInput): DocumentationHealth {
     totalExports,
     missingByRule,
     driftIssues,
-    fixableDrift,
     driftByCategory,
     examples,
   } = input;
@@ -97,7 +94,6 @@ export function computeHealth(input: HealthInput): DocumentationHealth {
     accuracy: {
       score: accuracyScore,
       issues: driftIssues,
-      fixable: fixableDrift,
       byCategory: driftByCategory,
     },
   };

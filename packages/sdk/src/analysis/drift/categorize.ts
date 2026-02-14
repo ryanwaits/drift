@@ -1,4 +1,3 @@
-import { isFixableDrift } from '../../fix';
 import {
   type CategorizedDrift,
   DRIFT_CATEGORIES,
@@ -11,7 +10,7 @@ import {
  * Categorize a single drift issue.
  *
  * @param drift - The drift to categorize
- * @returns The drift with category and fixable metadata
+ * @returns The drift with category metadata
  *
  * @example
  * ```ts
@@ -22,14 +21,12 @@ import {
  * };
  * const categorized = categorizeDrift(drift);
  * console.log(categorized.category); // => 'structural'
- * console.log(categorized.fixable);  // => true
  * ```
  */
 export function categorizeDrift(drift: SpecDocDrift): CategorizedDrift {
   return {
     ...drift,
     category: DRIFT_CATEGORIES[drift.type],
-    fixable: isFixableDrift(drift),
   };
 }
 
@@ -69,13 +66,13 @@ export function groupDriftsByCategory(
  * Get drift summary counts by category.
  *
  * @param drifts - Array of drift issues
- * @returns Summary with totals, category breakdown, and fixable count
+ * @returns Summary with totals and category breakdown
  *
  * @example
  * ```ts
  * const summary = getDriftSummary(exportEntry.docs?.drift ?? []);
- * console.log(`${summary.total} issues: ${summary.fixable} fixable`);
- * // => "5 issues: 3 fixable"
+ * console.log(`${summary.total} issues`);
+ * // => "5 issues"
  * ```
  */
 export function getDriftSummary(drifts: SpecDocDrift[]): DriftSummary {
@@ -89,7 +86,6 @@ export function getDriftSummary(drifts: SpecDocDrift[]): DriftSummary {
       example: grouped.example.length,
       prose: grouped.prose.length,
     },
-    fixable: drifts.filter((d) => isFixableDrift(d)).length,
   };
 }
 
@@ -126,7 +122,5 @@ export function formatDriftSummaryLine(summary: DriftSummary): string {
     parts.push(`${summary.byCategory.prose} prose`);
   }
 
-  const fixableNote = summary.fixable > 0 ? ` (${summary.fixable} auto-fixable)` : '';
-
-  return `${summary.total} issues (${parts.join(', ')})${fixableNote}`;
+  return `${summary.total} issues (${parts.join(', ')})`;
 }

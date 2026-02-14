@@ -55,7 +55,6 @@ export type DriftIssue = {
   issue: string;
   suggestion?: string;
   category: DriftCategory;
-  fixable: boolean;
 };
 
 // ============================================================================
@@ -115,8 +114,6 @@ export type DocumentationHealth = {
     score: number;
     /** Total drift issues found */
     issues: number;
-    /** Issues that can be auto-fixed */
-    fixable: number;
     /** Issues by category */
     byCategory: Record<DriftCategory, number>;
   };
@@ -195,7 +192,6 @@ export type DriftSummary = {
    */
   drift: {
     total: number;
-    fixable: number;
     byCategory: Record<DriftCategory, number>;
   };
 

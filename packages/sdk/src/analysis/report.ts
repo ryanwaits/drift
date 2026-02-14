@@ -108,7 +108,6 @@ export function generateReportFromDrift(openpkg: OpenPkg, driftSpec: DriftSpec):
       driftSpec.summary.drift.total > 0
         ? {
             total: driftSpec.summary.drift.total,
-            fixable: driftSpec.summary.drift.fixable,
             byCategory: driftSpec.summary.drift.byCategory,
           }
         : undefined,

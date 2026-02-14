@@ -19,7 +19,6 @@ function createMockDriftSpec(totalExports: number, health: number, driftTotal: n
       score: health,
       drift: {
         total: driftTotal,
-        fixable: 0,
         byCategory: { structural: 0, semantic: 0, example: 0 },
       },
       health: {
@@ -33,7 +32,6 @@ function createMockDriftSpec(totalExports: number, health: number, driftTotal: n
         accuracy: {
           score: 100,
           issues: driftTotal,
-          fixable: 0,
           byCategory: { structural: 0, semantic: 0, example: 0 },
         },
       },

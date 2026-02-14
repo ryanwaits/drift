@@ -60,11 +60,6 @@ export interface DriftReportSummary {
    * Count of issues per category.
    */
   byCategory: Record<DriftCategory, number>;
-
-  /**
-   * Number of auto-fixable issues.
-   */
-  fixable: number;
 }
 
 /**
