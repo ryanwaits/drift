@@ -14,10 +14,10 @@ import { isExportDocumented } from './health';
 import { toApiSpec } from './spec-types';
 
 /**
- * Generate a Drift report from an OpenPkg spec.
+ * Generate a Drift report from an OpenPkg or ApiSpec.
  *
- * @param spec - The pure OpenPkg spec to analyze
- * @param [openpkgPath] - Path to the openpkg spec file (for source tracking)
+ * @param spec - OpenPkg or ApiSpec to analyze
+ * @param [sourcePath] - Path to the source spec file (for source tracking)
  * @returns Promise resolving to a Drift report with coverage analysis
  *
  * @example
@@ -32,11 +32,16 @@ import { toApiSpec } from './spec-types';
  * ```
  */
 export async function generateReport(
-  spec: OpenPkg,
-  openpkgPath = 'openpkg.json',
+  spec: OpenPkg | ApiSpec,
+  sourcePath = 'openpkg.json',
 ): Promise<DriftReport> {
-  const driftSpec = await buildDriftSpec({ openpkg: spec, openpkgPath });
-  return generateReportFromDrift(toApiSpec(spec), driftSpec);
+  const isOpenPkg = 'openpkg' in spec;
+  const apiSpec = isOpenPkg ? toApiSpec(spec as OpenPkg) : (spec as ApiSpec);
+  const driftSpec = await buildDriftSpec({
+    ...(isOpenPkg ? { openpkg: spec as OpenPkg } : { apiSpec }),
+    sourcePath,
+  });
+  return generateReportFromDrift(apiSpec, driftSpec);
 }
 
 /**

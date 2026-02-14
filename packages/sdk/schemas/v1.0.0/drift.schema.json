@@ -19,7 +19,7 @@
   "$defs": {
     "source": {
       "type": "object",
-      "required": ["file", "specVersion", "packageName"],
+      "required": ["file", "packageName"],
       "properties": {
         "file": { "type": "string" },
         "specVersion": { "type": "string" },

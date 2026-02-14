@@ -11,7 +11,7 @@ import type {
 } from '../spec';
 import { DRIFT_CATEGORIES } from '../spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
-import type { ApiExport } from './api-spec';
+import type { ApiExport, ApiSpec } from './api-spec';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';
 import { computeHealth, isExportDocumented } from './health';
 import type { DocRequirements, StylePreset } from './presets';
@@ -40,8 +40,17 @@ export interface ExtractForgottenExport {
 }
 
 export interface BuildDriftOptions {
-  openpkgPath: string;
-  openpkg: OpenPkg;
+  /** Source spec — provide ONE of these */
+  openpkg?: OpenPkg;
+  apiSpec?: ApiSpec;
+
+  /** Path to the source spec file */
+  openpkgPath?: string;
+  /** Preferred alias for openpkgPath */
+  sourcePath?: string;
+  /** Spec format version (defaults to openpkg.openpkg or 'unknown') */
+  specVersion?: string;
+
   packagePath?: string;
   /** Forgotten exports from extraction (for API surface calculation) */
   forgottenExports?: ExtractForgottenExport[];
@@ -83,15 +92,17 @@ interface ExportAnalysisIntermediate {
 }
 
 /**
- * Build a Drift spec from an OpenPkg spec.
+ * Build a Drift spec from an ApiSpec or OpenPkg spec.
  *
- * @param options - Build options
+ * @param options - Build options (provide `apiSpec` or `openpkg`)
  * @returns Promise resolving to a Drift specification with coverage analysis
  */
 export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftSpec> {
+  if (!options.apiSpec && !options.openpkg) {
+    throw new Error('buildDriftSpec requires either apiSpec or openpkg');
+  }
+
   const {
-    openpkg,
-    openpkgPath,
     forgottenExports,
     apiSurfaceIgnore,
     entryExportNames,
@@ -100,7 +111,12 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
     style,
     require,
   } = options;
-  const apiSpec = toApiSpec(openpkg);
+
+  const apiSpec = options.apiSpec ?? toApiSpec(options.openpkg!);
+  const sourcePath = options.sourcePath ?? options.openpkgPath ?? 'unknown';
+  const specVersion = options.specVersion ?? options.openpkg?.openpkg;
+  const packageName = apiSpec.meta.name;
+  const packageVersion = apiSpec.meta.version;
   const registry = buildExportRegistry(apiSpec);
 
   // Resolve documentation requirements from style preset and custom overrides
@@ -244,7 +260,7 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
   // Compute API surface if forgotten exports provided
   const apiSurface = computeApiSurface(
     forgottenExports,
-    openpkg.types?.length ?? 0,
+    apiSpec.types?.length ?? 0,
     apiSurfaceIgnore,
     entryExportNames,
   );
@@ -252,10 +268,10 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
   return {
     drift: '1.0.0',
     source: {
-      file: openpkgPath,
-      specVersion: openpkg.openpkg,
-      packageName: openpkg.meta.name,
-      packageVersion: openpkg.meta.version,
+      file: sourcePath,
+      specVersion,
+      packageName,
+      packageVersion,
     },
     generatedAt: new Date().toISOString(),
     summary,

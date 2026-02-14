@@ -3,7 +3,9 @@
  */
 import { describe, expect, test } from 'bun:test';
 import { buildDriftSpec } from '../src/analysis/drift-builder';
+import { generateReport } from '../src/analysis/report';
 import type { OpenPkgSpec } from '../src/analysis/spec-types';
+import type { ApiSpec } from '../src/analysis/api-spec';
 
 /**
  * Create a minimal OpenPkg spec with N exports for testing.
@@ -480,5 +482,154 @@ describe('buildDriftSpec', () => {
       expect(result.apiSurface?.forgotten.length).toBe(1);
       expect(result.apiSurface?.forgotten[0].name).toBe('ActuallyForgotten');
     });
+  });
+
+  describe('apiSpec direct input', () => {
+    function createApiSpec(count: number): ApiSpec {
+      const exports = [];
+      for (let i = 0; i < count; i++) {
+        exports.push({
+          id: `export${i}`,
+          name: `export${i}`,
+          kind: 'function' as const,
+          description: `Export ${i} description`,
+          signatures: [
+            {
+              parameters: [{ name: 'arg', schema: { type: 'string' } }],
+              returns: { schema: { type: 'void' } },
+            },
+          ],
+        });
+      }
+      return { meta: { name: 'test-package', version: '2.0.0' }, exports };
+    }
+
+    test('works without openpkg', async () => {
+      const apiSpec = createApiSpec(3);
+      const result = await buildDriftSpec({ apiSpec, sourcePath: 'test.json' });
+
+      expect(result.drift).toBe('1.0.0');
+      expect(result.summary.totalExports).toBe(3);
+      expect(result.source.packageName).toBe('test-package');
+      expect(result.source.packageVersion).toBe('2.0.0');
+      expect(result.source.file).toBe('test.json');
+    });
+
+    test('source.specVersion defaults to undefined without openpkg', async () => {
+      const apiSpec = createApiSpec(1);
+      const result = await buildDriftSpec({ apiSpec });
+
+      expect(result.source.specVersion).toBeUndefined();
+    });
+
+    test('specVersion option overrides default', async () => {
+      const apiSpec = createApiSpec(1);
+      const result = await buildDriftSpec({ apiSpec, specVersion: 'clarity-1.0' });
+
+      expect(result.source.specVersion).toBe('clarity-1.0');
+    });
+
+    test('sourcePath falls back to openpkgPath', async () => {
+      const apiSpec = createApiSpec(1);
+      const result = await buildDriftSpec({ apiSpec, openpkgPath: 'legacy.json' });
+
+      expect(result.source.file).toBe('legacy.json');
+    });
+
+    test('sourcePath falls back to unknown', async () => {
+      const apiSpec = createApiSpec(1);
+      const result = await buildDriftSpec({ apiSpec });
+
+      expect(result.source.file).toBe('unknown');
+    });
+
+    test('computes coverage and health from ApiSpec', async () => {
+      const apiSpec = createApiSpec(5);
+      const result = await buildDriftSpec({ apiSpec });
+
+      expect(result.summary.score).toBeGreaterThan(0);
+      expect(result.summary.health).toBeDefined();
+      expect(result.summary.health!.score).toBeGreaterThan(0);
+    });
+
+    test('errors if neither apiSpec nor openpkg provided', async () => {
+      await expect(buildDriftSpec({} as any)).rejects.toThrow(
+        'buildDriftSpec requires either apiSpec or openpkg',
+      );
+    });
+
+    test('backward compat: openpkg path still works', async () => {
+      const spec = createSpecWithExports(3);
+      const result = await buildDriftSpec({ openpkg: spec, openpkgPath: 'test.json' });
+
+      expect(result.source.file).toBe('test.json');
+      expect(result.source.specVersion).toBe('1.0.0');
+      expect(result.source.packageName).toBe('test-package');
+    });
+
+    test('apiSpec.types used for API surface calculation', async () => {
+      const apiSpec: ApiSpec = {
+        meta: { name: 'typed-pkg', version: '1.0.0' },
+        exports: [{ id: 'fn', name: 'fn', kind: 'function', description: 'A fn' }],
+        types: [
+          { name: 'TypeA', kind: 'interface', schema: { type: 'object' } },
+          { name: 'TypeB', kind: 'type', schema: { type: 'string' } },
+        ],
+      };
+
+      const result = await buildDriftSpec({
+        apiSpec,
+        forgottenExports: [{ name: 'Missing', referencedBy: [], isExternal: false }],
+      });
+
+      // 2 types exported + 1 forgotten = 3 total, completeness = 2/3 = 67%
+      expect(result.apiSurface).toBeDefined();
+      expect(result.apiSurface!.exported).toBe(2);
+      expect(result.apiSurface!.totalReferenced).toBe(3);
+      expect(result.apiSurface!.completeness).toBe(67);
+    });
+  });
+});
+
+describe('generateReport', () => {
+  test('works with ApiSpec directly', async () => {
+    const apiSpec: ApiSpec = {
+      meta: { name: 'my-lib', version: '3.0.0' },
+      exports: [
+        {
+          id: 'doStuff',
+          name: 'doStuff',
+          kind: 'function',
+          description: 'Does stuff',
+          signatures: [
+            {
+              parameters: [{ name: 'x', schema: { type: 'number' }, description: 'input' }],
+              returns: { schema: { type: 'string' }, description: 'output' },
+            },
+          ],
+          examples: ['doStuff(42)'],
+        },
+      ],
+    };
+
+    const report = await generateReport(apiSpec, 'test.json');
+
+    expect(report.spec.name).toBe('my-lib');
+    expect(report.spec.version).toBe('3.0.0');
+    expect(report.coverage.totalExports).toBe(1);
+    expect(report.coverage.score).toBe(100);
+  });
+
+  test('backward compat: OpenPkg still works', async () => {
+    const spec: OpenPkgSpec = {
+      openpkg: '1.0.0',
+      meta: { name: 'legacy-pkg', version: '1.0.0' },
+      exports: [{ name: 'fn', kind: 'function', description: 'A function' }],
+    };
+
+    const report = await generateReport(spec);
+
+    expect(report.spec.name).toBe('legacy-pkg');
+    expect(report.coverage.totalExports).toBe(1);
   });
 });

@@ -147,10 +147,10 @@ export type DriftSpec = {
   $schema?: string;
   drift: DriftSpecVersion;
 
-  /** Reference to source openpkg spec */
+  /** Reference to source spec */
   source: {
     file: string;
-    specVersion: string;
+    specVersion?: string;
     packageName: string;
     packageVersion?: string;
   };
