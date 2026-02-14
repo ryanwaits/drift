@@ -150,4 +150,3 @@ Drift stores all state in `~/.drift/` -- nothing is written to your project dire
 - [CI Integration](./ci-integration.md) -- GitHub Actions setup
 - [Configuration](./configuration.md) -- config file locations and all keys
 - [SDK](./sdk.md) -- using `@driftdev/sdk` programmatically
-- [Pricing & Packaging](./pricing-packaging.md) -- OSS + BUSL + hosted plan proposal
