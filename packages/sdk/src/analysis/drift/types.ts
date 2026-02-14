@@ -22,7 +22,8 @@ export type DriftType =
   | 'example-runtime-error'
   | 'example-assertion-failed'
   | 'broken-link'
-  | 'prose-broken-reference';
+  | 'prose-broken-reference'
+  | 'prose-unresolved-member';
 
 export type SpecDocDrift = {
   type: DriftType;
@@ -71,6 +72,7 @@ export const DRIFT_CATEGORIES: Record<DriftType, DriftCategory> = {
 
   // Prose: markdown documentation references
   'prose-broken-reference': 'prose',
+  'prose-unresolved-member': 'prose',
 };
 
 /**
@@ -140,6 +142,10 @@ export interface ExportRegistry {
   typeNames: string[];
   allExportNames: string[];
   allNames: string[];
+  /** Map of member name → set of parent type names that contain it */
+  typeMembers: Map<string, Set<string>>;
+  /** All known member names across all types (for fuzzy matching) */
+  allMemberNames: string[];
 }
 
 /**

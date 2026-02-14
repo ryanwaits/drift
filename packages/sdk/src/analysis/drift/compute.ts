@@ -68,6 +68,55 @@ export function buildExportRegistry(spec: OpenPkgSpec): ExportRegistry {
     if (type.id) all.add(type.id);
   }
 
+  // Build type member index: memberName → Set<parentTypeName>
+  const typeMembers = new Map<string, Set<string>>();
+
+  const indexMembers = (typeName: string, schema: Record<string, unknown> | undefined) => {
+    const props = (schema as { properties?: Record<string, unknown> })?.properties;
+    if (!props) return;
+    for (const memberName of Object.keys(props)) {
+      let parents = typeMembers.get(memberName);
+      if (!parents) {
+        parents = new Set();
+        typeMembers.set(memberName, parents);
+      }
+      parents.add(typeName);
+    }
+  };
+
+  // Index members from exported types (class, interface, type with properties)
+  for (const entry of spec.exports ?? []) {
+    indexMembers(entry.name, entry.schema as Record<string, unknown>);
+    // Also index from explicit members array
+    if (entry.members) {
+      for (const member of entry.members) {
+        if (!member.name) continue;
+        let parents = typeMembers.get(member.name);
+        if (!parents) {
+          parents = new Set();
+          typeMembers.set(member.name, parents);
+        }
+        parents.add(entry.name);
+      }
+    }
+  }
+
+  // Index members from referenced types (e.g. Simnet in types[])
+  for (const type of spec.types ?? []) {
+    indexMembers(type.name, type.schema as Record<string, unknown>);
+    if (type.members) {
+      for (const member of type.members) {
+        if (!member.name) continue;
+        let parents = typeMembers.get(member.name);
+        if (!parents) {
+          parents = new Set();
+          typeMembers.set(member.name, parents);
+        }
+        parents.add(type.name);
+      }
+    }
+  }
+
   // Pre-compute candidate lists for fuzzy matching (performance optimization)
   const callableNames = Array.from(exports.values())
     .filter((e) => e.isCallable)
@@ -83,8 +132,9 @@ export function buildExportRegistry(spec: OpenPkgSpec): ExportRegistry {
 
   const allExportNames = Array.from(exports.keys());
   const allNames = Array.from(all);
+  const allMemberNames = Array.from(typeMembers.keys());
 
-  return { exports, types, all, callableNames, typeNames, allExportNames, allNames };
+  return { exports, types, all, callableNames, typeNames, allExportNames, allNames, typeMembers, allMemberNames };
 }
 
 /**
