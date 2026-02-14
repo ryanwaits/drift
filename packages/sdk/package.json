@@ -1,6 +1,6 @@
 {
   "name": "@driftdev/sdk",
-  "version": "0.42.0",
+  "version": "1.0.0",
   "description": "Drift SDK - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",
@@ -16,7 +16,7 @@
     "url": "git+https://github.com/ryanwaits/drift.git",
     "directory": "packages/sdk"
   },
-  "license": "BUSL-1.1",
+  "license": "MIT",
   "author": "Ryan Waits",
   "type": "module",
   "main": "./dist/index.js",

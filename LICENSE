@@ -1,42 +1,21 @@
-# Drift Licensing
-
-This repository contains multiple packages with different licenses:
-
-## Open Source (MIT License)
-
-The following packages are licensed under the MIT License:
-
-- **@openpkg-ts/spec** - OpenPkg JSON Schema, TypeScript types, and validation utilities
-- **@driftdev/cli** - Command-line interface for documentation coverage analysis
-- **docusaurus-plugin-drift** - Docusaurus integration plugin
-
-These packages are free to use, modify, and distribute for any purpose.
-See `packages/*/LICENSE` for the full MIT license text.
-
-## Source Available (Business Source License 1.1)
-
-The following package is licensed under the Business Source License 1.1:
-
-- **@driftdev/sdk** - Core analysis engine for TypeScript documentation coverage
-
-### What this means:
-
-- **You CAN**: View the source code, modify it, use it for internal tooling,
-  contribute improvements, and use it in your CI/CD pipelines.
-
-- **You CANNOT**: Offer the SDK's functionality as a commercial documentation
-  coverage service to third parties.
-
-- **Change Date**: November 26, 2028 - On this date, this version of the SDK
-  will be re-licensed under the Apache License 2.0, making it fully open source.
-
-For commercial licensing inquiries, contact: licensing@drift.dev
-
-## API Service
-
-The `packages/api` directory contains the Drift SaaS backend and is not
-licensed for external use.
-
----
+MIT License
 
 Copyright (c) 2024 Ryan Waits
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

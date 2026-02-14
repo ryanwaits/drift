@@ -2,9 +2,7 @@
 
 > Your code changed. Your docs didn't.
 
-Core job: fail PRs when docs drift.
-
-Detect documentation drift in TypeScript packages. Drift catches when JSDoc, examples, and markdown fall out of sync with your actual API.
+Detect documentation drift in TypeScript packages. Your API changed — Drift finds every doc that's now wrong.
 
 ## Quick Start
 
@@ -143,18 +141,6 @@ drift lint
 drift examples
 ```
 
-## Pricing & Packaging
-
-- CLI (`@driftdev/cli`): MIT, free
-- Spec (`@driftdev/spec`): MIT, free
-- SDK (`@driftdev/sdk`): BUSL-1.1 (source-available)
-- Hosted plans: org reporting + docs sync automation
-- Join Cloud Pro waitlist: https://github.com/ryanwaits/drift/issues/new?title=Cloud%20Pro%20Waitlist
-- Request Automation pilot: https://github.com/ryanwaits/drift/issues/new?title=Automation%20Pilot%20Request
-- Enterprise contact: https://github.com/ryanwaits/drift/issues/new?title=Enterprise%20Inquiry
-
-See `docs/pricing-packaging.md` for the one-page packaging proposal.
-
 ## Choose A Guide
 
 - New to Drift: `docs/getting-started.md`
@@ -179,8 +165,4 @@ Layer 2: drift CLI           (21 commands — composed + primitives + plumbing)
 
 ## License
 
-Dual license by package:
-
-- `@driftdev/cli`: MIT
-- `@driftdev/spec`: MIT
-- `@driftdev/sdk`: BUSL-1.1
+MIT licensed. Free and open source.

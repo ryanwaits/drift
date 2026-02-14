@@ -192,4 +192,4 @@ const grouped = groupDriftsByCategory(drifts);
 
 ## License
 
-BUSL-1.1
+MIT
