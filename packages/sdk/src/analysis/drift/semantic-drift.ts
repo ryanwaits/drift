@@ -1,4 +1,4 @@
-import type { SpecExport, SpecTag } from '@openpkg-ts/spec';
+import type { ApiExport, ApiTag } from '../api-spec';
 import type { ModuleGraph } from '../module-graph';
 import type {
   CodeVisibility,
@@ -28,7 +28,7 @@ export interface BrokenLinkOptions {
 /**
  * Detect mismatches between @deprecated tag and actual deprecation status.
  */
-export function detectDeprecatedDrift(entry: SpecExport): SpecDocDrift[] {
+export function detectDeprecatedDrift(entry: ApiExport): SpecDocDrift[] {
   const codeDeprecated = Boolean(entry.deprecated);
   const docsDeprecated =
     entry.tags?.some((tag) => tag.name.toLowerCase() === 'deprecated') ?? false;
@@ -79,7 +79,7 @@ const VISIBILITY_TAG_MAP: Record<string, DocVisibility> = {
 /**
  * Detect mismatches between visibility JSDoc tags and actual visibility.
  */
-export function detectVisibilityDrift(entry: SpecExport): SpecDocDrift[] {
+export function detectVisibilityDrift(entry: ApiExport): SpecDocDrift[] {
   const drifts: SpecDocDrift[] = [];
   const exportDocVisibility = getDocVisibility(entry.tags);
   const exportActualVisibility: CodeVisibility = 'public';
@@ -128,7 +128,7 @@ export function detectVisibilityDrift(entry: SpecExport): SpecDocDrift[] {
   return drifts;
 }
 
-function getDocVisibility(tags?: SpecTag[]): DocVisibilitySignal | undefined {
+function getDocVisibility(tags?: ApiTag[]): DocVisibilitySignal | undefined {
   if (!tags) {
     return undefined;
   }
@@ -225,7 +225,7 @@ function formatDocVisibilityTag(tagName: string): string {
  * @param options - Optional config including moduleGraph for cross-module validation
  */
 export function detectBrokenLinks(
-  entry: SpecExport,
+  entry: ApiExport,
   registry?: ExportRegistry,
   options?: BrokenLinkOptions,
 ): SpecDocDrift[] {
@@ -315,7 +315,7 @@ export function detectBrokenLinks(
 /**
  * Detect mismatches between async documentation and actual async behavior.
  */
-export function detectAsyncMismatch(entry: SpecExport): SpecDocDrift[] {
+export function detectAsyncMismatch(entry: ApiExport): SpecDocDrift[] {
   const signatures = entry.signatures ?? [];
   if (signatures.length === 0) {
     return [];

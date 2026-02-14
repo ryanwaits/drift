@@ -1,4 +1,4 @@
-import type { SpecSchema, SpecTag } from '@openpkg-ts/spec';
+import type { ApiSchema, ApiTag } from '../api-spec';
 
 // ============================================================================
 // Drift-specific Drift Types (moved from @openpkg-ts/spec v0.4.0)
@@ -190,7 +190,7 @@ export type SpecMemberWithVisibility = {
   id?: string;
   name?: string;
   visibility?: CodeVisibility;
-  tags?: SpecTag[];
+  tags?: ApiTag[];
   kind?: string;
 };
 
@@ -201,8 +201,8 @@ export type SpecMemberWithType = {
   id?: string;
   name?: string;
   kind?: string;
-  tags?: SpecTag[];
-  schema?: SpecSchema;
+  tags?: ApiTag[];
+  schema?: ApiSchema;
 };
 
 /**

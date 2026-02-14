@@ -1,4 +1,4 @@
-import type { SpecExport } from '@openpkg-ts/spec';
+import type { ApiExport } from '../api-spec';
 import ts from 'typescript';
 import { isBuiltInIdentifier } from '../../utils/builtin-detection';
 import type { ExampleRunResult } from '../../utils/example-runner';
@@ -89,7 +89,7 @@ function stripCodeBlockMarkers(example: string): string {
  * Parses each example AST only once for performance.
  */
 export function detectAllExampleIssues(
-  entry: SpecExport,
+  entry: ApiExport,
   registry?: ExportRegistry,
 ): SpecDocDrift[] {
   if (!entry.examples?.length) return [];
@@ -199,7 +199,7 @@ export function detectAllExampleIssues(
  * Detect references to non-existent exports in @example code blocks.
  * @deprecated Use detectAllExampleIssues for better performance
  */
-export function detectExampleDrift(entry: SpecExport, registry?: ExportRegistry): SpecDocDrift[] {
+export function detectExampleDrift(entry: ApiExport, registry?: ExportRegistry): SpecDocDrift[] {
   if (!registry || !entry.examples?.length) return [];
   // Delegate to combined function and filter
   return detectAllExampleIssues(entry, registry).filter((d) => d.type === 'example-drift');
@@ -209,7 +209,7 @@ export function detectExampleDrift(entry: SpecExport, registry?: ExportRegistry)
  * Detect syntax errors in @example code blocks.
  * @deprecated Use detectAllExampleIssues for better performance
  */
-export function detectExampleSyntaxErrors(entry: SpecExport): SpecDocDrift[] {
+export function detectExampleSyntaxErrors(entry: ApiExport): SpecDocDrift[] {
   if (!entry.examples?.length) return [];
   // Delegate to combined function and filter
   return detectAllExampleIssues(entry).filter((d) => d.type === 'example-syntax-error');
@@ -220,7 +220,7 @@ export function detectExampleSyntaxErrors(entry: SpecExport): SpecDocDrift[] {
  * Results are provided externally after running examples via runExamples().
  */
 export function detectExampleRuntimeErrors(
-  entry: SpecExport,
+  entry: ApiExport,
   runtimeResults: Map<number, ExampleRunResult>,
 ): SpecDocDrift[] {
   if (!entry.examples || entry.examples.length === 0 || runtimeResults.size === 0) {
@@ -322,7 +322,7 @@ export function hasNonAssertionComments(code: string): boolean {
  * Detect assertion failures by comparing stdout to expected values.
  */
 export function detectExampleAssertionFailures(
-  entry: SpecExport,
+  entry: ApiExport,
   runtimeResults: Map<number, ExampleRunResult>,
 ): SpecDocDrift[] {
   if (!entry.examples || entry.examples.length === 0 || runtimeResults.size === 0) {

@@ -1,6 +1,5 @@
-import type { SpecExport } from '@openpkg-ts/spec';
+import type { ApiExport, ApiSpec } from '../api-spec';
 import type { ModuleGraph } from '../module-graph';
-import type { OpenPkgSpec } from '../spec-types';
 import { detectAllExampleIssues } from './example-drift';
 import { detectOptionalityDrift, detectParamDrift, detectParamTypeDrift } from './param-drift';
 import {
@@ -30,7 +29,7 @@ export interface ComputeDriftOptions {
 /**
  * Build a registry of all export/type names for cross-reference validation.
  */
-export function buildExportRegistry(spec: OpenPkgSpec): ExportRegistry {
+export function buildExportRegistry(spec: ApiSpec): ExportRegistry {
   const exports = new Map<string, ExportInfo>();
   const types = new Set<string>();
   const all = new Set<string>();
@@ -144,7 +143,7 @@ export function buildExportRegistry(spec: OpenPkgSpec): ExportRegistry {
  * @param [options] - Optional config including moduleGraph for cross-module validation
  * @returns Drift results per export
  */
-export function computeDrift(spec: OpenPkgSpec, options?: ComputeDriftOptions): DriftResult {
+export function computeDrift(spec: ApiSpec, options?: ComputeDriftOptions): DriftResult {
   const registry = buildExportRegistry(spec);
   const exports = new Map<string, SpecDocDrift[]>();
 
@@ -165,7 +164,7 @@ export function computeDrift(spec: OpenPkgSpec, options?: ComputeDriftOptions): 
  * @returns Array of drift issues detected
  */
 export function computeExportDrift(
-  entry: SpecExport,
+  entry: ApiExport,
   registry?: ExportRegistry,
   options?: ComputeDriftOptions,
 ): SpecDocDrift[] {

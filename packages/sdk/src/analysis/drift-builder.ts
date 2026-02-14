@@ -10,17 +10,18 @@ import type {
   TypeReferenceLocation,
 } from '../spec';
 import { DRIFT_CATEGORIES } from '../spec';
-import type { SpecExport } from '@openpkg-ts/spec';
+import type { OpenPkg } from '@openpkg-ts/spec';
+import type { ApiExport } from './api-spec';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';
 import { computeHealth, isExportDocumented } from './health';
 import type { DocRequirements, StylePreset } from './presets';
 import { resolveRequirements } from './presets';
-import type { OpenPkgSpec } from './spec-types';
+import { toApiSpec } from './spec-types';
 
 /**
  * Check if an export has the @internal tag.
  */
-function hasInternalTag(exp: SpecExport): boolean {
+function hasInternalTag(exp: ApiExport): boolean {
   return exp.tags?.some((t) => t.name === 'internal') ?? false;
 }
 
@@ -40,7 +41,7 @@ export interface ExtractForgottenExport {
 
 export interface BuildDriftOptions {
   openpkgPath: string;
-  openpkg: OpenPkgSpec;
+  openpkg: OpenPkg;
   packagePath?: string;
   /** Forgotten exports from extraction (for API surface calculation) */
   forgottenExports?: ExtractForgottenExport[];
@@ -78,7 +79,7 @@ const YIELD_BATCH_SIZE = 5;
 interface ExportAnalysisIntermediate {
   coverage: CoverageResult;
   drifts: DriftIssue[];
-  exp: SpecExport;
+  exp: ApiExport;
 }
 
 /**
@@ -99,13 +100,14 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
     style,
     require,
   } = options;
-  const registry = buildExportRegistry(openpkg);
+  const apiSpec = toApiSpec(openpkg);
+  const registry = buildExportRegistry(apiSpec);
 
   // Resolve documentation requirements from style preset and custom overrides
   const requirements = resolveRequirements(style, require);
 
   // Filter out @internal exports - they're excluded from coverage/drift analysis
-  const allExports = (openpkg.exports ?? []).filter((exp) => !hasInternalTag(exp));
+  const allExports = apiSpec.exports.filter((exp) => !hasInternalTag(exp));
   const total = allExports.length;
 
   // Phase 1: Analyze each export individually
@@ -151,6 +153,7 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
     structural: 0,
     semantic: 0,
     example: 0,
+    prose: 0,
   };
   let totalDrift = 0;
 
@@ -318,7 +321,7 @@ interface CoverageResult {
  * @param exp - The export to analyze
  * @param requirements - Documentation requirements to enforce
  */
-function computeExportCoverage(exp: SpecExport, requirements: DocRequirements): CoverageResult {
+function computeExportCoverage(exp: ApiExport, requirements: DocRequirements): CoverageResult {
   const missing: MissingDocRule[] = [];
   let points = 0;
   let maxPoints = 0;

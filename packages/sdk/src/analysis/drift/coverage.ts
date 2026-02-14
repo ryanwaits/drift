@@ -1,4 +1,4 @@
-import type { OpenPkgSpec } from '../spec-types';
+import type { ApiSpec } from '../api-spec';
 
 /**
  * Calculate aggregate coverage score from a spec's exports.
@@ -20,7 +20,7 @@ import type { OpenPkgSpec } from '../spec-types';
  * console.log(`Coverage: ${coverage}%`);
  * ```
  */
-export function calculateAggregateCoverage(spec: OpenPkgSpec): number {
+export function calculateAggregateCoverage(spec: ApiSpec): number {
   const exports = spec.exports ?? [];
   if (exports.length === 0) return 100;
 
@@ -64,14 +64,14 @@ export function calculateAggregateCoverage(spec: OpenPkgSpec): number {
  * ```
  */
 export function ensureSpecCoverage(
-  spec: OpenPkgSpec,
-): OpenPkgSpec & { docs: { coverageScore: number } } {
-  type SpecWithDocs = OpenPkgSpec & { docs?: { coverageScore?: number } };
+  spec: ApiSpec,
+): ApiSpec & { docs: { coverageScore: number } } {
+  type SpecWithDocs = ApiSpec & { docs?: { coverageScore?: number } };
   const specWithDocs = spec as SpecWithDocs;
 
   // Already has top-level coverage
   if (specWithDocs.docs?.coverageScore !== undefined) {
-    return spec as OpenPkgSpec & { docs: { coverageScore: number } };
+    return spec as ApiSpec & { docs: { coverageScore: number } };
   }
 
   // Calculate and add coverage
@@ -82,5 +82,5 @@ export function ensureSpecCoverage(
       ...(specWithDocs.docs ?? {}),
       coverageScore: coverage,
     },
-  } as OpenPkgSpec & { docs: { coverageScore: number } };
+  } as ApiSpec & { docs: { coverageScore: number } };
 }

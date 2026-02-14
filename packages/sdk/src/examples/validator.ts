@@ -1,7 +1,7 @@
 /**
  * Unified example validation.
  */
-import type { SpecExample, SpecExport } from '@openpkg-ts/spec';
+import type { ApiExample, ApiExport } from '../analysis/api-spec';
 import {
   detectExampleAssertionFailures,
   detectExampleRuntimeErrors,
@@ -115,12 +115,12 @@ export interface ExampleValidationResult {
 /**
  * Get string examples from an export, filtering out structured examples.
  */
-function getStringExamples(exp: SpecExport): string[] {
+function getStringExamples(exp: ApiExport): string[] {
   if (!exp.examples || exp.examples.length === 0) {
     return [];
   }
   return exp.examples
-    .map((e) => (typeof e === 'string' ? e : (e as SpecExample).code))
+    .map((e) => (typeof e === 'string' ? e : (e as ApiExample).code))
     .filter((e): e is string => typeof e === 'string');
 }
 
@@ -133,7 +133,7 @@ function getStringExamples(exp: SpecExport): string[] {
  * - `run`: executes examples (doesn't require presence or typecheck)
  */
 export async function validateExamples(
-  exports: SpecExport[],
+  exports: ApiExport[],
   options: ExampleValidationOptions,
 ): Promise<ExampleValidationResult> {
   const {

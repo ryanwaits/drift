@@ -5,7 +5,7 @@
  * when working with the composition pattern (OpenPkg + DriftSpec).
  */
 import type { DriftIssue, DriftSpec, ExportAnalysis, MissingDocRule } from '../spec';
-import type { SpecExport } from '@openpkg-ts/spec';
+import type { ApiExport } from './api-spec';
 
 /**
  * Get the full analysis data for an export.
@@ -15,7 +15,7 @@ import type { SpecExport } from '@openpkg-ts/spec';
  * @returns Export analysis or undefined if not found
  */
 export function getExportAnalysis(
-  exp: SpecExport,
+  exp: ApiExport,
   driftSpec: DriftSpec,
 ): ExportAnalysis | undefined {
   const id = exp.id ?? exp.name;
@@ -29,7 +29,7 @@ export function getExportAnalysis(
  * @param driftSpec - The Drift spec containing analysis data
  * @returns Coverage score (0-100) or 100 if not found
  */
-export function getExportScore(exp: SpecExport, driftSpec: DriftSpec): number {
+export function getExportScore(exp: ApiExport, driftSpec: DriftSpec): number {
   const analysis = getExportAnalysis(exp, driftSpec);
   return analysis?.coverageScore ?? 100;
 }
@@ -41,7 +41,7 @@ export function getExportScore(exp: SpecExport, driftSpec: DriftSpec): number {
  * @param driftSpec - The Drift spec containing analysis data
  * @returns Array of drift issues or empty array if none
  */
-export function getExportDrift(exp: SpecExport, driftSpec: DriftSpec): DriftIssue[] {
+export function getExportDrift(exp: ApiExport, driftSpec: DriftSpec): DriftIssue[] {
   const analysis = getExportAnalysis(exp, driftSpec);
   return analysis?.drift ?? [];
 }
@@ -53,7 +53,7 @@ export function getExportDrift(exp: SpecExport, driftSpec: DriftSpec): DriftIssu
  * @param driftSpec - The Drift spec containing analysis data
  * @returns Array of missing rule IDs or empty array if none
  */
-export function getExportMissing(exp: SpecExport, driftSpec: DriftSpec): MissingDocRule[] {
+export function getExportMissing(exp: ApiExport, driftSpec: DriftSpec): MissingDocRule[] {
   const analysis = getExportAnalysis(exp, driftSpec);
   return analysis?.missing ?? [];
 }
@@ -65,7 +65,7 @@ export function getExportMissing(exp: SpecExport, driftSpec: DriftSpec): Missing
  * @param driftSpec - The Drift spec containing analysis data
  * @returns True if export has 100% coverage and no drift
  */
-export function isExportFullyDocumented(exp: SpecExport, driftSpec: DriftSpec): boolean {
+export function isExportFullyDocumented(exp: ApiExport, driftSpec: DriftSpec): boolean {
   const analysis = getExportAnalysis(exp, driftSpec);
   if (!analysis) return true;
   return analysis.coverageScore === 100 && (!analysis.drift || analysis.drift.length === 0);

@@ -1,4 +1,4 @@
-import type { OpenPkg } from '@openpkg-ts/spec';
+import type { ApiSpec } from './api-spec';
 
 /**
  * Information about a module in the graph.
@@ -66,7 +66,7 @@ export interface ModuleGraph {
  * }
  * ```
  */
-export function buildModuleGraph(specs: OpenPkg[]): ModuleGraph {
+export function buildModuleGraph(specs: ApiSpec[]): ModuleGraph {
   const modules = new Map<string, ModuleInfo>();
   const exports = new Map<string, string>();
   const types = new Map<string, string>();

@@ -2,7 +2,7 @@
  * Tests for cross-module @link validation.
  */
 
-import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
+import type { ApiExport, ApiSpec } from '../src/analysis/api-spec';
 import { describe, expect, it } from 'vitest';
 import { detectBrokenLinks } from '../src/analysis/drift';
 import type { ExportRegistry } from '../src/analysis/drift/types';
@@ -12,7 +12,7 @@ import {
   symbolExistsInGraph,
 } from '../src/analysis/module-graph';
 
-function createExport(overrides: Partial<SpecExport>): SpecExport {
+function createExport(overrides: Partial<ApiExport>): ApiExport {
   return {
     id: 'test',
     name: 'test',
@@ -23,13 +23,13 @@ function createExport(overrides: Partial<SpecExport>): SpecExport {
 
 function createSpec(
   name: string,
-  exports: SpecExport[],
+  exports: ApiExport[],
   types: { name: string; id?: string }[] = [],
-): OpenPkg {
+): ApiSpec {
   return {
     meta: { name, version: '1.0.0' },
     exports,
-    types: types as OpenPkg['types'],
+    types: types as ApiSpec['types'],
   };
 }
 

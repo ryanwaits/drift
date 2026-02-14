@@ -1,7 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { DriftSpec } from '../spec';
-import type { OpenPkg, SpecExport, SpecSignature, SpecType } from '@openpkg-ts/spec';
+import type { OpenPkg } from '@openpkg-ts/spec';
+import type { ApiExport, ApiSignature, ApiSpec, ApiType } from './api-spec';
 import {
   type CoverageSummary,
   type DriftReport,
@@ -10,6 +11,7 @@ import {
 } from '../types/report';
 import { buildDriftSpec } from './drift-builder';
 import { isExportDocumented } from './health';
+import { toApiSpec } from './spec-types';
 
 /**
  * Generate a Drift report from an OpenPkg spec.
@@ -34,7 +36,7 @@ export async function generateReport(
   openpkgPath = 'openpkg.json',
 ): Promise<DriftReport> {
   const driftSpec = await buildDriftSpec({ openpkg: spec, openpkgPath });
-  return generateReportFromDrift(spec, driftSpec);
+  return generateReportFromDrift(toApiSpec(spec), driftSpec);
 }
 
 /**
@@ -47,13 +49,13 @@ export async function generateReport(
  * @param driftSpec - The Drift spec with analysis data
  * @returns A Drift report with coverage analysis
  */
-export function generateReportFromDrift(openpkg: OpenPkg, driftSpec: DriftSpec): DriftReport {
+export function generateReportFromDrift(openpkg: ApiSpec, driftSpec: DriftSpec): DriftReport {
   // Build per-export coverage data from driftSpec.exports (already handles overload grouping)
   const exportsData: Record<string, ExportCoverageData> = {};
   const missingByRule: Record<string, number> = {};
 
   // Build lookup from openpkg for name/kind info
-  const openpkgExportsById = new Map<string, SpecExport>();
+  const openpkgExportsById = new Map<string, ApiExport>();
   for (const exp of openpkg.exports ?? []) {
     const id = exp.id ?? exp.name;
     // For overloads, first one wins (they all have same name/kind)
@@ -170,7 +172,7 @@ export function saveReport(report: DriftReport, reportPath: string): void {
 /**
  * Format a signature to a readable string.
  */
-function formatSignature(name: string, signature: SpecSignature): string {
+function formatSignature(name: string, signature: ApiSignature): string {
   const params = (signature.parameters ?? [])
     .map((p) => {
       const optional = p.required === false ? '?' : '';
@@ -199,7 +201,7 @@ function formatSignature(name: string, signature: SpecSignature): string {
 /**
  * Format an export to API surface markdown.
  */
-function formatExportToApiSurface(exp: SpecExport): string {
+function formatExportToApiSurface(exp: ApiExport): string {
   const lines: string[] = [];
   lines.push(`### ${exp.name}`);
 
@@ -255,7 +257,7 @@ function formatExportToApiSurface(exp: SpecExport): string {
 /**
  * Format a type to API surface markdown.
  */
-function formatTypeToApiSurface(type: SpecType): string {
+function formatTypeToApiSurface(type: ApiType): string {
   const lines: string[] = [];
   lines.push(`### ${type.name}`);
 
@@ -310,7 +312,7 @@ function formatTypeToApiSurface(type: SpecType): string {
  * fs.writeFileSync('api-surface.md', apiSurface);
  * ```
  */
-export function renderApiSurface(spec: OpenPkg): string {
+export function renderApiSurface(spec: ApiSpec): string {
   const lines: string[] = [];
 
   // Header
@@ -322,7 +324,7 @@ export function renderApiSurface(spec: OpenPkg): string {
   lines.push('');
 
   // Group exports by kind and sort alphabetically
-  const exportsByKind: Record<string, SpecExport[]> = {};
+  const exportsByKind: Record<string, ApiExport[]> = {};
   for (const exp of spec.exports) {
     const kind = exp.kind;
     if (!exportsByKind[kind]) {

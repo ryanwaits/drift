@@ -1,4 +1,4 @@
-import type { SpecExport, SpecSchema, SpecTag } from '@openpkg-ts/spec';
+import type { ApiExport, ApiSchema, ApiTag } from '../api-spec';
 import type { ClosestMatch, DocumentedTemplateTag, ParsedParamTag } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -8,7 +8,7 @@ import type { ClosestMatch, DocumentedTemplateTag, ParsedParamTag } from './type
 /**
  * Extract param info from a SpecTag's structured param field.
  */
-export function extractParamFromTag(tag: SpecTag): ParsedParamTag | undefined {
+export function extractParamFromTag(tag: ApiTag): ParsedParamTag | undefined {
   if (!tag.param) {
     return undefined;
   }
@@ -44,7 +44,7 @@ export function extractReturnTypeFromTag(text: string): string | undefined {
 // Schema Type Extraction
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function extractTypeFromSchema(schema: SpecSchema | undefined): string | undefined {
+export function extractTypeFromSchema(schema: ApiSchema | undefined): string | undefined {
   if (!schema) {
     return undefined;
   }
@@ -159,7 +159,7 @@ export function parseTemplateTag(text: string | undefined): DocumentedTemplateTa
 }
 
 export function collectActualTypeParameterConstraints(
-  entry: SpecExport,
+  entry: ApiExport,
 ): Map<string, string | undefined> {
   const constraints = new Map<string, string | undefined>();
 

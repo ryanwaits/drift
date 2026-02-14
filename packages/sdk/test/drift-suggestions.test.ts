@@ -2,7 +2,7 @@
  * Tests for drift suggestion fields (expected, actual, suggestion).
  */
 
-import type { SpecExport } from '@openpkg-ts/spec';
+import type { ApiExport } from '../src/analysis/api-spec';
 import { describe, expect, it } from 'vitest';
 import {
   detectAsyncMismatch,
@@ -16,7 +16,7 @@ import {
   detectVisibilityDrift,
 } from '../src/analysis/drift';
 
-function createExport(overrides: Partial<SpecExport>): SpecExport {
+function createExport(overrides: Partial<ApiExport>): ApiExport {
   return {
     id: 'test',
     name: 'test',

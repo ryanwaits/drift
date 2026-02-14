@@ -1,35 +1,38 @@
 /**
  * Shared test fixtures and helpers for SDK tests.
+ *
+ * These helpers produce loose shapes that are structurally compatible with
+ * both ApiSpec/ApiExport (drift analysis) and OpenPkg/SpecExport (diffSpec).
+ * Extra fields beyond the type contract are harmless at runtime.
  */
-import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
+import type { ApiExport, ApiSpec } from '../src/analysis/api-spec';
 import type { SpecDocDrift } from '../src/analysis/drift/types';
 
 /**
- * Create a minimal valid OpenPkg spec for testing.
+ * Create a minimal valid spec for testing.
+ * Includes openpkg-specific fields for compatibility with diffSpec() tests.
  */
-export function createSpec(overrides: Partial<OpenPkg> = {}): OpenPkg {
+export function createSpec(overrides: Record<string, unknown> = {}): ApiSpec {
   return {
     openpkg: '0.9.0',
-    name: 'test-pkg',
-    version: '1.0.0',
+    meta: { name: 'test-pkg', version: '1.0.0' },
     exports: [],
     types: [],
     ...overrides,
-  };
+  } as ApiSpec;
 }
 
 /**
  * Create a spec export for testing.
  */
-export function createExport(overrides: Partial<SpecExport> = {}): SpecExport {
-  const name = overrides.name ?? 'testFn';
+export function createExport(overrides: Record<string, unknown> = {}): ApiExport {
+  const name = (overrides.name as string) ?? 'testFn';
   return {
     id: name,
     name,
     kind: 'function',
-    signature: `function ${name}(): void`,
     ...overrides,
-  };
+  } as ApiExport;
 }
 
 /**
@@ -43,21 +46,26 @@ export function createDocumentedFunction(
     params?: Array<{ name: string; type: string; description?: string }>;
     returnType?: string;
   } = {},
-): SpecExport {
+): ApiExport {
   return {
     id: name,
     name,
     kind: 'function',
-    signature: `function ${name}(): ${options.returnType ?? 'void'}`,
     description: options.description,
     examples: options.examples,
-    parameters: options.params?.map((p) => ({
-      name: p.name,
-      schema: { type: p.type },
-      description: p.description,
-    })),
-    returnType: options.returnType ? { type: options.returnType } : undefined,
-  };
+    signatures: options.params
+      ? [
+          {
+            parameters: options.params.map((p) => ({
+              name: p.name,
+              schema: { type: p.type },
+              description: p.description,
+            })),
+            returns: options.returnType ? { schema: { type: options.returnType } } : undefined,
+          },
+        ]
+      : undefined,
+  } as ApiExport;
 }
 
 /**
@@ -70,24 +78,25 @@ export function createClassExport(
     methods?: Array<{ name: string; signature: string }>;
     properties?: Array<{ name: string; type: string }>;
   } = {},
-): SpecExport {
+): ApiExport {
   return {
     id: name,
     name,
     kind: 'class',
-    signature: `class ${name}`,
     description: options.description,
-    methods: options.methods?.map((m) => ({
-      id: `${name}.${m.name}`,
-      name: m.name,
-      kind: 'method' as const,
-      signature: m.signature,
-    })),
-    properties: options.properties?.map((p) => ({
-      name: p.name,
-      schema: { type: p.type },
-    })),
-  };
+    members: [
+      ...(options.methods?.map((m) => ({
+        id: `${name}.${m.name}`,
+        name: m.name,
+        kind: 'method' as const,
+      })) ?? []),
+      ...(options.properties?.map((p) => ({
+        name: p.name,
+        kind: 'property' as const,
+        schema: { type: p.type },
+      })) ?? []),
+    ],
+  } as ApiExport;
 }
 
 /**
@@ -107,11 +116,11 @@ export function createDrift(overrides: Partial<SpecDocDrift> = {}): SpecDocDrift
 export function createEnrichedSpec(
   options: {
     coverageScore?: number;
-    exports?: SpecExport[];
+    exports?: ApiExport[];
     missing?: string[];
     drift?: SpecDocDrift[];
   } = {},
-): OpenPkg & { docs?: { coverageScore: number; missing?: string[]; drift?: SpecDocDrift[] } } {
+): ApiSpec & { docs?: { coverageScore: number; missing?: string[]; drift?: SpecDocDrift[] } } {
   const spec = createSpec({ exports: options.exports ?? [] });
   return {
     ...spec,

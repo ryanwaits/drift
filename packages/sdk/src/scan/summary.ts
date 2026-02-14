@@ -3,7 +3,7 @@
  */
 
 import type { DriftSpec } from '../spec';
-import type { OpenPkg } from '@openpkg-ts/spec';
+import type { ApiSpec } from '../analysis/api-spec';
 import { getExportAnalysis } from '../analysis/lookup';
 
 /**
@@ -61,7 +61,7 @@ export interface SpecSummary {
  * console.log(`Undocumented: ${summary.undocumented.length}`);
  * ```
  */
-export function extractSpecSummary(openpkg: OpenPkg, driftSpec: DriftSpec): SpecSummary {
+export function extractSpecSummary(openpkg: ApiSpec, driftSpec: DriftSpec): SpecSummary {
   const exports = openpkg.exports ?? [];
   const undocumented: string[] = [];
   const drift: SummaryDriftIssue[] = [];

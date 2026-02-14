@@ -2,7 +2,7 @@
  * Tests for computeHealth() function.
  */
 import { describe, expect, test } from 'bun:test';
-import type { SpecExport } from '@openpkg-ts/spec';
+import type { ApiExport } from '../src/analysis/api-spec';
 import { computeHealth, type HealthInput, isExportDocumented } from '../src/analysis/health';
 
 /**
@@ -25,6 +25,7 @@ function createHealthInput(overrides: Partial<HealthInput> = {}): HealthInput {
       structural: 0,
       semantic: 0,
       example: 0,
+      prose: 0,
     },
     ...overrides,
   };
@@ -129,6 +130,7 @@ describe('computeHealth', () => {
           structural: 6,
           semantic: 2,
           example: 2,
+          prose: 0,
         },
       });
 
@@ -179,6 +181,7 @@ describe('computeHealth', () => {
           structural: 50,
           semantic: 30,
           example: 20,
+          prose: 0,
         },
       });
 
@@ -377,6 +380,7 @@ describe('computeHealth', () => {
           structural: 2,
           semantic: 2,
           example: 1,
+          prose: 0,
         },
       });
 
@@ -405,7 +409,7 @@ describe('computeHealth', () => {
 });
 
 describe('isExportDocumented', () => {
-  function createExport(overrides: Partial<SpecExport>): SpecExport {
+  function createExport(overrides: Partial<ApiExport>): ApiExport {
     return {
       id: 'test',
       name: 'test',

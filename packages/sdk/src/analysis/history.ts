@@ -5,7 +5,7 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { OpenPkg } from '@openpkg-ts/spec';
+import type { ApiSpec } from './api-spec';
 import { getStateDir } from '../utils/project-root';
 import { isExportDocumented } from './health';
 
@@ -122,7 +122,7 @@ function getSnapshotFilename(timestamp: Date): string {
  * Compute a coverage snapshot from an OpenPkg spec.
  */
 export function computeSnapshot(
-  spec: OpenPkg,
+  spec: ApiSpec,
   options?: { commit?: string; branch?: string },
 ): CoverageSnapshot {
   const exports = spec.exports ?? [];
@@ -213,7 +213,7 @@ export function loadSnapshots(cwd: string): CoverageSnapshot[] {
  * @returns Trend data with history and delta
  */
 export function getTrend(
-  spec: OpenPkg,
+  spec: ApiSpec,
   cwd: string,
   options?: { commit?: string; branch?: string },
 ): CoverageTrend {
@@ -417,7 +417,7 @@ export function generateWeeklySummaries(snapshots: CoverageSnapshot[]): WeeklySu
  * @returns Extended trend analysis
  */
 export function getExtendedTrend(
-  spec: OpenPkg,
+  spec: ApiSpec,
   cwd: string,
   options?: {
     commit?: string;

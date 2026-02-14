@@ -1,5 +1,5 @@
 import type { DriftSpec } from '../spec';
-import type { OpenPkg } from '@openpkg-ts/spec';
+import type { ApiSpec } from './api-spec';
 
 /**
  * Result from analyzing a single package in batch mode.
@@ -46,9 +46,9 @@ export interface PackageResult {
   coverageScore: number;
 
   /**
-   * The full OpenPkg spec (for detailed reporting).
+   * The full ApiSpec spec (for detailed reporting).
    */
-  openpkg: OpenPkg;
+  openpkg: ApiSpec;
 
   /**
    * The full Drift spec (for detailed reporting).
@@ -99,13 +99,13 @@ export interface BatchResult {
 /**
  * Create a PackageResult from analyzed specs.
  *
- * @param openpkg - The OpenPkg spec
+ * @param openpkg - The ApiSpec spec
  * @param driftSpec - The Drift spec with coverage analysis
  * @param entryPath - Path to the entry point that was analyzed
  * @returns PackageResult for batch aggregation
  */
 export function createPackageResult(
-  openpkg: OpenPkg,
+  openpkg: ApiSpec,
   driftSpec: DriftSpec,
   entryPath: string,
 ): PackageResult {

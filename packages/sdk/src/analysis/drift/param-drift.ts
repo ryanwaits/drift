@@ -1,4 +1,4 @@
-import type { SpecExport } from '@openpkg-ts/spec';
+import type { ApiExport } from '../api-spec';
 import type { ParsedParamTag, SpecDocDrift } from './types';
 import {
   buildParamTypeMismatchIssue,
@@ -12,7 +12,7 @@ import {
 /**
  * Detect mismatches between documented @param names and actual signature params.
  */
-export function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
+export function detectParamDrift(entry: ApiExport): SpecDocDrift[] {
   const drifts: SpecDocDrift[] = [];
   const signatures = entry.signatures ?? [];
   if (signatures.length === 0) {
@@ -158,7 +158,7 @@ export function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
 /**
  * Detect mismatches between documented optionality (brackets) and actual signature.
  */
-export function detectOptionalityDrift(entry: SpecExport): SpecDocDrift[] {
+export function detectOptionalityDrift(entry: ApiExport): SpecDocDrift[] {
   const signatures = entry.signatures ?? [];
   if (signatures.length === 0) {
     return [];
@@ -223,7 +223,7 @@ export function detectOptionalityDrift(entry: SpecExport): SpecDocDrift[] {
 /**
  * Detect mismatches between documented @param types and actual signature types.
  */
-export function detectParamTypeDrift(entry: SpecExport): SpecDocDrift[] {
+export function detectParamTypeDrift(entry: ApiExport): SpecDocDrift[] {
   const signatures = entry.signatures ?? [];
   if (signatures.length === 0) {
     return [];

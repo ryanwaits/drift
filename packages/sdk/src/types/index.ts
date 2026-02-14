@@ -24,3 +24,14 @@ export {
   REPORT_EXTENSIONS,
   REPORT_VERSION,
 } from './report';
+// Drift-owned input types (for adapter authors)
+export type {
+  ApiExample,
+  ApiExport,
+  ApiMember,
+  ApiSchema,
+  ApiSignature,
+  ApiSpec,
+  ApiTag,
+  ApiType,
+} from '../analysis/api-spec';

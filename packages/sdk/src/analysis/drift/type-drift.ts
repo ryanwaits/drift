@@ -1,4 +1,4 @@
-import type { SpecExport } from '@openpkg-ts/spec';
+import type { ApiExport } from '../api-spec';
 import type { SpecDocDrift, SpecMemberWithType } from './types';
 import {
   buildGenericConstraintMismatchIssue,
@@ -16,7 +16,7 @@ import {
 /**
  * Detect mismatches between documented @returns type and actual return type.
  */
-export function detectReturnTypeDrift(entry: SpecExport): SpecDocDrift[] {
+export function detectReturnTypeDrift(entry: ApiExport): SpecDocDrift[] {
   const returnsTag = entry.tags?.find((tag) => tag.name === 'returns' && tag.text?.length);
   if (!returnsTag) {
     return [];
@@ -64,7 +64,7 @@ export function detectReturnTypeDrift(entry: SpecExport): SpecDocDrift[] {
 /**
  * Detect mismatches between documented @template constraints and actual type parameter constraints.
  */
-export function detectGenericConstraintDrift(entry: SpecExport): SpecDocDrift[] {
+export function detectGenericConstraintDrift(entry: ApiExport): SpecDocDrift[] {
   const templateTags =
     entry.tags?.filter((tag) => tag.name === 'template' && Boolean(tag.text?.trim())) ?? [];
   if (templateTags.length === 0) {
@@ -117,7 +117,7 @@ export function detectGenericConstraintDrift(entry: SpecExport): SpecDocDrift[] 
 /**
  * Detect mismatches between documented @type and actual property types.
  */
-export function detectPropertyTypeDrift(entry: SpecExport): SpecDocDrift[] {
+export function detectPropertyTypeDrift(entry: ApiExport): SpecDocDrift[] {
   const members = entry.members ?? [];
   if (members.length === 0) {
     return [];

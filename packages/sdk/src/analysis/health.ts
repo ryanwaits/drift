@@ -1,5 +1,5 @@
 import type { DocumentationHealth, DriftCategory, MissingDocRule } from '../spec';
-import type { SpecExport } from '@openpkg-ts/spec';
+import type { ApiExport } from './api-spec';
 
 /**
  * Check if an export has meaningful documentation.
@@ -8,7 +8,7 @@ import type { SpecExport } from '@openpkg-ts/spec';
  * - Meaningful JSDoc tags
  * - For namespaces: description counts as documented (no examples required)
  */
-export function isExportDocumented(exp: SpecExport): boolean {
+export function isExportDocumented(exp: ApiExport): boolean {
   // Has direct description
   if (exp.description && exp.description.trim().length > 0) return true;
 
