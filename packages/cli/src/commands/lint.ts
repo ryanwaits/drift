@@ -5,7 +5,6 @@ import {
   computeDrift,
   detectProseDrift,
   discoverMarkdownFiles,
-  isFixableDrift,
 } from '@driftdev/sdk';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
@@ -128,17 +127,11 @@ export function registerLintCommand(program: Command): void {
         const data = { issues, count: issues.length };
 
         // Compute next action hint
-        let fixableCount = 0;
-        for (const [, drifts] of driftResult.exports) {
-          for (const d of drifts) {
-            if (isFixableDrift(d)) fixableCount++;
-          }
-        }
         const next: OutputNext | undefined =
           issues.length > 0
             ? {
                 suggested: 'drift-fix skill',
-                reason: `${fixableCount} of ${issues.length} issues are auto-fixable`,
+                reason: `${issues.length} issue${issues.length === 1 ? '' : 's'} found`,
               }
             : undefined;
 

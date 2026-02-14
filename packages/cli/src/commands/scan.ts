@@ -5,7 +5,6 @@ import {
   computeDrift,
   detectProseDrift,
   discoverMarkdownFiles,
-  isFixableDrift,
 } from '@driftdev/sdk';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
@@ -208,15 +207,9 @@ export function registerScanCommand(program: Command): void {
           // Compute next action hint
           let next: OutputNext | undefined;
           if (issues.length > 0) {
-            let fixableCount = 0;
-            for (const [, drs] of driftResult.exports) {
-              for (const d of drs) {
-                if (isFixableDrift(d)) fixableCount++;
-              }
-            }
             next = {
               suggested: 'drift-fix skill',
-              reason: `${fixableCount} of ${issues.length} issues are auto-fixable`,
+              reason: `${issues.length} issue${issues.length === 1 ? '' : 's'} found`,
             };
           } else if (total - documented > 0) {
             next = {

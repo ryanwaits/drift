@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { setNoCache } from './cache/spec-cache';
 import { registerBreakingCommand } from './commands/breaking';
+import { registerCommandsCommand } from './commands/commands';
 import { registerCacheCommand } from './commands/cache';
 import { registerChangelogCommand } from './commands/changelog';
 import { registerCiCommand } from './commands/ci';
@@ -26,7 +27,7 @@ import { registerReportCommand } from './commands/report';
 import { registerScanCommand } from './commands/scan';
 import { registerSemverCommand } from './commands/semver';
 import { registerValidateCommand } from './commands/validate';
-import { loadConfig, setConfigPath } from './config/loader';
+import { setConfigPath } from './config/loader';
 import { extractCapabilities } from './utils/capabilities';
 import { setOutputMode } from './utils/render';
 
@@ -96,8 +97,11 @@ registerContextCommand(program);
 // Cache management
 registerCacheCommand(program);
 
+// Command discovery
+registerCommandsCommand(program);
+
 // Hide non-human commands from --help (still functional)
-const HUMAN_COMMANDS = new Set(['scan', 'ci', 'init']);
+const HUMAN_COMMANDS = new Set(['scan', 'ci', 'init', 'commands']);
 for (const cmd of program.commands) {
   if (!HUMAN_COMMANDS.has(cmd.name())) {
     (cmd as any)._hidden = true;
@@ -110,7 +114,7 @@ if (process.argv.includes('--tools')) {
   process.exit(0);
 }
 
-// Smart default: bare `drift` runs init if no config, scan otherwise
+// Bare `drift` always runs scan
 // Skip if user passed --help/-h/--version/-V (let commander handle those)
 const rawArgs = process.argv.slice(2);
 const hasHelpOrVersion = rawArgs.some((a) =>
@@ -118,9 +122,7 @@ const hasHelpOrVersion = rawArgs.some((a) =>
 );
 const userArgs = rawArgs.filter((a) => !a.startsWith('-'));
 if (userArgs.length === 0 && !hasHelpOrVersion) {
-  const { configPath } = loadConfig();
-  const subcommand = configPath ? 'scan' : 'init';
-  process.argv.splice(2, 0, subcommand);
+  process.argv.splice(2, 0, 'scan');
 }
 
 program.parseAsync().catch(() => {

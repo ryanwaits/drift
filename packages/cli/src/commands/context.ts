@@ -2,7 +2,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import type { OpenPkgSpec } from '@openpkg-ts/spec';
-import { computeDrift, isFixableDrift } from '@driftdev/sdk';
+import { computeDrift } from '@driftdev/sdk';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
@@ -65,7 +65,6 @@ function buildPackageContext(name: string, spec: OpenPkgSpec): PackageContext {
         issue: drift.issue,
         filePath: drift.filePath ?? exp?.source?.file,
         line: drift.line ?? exp?.source?.line,
-        fixable: isFixableDrift(drift),
       });
     }
   }

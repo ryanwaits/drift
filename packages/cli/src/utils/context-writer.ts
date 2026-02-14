@@ -10,7 +10,6 @@ export interface PackageIssue {
   issue: string;
   filePath?: string;
   line?: number;
-  fixable: boolean;
 }
 
 export interface UndocumentedExport {
@@ -72,15 +71,13 @@ export function renderContextMarkdown(data: ContextData): string {
       if (pkg.issues && pkg.issues.length > 0) {
         lines.push(`### ${pkg.name} — Issues`);
         lines.push('');
-        lines.push('| Export | Type | Location | Fixable |');
-        lines.push('|--------|------|----------|---------|');
+        lines.push('| Export | Type | Location |');
+        lines.push('|--------|------|----------|');
         for (const issue of pkg.issues) {
           const loc = issue.filePath
             ? `${issue.filePath}${issue.line ? `:${issue.line}` : ''}`
             : '—';
-          lines.push(
-            `| ${issue.export} | ${issue.type} | ${loc} | ${issue.fixable ? 'yes' : 'no'} |`,
-          );
+          lines.push(`| ${issue.export} | ${issue.type} | ${loc} |`);
         }
         lines.push('');
       }
