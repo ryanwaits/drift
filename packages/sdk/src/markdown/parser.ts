@@ -91,8 +91,14 @@ export function parseMarkdownFile(
   filePath: string,
   options?: ParseOptions,
 ): MarkdownDocFile {
-  const processor = unified().use(remarkParse).use(remarkMdx);
-  const tree = processor.parse(content) as Root;
+  let tree: Root;
+  try {
+    tree = unified().use(remarkParse).use(remarkMdx).parse(content) as Root;
+  } catch {
+    // MDX parser fails on non-MDX syntax (e.g. Gitbook {% %} directives).
+    // Fall back to plain markdown parsing.
+    tree = unified().use(remarkParse).parse(content) as Root;
+  }
   const codeBlocks: MarkdownCodeBlock[] = [];
 
   // Use custom langs if provided, otherwise use global config
