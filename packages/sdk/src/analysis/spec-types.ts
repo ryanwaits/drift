@@ -1,9 +1,19 @@
-import type { OpenPkg, SpecSchema } from '@openpkg-ts/spec';
+/**
+ * Adapter: OpenPkg → ApiSpec.
+ *
+ * Converts @openpkg-ts/spec shapes into drift-owned ApiSpec types.
+ * All internal analysis consumers use ApiSpec directly.
+ */
+import type { OpenPkg } from '@openpkg-ts/spec';
+import type { ApiSpec } from './api-spec';
 
+/** @deprecated Use `OpenPkg` from `@openpkg-ts/spec` directly. Will be removed in Phase 2. */
 export type OpenPkgSpec = OpenPkg;
 
-export type ExportDefinition = OpenPkgSpec['exports'][number];
-export type TypeDefinition = NonNullable<OpenPkgSpec['types']>[number];
-// TypeReference is the SDK's internal representation during serialization
-// It uses SpecSchema for type-safety but the actual shapes are produced at runtime
-export type TypeReference = SpecSchema;
+export function toApiSpec(openpkg: OpenPkg): ApiSpec {
+  return {
+    meta: { name: openpkg.meta.name, version: openpkg.meta.version },
+    exports: openpkg.exports ?? [],
+    types: openpkg.types,
+  };
+}
