@@ -40,12 +40,12 @@
     },
     "packages/cli": {
       "name": "@driftdev/cli",
-      "version": "0.41.0",
+      "version": "0.42.0",
       "bin": {
         "drift": "./dist/drift.js",
       },
       "dependencies": {
-        "@driftdev/sdk": "^0.41.0",
+        "@driftdev/sdk": "^0.42.0",
         "@openpkg-ts/sdk": "^0.37.0",
         "@openpkg-ts/spec": "^0.37.0",
         "chalk": "^5.4.1",
@@ -67,7 +67,7 @@
     },
     "packages/sdk": {
       "name": "@driftdev/sdk",
-      "version": "0.41.0",
+      "version": "0.42.0",
       "dependencies": {
         "@openpkg-ts/sdk": "^0.37.0",
         "@openpkg-ts/spec": "^0.37.0",

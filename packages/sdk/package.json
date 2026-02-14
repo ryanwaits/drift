@@ -1,6 +1,6 @@
 {
   "name": "@driftdev/sdk",
-  "version": "0.41.0",
+  "version": "0.42.0",
   "description": "Drift SDK - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",

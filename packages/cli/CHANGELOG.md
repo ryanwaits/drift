@@ -1,5 +1,16 @@
 # @doccov/cli
 
+## 0.42.0
+
+### Minor Changes
+
+- 2bf7604: Remove fix module and `fixable` field from all types. Add `Drift.scan()` facade. Add subpath exports (`/markdown`, `/examples`, `/history`, `/cache`). Bare `drift` always runs scan. Add `drift commands`.
+
+### Patch Changes
+
+- Updated dependencies [2bf7604]
+  - @driftdev/sdk@0.42.0
+
 ## 0.41.0
 
 ### Patch Changes
