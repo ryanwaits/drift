@@ -4,10 +4,12 @@
   "type": "module",
   "workspaces": [
     "packages/*",
+    "packages/adapters/*",
     "apps/*"
   ],
   "scripts": {
-    "build": "bun run build:sdk && bun run build:cli",
+    "build": "bun run build:sdk && bun run build:cli && bun run build:clarity-adapter",
+    "build:clarity-adapter": "cd packages/adapters/clarity && bun run build",
     "build:sdk": "cd packages/sdk && bun run build",
     "build:cli": "cd packages/cli && bun run build",
     "dev": "bun run --parallel dev:sdk dev:cli",
