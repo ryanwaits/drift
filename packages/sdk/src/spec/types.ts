@@ -16,9 +16,11 @@ export type DriftType =
   | 'example-syntax-error'
   | 'example-runtime-error'
   | 'example-assertion-failed'
-  | 'broken-link';
+  | 'broken-link'
+  | 'prose-broken-reference'
+  | 'prose-unresolved-member';
 
-export type DriftCategory = 'structural' | 'semantic' | 'example';
+export type DriftCategory = 'structural' | 'semantic' | 'example' | 'prose';
 
 export const DRIFT_CATEGORIES: Record<DriftType, DriftCategory> = {
   'param-mismatch': 'structural',
@@ -35,18 +37,22 @@ export const DRIFT_CATEGORIES: Record<DriftType, DriftCategory> = {
   'example-syntax-error': 'example',
   'example-runtime-error': 'example',
   'example-assertion-failed': 'example',
+  'prose-broken-reference': 'prose',
+  'prose-unresolved-member': 'prose',
 };
 
 export const DRIFT_CATEGORY_LABELS: Record<DriftCategory, string> = {
   structural: 'Signature mismatches',
   semantic: 'Metadata issues',
   example: 'Example problems',
+  prose: 'Prose references',
 };
 
 export const DRIFT_CATEGORY_DESCRIPTIONS: Record<DriftCategory, string> = {
   structural: "JSDoc types or parameters don't match the actual code signature",
   semantic: 'Deprecation, visibility, or reference issues',
   example: "@example code has errors or doesn't work correctly",
+  prose: 'Markdown docs import or reference non-existent exports',
 };
 
 export type DriftIssue = {

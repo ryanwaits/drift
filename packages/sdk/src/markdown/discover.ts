@@ -1,5 +1,5 @@
 import { globSync, readFileSync } from 'node:fs';
-import { relative, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { parseMarkdownFile } from './parser';
 import type { MarkdownDocFile } from './types';
 
@@ -24,7 +24,7 @@ export function discoverMarkdownFiles(cwd: string, options?: DiscoverOptions): M
     const matches = globSync(pattern, { cwd, exclude });
 
     for (const match of matches) {
-      const relativePath = typeof match === 'string' ? match : relative(cwd, match.toString());
+      const relativePath = match;
       if (seen.has(relativePath)) continue;
       seen.add(relativePath);
 

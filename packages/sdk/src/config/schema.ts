@@ -5,7 +5,7 @@
 import { z } from 'zod';
 import type { DocsConfig, DriftConfig } from './types';
 
-const stringList: z.ZodUnion<[z.ZodString, z.ZodArray<z.ZodString, 'many'>]> = z.union([
+const stringList = z.union([
   z.string(),
   z.array(z.string()),
 ]);

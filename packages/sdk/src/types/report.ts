@@ -1,5 +1,5 @@
 import type { ApiSurfaceResult, DocumentationHealth } from '../spec';
-import type { CategorizedDrift, DriftCategory, SpecDocDrift } from '../analysis/drift/types';
+import type { DriftCategory, SpecDocDrift } from '../analysis/drift/types';
 
 /**
  * Drift report schema version.
@@ -60,31 +60,6 @@ export interface DriftReportSummary {
    * Count of issues per category.
    */
   byCategory: Record<DriftCategory, number>;
-}
-
-/**
- * Drift report with progressive disclosure structure.
- *
- * Provides three levels of detail:
- * 1. Summary - total counts by category
- * 2. By category - grouped drift issues
- * 3. All - flat list for backward compatibility
- */
-export interface DriftReport {
-  /**
-   * High-level summary counts.
-   */
-  summary: DriftReportSummary;
-
-  /**
-   * Issues grouped by category.
-   */
-  byCategory: Record<DriftCategory, CategorizedDrift[]>;
-
-  /**
-   * Flat list of all drift issues (backward compatible).
-   */
-  all: CategorizedDrift[];
 }
 
 /**
