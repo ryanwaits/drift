@@ -40,7 +40,7 @@
     },
     "packages/cli": {
       "name": "@driftdev/cli",
-      "version": "0.39.0",
+      "version": "0.40.0",
       "bin": {
         "drift": "./dist/drift.js",
       },

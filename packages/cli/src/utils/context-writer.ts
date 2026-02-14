@@ -4,6 +4,22 @@ import type { DriftConfig } from '../config/drift-config';
 import { getProjectDir } from '../config/global';
 import type { HistoryEntry } from './history';
 
+export interface PackageIssue {
+  export: string;
+  type: string;
+  issue: string;
+  filePath?: string;
+  line?: number;
+  fixable: boolean;
+}
+
+export interface UndocumentedExport {
+  name: string;
+  kind: string;
+  filePath?: string;
+  line?: number;
+}
+
 export interface PackageContext {
   name: string;
   coverage: number;
@@ -11,6 +27,8 @@ export interface PackageContext {
   exports: number;
   documented?: number;
   undocumented?: string[];
+  issues?: PackageIssue[];
+  undocumentedExports?: UndocumentedExport[];
 }
 
 export interface ContextData {
@@ -48,6 +66,39 @@ export function renderContextMarkdown(data: ContextData): string {
     lines.push(`**Average coverage**: ${avgCoverage}%  `);
     lines.push(`**Total lint issues**: ${totalIssues}`);
     lines.push('');
+
+    // Per-package issue details
+    for (const pkg of data.packages) {
+      if (pkg.issues && pkg.issues.length > 0) {
+        lines.push(`### ${pkg.name} — Issues`);
+        lines.push('');
+        lines.push('| Export | Type | Location | Fixable |');
+        lines.push('|--------|------|----------|---------|');
+        for (const issue of pkg.issues) {
+          const loc = issue.filePath
+            ? `${issue.filePath}${issue.line ? `:${issue.line}` : ''}`
+            : '—';
+          lines.push(
+            `| ${issue.export} | ${issue.type} | ${loc} | ${issue.fixable ? 'yes' : 'no'} |`,
+          );
+        }
+        lines.push('');
+      }
+
+      if (pkg.undocumentedExports && pkg.undocumentedExports.length > 0) {
+        lines.push(`### ${pkg.name} — Undocumented Exports`);
+        lines.push('');
+        lines.push('| Export | Kind | Location |');
+        lines.push('|--------|------|----------|');
+        for (const exp of pkg.undocumentedExports) {
+          const loc = exp.filePath
+            ? `${exp.filePath}${exp.line ? `:${exp.line}` : ''}`
+            : '—';
+          lines.push(`| ${exp.name} | ${exp.kind} | ${loc} |`);
+        }
+        lines.push('');
+      }
+    }
   }
 
   // Recent Activity

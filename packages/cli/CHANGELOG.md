@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.40.0
+
+### Minor Changes
+
+- Two-surface CLI: hide non-human commands from --help, default bare `drift` to scan, replace --capabilities with --tools, enrich context with per-issue detail and undocumented export locations
+
 ## 0.39.0
 
 ### Minor Changes

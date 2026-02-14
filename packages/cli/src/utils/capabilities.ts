@@ -11,6 +11,7 @@ interface CommandInfo {
   description: string;
   flags: FlagInfo[];
   positional?: string;
+  examples?: string[];
 }
 
 interface EntityInfo {
@@ -21,6 +22,8 @@ interface EntityInfo {
 
 export interface Capabilities {
   version: string;
+  hint: string;
+  humanCommands: string[];
   commands: CommandInfo[];
   globalFlags: FlagInfo[];
   entities: EntityInfo[];
@@ -40,6 +43,30 @@ function extractFlags(cmd: Command): FlagInfo[] {
   }));
 }
 
+const COMMAND_EXAMPLES: Record<string, string[]> = {
+  scan: ['drift scan --json', 'drift scan --all --json', 'drift scan --ci --json'],
+  lint: ['drift lint --json', 'drift lint --all --json'],
+  coverage: ['drift coverage --json', 'drift coverage --min 80 --json'],
+  extract: ['drift extract --json'],
+  list: ['drift list --json'],
+  get: ['drift get createClient --json'],
+  diff: ['drift diff --base main --json'],
+  breaking: ['drift breaking --base main --json'],
+  semver: ['drift semver --base main --json'],
+  changelog: ['drift changelog --base main --json'],
+  ci: ['drift ci --json', 'drift ci --all --json'],
+  release: ['drift release --json'],
+  context: ['drift context --json', 'drift context --all --json'],
+  examples: ['drift examples --typecheck --json'],
+  health: ['drift health --json'],
+  config: ['drift config list --json', 'drift config get coverage.min --json'],
+  init: ['drift init --json'],
+  validate: ['drift validate spec.json --json'],
+  filter: ['drift filter spec.json --kind function --json'],
+  report: ['drift report --json'],
+  cache: ['drift cache status', 'drift cache clear'],
+};
+
 export function extractCapabilities(program: Command): Capabilities {
   const commands: CommandInfo[] = [];
 
@@ -52,11 +79,14 @@ export function extractCapabilities(program: Command): Capabilities {
       ...(positionalArgs.length > 0
         ? { positional: positionalArgs.map((a) => a.name()).join(' ') }
         : {}),
+      ...(COMMAND_EXAMPLES[cmd.name()] ? { examples: COMMAND_EXAMPLES[cmd.name()] } : {}),
     });
   }
 
   return {
     version: program.version() ?? '0.0.0',
+    hint: "Run 'drift' for human output. Use these primitives with --json for agent workflows.",
+    humanCommands: ['scan', 'ci', 'init'],
     commands,
     globalFlags: extractFlags(program),
     entities: [

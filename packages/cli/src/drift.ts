@@ -39,13 +39,14 @@ const program = new Command();
 
 program
   .name('drift')
-  .description('drift — documentation quality primitives for TypeScript')
+  .description('drift — documentation quality for TypeScript')
   .version(packageJson.version)
   .option('--json', 'Force JSON output (default when piped)')
   .option('--human', 'Force human-readable output (default in terminal)')
   .option('--config <path>', 'Path to drift config file')
   .option('--cwd <dir>', 'Run as if started in <dir>')
   .option('--no-cache', 'Bypass spec cache')
+  .option('--tools', 'List all available tools for agent use (JSON)')
   .hook('preAction', (_thisCommand) => {
     const opts = program.opts();
     if (opts.cwd) {
@@ -95,20 +96,30 @@ registerContextCommand(program);
 // Cache management
 registerCacheCommand(program);
 
-if (process.argv.includes('--capabilities')) {
+// Hide non-human commands from --help (still functional)
+const HUMAN_COMMANDS = new Set(['scan', 'ci', 'init']);
+for (const cmd of program.commands) {
+  if (!HUMAN_COMMANDS.has(cmd.name())) {
+    (cmd as any)._hidden = true;
+  }
+}
+
+if (process.argv.includes('--tools')) {
   const caps = extractCapabilities(program);
   process.stdout.write(`${JSON.stringify(caps, null, 2)}\n`);
   process.exit(0);
 }
 
-// Smart default: bare `drift` runs init if no config, health otherwise
+// Smart default: bare `drift` runs init if no config, scan otherwise
 // Skip if user passed --help/-h/--version/-V (let commander handle those)
 const rawArgs = process.argv.slice(2);
-const hasHelpOrVersion = rawArgs.some((a) => ['-h', '--help', '-V', '--version'].includes(a));
+const hasHelpOrVersion = rawArgs.some((a) =>
+  ['-h', '--help', '-V', '--version', '--tools'].includes(a),
+);
 const userArgs = rawArgs.filter((a) => !a.startsWith('-'));
 if (userArgs.length === 0 && !hasHelpOrVersion) {
   const { configPath } = loadConfig();
-  const subcommand = configPath ? 'health' : 'init';
+  const subcommand = configPath ? 'scan' : 'init';
   process.argv.splice(2, 0, subcommand);
 }
 
