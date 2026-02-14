@@ -19,9 +19,9 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: 'drift — detect stale docs across your TypeScript packages',
+  title: 'drift — code changes. docs don\'t. drift catches it.',
   description:
-    'Your API changed. Drift finds every doc that\'s now wrong — JSDoc, markdown references, tutorials, code examples. Fix with CLI, agents, or CI.',
+    'Documentation drift detection for TypeScript. Finds stale JSDoc, broken references, and outdated examples across your packages.',
 };
 
 export default function RootLayout({

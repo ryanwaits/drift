@@ -24,11 +24,7 @@ export async function Hero() {
           drift
         </h1>
         <p className="mt-6 max-w-md text-lg leading-relaxed text-text-muted">
-          Your API changed. Drift finds every doc that's now wrong — stale JSDoc in source, broken
-          references in API guides, outdated examples in tutorials. Then fix it from the{' '}
-          <span className="font-medium text-text">CLI</span>, your{' '}
-          <span className="font-medium text-text">agent</span>, or{' '}
-          <span className="font-medium text-text">CI</span>.
+          Code changes. Docs don&apos;t. Drift catches it.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <a
