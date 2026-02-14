@@ -24,22 +24,24 @@ export async function Hero() {
           drift
         </h1>
         <p className="mt-6 max-w-md text-lg leading-relaxed text-text-muted">
-          Fail PRs when docs drift. Drift checks exported TypeScript APIs for JSDoc accuracy,
-          missing coverage, and stale markdown references in your{' '}
-          <span className="font-medium text-text">CI pipeline</span>.
+          Your API changed. Drift finds every doc that's now wrong — stale JSDoc in source, broken
+          references in API guides, outdated examples in tutorials. Then fix it from the{' '}
+          <span className="font-medium text-text">CLI</span>, your{' '}
+          <span className="font-medium text-text">agent</span>, or{' '}
+          <span className="font-medium text-text">CI</span>.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <a
             href="#overview"
             className="inline-flex h-10 items-center rounded-lg bg-cta px-5 text-sm font-medium text-white transition-opacity hover:opacity-90"
           >
-            Gate PRs in CI
+            Scan a Package
           </a>
           <a
-            href="/pricing#start"
+            href="https://github.com/ryanwaits/drift"
             className="inline-flex h-10 items-center rounded-lg border border-border px-5 text-sm font-medium text-text transition-colors hover:bg-card-bg"
           >
-            Join Cloud Waitlist
+            View on GitHub
           </a>
           <a
             href="https://github.com/ryanwaits/drift/tree/main/docs"
@@ -57,7 +59,7 @@ export async function Hero() {
         <div className="flex flex-wrap gap-3">
           <ShieldBadge label="stars" value={stars} />
           <ShieldBadge label="coverage" value="100%" variant="green" />
-          <ShieldBadge label="license" value="MIT + BUSL" />
+          <ShieldBadge label="license" value="MIT" />
         </div>
       </div>
     </section>

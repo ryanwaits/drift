@@ -1,40 +1,38 @@
 const features = [
   {
+    label: 'Analysis',
+    title: 'Drift Detection',
+    description: (
+      <>
+        15 rules across JSDoc, markdown, examples, and prose. Finds every doc that's now wrong.
+      </>
+    ),
+  },
+  {
     label: 'CI/CD',
-    title: 'PR Gate',
+    title: 'CI Ready',
     description: (
       <>
-        Run Drift in CI to fail pull requests when docs drift from shipped TypeScript API changes.
+        GitHub Action for PR comments, step summaries, and automated issue creation.
       </>
     ),
   },
   {
-    label: 'CLI',
-    title: 'Triage Fast',
+    label: 'Agent',
+    title: 'Agent-Native',
     description: (
       <>
-        Use primitives like scan, lint, coverage, and diff to quickly find exactly what broke and
-        where.
-      </>
-    ),
-  },
-  {
-    label: 'Cloud',
-    title: 'Hosted Reporting',
-    description: (
-      <>
-        Add a paid hosted layer for drift dashboards, org-level trends, alerts, and multi-repo docs
-        sync automation.
+        Detection is the tool's job. Mutation is the agent's job. Structured JSON output with file
+        and line data for AI-driven fixes.
       </>
     ),
   },
   {
     label: 'SDK',
-    title: 'Automation API',
+    title: 'Open SDK',
     description: (
       <>
-        Build custom workflows on top of Drift using the SDK and Action for CI checks, release
-        gates, and docs updates.
+        MIT-licensed analysis engine. Build custom detection and remediation workflows.
       </>
     ),
   },

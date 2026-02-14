@@ -27,7 +27,7 @@ const categories: Category[] = [
         code: {
           value: `$ drift scan --min 80
 
-  @driftdev/sdk v0.38.0
+  @driftdev/sdk v0.42.0
 
   Health     100%
 # !expandable
@@ -162,25 +162,25 @@ const categories: Category[] = [
       },
       {
         id: 'fix',
-        label: 'Fix stale signatures',
+        label: 'Fix stale docs',
         code: {
-          value: `$ /drift fix
+          value: `$ /drift fix --cwd packages/sdk
 
 ⏺ Running drift lint...
-  Found 3 fixable issues
+  Found 3 issues
 
 # !expandable
-⏺ Fixing parseConfig in src/config.ts:42
+⏺ Reading src/config.ts:42...
   ✓ @param options: object → ParseOptions
 
-⏺ Fixing createClient in src/client.ts:18
+⏺ Reading src/client.ts:18...
   ✓ @returns Client → Promise<Client>
 
-⏺ Fixing formatOutput in src/format.ts:7
+⏺ Reading src/format.ts:7...
   ✓ Added missing @throws annotation
 
 ⏺ Re-running lint...
-  ok 0 issues — all fixed
+  ok 0 issues remaining
 
 ✻ Cooked for 38s`,
           lang: 'bash',
@@ -194,64 +194,60 @@ const categories: Category[] = [
     label: 'SDK',
     variants: [
       {
-        id: 'analyze',
-        label: 'Analyze & detect drift',
+        id: 'scan',
+        label: 'Scan & detect drift',
         code: {
-          value: `import { buildDriftSpec, computeDrift } from '@driftdev/sdk'
+          value: `import { scan } from '@driftdev/sdk'
 
-const spec = await buildDriftSpec('src/index.ts')
-const drift = computeDrift(spec)
+const spec = await scan('src/index.ts')
 
-for (const [name, issues] of drift.exports) {
-  console.log(\`\${name}: \${issues.length} issues\`)
+console.log(\`Health: \${spec.summary.health?.score}%\`)
+console.log(\`Coverage: \${spec.summary.score}%\`)
+console.log(\`Drift: \${spec.summary.drift.total} issues\`)`,
+          lang: 'typescript',
+          meta: 'scan.ts -cn',
+        },
+      },
+      {
+        id: 'drift',
+        label: 'Inspect per-export drift',
+        code: {
+          value: `import { scan } from '@driftdev/sdk'
+
+const spec = await scan('src/index.ts')
+
+for (const [id, analysis] of Object.entries(spec.exports)) {
+  if (analysis.drift?.length) {
+    for (const d of analysis.drift) {
+      console.log(\`\${id}: \${d.issue} [\${d.category}]\`)
+    }
+  }
 }`,
           lang: 'typescript',
-          meta: 'analyze.ts -cn',
+          meta: 'drift.ts -cn',
         },
       },
       {
-        id: 'health',
-        label: 'Full health check',
+        id: 'markdown',
+        label: 'Check docs impact',
         code: {
-          value: `import { buildDriftSpec, computeDrift,
-  computeHealth, validateExamples } from '@driftdev/sdk'
+          value: `import { diffSpecWithDocs } from '@driftdev/sdk/markdown'
+import { scan } from '@driftdev/sdk'
 
-const spec = await buildDriftSpec('src/index.ts')
-const drift = computeDrift(spec)
-const examples = await validateExamples(spec.exports, {
-  validations: ['presence', 'typecheck'],
-})
+const oldSpec = await scan('src/index.ts')
+// ... make changes ...
+const newSpec = await scan('src/index.ts')
 
-const { score, completeness, accuracy } = computeHealth({
-  spec, drift, examples,
-})`,
-          lang: 'typescript',
-          meta: 'health.ts -cn',
-        },
-      },
-      {
-        id: 'diff',
-        label: 'Diff specs & detect breaking',
-        code: {
-          value: `import { diffSpecWithDocs, parseMarkdownFiles } from '@driftdev/sdk'
-
-const oldSpec = await loadSpec('v1.0.0')
-const newSpec = await loadSpec('v2.0.0')
-const docs = parseMarkdownFiles([
-  { path: 'docs/guide.md', content: readFileSync('docs/guide.md', 'utf-8') },
-])
-
-const diff = diffSpecWithDocs(oldSpec, newSpec, { markdownFiles: docs })
-
-console.log(\`Breaking: \${diff.breaking.length}\`)
-console.log(\`Coverage: \${diff.oldCoverage}% → \${diff.newCoverage}%\`)
+const diff = diffSpecWithDocs(oldSpec, newSpec)
 
 if (diff.docsImpact?.impactedFiles.length) {
   console.log('Docs needing updates:')
-  diff.docsImpact.impactedFiles.forEach(f => console.log(\`  \${f.path}\`))
+  for (const f of diff.docsImpact.impactedFiles) {
+    console.log(\`  \${f.path}\`)
+  }
 }`,
           lang: 'typescript',
-          meta: 'diff.ts -cn',
+          meta: 'docs-impact.ts -cn',
         },
       },
     ],
@@ -275,7 +271,7 @@ export function CodeExamples() {
       <div className="mb-8 text-center">
         <h2 className="font-serif text-4xl tracking-tight text-text sm:text-5xl">Overview</h2>
         <p className="mx-auto mt-3 max-w-lg text-base text-text-muted">
-          Everything you need to keep your documentation in sync with your code.
+          Detect drift, triage issues, and fix docs — from the terminal, your agent, or code.
         </p>
       </div>
 

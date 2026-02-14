@@ -68,9 +68,15 @@ const features = [
     text: 'action',
   },
   {
-    prefix: '',
-    link: { label: 'Hosted plans', href: '/pricing' },
-    suffix: ' for org-level reporting and docs sync automation at scale',
-    text: 'pricing',
+    prefix: 'Scans external markdown docs for broken API references, stale tutorials, and outdated code examples',
+    link: null,
+    suffix: '',
+    text: 'external-docs',
+  },
+  {
+    prefix: 'MIT licensed — CLI and SDK, fully open source',
+    link: null,
+    suffix: '',
+    text: 'mit',
   },
 ];

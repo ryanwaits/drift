@@ -21,12 +21,6 @@ export function Nav() {
           >
             Docs
           </a>
-          <a href="/pricing" className="text-text-muted transition-colors hover:text-text">
-            Pricing
-          </a>
-          <a href="/contact" className="text-text-muted transition-colors hover:text-text">
-            Contact
-          </a>
           <a
             href="https://github.com/ryanwaits/drift"
             className="text-text-muted transition-colors hover:text-text"
@@ -34,7 +28,7 @@ export function Nav() {
             GitHub
           </a>
           <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs text-text-muted">
-            v0.38.0
+            v0.42.0
           </span>
         </div>
       </div>
