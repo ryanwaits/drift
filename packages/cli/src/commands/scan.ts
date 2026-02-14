@@ -1,11 +1,13 @@
 import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
+import { fromSource } from '@driftdev/clarity-adapter';
 import {
   buildExportRegistry,
   computeDrift,
   detectProseDrift,
   discoverMarkdownFiles,
 } from '@driftdev/sdk';
+import type { ApiSpec } from '@driftdev/sdk/types';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
@@ -28,6 +30,31 @@ function getPackageInfo(cwd: string): { name?: string; version?: string } {
     formatWarning(`Could not parse package.json${err instanceof Error ? `: ${err.message}` : ''}`);
     return {};
   }
+}
+
+type SupportedLang = 'typescript' | 'clarity';
+
+async function loadSpec(
+  entryFile: string,
+  lang: SupportedLang,
+  abiPath?: string,
+): Promise<{ apiSpec: ApiSpec; packageName?: string; packageVersion?: string }> {
+  if (lang === 'clarity') {
+    if (!abiPath) throw new Error('--abi is required when --lang clarity');
+    if (!existsSync(entryFile)) throw new Error(`Source file not found: ${entryFile}`);
+    if (!existsSync(abiPath)) throw new Error(`ABI file not found: ${abiPath}`);
+    const source = readFileSync(entryFile, 'utf-8');
+    const abi = JSON.parse(readFileSync(abiPath, 'utf-8'));
+    const name = path.basename(entryFile, path.extname(entryFile));
+    const pkg = getPackageInfo(process.cwd());
+    const apiSpec = fromSource(source, abi, { name, version: pkg.version });
+    return { apiSpec, packageName: pkg.name ?? name, packageVersion: pkg.version };
+  }
+
+  // TypeScript (default)
+  const { spec } = await cachedExtract(entryFile);
+  const pkg = getPackageInfo(process.cwd());
+  return { apiSpec: spec as ApiSpec, packageName: pkg.name, packageVersion: pkg.version };
 }
 
 interface LintIssue {
@@ -54,15 +81,32 @@ export function registerScanCommand(program: Command): void {
     .option('--min <n>', 'Minimum health threshold (exit 1 if below)')
     .option('--all', 'Run across all workspace packages')
     .option('--private', 'Include private packages in --all mode')
+    .option('--lang <language>', 'Source language', 'typescript')
+    .option('--abi <path>', 'ABI JSON file (required for --lang clarity)')
     .action(
       async (
         entry: string | undefined,
-        options: { min?: string; all?: boolean; private?: boolean },
+        options: { min?: string; all?: boolean; private?: boolean; lang?: string; abi?: string },
       ) => {
         const startTime = Date.now();
         const version = getVersion();
 
         try {
+          // Validate --lang
+          const lang = (options.lang ?? 'typescript') as string;
+          if (lang !== 'typescript' && lang !== 'clarity') {
+            formatError('scan', `Unknown language: ${lang}`, startTime, version);
+            return;
+          }
+          if (lang === 'clarity' && options.all) {
+            formatError('scan', 'Batch mode (--all) not yet supported for clarity', startTime, version);
+            return;
+          }
+          if (lang === 'clarity' && !options.abi) {
+            formatError('scan', '--abi is required when --lang clarity', startTime, version);
+            return;
+          }
+
           // Batch mode
           if (options.all) {
             const allPackages = discoverPackages(process.cwd());
@@ -134,13 +178,16 @@ export function registerScanCommand(program: Command): void {
           const { config } = loadConfig();
           const entryFile = entry
             ? path.resolve(process.cwd(), entry)
-            : config.entry
-              ? path.resolve(process.cwd(), config.entry)
-              : detectEntry();
-          const { spec } = await cachedExtract(entryFile);
+            : lang === 'clarity'
+              ? (() => { throw new Error('Entry file required for --lang clarity'); })()
+              : config.entry
+                ? path.resolve(process.cwd(), config.entry)
+                : detectEntry();
+          const abiPath = options.abi ? path.resolve(process.cwd(), options.abi) : undefined;
+          const { apiSpec, packageName, packageVersion } = await loadSpec(entryFile, lang as SupportedLang, abiPath);
 
           // Coverage
-          const exports = spec.exports ?? [];
+          const exports = apiSpec.exports ?? [];
           const total = exports.length;
           let documented = 0;
           for (const exp of exports) {
@@ -148,8 +195,8 @@ export function registerScanCommand(program: Command): void {
           }
           const coverageScore = total > 0 ? Math.round((documented / total) * 100) : 100;
 
-          // JSDoc drift
-          const driftResult = computeDrift(spec);
+          // Drift
+          const driftResult = computeDrift(apiSpec);
           const issues: LintIssue[] = [];
           for (const [exportName, drifts] of driftResult.exports) {
             for (const drift of drifts) {
@@ -163,33 +210,34 @@ export function registerScanCommand(program: Command): void {
             }
           }
 
-          // Prose drift
-          try {
-            const pkgJsonPath = path.resolve(process.cwd(), 'package.json');
-            const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
-            const packageName = pkgJson.name as string | undefined;
-            if (packageName) {
-              const registry = buildExportRegistry(spec);
-              const markdownFiles = discoverMarkdownFiles(process.cwd(), config.docs);
-              const proseDrifts = detectProseDrift({ packageName, markdownFiles, registry });
-              for (const drift of proseDrifts) {
-                issues.push({
-                  export: drift.target ?? '',
-                  issue: drift.issue,
-                  ...(drift.suggestion ? { location: drift.suggestion } : {}),
-                  filePath: drift.filePath,
-                  line: drift.line,
-                });
+          // Prose drift (TS only — needs buildExportRegistry + TS-specific docs)
+          if (lang === 'typescript') {
+            try {
+              const pkgJsonPath = path.resolve(process.cwd(), 'package.json');
+              const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
+              const pkgName = pkgJson.name as string | undefined;
+              if (pkgName) {
+                const registry = buildExportRegistry(apiSpec);
+                const markdownFiles = discoverMarkdownFiles(process.cwd(), config.docs);
+                const proseDrifts = detectProseDrift({ packageName: pkgName, markdownFiles, registry });
+                for (const drift of proseDrifts) {
+                  issues.push({
+                    export: drift.target ?? '',
+                    issue: drift.issue,
+                    ...(drift.suggestion ? { location: drift.suggestion } : {}),
+                    filePath: drift.filePath,
+                    line: drift.line,
+                  });
+                }
               }
+            } catch (err) {
+              formatWarning(`Prose drift skipped: ${err instanceof Error ? err.message : String(err)}`);
             }
-          } catch (err) {
-            formatWarning(`Prose drift skipped: ${err instanceof Error ? err.message : String(err)}`);
           }
 
           // Health
           const healthIssues = issues.map((i) => ({ export: i.export, issue: i.issue }));
           const h = computeHealth(total, documented, healthIssues);
-          const pkg = getPackageInfo(process.cwd());
 
           let min = options.min ? parseInt(options.min, 10) : config.coverage?.min;
           if (min !== undefined && config.coverage?.ratchet) {
@@ -203,8 +251,8 @@ export function registerScanCommand(program: Command): void {
             lint: { issues, count: issues.length },
             health: h.health,
             pass,
-            packageName: pkg.name,
-            packageVersion: pkg.version,
+            packageName,
+            packageVersion,
           };
 
           // Compute next action hint
