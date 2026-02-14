@@ -95,7 +95,7 @@ Entry auto-detects from `package.json` (`types`, `exports`, `main`, `module`, `b
 
 ```bash
 # Machine-readable list of all commands + flags
-drift --capabilities
+drift --tools
 ```
 
 ## Global Options

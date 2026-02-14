@@ -59,7 +59,7 @@ If you only do one thing: run `drift ci --all --min 80` in pull requests and fai
 | `drift coverage --min 80` | Enforce a documentation coverage floor |
 | `drift list --undocumented` | Build a backlog of missing docs work |
 
-Need full command/flag details? See `docs/cli-reference.md` or run `drift --capabilities`.
+Need full command/flag details? See `docs/cli-reference.md` or run `drift --tools`.
 
 ## Output
 
@@ -91,7 +91,7 @@ Detection is the tool's job. Mutation is the agent's job. The CLI outputs struct
 
 ```bash
 # Machine-readable command discovery
-drift --capabilities
+drift --tools
 ```
 
 ## Drift Detection

@@ -155,23 +155,6 @@ if (result.typecheck) {
 
 Validation levels: `'presence'`, `'typecheck'`, `'run'`.
 
-### `isFixableDrift` -- Fix Classification
-
-Check if a drift issue can be auto-fixed:
-
-```typescript
-import { computeDrift, isFixableDrift } from '@driftdev/sdk';
-
-const result = computeDrift(spec);
-for (const [name, drifts] of result.exports) {
-  for (const drift of drifts) {
-    if (isFixableDrift(drift)) {
-      console.log(`${name}: ${drift.issue} (auto-fixable)`);
-    }
-  }
-}
-```
-
 ### `computeHealth` -- Health Scoring
 
 Compute the SDK-level health score (more detailed than the CLI's simplified version):
@@ -185,7 +168,6 @@ const input: HealthInput = {
   totalExports: 25,
   missingByRule: { description: 3 },
   driftIssues: 4,
-  fixableDrift: 2,
   driftByCategory: { structural: 3, semantic: 1, example: 0, prose: 0 },
 };
 

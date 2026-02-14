@@ -270,7 +270,7 @@ drift cache clear    # clear cache
 ### Agent Discovery
 
 ```bash
-drift --capabilities    # JSON list of all commands + flags
+drift --tools    # JSON list of all commands + flags
 ```
 
 ## Configuration

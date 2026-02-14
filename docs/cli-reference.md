@@ -20,7 +20,7 @@ All commands output human-readable text in a TTY, JSON envelopes when piped. Ove
 
 1. Start with [Getting Started](./getting-started.md) for first-run setup.
 2. Use this page as the detailed reference once Drift is already installed.
-3. Use `drift --capabilities` when you need machine-readable command discovery.
+3. Use `drift --tools` when you need machine-readable command discovery.
 
 ## Global Flags
 
@@ -31,7 +31,7 @@ All commands output human-readable text in a TTY, JSON envelopes when piped. Ove
 | `--config <path>` | string | Path to drift config file |
 | `--cwd <dir>` | string | Run as if started in `<dir>` |
 | `--no-cache` | boolean | Bypass spec cache |
-| `--capabilities` | boolean | Print machine-readable command/flag manifest and exit |
+| `--tools` | boolean | Print machine-readable command/flag manifest and exit |
 
 ## JSON Output Envelope
 
@@ -547,7 +547,7 @@ drift cache status
 
 ```bash
 # Machine-readable JSON of all commands, flags, entities, and workflows
-drift --capabilities
+drift --tools
 ```
 
 Useful for AI agents and tooling integration. Returns command metadata, entity operations, and suggested workflows.

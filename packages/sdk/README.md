@@ -146,7 +146,7 @@ const trend = getTrend(spec, process.cwd());
 import { categorizeDrift, getDriftSummary, groupDriftsByCategory } from '@driftdev/sdk';
 
 const summary = getDriftSummary(drifts);
-// summary.total, summary.byCategory (structural/semantic/example/prose), summary.fixable
+// summary.total, summary.byCategory (structural/semantic/example/prose)
 
 const grouped = groupDriftsByCategory(drifts);
 // grouped.structural[], grouped.semantic[], grouped.example[], grouped.prose[]
@@ -165,7 +165,6 @@ const grouped = groupDriftsByCategory(drifts);
 - `detectProseDrift` — Markdown prose drift detection
 - `buildExportRegistry` — Build registry for cross-reference validation
 - `categorizeDrift` / `getDriftSummary` / `groupDriftsByCategory` — Categorization
-- `generateFix` / `applyPatchToJSDoc` — Auto-fix drift
 
 ### Markdown
 - `discoverMarkdownFiles` — Auto-discover markdown files by glob patterns

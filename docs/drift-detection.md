@@ -119,7 +119,7 @@ JSON output:
     "count": 2
   },
   "meta": { "command": "lint", "duration": 450, "version": "0.38.0" },
-  "next": { "suggested": "drift-fix skill", "reason": "1 of 2 issues are auto-fixable" }
+  "next": { "suggested": "drift-fix skill", "reason": "2 issues found" }
 }
 ```
 
@@ -181,6 +181,3 @@ Batch output shows per-package issue counts:
 }
 ```
 
-## Fixability
-
-Each drift issue has a fixability status. The `next` field in JSON output tells you how many issues are auto-fixable. Structural issues (param mismatches, type mismatches) are typically fixable; prose issues require manual edits.
