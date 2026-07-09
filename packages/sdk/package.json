@@ -63,7 +63,7 @@
     "dist"
   ],
   "dependencies": {
-    "@openpkg-ts/sdk": "^0.37.0",
+    "@openpkg-ts/sdk": "^0.38.0",
     "@openpkg-ts/spec": "^0.37.0",
     "@vercel/sandbox": "^1.0.3",
     "ajv": "^8.17.1",
@@ -72,7 +72,8 @@
     "remark-parse": "^11.0.0",
     "typescript": "^5.0.0",
     "unified": "^11.0.5",
-    "unist-util-visit": "^5.0.0"
+    "unist-util-visit": "^5.0.0",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@sinclair/typebox": "^0.34.41",
@@ -80,9 +81,8 @@
     "@types/mdast": "^4.0.4",
     "@types/node": "^20.0.0",
     "arktype": "^2.1.29",
-    "bunup": "latest",
-    "valibot": "^1.2.0",
-    "zod": "^4.2.1"
+    "bunup": "0.16.26",
+    "valibot": "^1.2.0"
   },
   "peerDependencies": {
     "typescript": "^5"

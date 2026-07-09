@@ -14,5 +14,7 @@ export default defineConfig({
   clean: true,
   splitting: true,
   format: ['esm'],
-  external: ['@openpkg-ts/spec', 'typescript'],
+  // zod must stay external: bunup mis-orders zod v4's circular internal
+  // modules when bundling it, breaking dist at import time
+  external: ['@openpkg-ts/spec', 'typescript', 'zod'],
 });

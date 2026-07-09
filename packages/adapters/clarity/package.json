@@ -45,7 +45,7 @@
   "devDependencies": {
     "@driftdev/sdk": "workspace:*",
     "@types/bun": "latest",
-    "bunup": "latest"
+    "bunup": "0.16.26"
   },
   "publishConfig": {
     "access": "public"
