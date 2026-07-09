@@ -1,4 +1,9 @@
-import { extractImportsAST, extractMethodCallsAST, type ImportInfo } from '../../markdown/ast-extractor';
+import type * as TS from 'typescript';
+import {
+  extractImportsAST,
+  extractMethodCallsAST,
+  type ImportInfo,
+} from '../../markdown/ast-extractor';
 import type { MarkdownDocFile } from '../../markdown/types';
 import { ts } from '../../ts-module';
 import type { ExportRegistry, SpecDocDrift } from './types';
@@ -11,26 +16,86 @@ import { findClosestMatch } from './utils';
  */
 const JS_BUILTIN_METHODS = new Set([
   // Map/Set/WeakMap
-  'get', 'set', 'has', 'delete', 'clear', 'keys', 'values', 'entries', 'forEach',
+  'get',
+  'set',
+  'has',
+  'delete',
+  'clear',
+  'keys',
+  'values',
+  'entries',
+  'forEach',
   // Array
-  'push', 'pop', 'shift', 'unshift', 'map', 'filter', 'reduce', 'reduceRight',
-  'find', 'findIndex', 'some', 'every', 'flat', 'flatMap', 'sort', 'reverse',
-  'splice', 'slice', 'concat', 'includes', 'indexOf', 'lastIndexOf', 'join',
-  'fill', 'at', 'from', 'of', 'copyWithin',
+  'push',
+  'pop',
+  'shift',
+  'unshift',
+  'map',
+  'filter',
+  'reduce',
+  'reduceRight',
+  'find',
+  'findIndex',
+  'some',
+  'every',
+  'flat',
+  'flatMap',
+  'sort',
+  'reverse',
+  'splice',
+  'slice',
+  'concat',
+  'includes',
+  'indexOf',
+  'lastIndexOf',
+  'join',
+  'fill',
+  'at',
+  'from',
+  'of',
+  'copyWithin',
   // Promise
-  'then', 'catch', 'finally',
+  'then',
+  'catch',
+  'finally',
   // Object
-  'toString', 'valueOf', 'hasOwnProperty', 'toLocaleString',
+  'toString',
+  'valueOf',
+  'hasOwnProperty',
+  'toLocaleString',
   // String
-  'split', 'trim', 'trimStart', 'trimEnd', 'replace', 'replaceAll',
-  'match', 'matchAll', 'search', 'toLowerCase', 'toUpperCase',
-  'startsWith', 'endsWith', 'padStart', 'padEnd', 'repeat',
-  'substring', 'charAt', 'charCodeAt', 'codePointAt',
+  'split',
+  'trim',
+  'trimStart',
+  'trimEnd',
+  'replace',
+  'replaceAll',
+  'match',
+  'matchAll',
+  'search',
+  'toLowerCase',
+  'toUpperCase',
+  'startsWith',
+  'endsWith',
+  'padStart',
+  'padEnd',
+  'repeat',
+  'substring',
+  'charAt',
+  'charCodeAt',
+  'codePointAt',
   // Event/DOM
-  'addEventListener', 'removeEventListener', 'dispatchEvent',
-  'appendChild', 'removeChild', 'querySelector', 'querySelectorAll',
+  'addEventListener',
+  'removeEventListener',
+  'dispatchEvent',
+  'appendChild',
+  'removeChild',
+  'querySelector',
+  'querySelectorAll',
   // Iterator
-  'next', 'return', 'throw',
+  'next',
+  'return',
+  'throw',
 ]);
 
 export interface ProseDriftOptions {
@@ -61,8 +126,12 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
     for (const block of file.codeBlocks) {
       // Accumulate imports and declarations from this block
       accumulateBlockContext(
-        block.code, packageName, fileExternalImports, fileLocalDeclarations,
-        filePackageDerived, registry,
+        block.code,
+        packageName,
+        fileExternalImports,
+        fileLocalDeclarations,
+        filePackageDerived,
+        registry,
       );
 
       // 1. Check imports (existing behavior)
@@ -71,8 +140,15 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
       // 2. Check method/property access against type members
       if (registry.typeMembers.size > 0) {
         detectUnresolvedMembers(
-          block.code, packageName, registry, file.path, block.lineStart, issues,
-          fileExternalImports, fileLocalDeclarations, filePackageDerived,
+          block.code,
+          packageName,
+          registry,
+          file.path,
+          block.lineStart,
+          issues,
+          fileExternalImports,
+          fileLocalDeclarations,
+          filePackageDerived,
         );
       }
     }
@@ -165,7 +241,7 @@ function accumulateBlockContext(
  */
 function detectUnresolvedMembers(
   code: string,
-  packageName: string,
+  _packageName: string,
   registry: ExportRegistry,
   filePath: string,
   lineStart: number,
@@ -199,7 +275,8 @@ function detectUnresolvedMembers(
 
     // For locally-declared objects, only skip built-in method names (get, set, map, etc.)
     // Domain-specific methods (callPublicFn, getDataVar, etc.) should still be validated
-    if (fileLocalDeclarations.has(call.objectName) && JS_BUILTIN_METHODS.has(call.methodName)) continue;
+    if (fileLocalDeclarations.has(call.objectName) && JS_BUILTIN_METHODS.has(call.methodName))
+      continue;
 
     // Check if the method exists on ANY exported type
     const parentTypes = registry.typeMembers.get(call.methodName);
@@ -236,9 +313,15 @@ function extractLocalDeclarations(code: string): Set<string> {
   const names = new Set<string>();
 
   try {
-    const sourceFile = ts.createSourceFile('temp.ts', code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const sourceFile = ts.createSourceFile(
+      'temp.ts',
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
 
-    const walk = (node: any) => {
+    const walk = (node: TS.Node) => {
       if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) {
         names.add(node.name.text);
       }
@@ -258,8 +341,7 @@ function extractLocalDeclarations(code: string): Set<string> {
   } catch {
     // Fallback: simple regex for common patterns
     const declPattern = /(?:const|let|var|function|class)\s+(\w+)/g;
-    let match: RegExpExecArray | null;
-    while ((match = declPattern.exec(code)) !== null) {
+    for (const match of code.matchAll(declPattern)) {
       names.add(match[1]);
     }
   }
@@ -277,11 +359,17 @@ function extractPackageDerivedNames(code: string, registry: ExportRegistry): Set
   const names = new Set<string>();
 
   try {
-    const sourceFile = ts.createSourceFile('temp.ts', code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const sourceFile = ts.createSourceFile(
+      'temp.ts',
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
 
-    const walk = (node: any) => {
+    const walk = (node: TS.Node) => {
       if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
-        let expr = node.initializer;
+        let expr: TS.Expression = node.initializer;
         // Unwrap `await expr`
         if (ts.isAwaitExpression(expr)) expr = expr.expression;
         // Check `const x = knownExport(...)` pattern
@@ -297,8 +385,7 @@ function extractPackageDerivedNames(code: string, registry: ExportRegistry): Set
   } catch {
     // Fallback: regex for `const x = [await] knownExport(...)`
     const pattern = /(?:const|let|var)\s+(\w+)\s*=\s*(?:await\s+)?(\w+)\s*\(/g;
-    let match: RegExpExecArray | null;
-    while ((match = pattern.exec(code)) !== null) {
+    for (const match of code.matchAll(pattern)) {
       if (registry.all.has(match[2])) {
         names.add(match[1]);
       }

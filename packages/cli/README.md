@@ -44,8 +44,8 @@ Entry auto-detects from `package.json` (`types`, `exports`, `main`, `module`, `b
 
 | Command | Description |
 |---------|-------------|
-| `drift scan [entry]` | Coverage + lint + prose drift + health in one pass |
-| `drift health [entry]` | Documentation health score (default command) |
+| `drift scan [entry]` | Coverage + lint + prose drift + health in one pass (default command) |
+| `drift health [entry]` | Documentation health score |
 | `drift ci` | CI checks on changed packages with PR comments |
 
 ### Analysis
@@ -61,8 +61,8 @@ Entry auto-detects from `package.json` (`types`, `exports`, `main`, `module`, `b
 | Command | Description |
 |---------|-------------|
 | `drift extract [entry]` | Extract full API spec as JSON |
-| `drift list [entry]` | List all exports with kinds |
-| `drift get <name> [entry]` | Inspect single export detail + types |
+| `drift list [searchOrEntry]` | List all exports with kinds |
+| `drift get <name>` | Inspect single export detail + types (entry auto-detected; `drift get <entry> <name>` to override) |
 
 ### Spec Operations
 
@@ -112,8 +112,10 @@ drift --tools
 
 Run coverage + lint + prose drift + health in one pass.
 
+Default command — bare `drift` runs this.
+
 ```bash
-drift scan                    # single package
+drift scan                    # single package (bare `drift` does the same)
 drift scan --min 80           # fail if health below 80%
 drift scan --all              # all workspace packages
 drift scan --all --private    # include private packages
@@ -121,7 +123,7 @@ drift scan --all --private    # include private packages
 
 ## lint
 
-Cross-reference JSDoc against code signatures. Detects 15 drift types across 4 categories (structural, semantic, example, prose). Prose detection scans markdown files for broken import references.
+Cross-reference JSDoc against code signatures. Detects 16 drift types across 4 categories (structural, semantic, example, prose). Prose detection scans markdown files for broken import references and method calls that don't exist on any exported type.
 
 ```bash
 drift lint                    # single package
@@ -144,7 +146,7 @@ drift coverage --all          # all workspace packages
 Weighted health score: completeness (coverage) + accuracy (lint).
 
 ```bash
-drift health                  # default command (bare `drift`)
+drift health
 drift health --min 80
 drift health --all
 ```
@@ -201,7 +203,7 @@ All commands return structured JSON when piped or with `--json`:
 {
   "ok": true,
   "data": { "score": 88, "documented": 243, "total": 275 },
-  "meta": { "command": "coverage", "duration": 1234, "version": "0.38.0" }
+  "meta": { "command": "coverage", "duration": 1234, "version": "1.4.0" }
 }
 ```
 

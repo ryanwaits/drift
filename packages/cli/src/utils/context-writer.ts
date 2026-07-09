@@ -88,9 +88,7 @@ export function renderContextMarkdown(data: ContextData): string {
         lines.push('| Export | Kind | Location |');
         lines.push('|--------|------|----------|');
         for (const exp of pkg.undocumentedExports) {
-          const loc = exp.filePath
-            ? `${exp.filePath}${exp.line ? `:${exp.line}` : ''}`
-            : '—';
+          const loc = exp.filePath ? `${exp.filePath}${exp.line ? `:${exp.line}` : ''}` : '—';
           lines.push(`| ${exp.name} | ${exp.kind} | ${loc} |`);
         }
         lines.push('');

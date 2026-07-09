@@ -129,9 +129,9 @@ export function collectReferencedTypesFromNode(
     if (!isBuiltInTypeName(name)) {
       referencedTypes.add(name);
     }
-    node.typeArguments?.forEach((arg) =>
-      collectReferencedTypesFromNode(arg, typeChecker, referencedTypes),
-    );
+    node.typeArguments?.forEach((arg) => {
+      collectReferencedTypesFromNode(arg, typeChecker, referencedTypes);
+    });
     return;
   }
 
@@ -142,16 +142,16 @@ export function collectReferencedTypesFromNode(
     if (!isBuiltInTypeName(name)) {
       referencedTypes.add(name);
     }
-    node.typeArguments?.forEach((arg) =>
-      collectReferencedTypesFromNode(arg, typeChecker, referencedTypes),
-    );
+    node.typeArguments?.forEach((arg) => {
+      collectReferencedTypesFromNode(arg, typeChecker, referencedTypes);
+    });
     return;
   }
 
   if (ts.isUnionTypeNode(node) || ts.isIntersectionTypeNode(node)) {
-    node.types.forEach((typeNode) =>
-      collectReferencedTypesFromNode(typeNode, typeChecker, referencedTypes),
-    );
+    node.types.forEach((typeNode) => {
+      collectReferencedTypesFromNode(typeNode, typeChecker, referencedTypes);
+    });
     return;
   }
 

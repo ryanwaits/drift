@@ -19,7 +19,7 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: 'drift — code changes. docs don\'t. drift catches it.',
+  title: "drift — code changes. docs don't. drift catches it.",
   description:
     'Documentation drift detection for TypeScript. Finds stale JSDoc, broken references, and outdated examples across your packages.',
 };

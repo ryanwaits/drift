@@ -133,7 +133,17 @@ export function buildExportRegistry(spec: ApiSpec): ExportRegistry {
   const allNames = Array.from(all);
   const allMemberNames = Array.from(typeMembers.keys());
 
-  return { exports, types, all, callableNames, typeNames, allExportNames, allNames, typeMembers, allMemberNames };
+  return {
+    exports,
+    types,
+    all,
+    callableNames,
+    typeNames,
+    allExportNames,
+    allNames,
+    typeMembers,
+    allMemberNames,
+  };
 }
 
 /**

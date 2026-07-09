@@ -68,7 +68,8 @@ const features = [
     text: 'action',
   },
   {
-    prefix: 'Scans external markdown docs for broken API references, stale tutorials, and outdated code examples',
+    prefix:
+      'Scans external markdown docs for broken API references, stale tutorials, and outdated code examples',
     link: null,
     suffix: '',
     text: 'external-docs',

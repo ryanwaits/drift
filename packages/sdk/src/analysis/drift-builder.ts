@@ -1,3 +1,4 @@
+import type { OpenPkg } from '@openpkg-ts/spec';
 import type {
   ApiSurfaceResult,
   DriftCategory,
@@ -10,7 +11,6 @@ import type {
   TypeReferenceLocation,
 } from '../spec';
 import { DRIFT_CATEGORIES } from '../spec';
-import type { OpenPkg } from '@openpkg-ts/spec';
 import type { ApiExport, ApiSpec } from './api-spec';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';
 import { computeHealth, isExportDocumented } from './health';

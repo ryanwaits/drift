@@ -1,7 +1,7 @@
-import type { ApiExport } from '../api-spec';
 import ts from 'typescript';
 import { isBuiltInIdentifier } from '../../utils/builtin-detection';
 import type { ExampleRunResult } from '../../utils/example-runner';
+import type { ApiExport } from '../api-spec';
 import type { ExportRegistry, SpecDocDrift } from './types';
 import { findClosestMatch } from './utils';
 
@@ -336,7 +336,7 @@ export function detectExampleAssertionFailures(
     const result = runtimeResults.get(i);
 
     // Only check assertions if example ran successfully
-    if (!result || !result.success || typeof example !== 'string') {
+    if (!result?.success || typeof example !== 'string') {
       continue;
     }
 

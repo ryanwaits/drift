@@ -128,11 +128,20 @@ export function extractCapabilities(program: Command): Capabilities {
       },
     ],
     workflows: {
-      'detect-drift': { steps: ['extract', 'lint'], description: 'Find stale JSDoc and prose drift' },
+      'detect-drift': {
+        steps: ['extract', 'lint'],
+        description: 'Find stale JSDoc and prose drift',
+      },
       'full-scan': { steps: ['scan'], description: 'Coverage + lint + prose in one pass' },
-      'detect-and-enrich': { steps: ['scan', 'context'], description: 'Scan and generate agent context' },
+      'detect-and-enrich': {
+        steps: ['scan', 'context'],
+        description: 'Scan and generate agent context',
+      },
       'ci-pipeline': { steps: ['ci'], description: 'Run CI checks on changed packages' },
-      'pre-release': { steps: ['scan', 'breaking', 'release'], description: 'Full pre-release quality gate' },
+      'pre-release': {
+        steps: ['scan', 'breaking', 'release'],
+        description: 'Full pre-release quality gate',
+      },
     },
   };
 }

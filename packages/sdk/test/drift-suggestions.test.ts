@@ -2,8 +2,8 @@
  * Tests for drift suggestion fields (expected, actual, suggestion).
  */
 
-import type { ApiExport } from '../src/analysis/api-spec';
 import { describe, expect, it } from 'vitest';
+import type { ApiExport } from '../src/analysis/api-spec';
 import {
   detectAsyncMismatch,
   detectDeprecatedDrift,

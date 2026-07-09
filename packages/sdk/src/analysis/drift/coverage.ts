@@ -63,9 +63,7 @@ export function calculateAggregateCoverage(spec: ApiSpec): number {
  * console.log(specWithCoverage.docs?.coverageScore); // e.g., 85
  * ```
  */
-export function ensureSpecCoverage(
-  spec: ApiSpec,
-): ApiSpec & { docs: { coverageScore: number } } {
+export function ensureSpecCoverage(spec: ApiSpec): ApiSpec & { docs: { coverageScore: number } } {
   type SpecWithDocs = ApiSpec & { docs?: { coverageScore?: number } };
   const specWithDocs = spec as SpecWithDocs;
 

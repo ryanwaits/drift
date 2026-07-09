@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import type { ClarityContract } from '@secondlayer/clarity-types';
 import type { ContractDoc } from '@secondlayer/clarity-docs';
+import type { ClarityContract } from '@secondlayer/clarity-types';
 import { toApiSpec } from '../src/to-api-spec';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -103,15 +103,18 @@ describe('toApiSpec — functions', () => {
     expect(tagNames).toContain('caller');
 
     // Examples
-    expect(exp.examples).toEqual([
-      '(contract-call? .token transfer u100 tx-sender recipient)',
-    ]);
+    expect(exp.examples).toEqual(['(contract-call? .token transfer u100 tx-sender recipient)']);
   });
 
   test('read-only fn → flags.access = read-only', () => {
     const abi = minimalAbi({
       functions: [
-        { name: 'get-balance', access: 'read-only', args: [{ name: 'who', type: 'principal' }], outputs: 'uint128' },
+        {
+          name: 'get-balance',
+          access: 'read-only',
+          args: [{ name: 'who', type: 'principal' }],
+          outputs: 'uint128',
+        },
       ],
     });
     const spec = toApiSpec(abi, emptyDocs(), { name: 'token' });
@@ -120,9 +123,7 @@ describe('toApiSpec — functions', () => {
 
   test('private fn → flags.access = private', () => {
     const abi = minimalAbi({
-      functions: [
-        { name: 'check-owner', access: 'private', args: [], outputs: 'bool' },
-      ],
+      functions: [{ name: 'check-owner', access: 'private', args: [], outputs: 'bool' }],
     });
     const spec = toApiSpec(abi, emptyDocs(), { name: 'token' });
     expect(spec.exports[0].flags).toEqual({ access: 'private' });
@@ -131,7 +132,12 @@ describe('toApiSpec — functions', () => {
   test('params with FunctionDoc descriptions → signatures[0].parameters', () => {
     const abi = minimalAbi({
       functions: [
-        { name: 'mint', access: 'public', args: [{ name: 'amount', type: 'uint128' }], outputs: 'bool' },
+        {
+          name: 'mint',
+          access: 'public',
+          args: [{ name: 'amount', type: 'uint128' }],
+          outputs: 'bool',
+        },
       ],
     });
     const docs = emptyDocs({
@@ -164,7 +170,12 @@ describe('toApiSpec — functions', () => {
   test('@err tags → tags with name=throws', () => {
     const abi = minimalAbi({
       functions: [
-        { name: 'burn', access: 'public', args: [], outputs: { response: { ok: 'bool', error: 'uint128' } } },
+        {
+          name: 'burn',
+          access: 'public',
+          args: [],
+          outputs: { response: { ok: 'bool', error: 'uint128' } },
+        },
       ],
     });
     const docs = emptyDocs({
@@ -202,9 +213,7 @@ describe('toApiSpec — functions', () => {
 
   test('examples populated from FunctionDoc', () => {
     const abi = minimalAbi({
-      functions: [
-        { name: 'foo', access: 'public', args: [], outputs: 'bool' },
-      ],
+      functions: [{ name: 'foo', access: 'public', args: [], outputs: 'bool' }],
     });
     const docs = emptyDocs({
       functions: new Map([
@@ -236,7 +245,12 @@ describe('toApiSpec — functions', () => {
   test('undocumented fn → no description, drift-detectable', () => {
     const abi = minimalAbi({
       functions: [
-        { name: 'undoc', access: 'public', args: [{ name: 'x', type: 'uint128' }], outputs: 'bool' },
+        {
+          name: 'undoc',
+          access: 'public',
+          args: [{ name: 'x', type: 'uint128' }],
+          outputs: 'bool',
+        },
       ],
     });
     const spec = toApiSpec(abi, emptyDocs(), { name: 'test' });

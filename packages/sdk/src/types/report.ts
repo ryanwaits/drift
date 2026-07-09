@@ -1,5 +1,5 @@
-import type { ApiSurfaceResult, DocumentationHealth } from '../spec';
 import type { DriftCategory, SpecDocDrift } from '../analysis/drift/types';
+import type { ApiSurfaceResult, DocumentationHealth } from '../spec';
 
 /**
  * Drift report schema version.

@@ -206,7 +206,9 @@ export function registerCiCommand(program: Command): void {
               if (pkg.name) name = pkg.name;
               if (pkg.private === true) isPrivate = true;
             } catch (err) {
-              formatWarning(`Could not parse package.json for ${dir}${err instanceof Error ? `: ${err.message}` : ''}`);
+              formatWarning(
+                `Could not parse package.json for ${dir}${err instanceof Error ? `: ${err.message}` : ''}`,
+              );
             }
           }
 
@@ -299,7 +301,9 @@ export function registerCiCommand(program: Command): void {
               undocumented,
             });
           } catch (err) {
-            formatWarning(`Analysis failed for ${name}: ${err instanceof Error ? err.message : String(err)}`);
+            formatWarning(
+              `Analysis failed for ${name}: ${err instanceof Error ? err.message : String(err)}`,
+            );
             results.push({
               name,
               coverage: 0,

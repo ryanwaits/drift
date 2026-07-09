@@ -2,10 +2,10 @@
  * Tests for buildDriftSpec() function with progress callback.
  */
 import { describe, expect, test } from 'bun:test';
+import type { ApiSpec } from '../src/analysis/api-spec';
 import { buildDriftSpec } from '../src/analysis/drift-builder';
 import { generateReport } from '../src/analysis/report';
 import type { OpenPkgSpec } from '../src/analysis/spec-types';
-import type { ApiSpec } from '../src/analysis/api-spec';
 
 /**
  * Create a minimal OpenPkg spec with N exports for testing.

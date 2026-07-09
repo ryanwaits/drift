@@ -5,8 +5,8 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { ApiSpec } from './api-spec';
 import { getStateDir } from '../utils/project-root';
+import type { ApiSpec } from './api-spec';
 import { isExportDocumented } from './health';
 
 /** Directory for storing history snapshots (relative to state dir) */

@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
-import type { ClarityContract } from '@secondlayer/clarity-types';
-import type { ContractDoc } from '@secondlayer/clarity-docs';
-import { toApiSpec } from '../src/to-api-spec';
 import { computeDrift } from '@driftdev/sdk/analysis';
+import type { ContractDoc } from '@secondlayer/clarity-docs';
+import type { ClarityContract } from '@secondlayer/clarity-types';
+import { toApiSpec } from '../src/to-api-spec';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -184,8 +184,18 @@ describe('integration: clarity → computeDrift', () => {
   test('full contract → toApiSpec produces valid ApiSpec', () => {
     const abi: ClarityContract = {
       functions: [
-        { name: 'mint', access: 'public', args: [{ name: 'amount', type: 'uint128' }], outputs: { response: { ok: 'bool', error: 'uint128' } } },
-        { name: 'get-balance', access: 'read-only', args: [{ name: 'who', type: 'principal' }], outputs: 'uint128' },
+        {
+          name: 'mint',
+          access: 'public',
+          args: [{ name: 'amount', type: 'uint128' }],
+          outputs: { response: { ok: 'bool', error: 'uint128' } },
+        },
+        {
+          name: 'get-balance',
+          access: 'read-only',
+          args: [{ name: 'who', type: 'principal' }],
+          outputs: 'uint128',
+        },
         { name: 'check-auth', access: 'private', args: [], outputs: 'bool' },
       ],
       maps: [{ name: 'balances', key: 'principal', value: 'uint128' }],
@@ -199,7 +209,12 @@ describe('integration: clarity → computeDrift', () => {
         {
           name: 'sip-010',
           functions: [
-            { name: 'transfer', access: 'public', args: [{ name: 'amount', type: 'uint128' }], outputs: { response: { ok: 'bool', error: 'uint128' } } },
+            {
+              name: 'transfer',
+              access: 'public',
+              args: [{ name: 'amount', type: 'uint128' }],
+              outputs: { response: { ok: 'bool', error: 'uint128' } },
+            },
           ],
         },
       ],

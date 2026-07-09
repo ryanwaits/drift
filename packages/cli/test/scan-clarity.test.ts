@@ -64,7 +64,15 @@ afterAll(() => {
 
 describe('drift scan --lang clarity', () => {
   test('produces valid scan result with coverage + health', () => {
-    const result = run(['scan', '--lang', 'clarity', '--abi', 'token.abi.json', '--json', 'token.clar']);
+    const result = run([
+      'scan',
+      '--lang',
+      'clarity',
+      '--abi',
+      'token.abi.json',
+      '--json',
+      'token.clar',
+    ]);
     expect(result.exitCode).toBe(0);
 
     const stdout = result.stdout.toString();
@@ -99,7 +107,15 @@ describe('drift scan --lang clarity', () => {
   });
 
   test('derives name from filename', () => {
-    const result = run(['scan', '--lang', 'clarity', '--abi', 'token.abi.json', '--json', 'token.clar']);
+    const result = run([
+      'scan',
+      '--lang',
+      'clarity',
+      '--abi',
+      'token.abi.json',
+      '--json',
+      'token.clar',
+    ]);
     const envelope = JSON.parse(result.stdout.toString());
     expect(envelope.data.packageName).toBe('token');
   });

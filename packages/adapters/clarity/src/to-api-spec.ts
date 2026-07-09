@@ -1,9 +1,10 @@
 /**
  * Core mapping: ClarityContract + ContractDoc → ApiSpec.
  */
-import type { ClarityContract } from '@secondlayer/clarity-types';
-import type { ContractDoc } from '@secondlayer/clarity-docs';
+
 import type { ApiExport, ApiMember, ApiSpec, ApiTag } from '@driftdev/sdk/types';
+import type { ContractDoc } from '@secondlayer/clarity-docs';
+import type { ClarityContract } from '@secondlayer/clarity-types';
 import { clarityTypeToSchema } from './type-mapping';
 
 export function toApiSpec(
@@ -195,9 +196,7 @@ function mapFunction(fn: FunctionLike, fnDoc: FunctionDocLike | undefined): ApiE
   };
 }
 
-function buildMapTags(
-  doc: { dev?: string; see: string[] } | undefined,
-): ApiTag[] | undefined {
+function buildMapTags(doc: { dev?: string; see: string[] } | undefined): ApiTag[] | undefined {
   if (!doc) return undefined;
   const tags: ApiTag[] = [];
   if (doc.dev) tags.push({ name: 'remarks', text: doc.dev });
@@ -205,9 +204,7 @@ function buildMapTags(
   return tags.length > 0 ? tags : undefined;
 }
 
-function buildVariableTags(
-  doc: { dev?: string; see: string[] } | undefined,
-): ApiTag[] | undefined {
+function buildVariableTags(doc: { dev?: string; see: string[] } | undefined): ApiTag[] | undefined {
   if (!doc) return undefined;
   const tags: ApiTag[] = [];
   if (doc.dev) tags.push({ name: 'remarks', text: doc.dev });
@@ -215,9 +212,7 @@ function buildVariableTags(
   return tags.length > 0 ? tags : undefined;
 }
 
-function buildTraitTags(
-  doc: { dev?: string; see: string[] } | undefined,
-): ApiTag[] | undefined {
+function buildTraitTags(doc: { dev?: string; see: string[] } | undefined): ApiTag[] | undefined {
   if (!doc) return undefined;
   const tags: ApiTag[] = [];
   if (doc.dev) tags.push({ name: 'remarks', text: doc.dev });

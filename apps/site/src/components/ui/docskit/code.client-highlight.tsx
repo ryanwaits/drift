@@ -264,7 +264,9 @@ export function ClientCode(props: {
     ).then((results) => {
       if (!cancelled) {
         const map = new Map();
-        results.forEach((r) => map.set(r.index, r));
+        for (const r of results) {
+          map.set(r.index, r);
+        }
         setHighlighted(map);
       }
     });

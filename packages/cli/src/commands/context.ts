@@ -1,8 +1,8 @@
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import type { OpenPkgSpec } from '@openpkg-ts/spec';
 import { computeDrift } from '@driftdev/sdk';
+import type { OpenPkgSpec } from '@openpkg-ts/spec';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
@@ -11,8 +11,8 @@ import {
   type ContextData,
   type PackageContext,
   type PackageIssue,
-  type UndocumentedExport,
   renderContextMarkdown,
+  type UndocumentedExport,
   writeContext,
 } from '../utils/context-writer';
 import { detectEntry } from '../utils/detect-entry';
@@ -118,7 +118,9 @@ export function registerContextCommand(program: Command): void {
                   const { spec } = await cachedExtract(pkg.entry);
                   packages.push(buildPackageContext(pkg.name, spec));
                 } catch (err) {
-                  formatWarning(`Extraction failed for ${pkg.name}: ${err instanceof Error ? err.message : String(err)}`);
+                  formatWarning(
+                    `Extraction failed for ${pkg.name}: ${err instanceof Error ? err.message : String(err)}`,
+                  );
                   packages.push({
                     name: pkg.name,
                     coverage: 0,

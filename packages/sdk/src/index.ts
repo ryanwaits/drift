@@ -27,7 +27,9 @@ export type {
   ApiSurfaceResult,
   DocumentationHealth,
   DriftIssue,
+  DriftSchemaVersion,
   DriftSpec,
+  DriftSpecError,
   DriftSpecVersion,
   ExampleAnalysis,
   ExampleRuntimeDrift,
@@ -37,7 +39,6 @@ export type {
   MissingDocRule,
   TypeReferenceLocation,
 } from './spec';
-export type { DriftSchemaVersion, DriftSpecError } from './spec';
 export {
   assertDriftSpec,
   getAvailableDriftVersions,
@@ -106,7 +107,13 @@ export { buildModuleGraph, findSymbolModule, symbolExistsInGraph } from './analy
 export { generateReport, renderApiSurface } from './analysis/report';
 // Spec types
 export type { OpenPkgSpec } from './analysis/spec-types';
-export type { AnalysisResult, AnalyzeOptions, Diagnostic, ForgottenExportResult, ScanOptions } from './analyzer';
+export type {
+  AnalysisResult,
+  AnalyzeOptions,
+  Diagnostic,
+  ForgottenExportResult,
+  ScanOptions,
+} from './analyzer';
 export { analyze, analyzeFile, Drift, scan } from './analyzer';
 export type { DriftOptions } from './options';
 
@@ -134,14 +141,12 @@ export { resolveTarget } from './resolve';
 // Example Validation — @deprecated Use @driftdev/sdk/examples
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type {
-  ExampleValidation,
-} from './examples/types';
+export type { ExampleValidation } from './examples/types';
+export { parseExamplesFlag } from './examples/types';
 export type {
   ExampleValidationOptions,
   ExampleValidationResult,
 } from './examples/validator';
-export { parseExamplesFlag } from './examples/types';
 export { validateExamples } from './examples/validator';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -149,9 +154,9 @@ export { validateExamples } from './examples/validator';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export { detectProseDrift, type ProseDriftOptions } from './analysis/drift/prose-drift';
-export type { MarkdownCodeBlock, MarkdownDocFile } from './markdown/types';
 export { discoverMarkdownFiles } from './markdown/discover';
 export { findExportReferences, parseMarkdownFiles } from './markdown/parser';
+export type { MarkdownCodeBlock, MarkdownDocFile } from './markdown/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Report Types (commonly needed)

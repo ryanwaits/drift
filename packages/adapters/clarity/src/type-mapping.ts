@@ -1,8 +1,9 @@
 /**
  * Maps ClarityType → ApiSchema.
  */
-import type { ClarityType } from '@secondlayer/clarity-types';
+
 import type { ApiSchema } from '@driftdev/sdk/types';
+import type { ClarityType } from '@secondlayer/clarity-types';
 
 /**
  * Convert a ClarityType to a drift ApiSchema.

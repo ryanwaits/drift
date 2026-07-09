@@ -1,14 +1,14 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { DriftSpec } from '../spec';
 import type { OpenPkg } from '@openpkg-ts/spec';
-import type { ApiExport, ApiSignature, ApiSpec, ApiType } from './api-spec';
+import type { DriftSpec } from '../spec';
 import {
   type CoverageSummary,
   type DriftReport,
   type ExportCoverageData,
   REPORT_VERSION,
 } from '../types/report';
+import type { ApiExport, ApiSignature, ApiSpec, ApiType } from './api-spec';
 import { buildDriftSpec } from './drift-builder';
 import { isExportDocumented } from './health';
 import { toApiSpec } from './spec-types';

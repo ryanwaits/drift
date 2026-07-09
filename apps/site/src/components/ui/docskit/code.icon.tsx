@@ -30,6 +30,7 @@ export function CodeIcon({
   );
   return (
     <span className={className}>
+      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: SVG comes from the bundled seti icon set, not user input */}
       <span dangerouslySetInnerHTML={{ __html }} style={{ display: 'contents' }} />
     </span>
   );

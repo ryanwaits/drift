@@ -8,7 +8,13 @@ export interface DiscoverOptions {
   exclude?: string[];
 }
 
-const DEFAULT_INCLUDE = ['README.md', 'docs/**/*.md', 'docs/**/*.mdx', 'content/**/*.md', 'content/**/*.mdx'];
+const DEFAULT_INCLUDE = [
+  'README.md',
+  'docs/**/*.md',
+  'docs/**/*.mdx',
+  'content/**/*.md',
+  'content/**/*.mdx',
+];
 const DEFAULT_EXCLUDE = ['node_modules/**', 'dist/**', '.git/**'];
 
 /**

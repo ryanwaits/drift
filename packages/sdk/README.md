@@ -44,7 +44,7 @@ console.log(`Drift issues: ${spec.summary.drift.total}`);
 
 ### Drift Detection
 
-15 drift types across 4 categories: structural, semantic, example, prose.
+16 drift types across 4 categories: structural, semantic, example, prose.
 
 ```typescript
 import { computeDrift, buildExportRegistry, detectProseDrift, discoverMarkdownFiles } from '@driftdev/sdk';

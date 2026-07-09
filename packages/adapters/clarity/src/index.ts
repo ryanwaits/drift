@@ -3,9 +3,10 @@
  *
  * Maps ClarityContract (ABI) + ContractDoc (parsed docs) → ApiSpec.
  */
-import type { ClarityContract } from '@secondlayer/clarity-types';
+
 import type { ApiSpec } from '@driftdev/sdk/types';
 import { extractDocs } from '@secondlayer/clarity-docs';
+import type { ClarityContract } from '@secondlayer/clarity-types';
 import { toApiSpec as _toApiSpec } from './to-api-spec';
 
 export { toApiSpec } from './to-api-spec';

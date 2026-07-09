@@ -2,8 +2,8 @@
  * Tests for cross-module @link validation.
  */
 
-import type { ApiExport, ApiSpec } from '../src/analysis/api-spec';
 import { describe, expect, it } from 'vitest';
+import type { ApiExport, ApiSpec } from '../src/analysis/api-spec';
 import { detectBrokenLinks } from '../src/analysis/drift';
 import type { ExportRegistry } from '../src/analysis/drift/types';
 import {

@@ -21,7 +21,7 @@ function createHealthInput(overrides: Partial<HealthInput> = {}): HealthInput {
       throws: 0,
     },
     driftIssues: 0,
-        driftByCategory: {
+    driftByCategory: {
       structural: 0,
       semantic: 0,
       example: 0,
@@ -75,7 +75,7 @@ describe('computeHealth', () => {
         documentedExports: 20,
         totalExports: 24,
         driftIssues: 4,
-                driftByCategory: {
+        driftByCategory: {
           structural: 3,
           semantic: 1,
           example: 0,
@@ -126,7 +126,7 @@ describe('computeHealth', () => {
         documentedExports: 10,
         totalExports: 20,
         driftIssues: 10,
-                driftByCategory: {
+        driftByCategory: {
           structural: 6,
           semantic: 2,
           example: 2,
@@ -376,7 +376,7 @@ describe('computeHealth', () => {
     test('includes all accuracy fields', () => {
       const input = createHealthInput({
         driftIssues: 5,
-                driftByCategory: {
+        driftByCategory: {
           structural: 2,
           semantic: 2,
           example: 1,

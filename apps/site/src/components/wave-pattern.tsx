@@ -2,6 +2,7 @@ export function WavePattern() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
       <svg
+        aria-hidden="true"
         className="h-full w-full"
         viewBox="0 0 1440 900"
         preserveAspectRatio="xMidYMid slice"

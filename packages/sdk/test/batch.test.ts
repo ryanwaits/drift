@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import type { DriftSpec } from '../src/spec';
 import type { ApiSpec } from '../src/analysis/api-spec';
 import { aggregateResults, createPackageResult, type PackageResult } from '../src/analysis/batch';
+import type { DriftSpec } from '../src/spec';
 
 // Minimal mock ApiSpec spec
 function createMockApiSpec(name: string, version: string): ApiSpec {

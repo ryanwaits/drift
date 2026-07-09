@@ -49,6 +49,7 @@ export function Hoverable({
   const { addHoveredName, removeHoveredName, hoveredNames } = useContext(HoverContext);
   const isHovered = hoveredNames.length > 0 && hoveredNames[hoveredNames.length - 1] === name;
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: decorative hover enhancement only; no keyboard-reachable behavior lost
     <span
       className={className}
       onMouseEnter={() => addHoveredName(name)}

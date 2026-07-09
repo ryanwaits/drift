@@ -3,19 +3,13 @@ const features = [
     label: 'Analysis',
     title: 'Drift Detection',
     description: (
-      <>
-        15 rules across JSDoc, markdown, examples, and prose. Finds every doc that's now wrong.
-      </>
+      <>15 rules across JSDoc, markdown, examples, and prose. Finds every doc that's now wrong.</>
     ),
   },
   {
     label: 'CI/CD',
     title: 'CI Ready',
-    description: (
-      <>
-        GitHub Action for PR comments, step summaries, and automated issue creation.
-      </>
-    ),
+    description: <>GitHub Action for PR comments, step summaries, and automated issue creation.</>,
   },
   {
     label: 'Agent',
@@ -31,9 +25,7 @@ const features = [
     label: 'SDK',
     title: 'Open SDK',
     description: (
-      <>
-        MIT-licensed analysis engine. Build custom detection and remediation workflows.
-      </>
+      <>MIT-licensed analysis engine. Build custom detection and remediation workflows.</>
     ),
   },
 ];

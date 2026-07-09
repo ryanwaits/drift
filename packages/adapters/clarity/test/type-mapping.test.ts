@@ -121,10 +121,7 @@ describe('clarityTypeToSchema', () => {
       optional: { response: { ok: 'bool', error: 'uint128' } },
     };
     expect(clarityTypeToSchema(type)).toEqual({
-      anyOf: [
-        { type: 'response', ok: 'bool', error: 'uint128' },
-        { type: 'null' },
-      ],
+      anyOf: [{ type: 'response', ok: 'bool', error: 'uint128' }, { type: 'null' }],
     });
   });
 
