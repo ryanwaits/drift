@@ -4,12 +4,12 @@
  */
 
 import { extract } from '@openpkg-ts/sdk';
-import { normalize, type OpenPkgSpec } from '@openpkg-ts/spec';
+import { normalize, type OpenPkg } from '@openpkg-ts/spec';
 import { loadConfig } from '../config/loader';
 import { getCachedSpec, getConfigHash, isNoCacheSet, setCachedSpec } from './spec-cache';
 
 export interface CachedExtractResult {
-  spec: OpenPkgSpec;
+  spec: OpenPkg;
   cached: boolean;
 }
 
@@ -23,7 +23,7 @@ export async function cachedExtract(entryFile: string): Promise<CachedExtractRes
   if (!isNoCacheSet()) {
     const hit = getCachedSpec(cacheKey);
     if (hit) {
-      return { spec: hit.spec as OpenPkgSpec, cached: true };
+      return { spec: hit.spec as OpenPkg, cached: true };
     }
   }
 

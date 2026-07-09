@@ -17,13 +17,14 @@ option handling edge cases.
 - Proposed: read release notes, bump, full CLI test suite + manual `--help`,
   bare-`drift`, `--tools` smoke.
 
-## tsconfig consolidation
-Root tsconfig (isolatedDeclarations, ES2020) diverges from per-package
-tsconfigs (no extends, ES2022, no isolatedDeclarations). isolatedDeclarations
-errors only surface at bunup dts time (bit us in 1741351).
-- Proposed: root base absorbs ES2022/lib/esModuleInterop/declarationMap/
-  resolveJsonModule/forceConsistentCasingInFileNames, packages extend it.
-  Verify: bunup dts builds + `tsc --noEmit` per package before/after.
+## tsconfig consolidation — DONE 2026-07-09
+tsconfig.base.json shared; packages extend it. isolatedDeclarations only where
+d.ts ships (sdk, adapters), not the bin-only cli. `bun run typecheck` runs
+tsc per package + site; wired into CI. Fixing the 39 root-tsc errors surfaced
+4 real bugs: cli imported the nonexistent `OpenPkgSpec` from @openpkg-ts/spec,
+zod v4 `ZodArray` generic arity, `drift get` passed SpecType[] where the
+renderer needed a name-keyed record (referenced types silently never rendered),
+version fallback typing.
 
 ## CI lint gate
 No lint step in drift.yml. Lint is now green locally (audit cleared 62

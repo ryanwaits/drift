@@ -2,7 +2,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { computeDrift } from '@driftdev/sdk';
-import type { OpenPkgSpec } from '@openpkg-ts/spec';
+import type { OpenPkg } from '@openpkg-ts/spec';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
@@ -29,7 +29,7 @@ function getCommitSha(): string | null {
   }
 }
 
-function buildPackageContext(name: string, spec: OpenPkgSpec): PackageContext {
+function buildPackageContext(name: string, spec: OpenPkg): PackageContext {
   const exports = spec.exports ?? [];
   let documented = 0;
   const undocumented: string[] = [];

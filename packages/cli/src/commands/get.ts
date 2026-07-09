@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import { getExport, listExports } from '@openpkg-ts/sdk';
 import type { Command } from 'commander';
-import { renderGet } from '../formatters/get';
+import { type GetData, renderGet } from '../formatters/get';
 import { detectEntry } from '../utils/detect-entry';
 import { fuzzyTop } from '../utils/fuzzy';
 import { formatError, formatOutput } from '../utils/output';
@@ -63,9 +63,13 @@ export function registerGetCommand(program: Command): void {
           return;
         }
 
+        // getExport returns SpecType[]; renderGet inlines referenced types by name
+        const types: GetData['types'] = Object.fromEntries(
+          (result.types ?? []).map((t) => [t.name, (t.schema ?? {}) as NonNullable<GetData['types']>[string]]),
+        );
         formatOutput(
           'get',
-          { export: result.export, types: result.types },
+          { export: result.export, types } satisfies GetData,
           startTime,
           version,
           renderGet,

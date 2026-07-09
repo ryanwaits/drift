@@ -16,6 +16,7 @@
     "dev": "bun run --parallel dev:sdk dev:cli",
     "dev:sdk": "cd packages/sdk && bun run dev",
     "dev:cli": "cd packages/cli && bun run dev",
+    "typecheck": "tsc -p packages/sdk --noEmit && tsc -p packages/cli --noEmit && tsc -p packages/adapters/clarity --noEmit && tsc -p packages/adapters/openapi --noEmit && tsc -p apps/site --noEmit",
     "lint": "bunx biome check packages/ apps/",
     "lint:fix": "bunx biome check --write packages/ apps/",
     "format": "bunx biome format --write packages/ apps/",
@@ -29,6 +30,7 @@
     "@biomejs/biome": "2.5.3",
     "@changesets/cli": "^2.31.0",
     "@types/bun": "^1.3.14",
-    "@types/node": "^24.13.3"
+    "@types/node": "^24.13.3",
+    "typescript": "^5.9.3"
   }
 }

@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { Drift } from '@driftdev/sdk';
-import { normalize } from '@openpkg-ts/spec';
+import { normalize, type OpenPkg } from '@openpkg-ts/spec';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { renderExtract } from '../formatters/extract';
@@ -67,7 +67,7 @@ export function registerExtractCommand(program: Command): void {
           const entryFile = entry ? path.resolve(process.cwd(), entry) : detectEntry();
 
           const hasFilters = !!(options.only || options.ignore);
-          let spec: unknown;
+          let spec: OpenPkg;
 
           if (hasFilters) {
             // Filters change output — skip cache

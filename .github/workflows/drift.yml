@@ -44,6 +44,9 @@ jobs:
       - name: Build workspace packages
         run: bun run build
 
+      - name: Typecheck
+        run: bun run typecheck
+
       - name: Run CLI tests
         run: cd packages/cli && bun test
 

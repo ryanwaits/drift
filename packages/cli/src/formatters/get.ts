@@ -1,28 +1,29 @@
 import { c, indent, padRight } from '../utils/render';
 
 interface SchemaLike {
-  parameters?: Array<{ name: string; schema?: SchemaLike; required?: boolean }>;
-  returns?: SchemaLike;
-  properties?: Record<string, SchemaLike>;
+  parameters?: Array<{ name: string; schema?: SchemaLike | string; required?: boolean }>;
+  returns?: SchemaLike | string;
+  properties?: Record<string, SchemaLike | string>;
   required?: string[];
   $ref?: string;
   type?: string;
-  items?: SchemaLike;
-  anyOf?: SchemaLike[];
+  items?: SchemaLike | string;
+  anyOf?: (SchemaLike | string)[];
   [key: string]: unknown;
 }
 
-interface GetData {
+export interface GetData {
   export: {
     name: string;
     kind: string;
     description?: string;
     signature?: string;
-    parameters?: Array<{ name: string; type?: string; required?: boolean; description?: string }>;
+    parameters?: Array<{ name?: string; type?: string; required?: boolean; description?: string }>;
     returns?: { type?: string; description?: string };
-    members?: Array<{ name: string; type?: string; required?: boolean; description?: string }>;
+    members?: Array<{ name?: string; type?: string; required?: boolean; description?: string }>;
     deprecated?: boolean;
-    schema?: SchemaLike;
+    /** Lenient view over SpecSchema — narrowed in renderGet, string arms handled by formatType. */
+    schema?: unknown;
   };
   types?: Record<string, SchemaLike>;
 }
@@ -30,6 +31,8 @@ interface GetData {
 export function renderGet(data: GetData): string {
   const lines: string[] = [''];
   const exp = data.export;
+  const schema =
+    typeof exp.schema === 'object' && exp.schema !== null ? (exp.schema as SchemaLike) : undefined;
 
   // Header
   lines.push(
@@ -55,20 +58,20 @@ export function renderGet(data: GetData): string {
   }
 
   // Parameters
-  const params = exp.parameters ?? extractParams(exp.schema);
+  const params = exp.parameters ?? extractParams(schema);
   if (params.length > 0) {
     lines.push(indent(c.gray('  PARAMETERS')));
     for (const p of params) {
       const req = p.required ? 'required' : 'optional';
       const type = p.type ?? 'unknown';
       const desc = p.description ? `  ${c.dim(JSON.stringify(p.description))}` : '';
-      lines.push(indent(`  ${padRight(p.name, 16)}${padRight(type, 24)}${c.gray(req)}${desc}`));
+      lines.push(indent(`  ${padRight(p.name ?? '', 16)}${padRight(type, 24)}${c.gray(req)}${desc}`));
     }
     lines.push('');
   }
 
   // Returns
-  const returns = exp.returns ?? extractReturns(exp.schema);
+  const returns = exp.returns ?? extractReturns(schema);
   if (returns) {
     lines.push(indent(c.gray('  RETURNS')));
     lines.push(indent(`  ${returns.type ?? 'void'}`));
@@ -76,7 +79,7 @@ export function renderGet(data: GetData): string {
   }
 
   // Members (for classes/interfaces)
-  const members = exp.members ?? extractMembers(exp.schema);
+  const members = exp.members ?? extractMembers(schema);
   if (members.length > 0) {
     const shown = members.slice(0, 50);
     const remaining = members.length - shown.length;
@@ -85,7 +88,7 @@ export function renderGet(data: GetData): string {
     for (const m of shown) {
       const req = m.required ? 'required' : 'optional';
       const type = m.type ?? '';
-      lines.push(indent(`  ${padRight(m.name, 20)}${padRight(type, 20)}${c.gray(req)}`));
+      lines.push(indent(`  ${padRight(m.name ?? '', 20)}${padRight(type, 20)}${c.gray(req)}`));
     }
     if (remaining > 0) {
       lines.push(indent(c.gray(`  ... ${remaining} more`)));
@@ -126,7 +129,7 @@ export function renderGet(data: GetData): string {
 
 function extractParams(
   schema: SchemaLike | undefined,
-): Array<{ name: string; type?: string; required?: boolean }> {
+): Array<{ name: string; type?: string; required?: boolean; description?: string }> {
   if (!schema?.parameters) return [];
   return schema.parameters.map((p) => ({
     name: p.name,
@@ -145,7 +148,7 @@ function extractMembers(
 ): Array<{ name: string; type?: string; required?: boolean }> {
   if (!schema?.properties) return [];
   const required = new Set(schema.required ?? []);
-  return Object.entries(schema.properties).map(([name, prop]: [string, SchemaLike]) => ({
+  return Object.entries(schema.properties).map(([name, prop]) => ({
     name,
     type: formatType(prop),
     required: required.has(name),
@@ -157,15 +160,16 @@ function extractPropsFromSchema(
 ): Array<{ name: string; type: string; required: boolean }> {
   if (!schema?.properties) return [];
   const required = new Set(schema.required ?? []);
-  return Object.entries(schema.properties).map(([name, prop]: [string, SchemaLike]) => ({
+  return Object.entries(schema.properties).map(([name, prop]) => ({
     name,
     type: formatType(prop),
     required: required.has(name),
   }));
 }
 
-function formatType(schema: SchemaLike | undefined): string {
+function formatType(schema: SchemaLike | string | undefined): string {
   if (!schema) return 'unknown';
+  if (typeof schema === 'string') return schema;
   if (schema.$ref) return schema.$ref.replace('#/types/', '');
   if (schema.type === 'array' && schema.items) return `${formatType(schema.items)}[]`;
   if (schema.anyOf) return schema.anyOf.map(formatType).join(' | ');

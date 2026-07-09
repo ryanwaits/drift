@@ -14,5 +14,5 @@ export function getVersion(): string {
   } catch {
     cached = '0.0.0';
   }
-  return cached;
+  return cached ?? '0.0.0';
 }

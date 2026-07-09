@@ -15,4 +15,4 @@ const resolvedTypeScriptModule: TypeScriptModule = (() => {
   return candidate;
 })();
 
-export const ts = resolvedTypeScriptModule;
+export const ts: TypeScriptModule = resolvedTypeScriptModule;
