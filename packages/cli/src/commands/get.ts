@@ -141,16 +141,25 @@ interface GetOptions {
 }
 
 /** Compact human label for an ApiSchema (full schema rides alongside in JSON output). */
-function schemaTypeString(schema: unknown): string | undefined {
+function schemaTypeString(schema: unknown, depth = 0): string | undefined {
   if (schema === undefined || schema === null) return undefined;
   if (typeof schema === 'string') return schema;
-  if (typeof schema === 'object') {
-    const s = schema as Record<string, unknown>;
-    if (typeof s.$ref === 'string') return s.$ref.split('/').pop();
-    if (typeof s.type === 'string') return s.type;
-    if (Array.isArray(s.oneOf)) return 'oneOf';
-    if (Array.isArray(s.anyOf)) return 'anyOf';
+  if (typeof schema !== 'object' || depth > 3) return undefined;
+  const s = schema as Record<string, unknown>;
+  if (typeof s.$ref === 'string') return s.$ref.split('/').pop();
+  const composite = (s.oneOf ?? s.anyOf) as unknown[] | undefined;
+  if (Array.isArray(composite)) {
+    const arms = composite
+      .map((arm) => schemaTypeString(arm, depth + 1) ?? 'unknown')
+      .filter((v, i, a) => a.indexOf(v) === i);
+    return arms.join(' | ');
   }
+  if (s.type === 'array') {
+    const item = schemaTypeString(s.items, depth + 1);
+    return item ? `${item}[]` : 'array';
+  }
+  if (typeof s.title === 'string' && (s.type === 'object' || s.type === undefined)) return s.title;
+  if (typeof s.type === 'string') return s.type;
   return undefined;
 }
 

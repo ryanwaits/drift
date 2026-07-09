@@ -28,13 +28,20 @@ describe('resolveRef', () => {
 });
 
 describe('deepResolve', () => {
-  test('resolves nested refs', () => {
+  test('resolves nested refs, preserving schema names as title', () => {
     const d = doc({
       Outer: { type: 'object', properties: { inner: { $ref: '#/components/schemas/Inner' } } },
       Inner: { type: 'string' },
     });
     const resolved = deepResolve(d, { $ref: '#/components/schemas/Outer' }) as Record<string, any>;
-    expect(resolved.properties.inner).toEqual({ type: 'string' });
+    expect(resolved.title).toBe('Outer');
+    expect(resolved.properties.inner).toEqual({ title: 'Inner', type: 'string' });
+  });
+
+  test('existing title wins over injected schema name', () => {
+    const d = doc({ Named: { type: 'string', title: 'Custom' } });
+    const resolved = deepResolve(d, { $ref: '#/components/schemas/Named' }) as Record<string, any>;
+    expect(resolved.title).toBe('Custom');
   });
 
   test('breaks cycles by leaving inner $ref in place', () => {
@@ -55,7 +62,7 @@ describe('deepResolve', () => {
       $ref: '#/components/schemas/Base',
       description: 'override desc',
     });
-    expect(resolved).toEqual({ type: 'string', description: 'override desc' });
+    expect(resolved).toEqual({ title: 'Base', type: 'string', description: 'override desc' });
   });
 
   test('non-local refs pass through untouched', () => {
@@ -67,7 +74,7 @@ describe('deepResolve', () => {
   test('arrays and primitives pass through', () => {
     const d = doc({ S: { type: 'string' } });
     expect(deepResolve(d, [{ $ref: '#/components/schemas/S' }, 42, null])).toEqual([
-      { type: 'string' },
+      { title: 'S', type: 'string' },
       42,
       null,
     ]);

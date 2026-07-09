@@ -35,6 +35,11 @@ export interface GetData {
   types?: Record<string, SchemaLike>;
 }
 
+/** Column pad that never lets long values collide with the next column. */
+function col(text: string, width: number): string {
+  return padRight(text, Math.max(width, text.length + 2));
+}
+
 export function renderGet(data: GetData): string {
   const lines: string[] = [''];
   const exp = data.export;
@@ -72,9 +77,7 @@ export function renderGet(data: GetData): string {
       const req = p.required ? 'required' : 'optional';
       const type = p.type ?? 'unknown';
       const desc = p.description ? `  ${c.dim(JSON.stringify(p.description))}` : '';
-      lines.push(
-        indent(`  ${padRight(p.name ?? '', 16)}${padRight(type, 24)}${c.gray(req)}${desc}`),
-      );
+      lines.push(indent(`  ${col(p.name ?? '', 16)}${col(type, 24)}${c.gray(req)}${desc}`));
     }
     lines.push('');
   }
@@ -97,7 +100,7 @@ export function renderGet(data: GetData): string {
     for (const m of shown) {
       const req = m.required ? 'required' : 'optional';
       const type = m.type ?? '';
-      lines.push(indent(`  ${padRight(m.name ?? '', 20)}${padRight(type, 20)}${c.gray(req)}`));
+      lines.push(indent(`  ${col(m.name ?? '', 20)}${col(type, 20)}${c.gray(req)}`));
     }
     if (remaining > 0) {
       lines.push(indent(c.gray(`  ... ${remaining} more`)));

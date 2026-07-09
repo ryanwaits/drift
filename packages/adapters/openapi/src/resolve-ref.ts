@@ -63,7 +63,18 @@ export function deepResolve(
     const target = resolveRef(doc, ref);
     const nextSeen = new Set(seen);
     nextSeen.add(ref);
-    const resolved = deepResolve(doc, target, nextSeen);
+    let resolved = deepResolve(doc, target, nextSeen);
+    // Preserve provenance: an inlined named schema keeps its name as `title`
+    // so renderers and agents can still say "CandidateInfoSuccessResponse".
+    if (
+      resolved !== null &&
+      typeof resolved === 'object' &&
+      !Array.isArray(resolved) &&
+      (resolved as Record<string, unknown>).title === undefined
+    ) {
+      const name = ref.split('/').pop();
+      if (name) resolved = { title: unescapePointerSegment(name), ...resolved };
+    }
     const siblings: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
       if (key !== '$ref') siblings[key] = deepResolve(doc, value, nextSeen);
