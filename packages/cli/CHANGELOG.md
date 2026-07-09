@@ -1,5 +1,13 @@
 # @doccov/cli
 
+## 1.5.1
+
+### Patch Changes
+
+- 27474da: Readable type labels for OpenAPI surfaces. The adapter preserves inlined schema names as `title` (so a resolved `$ref` still knows it was `CandidateInfoSuccessResponse`); `drift get` renders composed types (`string | null`, `Success | Error`) instead of bare `anyOf`/`oneOf`, and long parameter names no longer collide with the type column.
+- Updated dependencies [27474da]
+  - @driftdev/openapi-adapter@1.0.1
+
 ## 1.5.0
 
 ### Minor Changes

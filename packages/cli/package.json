@@ -1,6 +1,6 @@
 {
   "name": "@driftdev/cli",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Drift CLI - detect when your docs drift from your code",
   "keywords": [
     "typescript",
@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@driftdev/clarity-adapter": "^1.0.1",
-    "@driftdev/openapi-adapter": "^1.0.0",
+    "@driftdev/openapi-adapter": "^1.0.1",
     "@driftdev/sdk": "^1.4.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@openpkg-ts/sdk": "^0.38.0",
