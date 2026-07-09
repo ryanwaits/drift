@@ -76,9 +76,9 @@ Coverage + lint + prose drift + health in one pass. This is the **default comman
 | `--min <n>` | number | Minimum health threshold (exit 1 if below) |
 | `--all` | boolean | Run across all workspace packages |
 | `--private` | boolean | Include private packages in `--all` mode |
-| `--lang <language>` | string | Source language: `typescript` (default), `clarity`, or `openapi` |
-| `--abi <path>` | string | ABI JSON file (required for `--lang clarity`) |
-| `--spec <path>` | string | OpenAPI 3.x JSON document (required for `--lang openapi`) |
+| `--lang <language>` | string | Source language: inferred from `--spec`/`--abi`/`.clar`; default `typescript` |
+| `--abi <path>` | string | ABI JSON file (required for Clarity) |
+| `--spec <path>` | string | OpenAPI 3.x JSON document — path or URL (implies openapi) |
 
 ```bash
 drift            # bare drift = scan
@@ -129,6 +129,9 @@ Documentation health score.
 | `--min <n>` | number | Minimum health threshold (exit 1 if below) |
 | `--all` | boolean | Run across all workspace packages |
 | `--private` | boolean | Include private packages in `--all` mode |
+| `--lang <language>` | string | Source language: inferred from `--spec`/`--abi`/`.clar`; default `typescript` |
+| `--abi <path>` | string | ABI JSON file (required for Clarity) |
+| `--spec <path>` | string | OpenAPI 3.x JSON document — path or URL (implies openapi) |
 
 ```bash
 drift health
@@ -207,6 +210,9 @@ Documentation coverage score.
 | `--min <n>` | number | Minimum coverage threshold (exit 1 if below) |
 | `--all` | boolean | Run across all workspace packages |
 | `--private` | boolean | Include private packages in `--all` mode |
+| `--lang <language>` | string | Source language: inferred from `--spec`/`--abi`/`.clar`; default `typescript` |
+| `--abi <path>` | string | ABI JSON file (required for Clarity) |
+| `--spec <path>` | string | OpenAPI 3.x JSON document — path or URL (implies openapi) |
 
 ```bash
 drift coverage
@@ -233,6 +239,9 @@ Cross-reference JSDoc against code for accuracy issues.
 |------|------|-------------|
 | `--all` | boolean | Run across all workspace packages |
 | `--private` | boolean | Include private packages in `--all` mode |
+| `--lang <language>` | string | Source language: inferred from `--spec`/`--abi`/`.clar`; default `typescript` |
+| `--abi <path>` | string | ABI JSON file (required for Clarity) |
+| `--spec <path>` | string | OpenAPI 3.x JSON document — path or URL (implies openapi) |
 
 ```bash
 drift lint
@@ -314,6 +323,9 @@ Extract full API spec as JSON.
 | `--max-depth <n>` | number | Max type resolution depth (default: 10) |
 | `--all` | boolean | Extract from all workspace packages |
 | `--private` | boolean | Include private packages in `--all` mode |
+| `--lang <language>` | string | Source language: inferred from `--spec`/`--abi`/`.clar`; default `typescript` |
+| `--abi <path>` | string | ABI JSON file (required for Clarity) |
+| `--spec <path>` | string | OpenAPI 3.x JSON document — path or URL (implies openapi) |
 
 ```bash
 drift extract
@@ -333,6 +345,9 @@ List exports. Positional arg is a search term or entry file path.
 | `--drifted` | boolean | Only exports with stale JSDoc |
 | `--full` | boolean | Show full list (no truncation) |
 | `--all` | boolean | Run across all workspace packages |
+| `--lang <language>` | string | Source language: inferred from `--spec`/`--abi`/`.clar`; default `typescript` |
+| `--abi <path>` | string | ABI JSON file (required for Clarity) |
+| `--spec <path>` | string | OpenAPI 3.x JSON document — path or URL (implies openapi) |
 
 ```bash
 drift list
@@ -491,6 +506,28 @@ Documentation trends from history data.
 
 ```bash
 drift report
+```
+
+---
+
+## Agent Integration
+
+### `drift mcp`
+
+Run a stdio MCP server exposing drift's truth primitives to any MCP client (Claude Code, Cursor, custom agents).
+
+```bash
+# Claude Code
+claude mcp add drift -- drift mcp
+
+# Any MCP client: command = drift, args = ["mcp"]
+```
+
+Tools: `drift_extract`, `drift_list`, `drift_get`, `drift_scan` (all accept `cwd`, `entry`, `lang`, `spec` path/URL, `abi`), plus `drift_diff` and `drift_breaking` (TypeScript only today). Each tool returns the same `{ok, data, meta}` envelope as the CLI's `--json` mode.
+
+```
+drift_get { name: "candidateInfo", spec: "https://developers.ashbyhq.com/openapi/ashby-api.json" }
+→ authoritative operation definition: params, required, types, deprecation
 ```
 
 ---

@@ -1,10 +1,11 @@
 # Getting Started
 
-Drift analyzes your TypeScript exports and checks that JSDoc, markdown docs, and `@example` blocks are accurate and complete.
+Drift detects when your docs drift from your code. It extracts the real API surface — TypeScript exports, OpenAPI operations, or Clarity contract functions — and checks that docs, JSDoc, and `@example` blocks are accurate and complete.
 
 ## Who This Is For
 
 - Maintainers of TypeScript packages with public APIs.
+- API teams checking hand-written guides against an OpenAPI spec.
 - Teams that want PR-time docs quality gates, not manual release checks.
 - Engineers who need fast, file-level guidance for fixing stale docs.
 

@@ -1,5 +1,7 @@
 # Usage Guide
 
+Detect when your docs drift from your code — TypeScript packages, OpenAPI specs, Clarity contracts.
+
 ## Quick Start
 
 1. Install:
@@ -9,7 +11,8 @@ bun add -g @driftdev/cli
 
 2. Run a full scan:
 ```bash
-drift scan
+drift scan                          # TypeScript package
+drift scan --spec openapi.json      # REST API (path or URL)
 ```
 
 3. Check documentation coverage:
@@ -31,9 +34,9 @@ Options:
 - `--min <n>` — Minimum health threshold (exit 1 if below)
 - `--all` — Run across all workspace packages
 - `--private` — Include private packages
-- `--lang <language>` — Source language: `typescript` (default), `clarity`, or `openapi`
-- `--abi <path>` — ABI JSON file (required for `--lang clarity`)
-- `--spec <path>` — OpenAPI 3.x JSON document (required for `--lang openapi`)
+- `--lang <language>` — Source language: inferred from `--spec`/`--abi`/`.clar`; default `typescript`
+- `--abi <path>` — ABI JSON file (required for Clarity)
+- `--spec <path>` — OpenAPI 3.x JSON document — path or URL (implies openapi)
 
 ### `drift health`
 
@@ -47,6 +50,7 @@ Options:
 - `--min <n>` — Minimum health threshold
 - `--all` — Run across all workspace packages
 - `--private` — Include private packages
+- `--lang/--abi/--spec` — Truth source: Clarity (`--abi` + `.clar`) or OpenAPI (`--spec` path/URL); inferred
 
 ### `drift coverage`
 
@@ -60,6 +64,7 @@ Options:
 - `--min <n>` — Minimum coverage % (exit 1 if below)
 - `--all` — Run across all workspace packages
 - `--private` — Include private packages
+- `--lang/--abi/--spec` — Truth source: Clarity (`--abi` + `.clar`) or OpenAPI (`--spec` path/URL); inferred
 
 ### `drift lint`
 
@@ -72,6 +77,7 @@ drift lint [entry] [options]
 Options:
 - `--all` — Run across all workspace packages
 - `--private` — Include private packages
+- `--lang/--abi/--spec` — Truth source: Clarity (`--abi` + `.clar`) or OpenAPI (`--spec` path/URL); inferred
 
 ### `drift examples`
 
@@ -103,6 +109,7 @@ Options:
 - `--max-depth <n>` — Max type resolution depth (default: 10)
 - `--all` — Extract all workspace packages
 - `--private` — Include private packages
+- `--lang/--abi/--spec` — Truth source: Clarity (`--abi` + `.clar`) or OpenAPI (`--spec` path/URL); inferred
 
 ### `drift list`
 
@@ -118,6 +125,7 @@ Options:
 - `--drifted` — Show only exports with drift issues
 - `--full` — Show full details
 - `--all` — Run across all workspace packages
+- `--lang/--abi/--spec` — Truth source: Clarity (`--abi` + `.clar`) or OpenAPI (`--spec` path/URL); inferred
 
 ### `drift get`
 
@@ -126,7 +134,11 @@ Get single export detail + types. Entry auto-detected; pass it first to override
 ```bash
 drift get <name>
 drift get <entry> <name>
+drift get candidateInfo --spec https://example.com/openapi.json
 ```
+
+Options:
+- `--lang/--abi/--spec` — Truth source: Clarity (`--abi` + `.clar`) or OpenAPI (`--spec` path/URL); inferred
 
 Includes fuzzy matching — suggests similar names if not found.
 
@@ -294,6 +306,14 @@ Cache management.
 ```bash
 drift cache status   # show cache stats
 drift cache clear    # clear cache
+```
+
+### `drift mcp`
+
+Stdio MCP server exposing drift tools (`drift_extract/list/get/scan/diff/breaking`) to any agent.
+
+```bash
+claude mcp add drift -- drift mcp
 ```
 
 ### Agent Discovery

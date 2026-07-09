@@ -20,13 +20,14 @@ drift lint
 ## Who It Helps
 
 - Teams shipping TypeScript libraries, SDKs, or CLI packages with public exports.
+- API teams whose hand-written guides must stay true to their OpenAPI spec.
 - Maintainers who want CI to catch documentation regressions before merge.
 - DX/DevRel teams that need docs accuracy to scale with release velocity.
 
 ## Who It Does Not Help
 
-- Apps with no exported TypeScript API surface to document.
-- Teams that do not use JSDoc or markdown docs as part of their release workflow.
+- Apps with no API surface to document (no exports, no spec, no contract).
+- Teams whose docs are not part of their release workflow.
 - Repos that are not ready to enforce docs quality in CI.
 
 ## Why It Matters
@@ -74,18 +75,19 @@ drift coverage --min 80 || echo "Below threshold"
 
 ## AI Agent Usage
 
-drift ships as a [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code). Install the skill, then use `/drift` inside any TypeScript package:
+Detection is the tool's job. Mutation and judgment are the agent's job. Deterministic edges, LLM in the middle: drift extracts what the API *actually is*; agents verify what the docs *claim*.
 
-```
-/drift              # status check, auto-init if needed
-/drift fix          # lint → fix JSDoc to match actual signatures
-/drift enrich       # coverage → add missing JSDoc
-/drift review       # PR documentation impact analysis
-/drift release      # pre-release documentation audit
-/drift docs/        # scan external docs for stale API references
+**MCP** — expose drift's truth primitives to any agent (Claude Code, Cursor, custom):
+
+```bash
+claude mcp add drift -- drift mcp
+# tools: drift_extract, drift_list, drift_get, drift_scan, drift_diff, drift_breaking
 ```
 
-Detection is the tool's job. Mutation is the agent's job. The CLI outputs structured JSON with `filePath` and `line` — agents read the diagnosis, then edit code directly.
+**Skills** — shipped in [`skills/`](skills/), install by copying into `~/.claude/skills/`:
+
+- `/drift` — coverage, validate, fix workflows against any truth source
+- `/docs-verify` — audit an entire docs site against the API: agent extracts claims page by page, verifies each with `drift get`, reports phantom/wrong-param/stale findings with file:line
 
 ```bash
 # Machine-readable command discovery
@@ -108,25 +110,26 @@ Every drift issue includes `filePath` and `line` for agent-driven fixes.
 ## How It Works
 
 ```
-TypeScript source
-    |  drift extract
-    v
-openpkg.json spec    (portable API structure)
-    |  drift scan / lint / coverage / diff
-    v
-structured facts     (JSON to stdout)
-    |
-    v
-.drift/context.md    (agent-readable project state)
+TypeScript source     OpenAPI 3.x document     Clarity contract
+    |                     |                        |
+    |  openpkg-ts         |  openapi adapter       |  clarity adapter
+    v                     v                        v
+              ApiSpec  (one portable API structure)
+                          |  drift scan / lint / coverage / list / get / diff
+                          v
+              structured facts  (JSON to stdout, file:line locations)
+                          |
+                          v
+              agents verify docs claims against the facts
 ```
 
-drift extracts a machine-readable spec from your TypeScript, then runs analysis against it. Every command outputs facts — agents decide what to do with them.
-
-Beyond TypeScript, adapters map other API surfaces into the same analysis pipeline:
+Truth adapters map any API surface into one spec; analysis runs against it. Every command outputs facts — agents decide what to do with them. Deterministic edges, LLM in the middle.
 
 ```bash
-drift scan --lang clarity --abi token.abi.json token.clar   # Clarity smart contracts
-drift scan --lang openapi --spec openapi.json               # REST APIs (OpenAPI 3.x)
+drift scan                                    # TypeScript package (entry auto-detected)
+drift scan --spec openapi.json                # REST API — path or URL, lang inferred
+drift scan --abi token.abi.json token.clar    # Clarity contract
+drift get candidateInfo --spec https://developers.ashbyhq.com/openapi/ashby-api.json
 ```
 
 ## CI
@@ -165,9 +168,9 @@ drift examples
 ## Architecture
 
 ```
-Layer 0: @openpkg-ts/spec   (open standard)
-Layer 1: @driftdev/sdk       (detection engine)
-Layer 2: drift CLI           (22 commands — composed + primitives + plumbing)
+Truth adapters:  @openpkg-ts/sdk (TypeScript) · @driftdev/openapi-adapter · @driftdev/clarity-adapter
+Engine:          @driftdev/sdk        (ApiSpec + 16 drift detectors)
+Surfaces:        drift CLI (23 commands) · drift mcp (agent tools) · skills/ (agent playbooks)
 ```
 
 ## License

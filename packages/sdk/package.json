@@ -8,7 +8,12 @@
     "sdk",
     "drift",
     "docs-coverage",
-    "drift-detection"
+    "drift-detection",
+    "openapi",
+    "rest",
+    "api",
+    "agent",
+    "mcp"
   ],
   "homepage": "https://github.com/ryanwaits/drift#readme",
   "repository": {
