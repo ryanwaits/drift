@@ -6,10 +6,10 @@ import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { setNoCache } from './cache/spec-cache';
 import { registerBreakingCommand } from './commands/breaking';
-import { registerCommandsCommand } from './commands/commands';
 import { registerCacheCommand } from './commands/cache';
 import { registerChangelogCommand } from './commands/changelog';
 import { registerCiCommand } from './commands/ci';
+import { registerCommandsCommand } from './commands/commands';
 import { registerConfigCommand } from './commands/config';
 import { registerContextCommand } from './commands/context';
 import { registerCoverageCommand } from './commands/coverage';
@@ -40,7 +40,7 @@ const program = new Command();
 
 program
   .name('drift')
-  .description('drift — documentation quality for TypeScript')
+  .description('drift — documentation quality for TypeScript, Clarity, and OpenAPI')
   .version(packageJson.version)
   .option('--json', 'Force JSON output (default when piped)')
   .option('--human', 'Force human-readable output (default in terminal)')
@@ -58,7 +58,6 @@ program
     if (opts.cache === false) setNoCache(true);
   });
 
-// Default (bare `drift`)
 registerHealthCommand(program);
 
 // Extraction
@@ -104,11 +103,15 @@ registerCommandsCommand(program);
 const HUMAN_COMMANDS = new Set(['scan', 'ci', 'init', 'commands']);
 for (const cmd of program.commands) {
   if (!HUMAN_COMMANDS.has(cmd.name())) {
-    (cmd as any)._hidden = true;
+    // Commander has no public API for hiding registered commands; set its private flag structurally
+    (cmd as unknown as { _hidden?: boolean })._hidden = true;
   }
 }
 
-program.addHelpText('after', '\nAgent mode:\n  drift --tools    JSON manifest of all commands for agent use\n');
+program.addHelpText(
+  'after',
+  '\nAgent mode:\n  drift --tools    JSON manifest of all commands for agent use\n',
+);
 
 if (process.argv.includes('--tools')) {
   const caps = extractCapabilities(program);

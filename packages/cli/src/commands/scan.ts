@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fromSource } from '@driftdev/clarity-adapter';
+import { fromDocument } from '@driftdev/openapi-adapter';
 import {
   buildExportRegistry,
   computeDrift,
@@ -32,13 +33,24 @@ function getPackageInfo(cwd: string): { name?: string; version?: string } {
   }
 }
 
-type SupportedLang = 'typescript' | 'clarity';
+type SupportedLang = 'typescript' | 'clarity' | 'openapi';
 
 async function loadSpec(
   entryFile: string,
   lang: SupportedLang,
   abiPath?: string,
+  specPath?: string,
 ): Promise<{ apiSpec: ApiSpec; packageName?: string; packageVersion?: string }> {
+  if (lang === 'openapi') {
+    if (!specPath) throw new Error('--spec is required when --lang openapi');
+    if (!existsSync(specPath)) throw new Error(`Spec file not found: ${specPath}`);
+    const document = readFileSync(specPath, 'utf-8');
+    const name = path.basename(specPath, path.extname(specPath));
+    const apiSpec = fromDocument(document);
+    if (!apiSpec.meta.name || apiSpec.meta.name === 'openapi') apiSpec.meta.name = name;
+    return { apiSpec, packageName: apiSpec.meta.name, packageVersion: apiSpec.meta.version };
+  }
+
   if (lang === 'clarity') {
     if (!abiPath) throw new Error('--abi is required when --lang clarity');
     if (!existsSync(entryFile)) throw new Error(`Source file not found: ${entryFile}`);
@@ -83,10 +95,18 @@ export function registerScanCommand(program: Command): void {
     .option('--private', 'Include private packages in --all mode')
     .option('--lang <language>', 'Source language', 'typescript')
     .option('--abi <path>', 'ABI JSON file (required for --lang clarity)')
+    .option('--spec <path>', 'OpenAPI document (required for --lang openapi)')
     .action(
       async (
         entry: string | undefined,
-        options: { min?: string; all?: boolean; private?: boolean; lang?: string; abi?: string },
+        options: {
+          min?: string;
+          all?: boolean;
+          private?: boolean;
+          lang?: string;
+          abi?: string;
+          spec?: string;
+        },
       ) => {
         const startTime = Date.now();
         const version = getVersion();
@@ -94,16 +114,25 @@ export function registerScanCommand(program: Command): void {
         try {
           // Validate --lang
           const lang = (options.lang ?? 'typescript') as string;
-          if (lang !== 'typescript' && lang !== 'clarity') {
+          if (lang !== 'typescript' && lang !== 'clarity' && lang !== 'openapi') {
             formatError('scan', `Unknown language: ${lang}`, startTime, version);
             return;
           }
-          if (lang === 'clarity' && options.all) {
-            formatError('scan', 'Batch mode (--all) not yet supported for clarity', startTime, version);
+          if (lang !== 'typescript' && options.all) {
+            formatError(
+              'scan',
+              `Batch mode (--all) not yet supported for ${lang}`,
+              startTime,
+              version,
+            );
             return;
           }
           if (lang === 'clarity' && !options.abi) {
             formatError('scan', '--abi is required when --lang clarity', startTime, version);
+            return;
+          }
+          if (lang === 'openapi' && !options.spec) {
+            formatError('scan', '--spec is required when --lang openapi', startTime, version);
             return;
           }
 
@@ -176,15 +205,26 @@ export function registerScanCommand(program: Command): void {
 
           // Single-package mode
           const { config } = loadConfig();
-          const entryFile = entry
-            ? path.resolve(process.cwd(), entry)
-            : lang === 'clarity'
-              ? (() => { throw new Error('Entry file required for --lang clarity'); })()
-              : config.entry
-                ? path.resolve(process.cwd(), config.entry)
-                : detectEntry();
+          const specPath = options.spec ? path.resolve(process.cwd(), options.spec) : undefined;
+          const entryFile =
+            lang === 'openapi'
+              ? (specPath as string)
+              : entry
+                ? path.resolve(process.cwd(), entry)
+                : lang === 'clarity'
+                  ? (() => {
+                      throw new Error('Entry file required for --lang clarity');
+                    })()
+                  : config.entry
+                    ? path.resolve(process.cwd(), config.entry)
+                    : detectEntry();
           const abiPath = options.abi ? path.resolve(process.cwd(), options.abi) : undefined;
-          const { apiSpec, packageName, packageVersion } = await loadSpec(entryFile, lang as SupportedLang, abiPath);
+          const { apiSpec, packageName, packageVersion } = await loadSpec(
+            entryFile,
+            lang as SupportedLang,
+            abiPath,
+            specPath,
+          );
 
           // Coverage
           const exports = apiSpec.exports ?? [];
@@ -219,7 +259,11 @@ export function registerScanCommand(program: Command): void {
               if (pkgName) {
                 const registry = buildExportRegistry(apiSpec);
                 const markdownFiles = discoverMarkdownFiles(process.cwd(), config.docs);
-                const proseDrifts = detectProseDrift({ packageName: pkgName, markdownFiles, registry });
+                const proseDrifts = detectProseDrift({
+                  packageName: pkgName,
+                  markdownFiles,
+                  registry,
+                });
                 for (const drift of proseDrifts) {
                   issues.push({
                     export: drift.target ?? '',
@@ -231,7 +275,9 @@ export function registerScanCommand(program: Command): void {
                 }
               }
             } catch (err) {
-              formatWarning(`Prose drift skipped: ${err instanceof Error ? err.message : String(err)}`);
+              formatWarning(
+                `Prose drift skipped: ${err instanceof Error ? err.message : String(err)}`,
+              );
             }
           }
 
