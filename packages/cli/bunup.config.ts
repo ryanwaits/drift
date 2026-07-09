@@ -2,9 +2,17 @@ import { defineConfig } from 'bunup';
 
 export default defineConfig({
   entry: ['src/drift.ts'],
-  dts: true,
+  dts: false,
   clean: true,
   splitting: false,
   format: ['esm'],
-  external: ['@driftdev/sdk', '@openpkg-ts/spec', 'commander', 'chalk', '@inquirer/prompts'],
+  external: [
+    '@driftdev/sdk',
+    '@driftdev/clarity-adapter',
+    '@driftdev/openapi-adapter',
+    '@openpkg-ts/spec',
+    'commander',
+    'chalk',
+    '@inquirer/prompts',
+  ],
 });
