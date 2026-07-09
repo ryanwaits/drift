@@ -1,5 +1,5 @@
 {
-  "name": "openpkg",
+  "name": "drift",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -8,8 +8,9 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "bun run build:sdk && bun run build:cli && bun run build:clarity-adapter",
+    "build": "bun run build:sdk && bun run build:cli && bun run build:clarity-adapter && bun run build:openapi-adapter",
     "build:clarity-adapter": "cd packages/adapters/clarity && bun run build",
+    "build:openapi-adapter": "cd packages/adapters/openapi && bun run build",
     "build:sdk": "cd packages/sdk && bun run build",
     "build:cli": "cd packages/cli && bun run build",
     "dev": "bun run --parallel dev:sdk dev:cli",
@@ -20,14 +21,14 @@
     "format": "bunx biome format --write packages/ apps/",
     "changeset": "changeset",
     "version": "changeset version && bun install",
-    "release": "changeset publish",
+    "release": "bun run build && changeset publish",
     "dev:site": "cd apps/site && bun dev",
     "build:site": "cd apps/site && bun run build"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.1.2",
-    "@changesets/cli": "^2.29.7",
-    "@types/bun": "latest",
-    "@types/node": "^20.0.0"
+    "@biomejs/biome": "2.5.3",
+    "@changesets/cli": "^2.31.0",
+    "@types/bun": "^1.3.14",
+    "@types/node": "^24.13.3"
   }
 }
