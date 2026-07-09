@@ -70,6 +70,7 @@ Broken references in markdown documentation.
 | Drift Type | Description |
 |------------|-------------|
 | `prose-broken-reference` | Markdown code block imports a name that doesn't exist in package exports |
+| `prose-unresolved-member` | Markdown code block calls a method that doesn't exist on any exported type |
 
 ## Using `drift lint`
 
@@ -118,7 +119,7 @@ JSON output:
     ],
     "count": 2
   },
-  "meta": { "command": "lint", "duration": 450, "version": "0.38.0" },
+  "meta": { "command": "lint", "duration": 450, "version": "1.4.0" },
   "next": { "suggested": "drift-fix skill", "reason": "2 issues found" }
 }
 ```
@@ -131,9 +132,9 @@ Exit code 1 when issues are found. Disable lint entirely with `lint: false` in [
 
 ## Prose Drift Detection
 
-Prose drift scans your markdown files for code blocks that import from your package. If an imported name doesn't exist in the package's exports, it's flagged as `prose-broken-reference`.
+Prose drift scans your markdown files for code blocks that import from your package. If an imported name doesn't exist in the package's exports, it's flagged as `prose-broken-reference`. Method calls in those code blocks are also checked: if a called method doesn't exist on any exported type, it's flagged as `prose-unresolved-member`.
 
-Drift includes fuzzy matching -- if you import `formatJSON` but the actual export is `formatJson`, the suggestion will say "Did you mean 'formatJson'?".
+Drift includes fuzzy matching -- if you import `formatJSON` but the actual export is `formatJson`, the suggestion will say "Did you mean 'formatJson'?". Same for member calls, with a hint naming the type that has the closest match.
 
 ### Configuring Markdown Discovery
 

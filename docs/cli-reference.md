@@ -44,7 +44,7 @@ Every command wraps its output in this shape:
   "meta": {
     "command": "scan",
     "duration": 342,
-    "version": "0.38.0"
+    "version": "1.4.0"
   },
   "next": {
     "suggested": "drift-fix skill",
@@ -59,7 +59,7 @@ Error shape:
 {
   "ok": false,
   "error": "Entry file not found",
-  "meta": { "command": "scan", "duration": 12, "version": "0.38.0" }
+  "meta": { "command": "scan", "duration": 12, "version": "1.4.0" }
 }
 ```
 
@@ -69,19 +69,26 @@ Error shape:
 
 ### `drift scan [entry]`
 
-Coverage + lint + prose drift + health in one pass.
+Coverage + lint + prose drift + health in one pass. This is the **default command** -- bare `drift` runs this.
 
 | Flag | Type | Description |
 |------|------|-------------|
 | `--min <n>` | number | Minimum health threshold (exit 1 if below) |
 | `--all` | boolean | Run across all workspace packages |
 | `--private` | boolean | Include private packages in `--all` mode |
+| `--lang <language>` | string | Source language: `typescript` (default), `clarity`, or `openapi` |
+| `--abi <path>` | string | ABI JSON file (required for `--lang clarity`) |
+| `--spec <path>` | string | OpenAPI 3.x JSON document (required for `--lang openapi`) |
 
 ```bash
-drift scan
+drift            # bare drift = scan
 drift scan src/index.ts --min 80
 drift scan --all --private
+drift scan --lang clarity --abi token.abi.json token.clar
+drift scan --lang openapi --spec openapi.json
 ```
+
+`--lang clarity` and `--lang openapi` run in single-package mode only (`--all` is TypeScript-only). Prose drift is TypeScript-only for now.
 
 Data shape:
 
@@ -115,7 +122,7 @@ Batch mode (`--all`) data shape:
 
 ### `drift health [entry]`
 
-Documentation health score. This is the **default command** -- bare `drift` runs this.
+Documentation health score.
 
 | Flag | Type | Description |
 |------|------|-------------|
@@ -124,7 +131,7 @@ Documentation health score. This is the **default command** -- bare `drift` runs
 | `--private` | boolean | Include private packages in `--all` mode |
 
 ```bash
-drift
+drift health
 drift health --min 80
 drift health --all
 ```
@@ -157,6 +164,7 @@ CI checks on changed packages with GitHub integration.
 |------|------|-------------|
 | `--all` | boolean | Check all packages (not just changed) |
 | `--private` | boolean | Include private packages |
+| `--min <n>` | number | Minimum coverage percentage (0-100) |
 
 ```bash
 drift ci
@@ -347,13 +355,13 @@ Data shape:
 }
 ```
 
-### `drift get <name> [entry]`
+### `drift get <name>`
 
-Inspect single export detail and types.
+Inspect single export detail and types. Entry auto-detected; pass it as the first arg to override (`drift get <entry> <name>`).
 
 ```bash
 drift get parseConfig
-drift get Client src/index.ts
+drift get src/index.ts Client
 ```
 
 ---
@@ -389,6 +397,8 @@ Show what changed between two specs. Exits 1 if breaking changes detected.
 | `--base <ref>` | string | Git ref for old spec |
 | `--head <ref>` | string | Git ref for new spec (default: working tree) |
 | `--entry <file>` | string | Entry file for git ref extraction |
+| `--all` | boolean | Run across all workspace packages |
+| `--private` | boolean | Include private packages in `--all` mode |
 
 ```bash
 drift diff api-v1.json api-v2.json
@@ -405,6 +415,8 @@ Detect breaking changes between two specs. Exits 1 if breaking changes found.
 | `--base <ref>` | string | Git ref for old spec |
 | `--head <ref>` | string | Git ref for new spec (default: working tree) |
 | `--entry <file>` | string | Entry file for git ref extraction |
+| `--all` | boolean | Run across all workspace packages |
+| `--private` | boolean | Include private packages in `--all` mode |
 
 ```bash
 drift breaking api-v1.json api-v2.json

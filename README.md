@@ -94,14 +94,14 @@ drift --tools
 
 ## Drift Detection
 
-15 drift types across 4 categories:
+16 drift types across 4 categories:
 
 | Category | Types | Description |
 |----------|-------|-------------|
 | **structural** | 7 | JSDoc types/params don't match code signature |
 | **semantic** | 3 | Deprecation, visibility, broken `{@link}` references |
 | **example** | 4 | @example code has errors or doesn't work |
-| **prose** | 1 | Markdown docs import/reference non-existent exports |
+| **prose** | 2 | Markdown docs import non-existent exports or call non-existent members |
 
 Every drift issue includes `filePath` and `line` for agent-driven fixes.
 
@@ -121,6 +121,13 @@ structured facts     (JSON to stdout)
 ```
 
 drift extracts a machine-readable spec from your TypeScript, then runs analysis against it. Every command outputs facts — agents decide what to do with them.
+
+Beyond TypeScript, adapters map other API surfaces into the same analysis pipeline:
+
+```bash
+drift scan --lang clarity --abi token.abi.json token.clar   # Clarity smart contracts
+drift scan --lang openapi --spec openapi.json               # REST APIs (OpenAPI 3.x)
+```
 
 ## CI
 
@@ -160,7 +167,7 @@ drift examples
 ```
 Layer 0: @openpkg-ts/spec   (open standard)
 Layer 1: @driftdev/sdk       (detection engine)
-Layer 2: drift CLI           (21 commands — composed + primitives + plumbing)
+Layer 2: drift CLI           (22 commands — composed + primitives + plumbing)
 ```
 
 ## License

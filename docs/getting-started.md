@@ -88,7 +88,7 @@ JSON output (piped or `--json`):
     "packageName": "my-lib",
     "packageVersion": "1.2.0"
   },
-  "meta": { "command": "scan", "duration": 342, "version": "0.38.0" }
+  "meta": { "command": "scan", "duration": 342, "version": "1.4.0" }
 }
 ```
 

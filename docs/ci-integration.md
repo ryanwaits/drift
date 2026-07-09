@@ -142,7 +142,7 @@ drift ci --all --private
     "min": 80,
     "skipped": ["@scope/internal"]
   },
-  "meta": { "command": "ci", "duration": 2340, "version": "0.38.0" }
+  "meta": { "command": "ci", "duration": 2340, "version": "1.4.0" }
 }
 ```
 

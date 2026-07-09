@@ -21,7 +21,7 @@ drift coverage --min 80
 
 ### `drift scan`
 
-Coverage + lint + prose drift + health in one pass.
+Coverage + lint + prose drift + health in one pass. Default command — bare `drift` runs this.
 
 ```bash
 drift scan [entry] [options]
@@ -31,10 +31,13 @@ Options:
 - `--min <n>` — Minimum health threshold (exit 1 if below)
 - `--all` — Run across all workspace packages
 - `--private` — Include private packages
+- `--lang <language>` — Source language: `typescript` (default), `clarity`, or `openapi`
+- `--abi <path>` — ABI JSON file (required for `--lang clarity`)
+- `--spec <path>` — OpenAPI 3.x JSON document (required for `--lang openapi`)
 
 ### `drift health`
 
-Documentation health score (default command — bare `drift` runs this).
+Documentation health score.
 
 ```bash
 drift health [entry] [options]
@@ -43,6 +46,7 @@ drift health [entry] [options]
 Options:
 - `--min <n>` — Minimum health threshold
 - `--all` — Run across all workspace packages
+- `--private` — Include private packages
 
 ### `drift coverage`
 
@@ -55,10 +59,11 @@ drift coverage [entry] [options]
 Options:
 - `--min <n>` — Minimum coverage % (exit 1 if below)
 - `--all` — Run across all workspace packages
+- `--private` — Include private packages
 
 ### `drift lint`
 
-Cross-reference JSDoc vs code signatures. Detects 15 drift types including prose drift (broken import references in markdown).
+Cross-reference JSDoc vs code signatures. Detects 16 drift types including prose drift (broken imports and unresolved member references in markdown).
 
 ```bash
 drift lint [entry] [options]
@@ -81,6 +86,7 @@ Options:
 - `--run` — Execute examples in sandbox
 - `--min <n>` — Minimum example coverage %
 - `--all` — Run across all workspace packages
+- `--private` — Include private packages
 
 ### `drift extract`
 
@@ -94,14 +100,16 @@ Options:
 - `-o <file>` — Write to file
 - `--only <patterns>` — Include exports matching glob
 - `--ignore <patterns>` — Exclude exports matching glob
+- `--max-depth <n>` — Max type resolution depth (default: 10)
 - `--all` — Extract all workspace packages
+- `--private` — Include private packages
 
 ### `drift list`
 
-List all exports with kinds.
+List all exports with kinds. Positional arg is a search term or entry file path.
 
 ```bash
-drift list [entry] [search] [options]
+drift list [searchOrEntry] [options]
 ```
 
 Options:
@@ -109,13 +117,15 @@ Options:
 - `--undocumented` — Show only undocumented exports
 - `--drifted` — Show only exports with drift issues
 - `--full` — Show full details
+- `--all` — Run across all workspace packages
 
 ### `drift get`
 
-Get single export detail + types.
+Get single export detail + types. Entry auto-detected; pass it first to override.
 
 ```bash
-drift get <name> [entry]
+drift get <name>
+drift get <entry> <name>
 ```
 
 Includes fuzzy matching — suggests similar names if not found.
@@ -132,6 +142,9 @@ drift diff --base main --head HEAD
 Options:
 - `--base <ref>` — Git ref for old spec
 - `--head <ref>` — Git ref for new spec
+- `--entry <file>` — Entry file for git ref extraction
+- `--all` — Run across all workspace packages
+- `--private` — Include private packages
 
 ### `drift breaking`
 
@@ -142,6 +155,13 @@ drift breaking <old> <new>
 drift breaking --base main --head HEAD
 ```
 
+Options:
+- `--base <ref>` — Git ref for old spec
+- `--head <ref>` — Git ref for new spec
+- `--entry <file>` — Entry file for git ref extraction
+- `--all` — Run across all workspace packages
+- `--private` — Include private packages
+
 ### `drift semver`
 
 Recommend semver bump based on changes.
@@ -149,6 +169,11 @@ Recommend semver bump based on changes.
 ```bash
 drift semver <old> <new>
 ```
+
+Options:
+- `--base <ref>` — Git ref for old spec
+- `--head <ref>` — Git ref for new spec
+- `--entry <file>` — Entry file for git ref extraction
 
 ### `drift changelog`
 
@@ -160,6 +185,9 @@ drift changelog <old> <new> [options]
 
 Options:
 - `--format <md|json>` — Output format (default: md)
+- `--base <ref>` — Git ref for old spec
+- `--head <ref>` — Git ref for new spec
+- `--entry <file>` — Entry file for git ref extraction
 
 ### `drift ci`
 
@@ -257,6 +285,7 @@ Options:
 - `--kind <type>` — Filter by kind
 - `--search <term>` — Search by name
 - `--tag <tag>` — Filter by tag
+- `--deprecated` / `--no-deprecated` — Only/exclude deprecated exports
 
 ### `drift cache`
 
@@ -307,7 +336,7 @@ All commands return `{ok, data, meta}` JSON when piped or with `--json`:
     "health": 89,
     "pass": true
   },
-  "meta": { "command": "scan", "duration": 7845, "version": "0.36.0" }
+  "meta": { "command": "scan", "duration": 7845, "version": "1.4.0" }
 }
 ```
 

@@ -99,7 +99,7 @@ Health is a weighted composite of two signals:
 drift health
 ```
 
-This is the **default command** -- running bare `drift` shows health.
+Note: bare `drift` runs `scan` (which includes health), not `health`.
 
 ### Formula
 

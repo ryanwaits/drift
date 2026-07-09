@@ -31,7 +31,6 @@
   "ignore": {
     "useGitignore": true,
     "useDefaultPatterns": true,
-    // ignore is specified in .repomixignore
     "customPatterns": [".drift/**", "apps/**"],
   },
   "security": {
