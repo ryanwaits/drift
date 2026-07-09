@@ -22,6 +22,7 @@ import { registerHealthCommand } from './commands/health';
 import { registerInitCommand } from './commands/init';
 import { registerLintCommand } from './commands/lint';
 import { registerListCommand } from './commands/list';
+import { registerMcpCommand } from './commands/mcp';
 import { registerReleaseCommand } from './commands/release';
 import { registerReportCommand } from './commands/report';
 import { registerScanCommand } from './commands/scan';
@@ -98,6 +99,9 @@ registerCacheCommand(program);
 
 // Command discovery
 registerCommandsCommand(program);
+
+// MCP server (agent-facing)
+registerMcpCommand(program);
 
 // Hide non-human commands from --help (still functional)
 const HUMAN_COMMANDS = new Set(['scan', 'ci', 'init', 'commands']);

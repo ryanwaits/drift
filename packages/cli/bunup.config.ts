@@ -11,6 +11,8 @@ export default defineConfig({
     '@driftdev/clarity-adapter',
     '@driftdev/openapi-adapter',
     '@openpkg-ts/spec',
+    '@modelcontextprotocol/sdk',
+    'zod',
     'commander',
     'chalk',
     '@inquirer/prompts',
