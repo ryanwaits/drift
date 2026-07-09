@@ -1,4 +1,3 @@
-import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { computeDrift } from '@driftdev/sdk';
 import type { Command } from 'commander';
@@ -8,23 +7,12 @@ import { renderBatchCoverage } from '../formatters/batch';
 import { renderHealth } from '../formatters/health';
 import { detectEntry } from '../utils/detect-entry';
 import { computeHealth } from '../utils/health';
-import { formatError, formatOutput, formatWarning, type OutputNext } from '../utils/output';
+import { resolveLang, resolveTruth } from '../utils/load-spec';
+import { formatError, formatOutput, type OutputNext } from '../utils/output';
 import { computeRatchetMin } from '../utils/ratchet';
 import { shouldRenderHuman } from '../utils/render';
 import { getVersion } from '../utils/version';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
-
-function getPackageInfo(cwd: string): { name?: string; version?: string } {
-  const pkgPath = path.join(cwd, 'package.json');
-  if (!existsSync(pkgPath)) return {};
-  try {
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-    return { name: pkg.name, version: pkg.version };
-  } catch (err) {
-    formatWarning(`Could not parse package.json${err instanceof Error ? `: ${err.message}` : ''}`);
-    return {};
-  }
-}
 
 export function registerHealthCommand(program: Command): void {
   program
@@ -33,15 +21,43 @@ export function registerHealthCommand(program: Command): void {
     .option('--min <n>', 'Minimum health threshold (exit 1 if below)')
     .option('--all', 'Run across all workspace packages')
     .option('--private', 'Include private packages in --all mode')
+    .option(
+      '--lang <language>',
+      'Source language (inferred from --spec/--abi/.clar; default typescript)',
+    )
+    .option('--abi <path>', 'ABI JSON file (required for --lang clarity)')
+    .option('--spec <path>', 'OpenAPI document: path or URL (implies --lang openapi)')
     .action(
       async (
         entry: string | undefined,
-        options: { min?: string; all?: boolean; private?: boolean },
+        options: {
+          min?: string;
+          all?: boolean;
+          private?: boolean;
+          lang?: string;
+          abi?: string;
+          spec?: string;
+        },
       ) => {
         const startTime = Date.now();
         const version = getVersion();
 
         try {
+          const lang = resolveLang({
+            entry,
+            lang: options.lang,
+            spec: options.spec,
+            abi: options.abi,
+          });
+          if (lang !== 'typescript' && options.all) {
+            formatError(
+              'health',
+              `Batch mode (--all) not yet supported for ${lang}`,
+              startTime,
+              version,
+            );
+            return;
+          }
           // --all batch mode — reuse coverage-style aggregate for health
           if (options.all) {
             const allPackages = discoverPackages(process.cwd());
@@ -83,12 +99,15 @@ export function registerHealthCommand(program: Command): void {
           }
 
           const { config } = loadConfig();
-          const entryFile = entry
-            ? path.resolve(process.cwd(), entry)
-            : config.entry
-              ? path.resolve(process.cwd(), config.entry)
-              : detectEntry();
-          const { spec } = await cachedExtract(entryFile);
+          let entryFile = entry ? path.resolve(process.cwd(), entry) : undefined;
+          if (lang === 'typescript' && !entryFile) {
+            entryFile = config.entry ? path.resolve(process.cwd(), config.entry) : detectEntry();
+          }
+          const {
+            apiSpec: spec,
+            packageName,
+            packageVersion,
+          } = await resolveTruth({ entry: entryFile, lang, spec: options.spec, abi: options.abi });
 
           // Coverage data
           const exports = spec.exports ?? [];
@@ -110,12 +129,11 @@ export function registerHealthCommand(program: Command): void {
           }
 
           const health = computeHealth(total, documented, issues);
-          const pkg = getPackageInfo(process.cwd());
 
           const data = {
             ...health,
-            packageName: pkg.name,
-            packageVersion: pkg.version,
+            packageName,
+            packageVersion,
           };
 
           let min = options.min ? parseInt(options.min, 10) : config.coverage?.min;

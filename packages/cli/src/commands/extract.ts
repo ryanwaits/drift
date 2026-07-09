@@ -5,6 +5,7 @@ import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { renderExtract } from '../formatters/extract';
 import { detectEntry } from '../utils/detect-entry';
+import { resolveLang, resolveTruth } from '../utils/load-spec';
 import { formatError, formatOutput } from '../utils/output';
 import { getVersion } from '../utils/version';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
@@ -12,13 +13,19 @@ import { discoverPackages, filterPublic } from '../utils/workspaces';
 export function registerExtractCommand(program: Command): void {
   program
     .command('extract [entry]')
-    .description('Extract OpenPkg spec from TypeScript entry file')
+    .description('Extract API spec from a source of truth (TypeScript, Clarity, OpenAPI)')
     .option('-o, --output <file>', 'Write JSON to file instead of stdout')
     .option('--only <patterns>', 'Include exports matching glob (comma-separated)')
     .option('--ignore <patterns>', 'Exclude exports matching glob (comma-separated)')
     .option('--max-depth <n>', 'Max type resolution depth', '10')
     .option('--all', 'Extract from all workspace packages')
     .option('--private', 'Include private packages in --all mode')
+    .option(
+      '--lang <language>',
+      'Source language (inferred from --spec/--abi/.clar; default typescript)',
+    )
+    .option('--abi <path>', 'ABI JSON file (required for --lang clarity)')
+    .option('--spec <path>', 'OpenAPI document: path or URL (implies --lang openapi)')
     .action(
       async (
         entry: string | undefined,
@@ -29,12 +36,47 @@ export function registerExtractCommand(program: Command): void {
           maxDepth?: string;
           all?: boolean;
           private?: boolean;
+          lang?: string;
+          abi?: string;
+          spec?: string;
         },
       ) => {
         const startTime = Date.now();
         const version = getVersion();
 
         try {
+          const lang = resolveLang({
+            entry,
+            lang: options.lang,
+            spec: options.spec,
+            abi: options.abi,
+          });
+          if (lang !== 'typescript') {
+            if (options.all || options.only || options.ignore) {
+              formatError(
+                'extract',
+                `--all/--only/--ignore not yet supported for ${lang}`,
+                startTime,
+                version,
+              );
+              return;
+            }
+            const { apiSpec } = await resolveTruth({
+              entry,
+              lang,
+              spec: options.spec,
+              abi: options.abi,
+            });
+            if (options.output) {
+              const { writeFileSync } = await import('node:fs');
+              writeFileSync(options.output, JSON.stringify(apiSpec, null, 2));
+              process.stderr.write(`drift extract: wrote ${options.output}\n`);
+            } else {
+              formatOutput('extract', apiSpec, startTime, version, renderExtract);
+            }
+            return;
+          }
+
           // --all batch mode
           if (options.all) {
             const allPackages = discoverPackages(process.cwd());

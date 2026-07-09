@@ -18,10 +18,17 @@ export interface GetData {
     kind: string;
     description?: string;
     signature?: string;
-    parameters?: Array<{ name?: string; type?: string; required?: boolean; description?: string }>;
-    returns?: { type?: string; description?: string };
+    parameters?: Array<{
+      name?: string;
+      type?: string;
+      required?: boolean;
+      description?: string;
+      schema?: unknown;
+    }>;
+    returns?: { type?: string; description?: string; schema?: unknown };
     members?: Array<{ name?: string; type?: string; required?: boolean; description?: string }>;
     deprecated?: boolean;
+    flags?: Record<string, unknown>;
     /** Lenient view over SpecSchema — narrowed in renderGet, string arms handled by formatType. */
     schema?: unknown;
   };
@@ -65,7 +72,9 @@ export function renderGet(data: GetData): string {
       const req = p.required ? 'required' : 'optional';
       const type = p.type ?? 'unknown';
       const desc = p.description ? `  ${c.dim(JSON.stringify(p.description))}` : '';
-      lines.push(indent(`  ${padRight(p.name ?? '', 16)}${padRight(type, 24)}${c.gray(req)}${desc}`));
+      lines.push(
+        indent(`  ${padRight(p.name ?? '', 16)}${padRight(type, 24)}${c.gray(req)}${desc}`),
+      );
     }
     lines.push('');
   }

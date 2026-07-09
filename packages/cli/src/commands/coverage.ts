@@ -5,6 +5,7 @@ import { loadConfig } from '../config/loader';
 import { renderBatchCoverage } from '../formatters/batch';
 import { renderCoverage } from '../formatters/coverage';
 import { detectEntry } from '../utils/detect-entry';
+import { resolveLang, resolveTruth } from '../utils/load-spec';
 import { formatError, formatOutput, type OutputNext } from '../utils/output';
 import { computeRatchetMin } from '../utils/ratchet';
 import { shouldRenderHuman } from '../utils/render';
@@ -14,19 +15,48 @@ import { discoverPackages, filterPublic } from '../utils/workspaces';
 export function registerCoverageCommand(program: Command): void {
   program
     .command('coverage [entry]')
-    .description('Measure documentation coverage for a TypeScript entry file')
+    .description('Measure documentation coverage')
     .option('--min <n>', 'Minimum coverage threshold (exit 1 if below)')
     .option('--all', 'Run across all workspace packages')
     .option('--private', 'Include private packages in --all mode')
+    .option(
+      '--lang <language>',
+      'Source language (inferred from --spec/--abi/.clar; default typescript)',
+    )
+    .option('--abi <path>', 'ABI JSON file (required for --lang clarity)')
+    .option('--spec <path>', 'OpenAPI document: path or URL (implies --lang openapi)')
     .action(
       async (
         entry: string | undefined,
-        options: { min?: string; all?: boolean; private?: boolean },
+        options: {
+          min?: string;
+          all?: boolean;
+          private?: boolean;
+          lang?: string;
+          abi?: string;
+          spec?: string;
+        },
       ) => {
         const startTime = Date.now();
         const version = getVersion();
 
         try {
+          const lang = resolveLang({
+            entry,
+            lang: options.lang,
+            spec: options.spec,
+            abi: options.abi,
+          });
+          if (lang !== 'typescript' && options.all) {
+            formatError(
+              'coverage',
+              `Batch mode (--all) not yet supported for ${lang}`,
+              startTime,
+              version,
+            );
+            return;
+          }
+
           // --all batch mode
           if (options.all) {
             const allPackages = discoverPackages(process.cwd());
@@ -70,12 +100,16 @@ export function registerCoverageCommand(program: Command): void {
           }
 
           const { config } = loadConfig();
-          const entryFile = entry
-            ? path.resolve(process.cwd(), entry)
-            : config.entry
-              ? path.resolve(process.cwd(), config.entry)
-              : detectEntry();
-          const { spec } = await cachedExtract(entryFile);
+          let entryFile = entry ? path.resolve(process.cwd(), entry) : undefined;
+          if (lang === 'typescript' && !entryFile) {
+            entryFile = config.entry ? path.resolve(process.cwd(), config.entry) : detectEntry();
+          }
+          const { apiSpec: spec } = await resolveTruth({
+            entry: entryFile,
+            lang,
+            spec: options.spec,
+            abi: options.abi,
+          });
 
           const exports = spec.exports ?? [];
           const total = exports.length;

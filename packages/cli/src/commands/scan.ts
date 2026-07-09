@@ -1,73 +1,23 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { fromSource } from '@driftdev/clarity-adapter';
-import { fromDocument } from '@driftdev/openapi-adapter';
 import {
   buildExportRegistry,
   computeDrift,
   detectProseDrift,
   discoverMarkdownFiles,
 } from '@driftdev/sdk';
-import type { ApiSpec } from '@driftdev/sdk/types';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderBatchScan, renderScan } from '../formatters/scan';
 import { detectEntry } from '../utils/detect-entry';
 import { computeHealth } from '../utils/health';
+import { resolveLang, resolveTruth } from '../utils/load-spec';
 import { formatError, formatOutput, formatWarning, type OutputNext } from '../utils/output';
 import { computeRatchetMin } from '../utils/ratchet';
 import { shouldRenderHuman } from '../utils/render';
 import { getVersion } from '../utils/version';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
-
-function getPackageInfo(cwd: string): { name?: string; version?: string } {
-  const pkgPath = path.join(cwd, 'package.json');
-  if (!existsSync(pkgPath)) return {};
-  try {
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-    return { name: pkg.name, version: pkg.version };
-  } catch (err) {
-    formatWarning(`Could not parse package.json${err instanceof Error ? `: ${err.message}` : ''}`);
-    return {};
-  }
-}
-
-type SupportedLang = 'typescript' | 'clarity' | 'openapi';
-
-async function loadSpec(
-  entryFile: string,
-  lang: SupportedLang,
-  abiPath?: string,
-  specPath?: string,
-): Promise<{ apiSpec: ApiSpec; packageName?: string; packageVersion?: string }> {
-  if (lang === 'openapi') {
-    if (!specPath) throw new Error('--spec is required when --lang openapi');
-    if (!existsSync(specPath)) throw new Error(`Spec file not found: ${specPath}`);
-    const document = readFileSync(specPath, 'utf-8');
-    const name = path.basename(specPath, path.extname(specPath));
-    const apiSpec = fromDocument(document);
-    if (!apiSpec.meta.name || apiSpec.meta.name === 'openapi') apiSpec.meta.name = name;
-    return { apiSpec, packageName: apiSpec.meta.name, packageVersion: apiSpec.meta.version };
-  }
-
-  if (lang === 'clarity') {
-    if (!abiPath) throw new Error('--abi is required when --lang clarity');
-    if (!existsSync(entryFile)) throw new Error(`Source file not found: ${entryFile}`);
-    if (!existsSync(abiPath)) throw new Error(`ABI file not found: ${abiPath}`);
-    const source = readFileSync(entryFile, 'utf-8');
-    const abi = JSON.parse(readFileSync(abiPath, 'utf-8'));
-    const name = path.basename(entryFile, path.extname(entryFile));
-    const pkg = getPackageInfo(process.cwd());
-    const apiSpec = fromSource(source, abi, { name, version: pkg.version });
-    return { apiSpec, packageName: pkg.name ?? name, packageVersion: pkg.version };
-  }
-
-  // TypeScript (default)
-  const { spec } = await cachedExtract(entryFile);
-  const pkg = getPackageInfo(process.cwd());
-  return { apiSpec: spec as ApiSpec, packageName: pkg.name, packageVersion: pkg.version };
-}
 
 interface LintIssue {
   export: string;
@@ -93,9 +43,12 @@ export function registerScanCommand(program: Command): void {
     .option('--min <n>', 'Minimum health threshold (exit 1 if below)')
     .option('--all', 'Run across all workspace packages')
     .option('--private', 'Include private packages in --all mode')
-    .option('--lang <language>', 'Source language', 'typescript')
+    .option(
+      '--lang <language>',
+      'Source language (inferred from --spec/--abi/.clar; default typescript)',
+    )
     .option('--abi <path>', 'ABI JSON file (required for --lang clarity)')
-    .option('--spec <path>', 'OpenAPI document (required for --lang openapi)')
+    .option('--spec <path>', 'OpenAPI document: path or URL (implies --lang openapi)')
     .action(
       async (
         entry: string | undefined,
@@ -112,12 +65,12 @@ export function registerScanCommand(program: Command): void {
         const version = getVersion();
 
         try {
-          // Validate --lang
-          const lang = (options.lang ?? 'typescript') as string;
-          if (lang !== 'typescript' && lang !== 'clarity' && lang !== 'openapi') {
-            formatError('scan', `Unknown language: ${lang}`, startTime, version);
-            return;
-          }
+          const lang = resolveLang({
+            entry,
+            lang: options.lang,
+            spec: options.spec,
+            abi: options.abi,
+          });
           if (lang !== 'typescript' && options.all) {
             formatError(
               'scan',
@@ -205,26 +158,16 @@ export function registerScanCommand(program: Command): void {
 
           // Single-package mode
           const { config } = loadConfig();
-          const specPath = options.spec ? path.resolve(process.cwd(), options.spec) : undefined;
-          const entryFile =
-            lang === 'openapi'
-              ? (specPath as string)
-              : entry
-                ? path.resolve(process.cwd(), entry)
-                : lang === 'clarity'
-                  ? (() => {
-                      throw new Error('Entry file required for --lang clarity');
-                    })()
-                  : config.entry
-                    ? path.resolve(process.cwd(), config.entry)
-                    : detectEntry();
-          const abiPath = options.abi ? path.resolve(process.cwd(), options.abi) : undefined;
-          const { apiSpec, packageName, packageVersion } = await loadSpec(
-            entryFile,
-            lang as SupportedLang,
-            abiPath,
-            specPath,
-          );
+          let entryFile = entry ? path.resolve(process.cwd(), entry) : undefined;
+          if (lang === 'typescript' && !entryFile) {
+            entryFile = config.entry ? path.resolve(process.cwd(), config.entry) : detectEntry();
+          }
+          const { apiSpec, packageName, packageVersion } = await resolveTruth({
+            entry: entryFile,
+            lang,
+            spec: options.spec,
+            abi: options.abi,
+          });
 
           // Coverage
           const exports = apiSpec.exports ?? [];
