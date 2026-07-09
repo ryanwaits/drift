@@ -2,7 +2,7 @@
 
 > Your code changed. Your docs didn't.
 
-Detect documentation drift in TypeScript packages. Your API changed — Drift finds every doc that's now wrong.
+Detect when your docs drift from your code. TypeScript packages, REST APIs (OpenAPI), Clarity contracts — Drift extracts what your API actually is and finds every doc that's now wrong.
 
 ## Quick Start
 

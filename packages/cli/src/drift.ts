@@ -40,7 +40,7 @@ const program = new Command();
 
 program
   .name('drift')
-  .description('drift — documentation quality for TypeScript, Clarity, and OpenAPI')
+  .description('drift — detect when your docs drift from your code')
   .version(packageJson.version)
   .option('--json', 'Force JSON output (default when piped)')
   .option('--human', 'Force human-readable output (default in terminal)')
