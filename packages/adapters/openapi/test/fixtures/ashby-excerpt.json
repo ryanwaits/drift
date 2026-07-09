@@ -1,0 +1,1259 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Ashby API",
+    "version": "1.0.0",
+    "description": "Trimmed excerpt of the public Ashby OpenAPI spec (developers.ashbyhq.com) for adapter tests."
+  },
+  "paths": {
+    "/candidate.info": {
+      "post": {
+        "summary": "candidate.info",
+        "description": "Fetches details about a single candidate by id or external mapping id.\n\n**Requires the [`candidatesRead`](authentication#permissions-candidateinfo) permission.**",
+        "operationId": "candidateInfo",
+        "tags": ["Candidate"],
+        "x-added-in-version": "2026-01-01",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateInfoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Responses from the candidate.info endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CandidateInfoSuccessResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  ]
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Success response",
+                    "value": {
+                      "success": true,
+                      "results": {
+                        "id": "e9ed20fd-d45f-4aad-8a00-a19bfba0083e",
+                        "createdAt": "2024-01-15T10:30:00.000Z",
+                        "updatedAt": "2024-01-16T10:30:00.000Z",
+                        "name": "Adam Hart",
+                        "primaryEmailAddress": {
+                          "value": "adam.hart@example.com",
+                          "type": "Personal",
+                          "isPrimary": true
+                        },
+                        "emailAddresses": [
+                          {
+                            "value": "adam.hart@example.com",
+                            "type": "Personal",
+                            "isPrimary": true
+                          }
+                        ],
+                        "primaryPhoneNumber": null,
+                        "phoneNumbers": [],
+                        "socialLinks": [],
+                        "tags": [],
+                        "applicationIds": ["f9e52a51-a075-4116-a7b8-484deba69004"],
+                        "resumeFileHandle": null,
+                        "fileHandles": [],
+                        "profileUrl": "https://app.ashbyhq.com/candidates/e9ed20fd-d45f-4aad-8a00-a19bfba0083e",
+                        "source": null,
+                        "creditedToUser": null,
+                        "timezone": null,
+                        "fraudStatus": null
+                      }
+                    }
+                  },
+                  "error": {
+                    "summary": "Error response",
+                    "value": {
+                      "success": false,
+                      "errors": [
+                        {
+                          "message": "Example error message"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/candidate.list": {
+      "post": {
+        "summary": "candidate.list",
+        "description": "Lists all candidates in the organization with pagination and incremental sync support.\n\nUse the `syncToken` parameter to retrieve only candidates updated since your last sync.\nUse `createdAfter` to filter candidates by creation date.\n\n**Requires the [`candidatesRead`](authentication#permissions-candidatelist) permission.**",
+        "operationId": "candidateList",
+        "tags": ["Candidate"],
+        "x-added-in-version": "2026-01-01",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateListRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Responses from the candidate.list endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CandidateListSuccessResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  ]
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Success response",
+                    "value": {
+                      "success": true,
+                      "results": [
+                        {
+                          "id": "e9ed20fd-d45f-4aad-8a00-a19bfba0083e",
+                          "createdAt": "2024-01-15T10:30:00.000Z",
+                          "updatedAt": "2024-01-16T10:30:00.000Z",
+                          "name": "Adam Hart",
+                          "primaryEmailAddress": {
+                            "value": "adam.hart@example.com",
+                            "type": "Personal",
+                            "isPrimary": true
+                          },
+                          "emailAddresses": [
+                            {
+                              "value": "adam.hart@example.com",
+                              "type": "Personal",
+                              "isPrimary": true
+                            }
+                          ],
+                          "primaryPhoneNumber": null,
+                          "phoneNumbers": [],
+                          "socialLinks": [],
+                          "tags": [],
+                          "applicationIds": ["f9e52a51-a075-4116-a7b8-484deba69004"],
+                          "resumeFileHandle": null,
+                          "fileHandles": [],
+                          "profileUrl": "https://app.ashbyhq.com/candidates/e9ed20fd-d45f-4aad-8a00-a19bfba0083e",
+                          "source": null,
+                          "creditedToUser": null,
+                          "timezone": null,
+                          "fraudStatus": null
+                        }
+                      ],
+                      "moreDataAvailable": false,
+                      "syncToken": "sync-token-example"
+                    }
+                  },
+                  "error": {
+                    "summary": "Error response",
+                    "value": {
+                      "success": false,
+                      "errors": [
+                        {
+                          "message": "Example error message"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/apiKey.info": {
+      "post": {
+        "summary": "apiKey.info",
+        "description": "Returns details for the API key used to make the request.\n\n**Requires the [`apiKeysRead`](authentication#permissions-apikeyinfo) permission.**",
+        "operationId": "apiKeyInfo",
+        "tags": ["ApiKey"],
+        "x-added-in-version": "2026-01-01",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyInfoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Responses from the apiKey.info endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiKeyInfoSuccessResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  ]
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Success response",
+                    "value": {
+                      "success": true,
+                      "results": {
+                        "title": "Ashby Automator Bot",
+                        "createdAt": "2024-01-15T10:30:00.000Z",
+                        "scopes": ["apiKeys:read", "candidates:read"]
+                      }
+                    }
+                  },
+                  "error": {
+                    "summary": "Error response",
+                    "value": {
+                      "success": false,
+                      "errors": [
+                        {
+                          "message": "Example error message"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiKey": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the API key."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "description": "The date and time when the API key was created."
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The permission scopes granted to the API key."
+          }
+        },
+        "required": ["title", "createdAt", "scopes"],
+        "additionalProperties": false
+      },
+      "ApiKeyInfoRequest": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "ApiKeyInfoSuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "results": {
+            "$ref": "#/components/schemas/ApiKey"
+          }
+        },
+        "required": ["success", "results"],
+        "additionalProperties": false,
+        "example": {
+          "success": true,
+          "results": {
+            "title": "Ashby Automator Bot",
+            "createdAt": "2024-01-15T10:30:00.000Z",
+            "scopes": ["apiKeys:read", "candidates:read"]
+          }
+        }
+      },
+      "Candidate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "The unique identifier for the candidate"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The timestamp when the candidate was created"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "The timestamp when the candidate was last updated"
+          },
+          "name": {
+            "type": "string",
+            "description": "The candidate's name"
+          },
+          "primaryEmailAddress": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContactInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The candidate's primary email address"
+          },
+          "emailAddresses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactInfo"
+            },
+            "description": "The candidate's email addresses"
+          },
+          "primaryPhoneNumber": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContactInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The candidate's primary phone number"
+          },
+          "phoneNumbers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactInfo"
+            },
+            "description": "The candidate's phone numbers"
+          },
+          "socialLinks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SocialLink"
+            },
+            "description": "The candidate's social links"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CandidateTag"
+            },
+            "description": "The candidate's tags"
+          },
+          "position": {
+            "description": "The candidate's current position",
+            "type": "string"
+          },
+          "company": {
+            "description": "The candidate's current company",
+            "type": "string"
+          },
+          "school": {
+            "description": "The candidate's school",
+            "type": "string"
+          },
+          "applicationIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "description": "The unique identifiers of the candidate's applications"
+          },
+          "resumeFileHandle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FileHandle"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The file handle for the candidate's resume"
+          },
+          "fileHandles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileHandle"
+            },
+            "description": "The file handles associated with the candidate"
+          },
+          "customFields": {
+            "description": "The custom field values associated with the candidate",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CandidateCustomField"
+            }
+          },
+          "profileUrl": {
+            "type": "string",
+            "description": "The URL of the candidate's profile in Ashby"
+          },
+          "source": {
+            "description": "The source that created this candidate",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Source"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "creditedToUser": {
+            "description": "The user who receives credit for this candidate",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "timezone": {
+            "description": "The candidate's timezone",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location": {
+            "description": "The primary location of the candidate",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CandidateLocation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fraudStatus": {
+            "description": "The fraud status of the candidate",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["Fraudulent", "NotFraudulent", "Unsure", "Unreviewed", "PassedFraudCheck"]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "updatedAt",
+          "name",
+          "primaryEmailAddress",
+          "emailAddresses",
+          "primaryPhoneNumber",
+          "phoneNumbers",
+          "socialLinks",
+          "tags",
+          "applicationIds",
+          "resumeFileHandle",
+          "fileHandles",
+          "profileUrl"
+        ],
+        "additionalProperties": false
+      },
+      "CandidateCustomField": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "The unique identifier for the custom field definition",
+            "example": "e9ed20fd-d45f-4aad-8a00-a19bfba0083e"
+          },
+          "isPrivate": {
+            "type": "boolean",
+            "description": "Whether the custom field is private"
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the custom field"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "description": "The currency amount"
+                  },
+                  "currencyCode": {
+                    "type": "string",
+                    "description": "The currency code"
+                  }
+                },
+                "required": ["value", "currencyCode"],
+                "additionalProperties": {}
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The range type"
+                  },
+                  "minValue": {
+                    "type": "number",
+                    "description": "The minimum value"
+                  },
+                  "maxValue": {
+                    "type": "number",
+                    "description": "The maximum value"
+                  }
+                },
+                "required": ["type", "minValue", "maxValue"],
+                "additionalProperties": {}
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The compensation range type"
+                  },
+                  "minValue": {
+                    "type": "number",
+                    "description": "The minimum compensation value"
+                  },
+                  "maxValue": {
+                    "type": "number",
+                    "description": "The maximum compensation value"
+                  },
+                  "currencyCode": {
+                    "type": "string",
+                    "description": "The currency code"
+                  },
+                  "interval": {
+                    "type": "string",
+                    "description": "The compensation interval"
+                  }
+                },
+                "required": ["type", "minValue", "maxValue", "currencyCode", "interval"],
+                "additionalProperties": {}
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The custom field value"
+          },
+          "valueLabel": {
+            "description": "The human-readable label for select custom field values",
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": ["id", "isPrivate", "title", "value"],
+        "additionalProperties": false
+      },
+      "CandidateInfoRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The id of the candidate to fetch",
+            "example": "e9ed20fd-d45f-4aad-8a00-a19bfba0083e",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalMappingId": {
+            "description": "An id assigned to a candidate outside of Ashby. Used to associate Ashby candidates with their profiles in external systems (BambooHR, Rippling, Gusto, etc.)",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "CandidateInfoSuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "results": {
+            "$ref": "#/components/schemas/Candidate"
+          }
+        },
+        "required": ["success", "results"],
+        "additionalProperties": false,
+        "example": {
+          "success": true,
+          "results": {
+            "id": "e9ed20fd-d45f-4aad-8a00-a19bfba0083e",
+            "createdAt": "2024-01-15T10:30:00.000Z",
+            "updatedAt": "2024-01-16T10:30:00.000Z",
+            "name": "Adam Hart",
+            "primaryEmailAddress": {
+              "value": "adam.hart@example.com",
+              "type": "Personal",
+              "isPrimary": true
+            },
+            "emailAddresses": [
+              {
+                "value": "adam.hart@example.com",
+                "type": "Personal",
+                "isPrimary": true
+              }
+            ],
+            "primaryPhoneNumber": null,
+            "phoneNumbers": [],
+            "socialLinks": [],
+            "tags": [],
+            "applicationIds": ["f9e52a51-a075-4116-a7b8-484deba69004"],
+            "resumeFileHandle": null,
+            "fileHandles": [],
+            "profileUrl": "https://app.ashbyhq.com/candidates/e9ed20fd-d45f-4aad-8a00-a19bfba0083e",
+            "source": null,
+            "creditedToUser": null,
+            "timezone": null,
+            "fraudStatus": null
+          }
+        }
+      },
+      "CandidateListRequest": {
+        "type": "object",
+        "properties": {
+          "cursor": {
+            "description": "The pagination cursor. Use 'start' for the first page or the nextCursor value from a previous response.",
+            "example": "G8",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "limit": {
+            "description": "The maximum number of candidates to return per page. Maximum is 100.",
+            "example": 25,
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncToken": {
+            "description": "A sync token to retrieve only candidates updated since the last sync. Obtained from a previous list response.",
+            "example": "jYnEBmjzR",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAfter": {
+            "description": "Unix timestamp (milliseconds). When provided, only candidates created at or after this time are returned.",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "CandidateListSuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Candidate"
+            }
+          },
+          "nextCursor": {
+            "description": "Cursor for the next page of results, if available",
+            "type": "string"
+          },
+          "moreDataAvailable": {
+            "description": "Whether more data is available beyond this page",
+            "type": "boolean"
+          },
+          "syncToken": {
+            "description": "Sync token to use for future incremental syncs. Only present on the last page.",
+            "type": "string"
+          }
+        },
+        "required": ["success", "results"],
+        "additionalProperties": false,
+        "example": {
+          "success": true,
+          "results": [
+            {
+              "id": "e9ed20fd-d45f-4aad-8a00-a19bfba0083e",
+              "createdAt": "2024-01-15T10:30:00.000Z",
+              "updatedAt": "2024-01-16T10:30:00.000Z",
+              "name": "Adam Hart",
+              "primaryEmailAddress": {
+                "value": "adam.hart@example.com",
+                "type": "Personal",
+                "isPrimary": true
+              },
+              "emailAddresses": [
+                {
+                  "value": "adam.hart@example.com",
+                  "type": "Personal",
+                  "isPrimary": true
+                }
+              ],
+              "primaryPhoneNumber": null,
+              "phoneNumbers": [],
+              "socialLinks": [],
+              "tags": [],
+              "applicationIds": ["f9e52a51-a075-4116-a7b8-484deba69004"],
+              "resumeFileHandle": null,
+              "fileHandles": [],
+              "profileUrl": "https://app.ashbyhq.com/candidates/e9ed20fd-d45f-4aad-8a00-a19bfba0083e",
+              "source": null,
+              "creditedToUser": null,
+              "timezone": null,
+              "fraudStatus": null
+            }
+          ],
+          "moreDataAvailable": false,
+          "syncToken": "sync-token-example"
+        }
+      },
+      "CandidateLocation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "The unique identifier for the location",
+            "example": "e9ed20fd-d45f-4aad-8a00-a19bfba0083e"
+          },
+          "locationSummary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A human-readable summary of the location"
+          },
+          "locationComponents": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CandidateLocationComponent"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The individual components of the location"
+          }
+        },
+        "required": ["id", "locationSummary", "locationComponents"],
+        "additionalProperties": false
+      },
+      "CandidateLocationComponent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "The type of the location component"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the location component"
+          }
+        },
+        "required": ["type", "name"],
+        "additionalProperties": false
+      },
+      "CandidateTag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "The candidate tag's unique identifier"
+          },
+          "title": {
+            "type": "string",
+            "description": "The tag's title"
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Whether the tag has been archived"
+          }
+        },
+        "required": ["id", "title", "isArchived"],
+        "additionalProperties": false
+      },
+      "ContactInfo": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The email address or phone number of the candidate"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["Personal", "Work", "Other"],
+            "description": "The type of the contact info"
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "description": "Whether the contact info is the primary email or phone number"
+          }
+        },
+        "required": ["value", "type", "isPrimary"],
+        "additionalProperties": false
+      },
+      "CustomField": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "The unique identifier for the custom field definition"
+          },
+          "isPrivate": {
+            "type": "boolean",
+            "description": "Whether the custom field is private"
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the custom field"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "description": "The currency amount"
+                  },
+                  "currencyCode": {
+                    "type": "string",
+                    "description": "The currency code"
+                  }
+                },
+                "required": ["value", "currencyCode"],
+                "additionalProperties": {}
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The range type"
+                  },
+                  "minValue": {
+                    "type": "number",
+                    "description": "The minimum value"
+                  },
+                  "maxValue": {
+                    "type": "number",
+                    "description": "The maximum value"
+                  }
+                },
+                "required": ["type", "minValue", "maxValue"],
+                "additionalProperties": {}
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The compensation range type"
+                  },
+                  "minValue": {
+                    "type": "number",
+                    "description": "The minimum compensation value"
+                  },
+                  "maxValue": {
+                    "type": "number",
+                    "description": "The maximum compensation value"
+                  },
+                  "currencyCode": {
+                    "type": "string",
+                    "description": "The currency code"
+                  },
+                  "interval": {
+                    "type": "string",
+                    "description": "The compensation interval"
+                  }
+                },
+                "required": ["type", "minValue", "maxValue", "currencyCode", "interval"],
+                "additionalProperties": {}
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The value of the custom field"
+          },
+          "valueLabel": {
+            "description": "The label of the custom field value. This is only present for value select custom fields.",
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": ["id", "isPrivate", "title", "value"],
+        "additionalProperties": false
+      },
+      "ErrorDetail": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "parameter": {
+            "type": "string"
+          }
+        },
+        "required": ["message"],
+        "additionalProperties": false
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": false
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorDetail"
+            }
+          }
+        },
+        "required": ["success", "errors"],
+        "additionalProperties": false
+      },
+      "FileHandle": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "The unique identifier for the file",
+            "example": "e9ed20fd-d45f-4aad-8a00-a19bfba0083e"
+          },
+          "name": {
+            "type": "string",
+            "description": "The file name"
+          },
+          "handle": {
+            "type": "string",
+            "description": "The file handle, which can be used with the file.info endpoint"
+          }
+        },
+        "required": ["id", "name", "handle"],
+        "additionalProperties": false
+      },
+      "GlobalRole": {
+        "type": "string",
+        "enum": ["Organization Admin", "Elevated Access", "Limited Access", "External Recruiter"],
+        "description": "The user's global role in the organization",
+        "title": "Global Role"
+      },
+      "SocialLink": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "LinkedIn",
+              "GitHub",
+              "Twitter",
+              "Medium",
+              "StackOverflow",
+              "Website",
+              "YouTube",
+              "CodePen"
+            ],
+            "description": "The type of social link"
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL of the social profile"
+          }
+        },
+        "required": ["type", "url"],
+        "additionalProperties": false
+      },
+      "Source": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "The source's unique identifier"
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the source",
+            "example": "Applied"
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Whether the source has been archived"
+          },
+          "sourceType": {
+            "description": "The source type associated with this source",
+            "$ref": "#/components/schemas/SourceType"
+          }
+        },
+        "required": ["id", "title", "isArchived", "sourceType"],
+        "additionalProperties": false
+      },
+      "SourceType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "The source type's unique identifier"
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the source type",
+            "example": "Inbound"
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Whether the source type has been archived"
+          }
+        },
+        "required": ["id", "title", "isArchived"],
+        "additionalProperties": false
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "The unique identifier for the user"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "The user's first name"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "The user's last name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email",
+                "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The user's email address"
+          },
+          "globalRole": {
+            "$ref": "#/components/schemas/GlobalRole"
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "description": "Whether the user is enabled (not deactivated)"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "The timestamp when the user was last updated (ISO 8601 format)"
+          },
+          "managerId": {
+            "description": "The unique identifier for the user's manager",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "customFields": {
+            "description": "Custom fields associated with the user (only included when requested)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomField"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "globalRole",
+          "isEnabled",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

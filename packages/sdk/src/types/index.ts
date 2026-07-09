@@ -9,6 +9,22 @@
  * @module types
  */
 
+// Drift-owned input types (for adapter authors)
+export type {
+  ApiExample,
+  ApiExport,
+  ApiMember,
+  ApiSchema,
+  ApiSignature,
+  ApiSignatureParameter,
+  ApiSignatureReturn,
+  ApiSource,
+  ApiSpec,
+  ApiTag,
+  ApiThrows,
+  ApiType,
+  ApiTypeParameter,
+} from '../analysis/api-spec';
 export type { FilterSource, ResolvedFilters } from '../filtering/merge';
 export { mergeFilters, parseListFlag } from '../filtering/merge';
 // Filter types (re-export from filtering module)
@@ -24,14 +40,3 @@ export {
   REPORT_EXTENSIONS,
   REPORT_VERSION,
 } from './report';
-// Drift-owned input types (for adapter authors)
-export type {
-  ApiExample,
-  ApiExport,
-  ApiMember,
-  ApiSchema,
-  ApiSignature,
-  ApiSpec,
-  ApiTag,
-  ApiType,
-} from '../analysis/api-spec';
