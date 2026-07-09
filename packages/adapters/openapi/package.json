@@ -1,6 +1,6 @@
 {
   "name": "@driftdev/openapi-adapter",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "OpenAPI adapter for Drift - maps OpenAPI 3.x documents to ApiSpec",
   "keywords": [
     "openapi",

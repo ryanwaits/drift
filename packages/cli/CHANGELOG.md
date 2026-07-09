@@ -1,5 +1,20 @@
 # @doccov/cli
 
+## 1.4.0
+
+### Minor Changes
+
+- 215bede: OpenAPI adapter: map OpenAPI 3.0/3.1 documents to ApiSpec and scan REST API surfaces with `drift scan --lang openapi --spec <file>`. Operations become exports (operationId or `METHOD path`), requestBody object schemas flatten into named parameters, local $refs resolve (cycle-safe), success responses carry through — including RPC-style oneOf [success, error] shapes. Named component schemas map to ApiSpec types.
+- 327ed34: Publish integrity + audit fixes. CLI: replace `workspace:*` internal dep ranges with real semver (1.3.0 was uninstallable via npm — the workspace protocol leaked into the published manifest), drop dead main/types/exports fields (bin-only package), correct `--help` claims. SDK: ship `schemas/` so `SCHEMA_URL` stops 404ing, remove orphaned scan/install modules, move type-only @vercel/sandbox out of runtime deps. All packages: `engines.node >=20`, `prepublishOnly` build guard; clarity adapter now ships LICENSE + README.
+
+### Patch Changes
+
+- Updated dependencies [215bede]
+- Updated dependencies [327ed34]
+  - @driftdev/openapi-adapter@1.0.0
+  - @driftdev/sdk@1.4.0
+  - @driftdev/clarity-adapter@1.0.1
+
 ## 1.3.0
 
 ### Minor Changes

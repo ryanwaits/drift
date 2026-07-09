@@ -1,6 +1,6 @@
 {
   "name": "@driftdev/clarity-adapter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Clarity smart contract adapter for Drift - maps ClarityContract + ContractDoc to ApiSpec",
   "keywords": [
     "clarity",
