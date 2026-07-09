@@ -143,8 +143,8 @@ export function createPackageResult(
  * import { aggregateResults, createPackageResult } from '@driftdev/sdk';
  *
  * const results = [
- *   createPackageResult(pkg1Openpkg, pkg1Doccov, 'packages/a/src/index.ts'),
- *   createPackageResult(pkg2Openpkg, pkg2Doccov, 'packages/b/src/index.ts'),
+ *   createPackageResult(pkg1Spec, pkg1Drift, 'packages/a/src/index.ts'),
+ *   createPackageResult(pkg2Spec, pkg2Drift, 'packages/b/src/index.ts'),
  * ];
  *
  * const batch = aggregateResults(results);
