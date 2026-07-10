@@ -142,16 +142,22 @@ export function buildExportRegistry(spec: ApiSpec): ExportRegistry {
 
   const indexDeprecatedMember = (
     parentName: string,
-    member: { name?: string; deprecated?: boolean; tags?: { name: string; text: string }[] },
+    member: {
+      name?: string;
+      deprecated?: boolean;
+      deprecationReason?: string;
+      tags?: { name: string; text: string }[];
+    },
   ) => {
     if (!member.name || !member.deprecated) return;
+    const note = member.deprecationReason ?? deprecationNote(member.tags);
     let entry = deprecatedMembers.get(member.name);
     if (!entry) {
-      entry = { parents: new Set(), note: deprecationNote(member.tags) };
+      entry = { parents: new Set(), note };
       deprecatedMembers.set(member.name, entry);
     }
     entry.parents.add(parentName);
-    if (!entry.note) entry.note = deprecationNote(member.tags);
+    if (!entry.note) entry.note = note;
   };
 
   for (const entry of spec.exports ?? []) {
@@ -159,13 +165,41 @@ export function buildExportRegistry(spec: ApiSpec): ExportRegistry {
       entry.deprecated === true ||
       (entry.tags?.some((t) => t.name.toLowerCase() === 'deprecated') ?? false);
     if (isDeprecated) {
-      deprecated.set(entry.name, deprecationNote(entry.tags));
-      if (entry.id) deprecated.set(entry.id, deprecationNote(entry.tags));
+      const note = entry.deprecationReason ?? deprecationNote(entry.tags);
+      deprecated.set(entry.name, note);
+      if (entry.id) deprecated.set(entry.id, note);
     }
     for (const member of entry.members ?? []) indexDeprecatedMember(entry.name, member);
   }
   for (const type of spec.types ?? []) {
     for (const member of type.members ?? []) indexDeprecatedMember(type.name, member);
+  }
+
+  // Instance typing: callable export → named return type (Promise unwrapped),
+  // so `const simnet = await initSimnet()` can be typed as Simnet in prose checks.
+  const callableReturnTypes = new Map<string, string>();
+  const schemaRefName = (schema: unknown): string | undefined => {
+    if (!schema || typeof schema !== 'object') return undefined;
+    const s = schema as Record<string, unknown>;
+    const ref = typeof s.$ref === 'string' ? s.$ref.split('/').pop() : undefined;
+    if (ref === 'Promise') {
+      const args = s['x-ts-type-arguments'] ?? s.typeArguments;
+      if (Array.isArray(args) && args.length > 0) return schemaRefName(args[0]);
+      return undefined;
+    }
+    return ref;
+  };
+  for (const entry of spec.exports ?? []) {
+    const sigs =
+      entry.signatures ??
+      ((entry.schema as Record<string, unknown> | undefined)?.[
+        'x-ts-signatures'
+      ] as typeof entry.signatures);
+    const returnsSchema = Array.isArray(sigs) ? sigs[0]?.returns?.schema : undefined;
+    const returnRef = schemaRefName(returnsSchema);
+    if (returnRef) callableReturnTypes.set(entry.name, returnRef);
+    // Classes construct instances of themselves
+    if (entry.kind === 'class') callableReturnTypes.set(entry.name, entry.name);
   }
 
   return {
@@ -180,6 +214,7 @@ export function buildExportRegistry(spec: ApiSpec): ExportRegistry {
     allMemberNames,
     deprecated,
     deprecatedMembers,
+    callableReturnTypes,
   };
 }
 

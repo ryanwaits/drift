@@ -25,6 +25,7 @@ export type ApiExport = {
   signatures?: ApiSignature[];
   examples?: (string | ApiExample)[];
   deprecated?: boolean;
+  deprecationReason?: string;
   schema?: ApiSchema;
   type?: string | ApiSchema;
   members?: ApiMember[];
@@ -95,6 +96,7 @@ export type ApiMember = {
   schema?: ApiSchema;
   signatures?: ApiSignature[];
   deprecated?: boolean;
+  deprecationReason?: string;
 };
 
 export type ApiExample = {

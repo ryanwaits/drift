@@ -138,6 +138,72 @@ import { runSnippet } from '${PKG}';
     expect(issues.filter((i) => i.type === 'prose-deprecated-reference')).toHaveLength(1);
   });
 
+  test('instance typing: deprecated on derived type wins over ambiguous raw type', () => {
+    // Mirrors clarinet: runSnippet deprecated on Simnet (proxy) but live on raw SDK class.
+    const clarinetLike: ApiSpec = {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'initSimnet',
+          name: 'initSimnet',
+          kind: 'function',
+          signatures: [
+            {
+              returns: {
+                schema: {
+                  $ref: '#/types/Promise',
+                  'x-ts-type-arguments': [{ $ref: '#/types/Simnet' }],
+                },
+              },
+            },
+          ],
+        },
+        {
+          id: 'Simnet',
+          name: 'Simnet',
+          kind: 'type',
+          members: [
+            {
+              name: 'runSnippet',
+              kind: 'method',
+              deprecated: true,
+              tags: [{ name: 'deprecated', text: 'use simnet.execute(command) instead' }],
+            },
+            { name: 'execute', kind: 'method' },
+          ],
+        },
+      ],
+      types: [
+        {
+          id: 'SDK',
+          name: 'SDK',
+          kind: 'class',
+          members: [
+            { name: 'runSnippet', kind: 'method' },
+            { name: 'execute', kind: 'method' },
+          ],
+        },
+      ],
+    };
+    const registry = buildExportRegistry(clarinetLike);
+    const file = parseMarkdownFile(
+      `# Guide
+
+\`\`\`ts
+import { initSimnet } from '${PKG}';
+const simnet = await initSimnet();
+simnet.runSnippet('(+ 1 2)');
+\`\`\`
+`,
+      'docs/guide.md',
+    );
+    const issues = detectProseDrift({ packageName: PKG, markdownFiles: [file], registry });
+    const dep = issues.filter((i) => i.type === 'prose-deprecated-reference');
+    expect(dep).toHaveLength(1);
+    expect(dep[0].target).toBe('runSnippet');
+    expect(dep[0].suggestion).toContain('simnet.execute');
+  });
+
   test('imports from other packages are ignored', () => {
     const issues = drift(`# Guide
 

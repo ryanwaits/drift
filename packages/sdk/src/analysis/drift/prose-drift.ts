@@ -122,6 +122,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
     const fileExternalImports = new Set<string>();
     const fileLocalDeclarations = new Set<string>();
     const filePackageDerived = new Set<string>();
+    const filePackageDerivedTypes = new Map<string, string>();
     const flaggedDeprecated = new Set<string>();
 
     for (const block of file.codeBlocks) {
@@ -133,6 +134,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
         fileLocalDeclarations,
         filePackageDerived,
         registry,
+        filePackageDerivedTypes,
       );
 
       // 1. Check imports (existing behavior)
@@ -163,6 +165,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
           issues,
           fileExternalImports,
           flaggedDeprecated,
+          filePackageDerivedTypes,
         );
       }
     }
@@ -226,6 +229,7 @@ function accumulateBlockContext(
   localDeclarations: Set<string>,
   packageDerived?: Set<string>,
   registry?: ExportRegistry,
+  packageDerivedTypes?: Map<string, string>,
 ): void {
   try {
     const imports = extractImportsAST(code);
@@ -244,8 +248,10 @@ function accumulateBlockContext(
 
   // Track variables derived from package export calls (e.g. `const simnet = await initSimnet()`)
   if (packageDerived && registry) {
-    for (const name of extractPackageDerivedNames(code, registry)) {
+    for (const [name, exportName] of extractPackageDerivedNames(code, registry)) {
       packageDerived.add(name);
+      const returnType = registry.callableReturnTypes.get(exportName);
+      if (packageDerivedTypes && returnType) packageDerivedTypes.set(name, returnType);
     }
   }
 }
@@ -337,6 +343,7 @@ function detectDeprecatedReferences(
   issues: SpecDocDrift[],
   fileExternalImports: Set<string>,
   flaggedDeprecated: Set<string>,
+  packageDerivedTypes: Map<string, string>,
 ): void {
   if (hasDeprecationContext(file, block.lineStart, block.lineEnd)) return;
 
@@ -367,13 +374,24 @@ function detectDeprecatedReferences(
     // parse failure — skip imports check
   }
 
-  // Member calls on deprecated members (only when unambiguous: every type
-  // declaring this member marks it deprecated)
+  // Member calls on deprecated members. When the object's type is known
+  // (derived from a package call, e.g. `const simnet = await initSimnet()` →
+  // Simnet), judge against that type directly. Otherwise only flag when
+  // unambiguous: every type declaring this member marks it deprecated.
   for (const call of extractMethodCallsAST(block.code)) {
     if (JS_BUILTIN_METHODS.has(call.methodName)) continue;
     if (fileExternalImports.has(call.objectName)) continue;
     const dep = registry.deprecatedMembers.get(call.methodName);
     if (!dep) continue;
+
+    const knownType = packageDerivedTypes.get(call.objectName);
+    if (knownType) {
+      if (dep.parents.has(knownType)) {
+        push(call.methodName, dep.note, block.lineStart + call.line);
+      }
+      continue;
+    }
+
     const declaredOn = registry.typeMembers.get(call.methodName);
     if (declaredOn && [...declaredOn].some((parent) => !dep.parents.has(parent))) continue;
     push(call.methodName, dep.note, block.lineStart + call.line);
@@ -439,8 +457,8 @@ function extractLocalDeclarations(code: string): Set<string> {
  * These objects ARE the package API, but if their return type has no indexed
  * members in the registry, we can't validate method calls on them.
  */
-function extractPackageDerivedNames(code: string, registry: ExportRegistry): Set<string> {
-  const names = new Set<string>();
+function extractPackageDerivedNames(code: string, registry: ExportRegistry): Map<string, string> {
+  const names = new Map<string, string>();
 
   try {
     const sourceFile = ts.createSourceFile(
@@ -456,10 +474,13 @@ function extractPackageDerivedNames(code: string, registry: ExportRegistry): Set
         let expr: TS.Expression = node.initializer;
         // Unwrap `await expr`
         if (ts.isAwaitExpression(expr)) expr = expr.expression;
-        // Check `const x = knownExport(...)` pattern
-        if (ts.isCallExpression(expr) && ts.isIdentifier(expr.expression)) {
+        // `const x = knownExport(...)` and `const x = new KnownClass(...)`
+        if (
+          (ts.isCallExpression(expr) || ts.isNewExpression(expr)) &&
+          ts.isIdentifier(expr.expression)
+        ) {
           if (registry.all.has(expr.expression.text)) {
-            names.add(node.name.text);
+            names.set(node.name.text, expr.expression.text);
           }
         }
       }
@@ -467,11 +488,11 @@ function extractPackageDerivedNames(code: string, registry: ExportRegistry): Set
     };
     walk(sourceFile);
   } catch {
-    // Fallback: regex for `const x = [await] knownExport(...)`
-    const pattern = /(?:const|let|var)\s+(\w+)\s*=\s*(?:await\s+)?(\w+)\s*\(/g;
+    // Fallback: regex for `const x = [await] [new] knownExport(...)`
+    const pattern = /(?:const|let|var)\s+(\w+)\s*=\s*(?:await\s+)?(?:new\s+)?(\w+)\s*\(/g;
     for (const match of code.matchAll(pattern)) {
       if (registry.all.has(match[2])) {
-        names.add(match[1]);
+        names.set(match[1], match[2]);
       }
     }
   }

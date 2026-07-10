@@ -152,6 +152,8 @@ export interface ExportRegistry {
   deprecated: Map<string, string>;
   /** Deprecated member names → parent types where deprecated + note */
   deprecatedMembers: Map<string, { parents: Set<string>; note: string }>;
+  /** Callable export name → named type it returns (Promise unwrapped), for instance typing */
+  callableReturnTypes: Map<string, string>;
 }
 
 /**
