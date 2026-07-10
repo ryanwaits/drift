@@ -69,7 +69,7 @@ Options:
 
 ### `drift lint`
 
-Cross-reference JSDoc vs code signatures. Detects 16 drift types including prose drift (broken imports and unresolved member references in markdown).
+Cross-reference JSDoc vs code signatures. Detects 17 drift types including prose drift (broken imports, unresolved member references, and un-noted deprecated API references in markdown).
 
 ```bash
 drift lint [entry] [options]

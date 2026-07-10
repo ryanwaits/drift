@@ -96,14 +96,14 @@ drift --tools
 
 ## Drift Detection
 
-16 drift types across 4 categories:
+17 drift types across 4 categories:
 
 | Category | Types | Description |
 |----------|-------|-------------|
 | **structural** | 7 | JSDoc types/params don't match code signature |
 | **semantic** | 3 | Deprecation, visibility, broken `{@link}` references |
 | **example** | 4 | @example code has errors or doesn't work |
-| **prose** | 2 | Markdown docs import non-existent exports or call non-existent members |
+| **prose** | 3 | Markdown docs import non-existent exports, call non-existent members, or promote deprecated APIs |
 
 Every drift issue includes `filePath` and `line` for agent-driven fixes.
 
@@ -169,7 +169,7 @@ drift examples
 
 ```
 Truth adapters:  @openpkg-ts/sdk (TypeScript) · @driftdev/openapi-adapter · @driftdev/clarity-adapter
-Engine:          @driftdev/sdk        (ApiSpec + 16 drift detectors)
+Engine:          @driftdev/sdk        (ApiSpec + 17 drift detectors)
 Surfaces:        drift CLI (23 commands) · drift mcp (agent tools) · skills/ (agent playbooks)
 ```
 

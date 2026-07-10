@@ -79,16 +79,13 @@ registry/linking design below — solve together. Second motivating case
 (2026-07-10, clarinet dogfood): `simnet.execute` exists in shipped types,
 absent from both SDK reference pages — spec-not-in-claims would catch it.
 
-## prose-deprecated-reference detector (scoped 2026-07-10, clarinet dogfood)
-Deterministic gap: docs corpus references an export whose spec entry is
-deprecated, with no deprecation context — caught only by agent judgment today
-(clarinet: runSnippet promoted on both reference pages while sdkProxy.d.ts says
-`@deprecated use simnet.execute`). Registry has `deprecated`; --docs (Phase A)
-has the corpus. Scope: one prose detector + tests (prose category 2→3; update
-the 16-types claims). Clarinet-specific caveat: needs the openpkg mapped-type
-fix above before the runSnippet case extracts. The dual finding (`execute`
-undocumented) is Phase B's spec-not-in-claims report — clarinet is a second
-motivating case for it, noted there.
+## prose-deprecated-reference detector — DONE 2026-07-10
+Shipped: registry indexes deprecated exports/members (+ note text);
+detectProseDrift flags un-noted references in docs code blocks (imports +
+unambiguous member calls), suppressed when prose within ±5 lines mentions the
+deprecation. 7 tests. Clarinet-specific caveat stands: the runSnippet case
+also needs the openpkg mapped-type fix above before extraction sees the
+member's @deprecated.
 
 ## Prose drift for non-TS langs
 `scan` gates prose drift behind `lang === 'typescript'`

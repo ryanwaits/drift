@@ -123,7 +123,7 @@ drift scan --all --private    # include private packages
 
 ## lint
 
-Cross-reference JSDoc against code signatures. Detects 16 drift types across 4 categories (structural, semantic, example, prose). Prose detection scans markdown files for broken import references and method calls that don't exist on any exported type.
+Cross-reference JSDoc against code signatures. Detects 17 drift types across 4 categories (structural, semantic, example, prose). Prose detection scans markdown files for broken import references, method calls that don't exist on any exported type, and references to deprecated APIs with no deprecation note.
 
 ```bash
 drift lint                    # single package
