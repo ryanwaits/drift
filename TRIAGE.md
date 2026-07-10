@@ -75,7 +75,20 @@ Phase B still open — what made the posthog audit manual: hosted docs call
 fires. Needs: instance-linking heuristic (config `instanceNames` or infer
 singleton from spec), bidirectional claims report (claims-not-in-spec /
 spec-not-in-claims), maybe URL ingestion. Overlaps with the prose-drift
-registry/linking design below — solve together.
+registry/linking design below — solve together. Second motivating case
+(2026-07-10, clarinet dogfood): `simnet.execute` exists in shipped types,
+absent from both SDK reference pages — spec-not-in-claims would catch it.
+
+## prose-deprecated-reference detector (scoped 2026-07-10, clarinet dogfood)
+Deterministic gap: docs corpus references an export whose spec entry is
+deprecated, with no deprecation context — caught only by agent judgment today
+(clarinet: runSnippet promoted on both reference pages while sdkProxy.d.ts says
+`@deprecated use simnet.execute`). Registry has `deprecated`; --docs (Phase A)
+has the corpus. Scope: one prose detector + tests (prose category 2→3; update
+the 16-types claims). Clarinet-specific caveat: needs the openpkg mapped-type
+fix above before the runSnippet case extracts. The dual finding (`execute`
+undocumented) is Phase B's spec-not-in-claims report — clarinet is a second
+motivating case for it, noted there.
 
 ## Prose drift for non-TS langs
 `scan` gates prose drift behind `lang === 'typescript'`
