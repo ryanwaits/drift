@@ -1,17 +1,12 @@
-import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import {
-  buildExportRegistry,
-  computeDrift,
-  detectProseDrift,
-  discoverMarkdownFiles,
-} from '@driftdev/sdk';
+import { buildExportRegistry, computeDrift, detectProseDrift } from '@driftdev/sdk';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderBatchLint } from '../formatters/batch';
 import { renderLint } from '../formatters/lint';
 import { detectEntry } from '../utils/detect-entry';
+import { readPackageName, resolveDocsCorpus } from '../utils/docs-corpus';
 import { resolveLang, resolveTruth } from '../utils/load-spec';
 import { formatError, formatOutput, formatWarning, type OutputNext } from '../utils/output';
 import { shouldRenderHuman } from '../utils/render';
@@ -38,10 +33,21 @@ export function registerLintCommand(program: Command): void {
     )
     .option('--abi <path>', 'ABI JSON file (required for --lang clarity)')
     .option('--spec <path>', 'OpenAPI document: path or URL (implies --lang openapi)')
+    .option(
+      '--docs <patterns...>',
+      'Markdown corpus for prose drift: glob patterns or directories (overrides repo-local defaults)',
+    )
     .action(
       async (
         entry: string | undefined,
-        options: { all?: boolean; private?: boolean; lang?: string; abi?: string; spec?: string },
+        options: {
+          all?: boolean;
+          private?: boolean;
+          lang?: string;
+          abi?: string;
+          spec?: string;
+          docs?: string[];
+        },
       ) => {
         const startTime = Date.now();
         const version = getVersion();
@@ -132,15 +138,14 @@ export function registerLintCommand(program: Command): void {
             }
           }
 
-          // Prose drift: check markdown docs for broken import references (TS only)
-          if (lang === 'typescript')
+          // Prose drift: check markdown docs for broken references — TS by
+          // default; an explicit --docs corpus runs for any language
+          if (lang === 'typescript' || options.docs)
             try {
-              const pkgJsonPath = path.resolve(process.cwd(), 'package.json');
-              const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
-              const packageName = pkgJson.name as string | undefined;
+              const packageName = readPackageName() ?? spec.meta?.name;
               if (packageName) {
                 const registry = buildExportRegistry(spec);
-                const markdownFiles = discoverMarkdownFiles(process.cwd(), config.docs);
+                const markdownFiles = resolveDocsCorpus(process.cwd(), options.docs, config.docs);
                 const proseDrifts = detectProseDrift({ packageName, markdownFiles, registry });
                 for (const drift of proseDrifts) {
                   issues.push({

@@ -1,16 +1,16 @@
-import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import {
   buildExportRegistry,
   computeDrift,
   detectProseDrift,
-  discoverMarkdownFiles,
+  isExternalExport,
 } from '@driftdev/sdk';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderBatchScan, renderScan } from '../formatters/scan';
 import { detectEntry } from '../utils/detect-entry';
+import { readPackageName, resolveDocsCorpus } from '../utils/docs-corpus';
 import { computeHealth } from '../utils/health';
 import { resolveLang, resolveTruth } from '../utils/load-spec';
 import { formatError, formatOutput, formatWarning, type OutputNext } from '../utils/output';
@@ -28,7 +28,14 @@ interface LintIssue {
 }
 
 export interface ScanResult {
-  coverage: { score: number; documented: number; total: number; undocumented: number };
+  coverage: {
+    score: number;
+    documented: number;
+    total: number;
+    undocumented: number;
+    /** External re-exports excluded from `total` (docs not resolvable here) */
+    external?: number;
+  };
   lint: { issues: LintIssue[]; count: number };
   health: number;
   pass: boolean;
@@ -49,6 +56,10 @@ export function registerScanCommand(program: Command): void {
     )
     .option('--abi <path>', 'ABI JSON file (required for --lang clarity)')
     .option('--spec <path>', 'OpenAPI document: path or URL (implies --lang openapi)')
+    .option(
+      '--docs <patterns...>',
+      'Markdown corpus for prose drift: glob patterns or directories (overrides repo-local defaults)',
+    )
     .action(
       async (
         entry: string | undefined,
@@ -59,6 +70,7 @@ export function registerScanCommand(program: Command): void {
           lang?: string;
           abi?: string;
           spec?: string;
+          docs?: string[];
         },
       ) => {
         const startTime = Date.now();
@@ -116,7 +128,7 @@ export function registerScanCommand(program: Command): void {
 
             for (const pkg of packages) {
               const { spec } = await cachedExtract(pkg.entry);
-              const exps = spec.exports ?? [];
+              const exps = (spec.exports ?? []).filter((e) => !isExternalExport(e));
               let documented = 0;
               for (const e of exps) {
                 if (e.description?.trim()) documented++;
@@ -169,8 +181,11 @@ export function registerScanCommand(program: Command): void {
             abi: options.abi,
           });
 
-          // Coverage
-          const exports = apiSpec.exports ?? [];
+          // Coverage — external re-exports excluded: their docs live in
+          // another package, so counting them inflates the denominator
+          const allExports = apiSpec.exports ?? [];
+          const exports = allExports.filter((exp) => !isExternalExport(exp));
+          const external = allExports.length - exports.length;
           const total = exports.length;
           let documented = 0;
           for (const exp of exports) {
@@ -193,15 +208,14 @@ export function registerScanCommand(program: Command): void {
             }
           }
 
-          // Prose drift (TS only — needs buildExportRegistry + TS-specific docs)
-          if (lang === 'typescript') {
+          // Prose drift — TS by default (import heuristics assume npm
+          // packages); an explicit --docs corpus runs for any language
+          if (lang === 'typescript' || options.docs) {
             try {
-              const pkgJsonPath = path.resolve(process.cwd(), 'package.json');
-              const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
-              const pkgName = pkgJson.name as string | undefined;
+              const pkgName = readPackageName() ?? packageName;
               if (pkgName) {
                 const registry = buildExportRegistry(apiSpec);
-                const markdownFiles = discoverMarkdownFiles(process.cwd(), config.docs);
+                const markdownFiles = resolveDocsCorpus(process.cwd(), options.docs, config.docs);
                 const proseDrifts = detectProseDrift({
                   packageName: pkgName,
                   markdownFiles,
@@ -236,7 +250,13 @@ export function registerScanCommand(program: Command): void {
           const pass = min === undefined || h.health >= min;
 
           const data: ScanResult = {
-            coverage: { score: coverageScore, documented, total, undocumented: total - documented },
+            coverage: {
+              score: coverageScore,
+              documented,
+              total,
+              undocumented: total - documented,
+              ...(external > 0 ? { external } : {}),
+            },
             lint: { issues, count: issues.length },
             health: h.health,
             pass,

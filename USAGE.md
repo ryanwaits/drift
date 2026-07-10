@@ -37,6 +37,7 @@ Options:
 - `--lang <language>` — Source language: inferred from `--spec`/`--abi`/`.clar`; default `typescript`
 - `--abi <path>` — ABI JSON file (required for Clarity)
 - `--spec <path>` — OpenAPI 3.x JSON document — path or URL (implies openapi)
+- `--docs <patterns...>` — Markdown corpus for prose drift: globs or directories (e.g. a hosted docs site pulled down locally); overrides repo-local defaults
 
 ### `drift health`
 
@@ -78,6 +79,12 @@ Options:
 - `--all` — Run across all workspace packages
 - `--private` — Include private packages
 - `--lang/--abi/--spec` — Truth source: Clarity (`--abi` + `.clar`) or OpenAPI (`--spec` path/URL); inferred
+- `--docs <patterns...>` — Markdown corpus for prose drift: globs or directories; overrides repo-local defaults
+
+```bash
+# Audit an external docs corpus (e.g. hosted docs pulled down) against the API
+drift lint src/index.ts --docs ../docs-site/content
+```
 
 ### `drift examples`
 
