@@ -118,7 +118,7 @@ export function parseMarkdownFile(
     }
   });
 
-  return { path: filePath, codeBlocks };
+  return { path: filePath, codeBlocks, content };
 }
 
 /**

@@ -122,6 +122,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
     const fileExternalImports = new Set<string>();
     const fileLocalDeclarations = new Set<string>();
     const filePackageDerived = new Set<string>();
+    const flaggedDeprecated = new Set<string>();
 
     for (const block of file.codeBlocks) {
       // Accumulate imports and declarations from this block
@@ -149,6 +150,19 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
           fileExternalImports,
           fileLocalDeclarations,
           filePackageDerived,
+        );
+      }
+
+      // 3. Check references to deprecated exports/members without a deprecation note
+      if (registry.deprecated.size > 0 || registry.deprecatedMembers.size > 0) {
+        detectDeprecatedReferences(
+          block,
+          file,
+          packageName,
+          registry,
+          issues,
+          fileExternalImports,
+          flaggedDeprecated,
         );
       }
     }
@@ -303,6 +317,76 @@ function detectUnresolvedMembers(
       line: lineStart + call.line,
     });
   }
+}
+
+/**
+ * Detect references to deprecated exports/members in code blocks whose
+ * surrounding prose never acknowledges the deprecation.
+ *
+ * Deterministic and conservative:
+ * - imports of deprecated exports from the package
+ * - member calls whose name is deprecated on every type that declares it
+ * - suppressed when "deprecat…" appears within ±5 lines of the block
+ * - one finding per name per file
+ */
+function detectDeprecatedReferences(
+  block: { code: string; lineStart: number; lineEnd: number },
+  file: MarkdownDocFile,
+  packageName: string,
+  registry: ExportRegistry,
+  issues: SpecDocDrift[],
+  fileExternalImports: Set<string>,
+  flaggedDeprecated: Set<string>,
+): void {
+  if (hasDeprecationContext(file, block.lineStart, block.lineEnd)) return;
+
+  const push = (name: string, note: string, line: number) => {
+    if (flaggedDeprecated.has(name)) return;
+    flaggedDeprecated.add(name);
+    issues.push({
+      type: 'prose-deprecated-reference',
+      target: name,
+      issue: `Docs reference deprecated API '${name}' without noting the deprecation`,
+      suggestion: note
+        ? `Deprecation note: ${note}`
+        : 'Add a deprecation note or update the docs to the replacement API',
+      filePath: file.path,
+      line,
+    });
+  };
+
+  // Imports of deprecated exports
+  try {
+    for (const imp of extractImportsAST(block.code)) {
+      if (imp.kind === 'side-effect') continue;
+      if (imp.from !== packageName && !imp.from.startsWith(`${packageName}/`)) continue;
+      const note = registry.deprecated.get(imp.name);
+      if (note !== undefined) push(imp.name, note, block.lineStart);
+    }
+  } catch {
+    // parse failure — skip imports check
+  }
+
+  // Member calls on deprecated members (only when unambiguous: every type
+  // declaring this member marks it deprecated)
+  for (const call of extractMethodCallsAST(block.code)) {
+    if (JS_BUILTIN_METHODS.has(call.methodName)) continue;
+    if (fileExternalImports.has(call.objectName)) continue;
+    const dep = registry.deprecatedMembers.get(call.methodName);
+    if (!dep) continue;
+    const declaredOn = registry.typeMembers.get(call.methodName);
+    if (declaredOn && [...declaredOn].some((parent) => !dep.parents.has(parent))) continue;
+    push(call.methodName, dep.note, block.lineStart + call.line);
+  }
+}
+
+/** True when the prose around a code block already mentions deprecation. */
+function hasDeprecationContext(file: MarkdownDocFile, lineStart: number, lineEnd: number): boolean {
+  if (!file.content) return false;
+  const lines = file.content.split('\n');
+  const from = Math.max(0, lineStart - 1 - 5);
+  const to = Math.min(lines.length, lineEnd + 5);
+  return /deprecat/i.test(lines.slice(from, to).join('\n'));
 }
 
 /**

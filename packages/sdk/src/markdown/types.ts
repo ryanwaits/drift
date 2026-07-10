@@ -26,6 +26,8 @@ export interface MarkdownDocFile {
   path: string;
   /** All executable code blocks found */
   codeBlocks: MarkdownCodeBlock[];
+  /** Raw file content (for prose context checks around code blocks) */
+  content?: string;
 }
 
 /**

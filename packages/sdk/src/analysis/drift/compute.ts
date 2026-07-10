@@ -133,6 +133,41 @@ export function buildExportRegistry(spec: ApiSpec): ExportRegistry {
   const allNames = Array.from(all);
   const allMemberNames = Array.from(typeMembers.keys());
 
+  // Deprecation indexes: exports and type members flagged deprecated in the spec
+  const deprecationNote = (tags?: { name: string; text: string }[]): string =>
+    tags?.find((t) => t.name.toLowerCase() === 'deprecated')?.text ?? '';
+
+  const deprecated = new Map<string, string>();
+  const deprecatedMembers = new Map<string, { parents: Set<string>; note: string }>();
+
+  const indexDeprecatedMember = (
+    parentName: string,
+    member: { name?: string; deprecated?: boolean; tags?: { name: string; text: string }[] },
+  ) => {
+    if (!member.name || !member.deprecated) return;
+    let entry = deprecatedMembers.get(member.name);
+    if (!entry) {
+      entry = { parents: new Set(), note: deprecationNote(member.tags) };
+      deprecatedMembers.set(member.name, entry);
+    }
+    entry.parents.add(parentName);
+    if (!entry.note) entry.note = deprecationNote(member.tags);
+  };
+
+  for (const entry of spec.exports ?? []) {
+    const isDeprecated =
+      entry.deprecated === true ||
+      (entry.tags?.some((t) => t.name.toLowerCase() === 'deprecated') ?? false);
+    if (isDeprecated) {
+      deprecated.set(entry.name, deprecationNote(entry.tags));
+      if (entry.id) deprecated.set(entry.id, deprecationNote(entry.tags));
+    }
+    for (const member of entry.members ?? []) indexDeprecatedMember(entry.name, member);
+  }
+  for (const type of spec.types ?? []) {
+    for (const member of type.members ?? []) indexDeprecatedMember(type.name, member);
+  }
+
   return {
     exports,
     types,
@@ -143,6 +178,8 @@ export function buildExportRegistry(spec: ApiSpec): ExportRegistry {
     allNames,
     typeMembers,
     allMemberNames,
+    deprecated,
+    deprecatedMembers,
   };
 }
 

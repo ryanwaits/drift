@@ -23,7 +23,8 @@ export type DriftType =
   | 'example-assertion-failed'
   | 'broken-link'
   | 'prose-broken-reference'
-  | 'prose-unresolved-member';
+  | 'prose-unresolved-member'
+  | 'prose-deprecated-reference';
 
 export type SpecDocDrift = {
   type: DriftType;
@@ -73,6 +74,7 @@ export const DRIFT_CATEGORIES: Record<DriftType, DriftCategory> = {
   // Prose: markdown documentation references
   'prose-broken-reference': 'prose',
   'prose-unresolved-member': 'prose',
+  'prose-deprecated-reference': 'prose',
 };
 
 /**
@@ -92,7 +94,7 @@ export const DRIFT_CATEGORY_DESCRIPTIONS: Record<DriftCategory, string> = {
   structural: "JSDoc types or parameters don't match the actual code signature",
   semantic: 'Deprecation, visibility, or reference issues',
   example: "@example code has errors or doesn't work correctly",
-  prose: 'Markdown docs import or reference non-existent exports',
+  prose: 'Markdown docs import, reference non-existent exports, or promote deprecated APIs',
 };
 
 export type SpecDocsMetadata = {
@@ -146,6 +148,10 @@ export interface ExportRegistry {
   typeMembers: Map<string, Set<string>>;
   /** All known member names across all types (for fuzzy matching) */
   allMemberNames: string[];
+  /** Deprecated export names → deprecation note ('' when the spec has no note) */
+  deprecated: Map<string, string>;
+  /** Deprecated member names → parent types where deprecated + note */
+  deprecatedMembers: Map<string, { parents: Set<string>; note: string }>;
 }
 
 /**
