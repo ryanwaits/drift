@@ -14,9 +14,12 @@ export function renderScan(data: ScanResult, next?: OutputNext): string {
   // Summary
   const hColor = coverageColor(data.health);
   lines.push(indent(`Health     ${hColor(`${data.health}%`)}`));
+  const externalNote = data.coverage.external
+    ? c.gray(`  +${data.coverage.external} external (not resolvable here)`)
+    : '';
   lines.push(
     indent(
-      `Coverage   ${coverageColor(data.coverage.score)(`${data.coverage.score}%`)}  (${data.coverage.documented}/${data.coverage.total} exports)`,
+      `Coverage   ${coverageColor(data.coverage.score)(`${data.coverage.score}%`)}  (${data.coverage.documented}/${data.coverage.total} exports)${externalNote}`,
     ),
   );
   lines.push(

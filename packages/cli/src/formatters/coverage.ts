@@ -5,6 +5,8 @@ interface CoverageData {
   documented: number;
   total: number;
   undocumented: string[];
+  /** External re-exports excluded from `total` (docs not resolvable here) */
+  external?: number;
 }
 
 export function renderCoverage(data: CoverageData): string {
@@ -12,8 +14,13 @@ export function renderCoverage(data: CoverageData): string {
   const color = coverageColor(data.score);
   const bar = progressBar(data.score);
 
+  const externalNote = data.external
+    ? c.gray(`  +${data.external} external (not resolvable here)`)
+    : '';
   lines.push(
-    indent(`Coverage  ${color(`${data.score}%`)}  ${bar}  (${data.documented}/${data.total})`),
+    indent(
+      `Coverage  ${color(`${data.score}%`)}  ${bar}  (${data.documented}/${data.total})${externalNote}`,
+    ),
   );
   lines.push('');
 

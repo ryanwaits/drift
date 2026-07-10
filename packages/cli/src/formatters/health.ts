@@ -6,6 +6,8 @@ interface HealthData extends HealthResult {
   packageName?: string;
   packageVersion?: string;
   min?: number;
+  /** External re-exports excluded from totals (docs not resolvable here) */
+  external?: number;
 }
 
 export function renderHealth(data: HealthData, next?: OutputNext): string {
@@ -34,9 +36,12 @@ export function renderHealth(data: HealthData, next?: OutputNext): string {
   lines.push('');
 
   // 4. Counts
+  const externalNote = data.external
+    ? `  ${c.gray(sym.dot)}  ${c.gray(`${data.external} external (not resolvable here)`)}`
+    : '';
   lines.push(
     indent(
-      `${data.totalExports} exports  ${c.gray(sym.dot)}  ${data.documented} documented  ${c.gray(sym.dot)}  ${data.drifted} drifted`,
+      `${data.totalExports} exports  ${c.gray(sym.dot)}  ${data.documented} documented  ${c.gray(sym.dot)}  ${data.drifted} drifted${externalNote}`,
     ),
   );
   lines.push('');

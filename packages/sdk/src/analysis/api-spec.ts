@@ -108,6 +108,10 @@ export type ApiSource = {
   file?: string;
   line?: number;
   url?: string;
+  /** Package name for external types (e.g., "@posthog/core") */
+  package?: string;
+  /** Package version for external types (e.g., "7.0.0") */
+  version?: string;
 };
 
 export type ApiTypeParameter = {

@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import { isExternalExport } from '@driftdev/sdk';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
@@ -77,7 +78,7 @@ export function registerCoverageCommand(program: Command): void {
             let totalAll = 0;
             for (const pkg of packages) {
               const { spec } = await cachedExtract(pkg.entry);
-              const exps = spec.exports ?? [];
+              const exps = (spec.exports ?? []).filter((e) => !isExternalExport(e));
               let doc = 0;
               for (const e of exps) {
                 if (e.description?.trim()) doc++;
@@ -111,7 +112,10 @@ export function registerCoverageCommand(program: Command): void {
             abi: options.abi,
           });
 
-          const exports = spec.exports ?? [];
+          // External re-exports excluded — their docs live in another package
+          const allExports = spec.exports ?? [];
+          const exports = allExports.filter((exp) => !isExternalExport(exp));
+          const external = allExports.length - exports.length;
           const total = exports.length;
           const undocumented: string[] = [];
 
@@ -124,7 +128,13 @@ export function registerCoverageCommand(program: Command): void {
           const documented = total - undocumented.length;
           const score = total > 0 ? Math.round((documented / total) * 100) : 100;
 
-          const data = { score, documented, total, undocumented };
+          const data = {
+            score,
+            documented,
+            total,
+            undocumented,
+            ...(external > 0 ? { external } : {}),
+          };
 
           const next: OutputNext | undefined =
             undocumented.length > 0

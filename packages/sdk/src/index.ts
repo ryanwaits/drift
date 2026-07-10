@@ -80,7 +80,12 @@ export type { BuildDriftOptions } from './analysis/drift-builder';
 export { buildDriftSpec } from './analysis/drift-builder';
 // Health computation
 export type { HealthInput } from './analysis/health';
-export { computeHealth, isExportDocumented } from './analysis/health';
+export {
+  computeHealth,
+  EXTERNAL_SOURCE_FILE,
+  isExportDocumented,
+  isExternalExport,
+} from './analysis/health';
 // Incremental analysis (crash recovery)
 export type {
   IncrementalAnalyzerOptions,

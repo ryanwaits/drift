@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import { computeDrift } from '@driftdev/sdk';
+import { computeDrift, isExternalExport } from '@driftdev/sdk';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
@@ -78,7 +78,7 @@ export function registerHealthCommand(program: Command): void {
             let totalAll = 0;
             for (const pkg of packages) {
               const { spec } = await cachedExtract(pkg.entry);
-              const exps = spec.exports ?? [];
+              const exps = (spec.exports ?? []).filter((e) => !isExternalExport(e));
               let doc = 0;
               for (const e of exps) {
                 if (e.description?.trim()) doc++;
@@ -109,8 +109,10 @@ export function registerHealthCommand(program: Command): void {
             packageVersion,
           } = await resolveTruth({ entry: entryFile, lang, spec: options.spec, abi: options.abi });
 
-          // Coverage data
-          const exports = spec.exports ?? [];
+          // Coverage data — external re-exports excluded (docs not resolvable here)
+          const allExports = spec.exports ?? [];
+          const exports = allExports.filter((exp) => !isExternalExport(exp));
+          const external = allExports.length - exports.length;
           const total = exports.length;
           let documented = 0;
           for (const exp of exports) {
@@ -132,6 +134,7 @@ export function registerHealthCommand(program: Command): void {
 
           const data = {
             ...health,
+            ...(external > 0 ? { external } : {}),
             packageName,
             packageVersion,
           };

@@ -112,6 +112,11 @@ export type DocumentationHealth = {
     total: number;
     /** Missing docs by rule */
     missing: Record<MissingDocRule, number>;
+    /**
+     * External re-exports excluded from `total` — declarations live outside
+     * the analyzed program, so their docs are not resolvable here.
+     */
+    external?: number;
   };
 
   /** Accuracy (drift) metrics */
@@ -213,6 +218,12 @@ export type DriftSummary = {
     runtimePassed?: number;
     runtimeFailed?: number;
   };
+
+  /**
+   * External re-exports excluded from coverage analysis — declarations live
+   * outside the analyzed program, so their docs are not resolvable here.
+   */
+  externalExports?: number;
 
   /** Unified documentation health metrics */
   health?: DocumentationHealth;

@@ -13,7 +13,7 @@ import type {
 import { DRIFT_CATEGORIES } from '../spec';
 import type { ApiExport, ApiSpec } from './api-spec';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';
-import { computeHealth, isExportDocumented } from './health';
+import { computeHealth, isExportDocumented, isExternalExport } from './health';
 import type { DocRequirements, StylePreset } from './presets';
 import { resolveRequirements } from './presets';
 import { toApiSpec } from './spec-types';
@@ -122,8 +122,13 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
   // Resolve documentation requirements from style preset and custom overrides
   const requirements = resolveRequirements(style, require);
 
-  // Filter out @internal exports - they're excluded from coverage/drift analysis
-  const allExports = apiSpec.exports.filter((exp) => !hasInternalTag(exp));
+  // Filter out @internal exports - they're excluded from coverage/drift analysis.
+  // External re-exports (source.file === '<external>') are excluded too: their
+  // docs live in another package, so counting them as undocumented inflates
+  // the denominator.
+  const nonInternal = apiSpec.exports.filter((exp) => !hasInternalTag(exp));
+  const externalCount = nonInternal.filter(isExternalExport).length;
+  const allExports = nonInternal.filter((exp) => !isExternalExport(exp));
   const total = allExports.length;
 
   // Phase 1: Analyze each export individually
@@ -243,12 +248,14 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
     missingByRule,
     driftIssues: totalDrift,
     driftByCategory,
+    externalExports: externalCount,
   });
 
   const summary: DriftSummary = {
     score: coverageScore,
     totalExports: exportCount,
     documentedExports: documentedCount,
+    ...(externalCount > 0 ? { externalExports: externalCount } : {}),
     missingByRule,
     drift: {
       total: totalDrift,

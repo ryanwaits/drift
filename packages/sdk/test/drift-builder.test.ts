@@ -163,6 +163,115 @@ describe('buildDriftSpec', () => {
     });
   });
 
+  describe('external re-export exclusion', () => {
+    test('excludes <external> exports from coverage denominator', async () => {
+      const spec: OpenPkgSpec = {
+        openpkg: '1.0.0',
+        meta: { name: 'test-package' },
+        exports: [
+          {
+            name: 'localFn',
+            kind: 'function',
+            description: 'Documented local function',
+            source: { file: 'src/index.ts', line: 1 },
+          },
+          {
+            name: 'reexportedFn',
+            kind: 'function',
+            description: '',
+            source: { file: '<external>', line: 0 },
+          },
+          {
+            name: 'localUndocumented',
+            kind: 'function',
+            description: '',
+            source: { file: 'src/index.ts', line: 10 },
+          },
+        ],
+      };
+
+      const result = await buildDriftSpec({
+        openpkg: spec,
+        openpkgPath: 'test.json',
+      });
+
+      // Denominator counts only local exports; external bucketed separately
+      expect(result.summary.totalExports).toBe(2);
+      expect(result.summary.documentedExports).toBe(1);
+      expect(result.summary.externalExports).toBe(1);
+      expect(result.summary.health?.completeness.total).toBe(2);
+      expect(result.summary.health?.completeness.external).toBe(1);
+      expect(result.exports.reexportedFn).toBeUndefined();
+    });
+
+    test('excludes package-only source (external-unresolved re-export)', async () => {
+      const spec: OpenPkgSpec = {
+        openpkg: '1.0.0',
+        meta: { name: 'test-package' },
+        exports: [
+          {
+            name: 'local',
+            kind: 'function',
+            description: 'Local fn',
+            source: { file: 'index.ts', line: 1 },
+          },
+          // Re-export whose declaration lives in another package
+          { name: 'reexported', kind: 'function', source: { package: '@other/pkg' } },
+          // Resolved into node_modules — file present, counts normally
+          {
+            name: 'resolved',
+            kind: 'function',
+            source: {
+              file: 'node_modules/@other/pkg/dist/index.d.ts',
+              line: 5,
+              package: '@other/pkg',
+            },
+          },
+        ],
+      };
+
+      const result = await buildDriftSpec({
+        openpkg: spec,
+        openpkgPath: 'test.json',
+      });
+
+      expect(result.summary.totalExports).toBe(2); // local + resolved
+      expect(result.summary.externalExports).toBe(1); // reexported
+    });
+
+    test('omits externalExports when none present', async () => {
+      const spec = createSpecWithExports(3);
+
+      const result = await buildDriftSpec({
+        openpkg: spec,
+        openpkgPath: 'test.json',
+      });
+
+      expect(result.summary.externalExports).toBeUndefined();
+      expect(result.summary.health?.completeness.external).toBeUndefined();
+    });
+
+    test('all-external spec yields empty analysis, not 0% coverage', async () => {
+      const spec: OpenPkgSpec = {
+        openpkg: '1.0.0',
+        meta: { name: 'test-package' },
+        exports: [
+          { name: 'a', kind: 'function', source: { file: '<external>', line: 0 } },
+          { name: 'b', kind: 'function', source: { file: '<external>', line: 0 } },
+        ],
+      };
+
+      const result = await buildDriftSpec({
+        openpkg: spec,
+        openpkgPath: 'test.json',
+      });
+
+      expect(result.summary.totalExports).toBe(0);
+      expect(result.summary.externalExports).toBe(2);
+      expect(result.summary.score).toBe(100);
+    });
+  });
+
   describe('integration: large export count', () => {
     test('handles 100+ exports with progress updates', async () => {
       const exportCount = 150;
