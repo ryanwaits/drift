@@ -52,6 +52,31 @@ render as opaque `x-ts-type`; (3) `string | undefined` return lost its
 `undefined` arm (getContractSource). Repro: `npm i @stacks/clarinet-sdk` →
 `drift get node_modules/@stacks/clarinet-sdk/dist/esm/node/src/sdkProxy.d.ts Simnet`.
 
+## posthog-js dogfood: coverage % inflated by external symbols — DONE 2026-07-10
+`drift scan` on posthog-js@1.399.1 counted `<external>` re-exports (docs live
+in @posthog/core, never cross the extraction boundary) as undocumented.
+Fixed: `isExternalExport` in packages/sdk/src/analysis/health.ts detects both
+extraction forms (`source.file === '<external>'`, and package-only source
+with no file; file+package = resolved, counts normally). Bucketed out of the
+denominator in buildDriftSpec + scan/coverage/health CLI (single + batch);
+surfaced as `summary.externalExports` / `health.completeness.external` /
+`coverage.external` and "+N external (not resolvable here)" in human output.
+- Same run, working as designed (don't re-file): `--json` piped output ends
+  cleanly at `}` (timing line is TTY-only); posthog's pnpm
+  `min-release-age=7` install friction is their .npmrc, not drift.
+
+## posthog-js dogfood: hosted docs corpus mode — Phase A DONE 2026-07-10
+Phase A shipped: `--docs <patterns...>` on scan + lint (globs or directories;
+dir expands to **/*.{md,mdx}; overrides config.docs; warns on zero matches;
+runs for any lang when explicit). resolveDocsCorpus in
+packages/cli/src/utils/docs-corpus.ts.
+Phase B still open — what made the posthog audit manual: hosted docs call
+`posthog.capture(...)` with no import, so import-based registry linking never
+fires. Needs: instance-linking heuristic (config `instanceNames` or infer
+singleton from spec), bidirectional claims report (claims-not-in-spec /
+spec-not-in-claims), maybe URL ingestion. Overlaps with the prose-drift
+registry/linking design below — solve together.
+
 ## Prose drift for non-TS langs
 `scan` gates prose drift behind `lang === 'typescript'`
 (packages/cli/src/commands/scan.ts). For OpenAPI (docs-site guides vs spec)
