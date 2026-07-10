@@ -44,6 +44,14 @@ packages/sdk/src/analysis/report.ts:~124 emits
 lander. SCHEMA_URL (unpkg) is fixed this release; the report one needs either
 hosting the schema or repointing to the unpkg path shipped in `schemas/`.
 
+## openpkg extraction gaps (found dogfooding on @stacks/clarinet-sdk wasm surface, 2026-07-09)
+Upstream (@openpkg-ts/sdk) — wasm-bindgen d.ts extracts cleanly (44-member class,
+full signatures), but: (1) mapped conditional types (`{[K in keyof SDK]: ...}`)
+don't flatten to members; (2) function-type aliases (`type CallFn = (...) => X`)
+render as opaque `x-ts-type`; (3) `string | undefined` return lost its
+`undefined` arm (getContractSource). Repro: `npm i @stacks/clarinet-sdk` →
+`drift get node_modules/@stacks/clarinet-sdk/dist/esm/node/src/sdkProxy.d.ts Simnet`.
+
 ## Prose drift for non-TS langs
 `scan` gates prose drift behind `lang === 'typescript'`
 (packages/cli/src/commands/scan.ts). For OpenAPI (docs-site guides vs spec)
