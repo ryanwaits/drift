@@ -1,94 +1,41 @@
-import { PackageInstall } from '@/components/ui/docskit';
+import { HeroInstall } from '@/components/hero-install';
+import { SkillCopyLine } from '@/components/skill-copy-line';
 
-async function getStarCount(): Promise<string> {
-  try {
-    const res = await fetch('https://api.github.com/repos/ryanwaits/drift', {
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return '—';
-    const data = await res.json();
-    const count = data.stargazers_count as number;
-    return count >= 1000 ? `${(count / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(count);
-  } catch {
-    return '—';
-  }
-}
+const SKILL_INSTALL_COMMAND = 'bunx skills add ryanwaits/drift';
 
-export async function Hero() {
-  const stars = await getStarCount();
+export function Hero() {
   return (
-    <section className="relative z-10 mx-auto grid max-w-6xl gap-12 px-6 py-20 lg:grid-cols-2 lg:gap-16 lg:py-32">
-      {/* Left — title + CTA */}
-      <div className="flex flex-col justify-center">
-        <h1 className="font-serif text-7xl leading-[0.9] tracking-tight text-text sm:text-8xl lg:text-9xl">
-          drift
-        </h1>
-        <p className="mt-6 max-w-md text-lg leading-relaxed text-text-muted">
-          Code changes. Docs don&apos;t. Drift catches it.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <a
-            href="#overview"
-            className="inline-flex h-10 items-center rounded-lg bg-cta px-5 text-sm font-medium text-white transition-opacity hover:opacity-90"
-          >
-            Scan a Package
-          </a>
-          <a
-            href="https://github.com/ryanwaits/drift"
-            className="inline-flex h-10 items-center rounded-lg border border-border px-5 text-sm font-medium text-text transition-colors hover:bg-card-bg"
-          >
-            View on GitHub
-          </a>
-          <a
-            href="https://github.com/ryanwaits/drift/tree/main/docs"
-            className="inline-flex h-10 items-center rounded-lg border border-border px-5 text-sm font-medium text-text transition-colors hover:bg-card-bg"
-          >
-            View Docs
-          </a>
-        </div>
+    <section className="relative z-10 mx-auto max-w-2xl px-6 pt-10 pb-16 text-center lg:pt-14 lg:pb-24">
+      <p className="mb-5 flex flex-nowrap items-center justify-center gap-2 text-sm text-text-muted">
+        <span className="shrink-0 rounded bg-text px-2 py-0.5 font-mono text-xs font-bold text-page-bg">
+          New
+        </span>
+        <span className="min-w-0 truncate">
+          <b className="font-medium text-text">v1.9.0</b>
+          {' — drift catches deprecated code your agent would'}&apos;ve missed.
+        </span>
+        <a
+          href="/changelog"
+          className="shrink-0 underline decoration-border-strong underline-offset-2 transition-colors hover:text-text hover:decoration-text"
+        >
+          View changelog →
+        </a>
+      </p>
+
+      <h1 className="font-serif text-7xl leading-[0.92] tracking-tight text-text sm:text-8xl lg:text-9xl">
+        drift
+      </h1>
+      <p className="mx-auto mt-5 max-w-md text-xl text-text">
+        Code changes. Docs don&apos;t. Drift catches it.
+      </p>
+
+      <div className="mt-8">
+        <HeroInstall />
       </div>
 
-      {/* Right — install block + badges */}
-      <div className="flex flex-col justify-center gap-0">
-        <h4 className="font-serif text-2xl tracking-tight text-text">Installation</h4>
-        <PackageInstall package="@driftdev/cli" dev managers={['bun', 'npm', 'pnpm']} copyButton />
-        <div className="flex flex-wrap gap-3">
-          <ShieldBadge label="stars" value={stars} />
-          <ShieldBadge label="coverage" value="100%" variant="green" />
-          <ShieldBadge label="license" value="MIT" />
-        </div>
-      </div>
+      <p className="mx-auto mt-3 max-w-md text-sm text-text-muted">
+        For agents: <SkillCopyLine command={SKILL_INSTALL_COMMAND} />
+      </p>
     </section>
-  );
-}
-
-function ShieldBadge({
-  label,
-  value,
-  variant = 'default',
-}: {
-  label: string;
-  value: string;
-  variant?: 'default' | 'green';
-}) {
-  return (
-    <span className="inline-flex items-center overflow-hidden rounded-md border border-border text-xs font-medium">
-      <span
-        className={
-          variant === 'green'
-            ? 'bg-[#2d3a2e] px-2.5 py-1 text-green-200'
-            : 'bg-card-bg px-2.5 py-1 text-text-muted'
-        }
-      >
-        {label}
-      </span>
-      <span
-        className={
-          variant === 'green' ? 'bg-green-100 px-2.5 py-1 text-green-700' : 'px-2.5 py-1 text-text'
-        }
-      >
-        {value}
-      </span>
-    </span>
   );
 }

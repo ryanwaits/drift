@@ -1,21 +1,21 @@
-import { CodeExamples } from '@/components/code-examples';
-import { FeatureCards } from '@/components/feature-cards';
-import { FeaturesList } from '@/components/features-list';
+import { FeatureRows } from '@/components/feature-rows';
+import { Footer } from '@/components/footer';
 import { Hero } from '@/components/hero';
 import { Nav } from '@/components/nav';
 import { WavePattern } from '@/components/wave-pattern';
 
-export default async function Home() {
+export default function Home() {
   return (
     <div className="relative min-h-screen">
-      <WavePattern />
       <Nav />
-      <Hero />
-      <FeatureCards />
-      <hr className="mx-auto max-w-4xl border-border" />
-      <CodeExamples />
-      <hr className="mx-auto max-w-4xl border-border" />
-      <FeaturesList />
+      <div className="relative overflow-hidden">
+        <WavePattern />
+        <Hero />
+      </div>
+      <hr className="section-divider" />
+      <FeatureRows />
+      <hr className="section-divider" />
+      <Footer />
     </div>
   );
 }
