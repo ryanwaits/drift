@@ -162,6 +162,12 @@ Override with the `docs` config key:
 
 See [Configuration](./configuration.md) for config file locations.
 
+Override at the command line instead with `--docs <patterns...>` (globs or directories) — useful for pointing at a hosted docs site pulled down locally, without touching the config file. Runs for any language when passed explicitly, not just TypeScript:
+
+```bash
+drift lint --docs guides/**/*.md
+```
+
 ## Monorepo Mode
 
 Run lint across all workspace packages:

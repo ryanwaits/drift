@@ -43,6 +43,21 @@ coverage = documented_exports / total_exports * 100
 }
 ```
 
+### External Exports
+
+Exports whose declaration lives outside the analyzed program don't count against you. If an export's source resolves to `<external>` (or it's package-only, with no local file), it's bucketed out of the denominator instead of counting as undocumented:
+
+```json
+{
+  "score": 94,
+  "documented": 142,
+  "total": 151,
+  "external": 12
+}
+```
+
+This shows up as `summary.externalExports` in the SDK, `coverage.external` in CLI JSON, and a `+N external (not resolvable here)` note in human-readable output.
+
 ### Threshold Enforcement
 
 Set a minimum coverage threshold:
