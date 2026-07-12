@@ -18,10 +18,27 @@ const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
 });
 
+const siteUrl = 'https://driftdev.sh';
+const title = "drift — code changes. docs don't. drift catches it.";
+const description =
+  'Detect when your docs drift from your code — TypeScript packages, OpenAPI specs, Clarity contracts. Finds stale docs, broken references, and outdated examples.';
+
 export const metadata: Metadata = {
-  title: "drift — code changes. docs don't. drift catches it.",
-  description:
-    'Detect when your docs drift from your code — TypeScript packages, OpenAPI specs, Clarity contracts. Finds stale docs, broken references, and outdated examples.',
+  metadataBase: new URL(siteUrl),
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    url: siteUrl,
+    siteName: 'drift',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title,
+    description,
+  },
 };
 
 export default function RootLayout({
