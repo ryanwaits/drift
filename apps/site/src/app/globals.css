@@ -2,32 +2,44 @@
 @import "../styles/docskit.css";
 
 :root {
-  --page-bg: #f7f7f4;
-  --card-bg: #f2f1ed;
-  --code-bg: #e1e0db;
-  --text: #26251e;
-  --text-muted: #26251e99;
-  --accent: #f54e00;
-  --cta: #c08532;
-  --label: #3a6a9f;
-  --border: #26251e1a;
-  --light: #f7f7f4;
-  --wave-stroke: #e5e5e0;
+  --page-bg: #fbfaf6;
+  --card-bg: #fbfaf6;
+  --code-bg: #f1efe6;
+  --text: #1d1d1f;
+  --text-muted: rgba(29, 29, 31, 0.6);
+  --accent: #1d1d1f;
+  --cta: #1d1d1f;
+  --label: rgba(29, 29, 31, 0.6);
+  --border: rgba(15, 0, 0, 0.12);
+  --border-strong: rgba(15, 0, 0, 0.22);
+  --light: #fbfaf6;
+  --focus: #f8fac7;
+  --wave-stroke: rgba(29, 29, 31, 0.12);
+  --code-key: #3a5ccc;
+  --code-string: #8a6a1f;
+  --code-flag: #b23b2a;
+  --code-fix: #2f7d4f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --page-bg: #1a1a17;
-    --card-bg: #24241f;
-    --code-bg: #2e2e28;
-    --text: #ededec;
-    --text-muted: #ededec99;
-    --accent: #ff6b2b;
-    --cta: #d4a34a;
-    --label: #6aade0;
-    --border: #ededec15;
-    --light: #1a1a17;
-    --wave-stroke: #2e2e28;
+    --page-bg: #1a1a1a;
+    --card-bg: #1a1a1a;
+    --code-bg: #1a1a1a;
+    --text: #f2f1ec;
+    --text-muted: rgba(242, 241, 236, 0.6);
+    --accent: #4a4942;
+    --cta: #4a4942;
+    --label: rgba(242, 241, 236, 0.6);
+    --border: rgba(255, 255, 255, 0.14);
+    --border-strong: rgba(255, 255, 255, 0.24);
+    --light: #1a1a1a;
+    --focus: #dde27f;
+    --wave-stroke: rgba(242, 241, 236, 0.14);
+    --code-key: #7ea1ff;
+    --code-string: #d1a94a;
+    --code-flag: #ff8a72;
+    --code-fix: #6fcf8e;
   }
 }
 
@@ -41,7 +53,13 @@
   --color-cta: var(--cta);
   --color-label: var(--label);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-light: var(--light);
+  --color-focus: var(--focus);
+  --color-code-key: var(--code-key);
+  --color-code-string: var(--code-string);
+  --color-code-flag: var(--code-flag);
+  --color-code-fix: var(--code-fix);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-instrument-serif);
@@ -51,4 +69,30 @@ body {
   background: var(--page-bg);
   color: var(--text);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--page-bg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--border-strong);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Full-bleed section break: fades out toward the viewport edges instead of
+   cutting hard at a constrained content width. */
+.section-divider {
+  height: 1px;
+  border: none;
+  margin: 0;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--border-strong) 20%,
+    var(--border-strong) 80%,
+    transparent
+  );
 }

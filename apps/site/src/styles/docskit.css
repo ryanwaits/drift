@@ -3,35 +3,40 @@
  * CodeHike theme variables + openpkg-code-* Tailwind color mappings.
  */
 
-/* CodeHike custom theme (light default) */
+/* CodeHike custom theme (light default) — container-level slots (bg, border,
+   header, active/inactive text, selection, line-number, accent) retheme to
+   match the new near-white/near-black palette. Deep per-scope syntax hues
+   (comments/keywords/etc, ch-2/5/7/9/11/12/13/17-19/21/25) are left as-is —
+   the only real code on the page today (bash install commands) barely
+   exercises them; revisit if/when richer snippets land. */
 :root {
   --ch-0: light;
   --ch-1: #999999;
   --ch-2: #c9555a;
-  --ch-3: #3a3a3a;
-  --ch-4: #3a3a3a;
+  --ch-3: #1d1d1f;
+  --ch-4: #1d1d1f;
   --ch-5: #7c3aed;
-  --ch-6: #b8860b;
+  --ch-6: #3a5ccc;
   --ch-7: #c9555a;
-  --ch-8: #b8860b;
+  --ch-8: #3a5ccc;
   --ch-9: #c9555a;
-  --ch-10: #ebebeb;
+  --ch-10: #f3f2ec;
   --ch-11: #fde8e8;
   --ch-12: #e8f5e8;
   --ch-13: #fdf0d5;
-  --ch-14: #e8e8e8;
-  --ch-15: #999999;
-  --ch-16: #f5f5f5;
+  --ch-14: #f3f2ec;
+  --ch-15: rgba(29, 29, 31, 0.6);
+  --ch-16: #ffffff;
   --ch-17: #d0d0d080;
   --ch-18: #fdff0033;
   --ch-19: #c9555a;
-  --ch-20: #d0d0e0;
+  --ch-20: #f8fac7;
   --ch-21: #c9555a;
-  --ch-22: #ebebeb;
-  --ch-23: #e0e0e0;
-  --ch-24: #b0b0b0;
+  --ch-22: #ffffff;
+  --ch-23: rgba(15, 0, 0, 0.12);
+  --ch-24: rgba(29, 29, 31, 0.4);
   --ch-25: #b0b0b033;
-  --ch-26: #f5f5f5e6;
+  --ch-26: #ffffffe6;
 }
 
 /* CodeHike dark theme */
@@ -40,30 +45,30 @@
     --ch-0: dark;
     --ch-1: #6a6a6a;
     --ch-2: #e06c75;
-    --ch-3: #d4d4d4;
-    --ch-4: #d4d4d4;
+    --ch-3: #f2f1ec;
+    --ch-4: #f2f1ec;
     --ch-5: #c678dd;
-    --ch-6: #e5c07b;
+    --ch-6: #7ea1ff;
     --ch-7: #c678dd;
-    --ch-8: #e5c07b;
+    --ch-8: #7ea1ff;
     --ch-9: #e06c75;
-    --ch-10: #3a3a3a;
+    --ch-10: #232322;
     --ch-11: #4a2020;
     --ch-12: #204a20;
     --ch-13: #4a3a10;
-    --ch-14: #3a3a3a;
-    --ch-15: #6a6a6a;
-    --ch-16: #1e1e1c;
+    --ch-14: #232322;
+    --ch-15: rgba(242, 241, 236, 0.6);
+    --ch-16: #1a1a1a;
     --ch-17: #40404080;
     --ch-18: #fdff0022;
     --ch-19: #e06c75;
-    --ch-20: #3a3a50;
+    --ch-20: #dde27f;
     --ch-21: #e06c75;
-    --ch-22: #2a2a27;
-    --ch-23: #3a3a36;
-    --ch-24: #5a5a56;
+    --ch-22: #1a1a1a;
+    --ch-23: rgba(255, 255, 255, 0.14);
+    --ch-24: rgba(242, 241, 236, 0.4);
     --ch-25: #5a5a5633;
-    --ch-26: #1e1e1ce6;
+    --ch-26: #1a1a1ae6;
   }
 }
 

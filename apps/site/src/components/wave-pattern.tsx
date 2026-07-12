@@ -1,6 +1,6 @@
 export function WavePattern() {
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+    <div className="pointer-events-none absolute inset-0 z-0">
       <svg
         aria-hidden="true"
         className="h-full w-full"
