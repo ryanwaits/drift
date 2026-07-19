@@ -93,6 +93,9 @@ Coverage + lint + prose drift + health in one pass. This is the **default comman
 | `--lang <language>` | string | Source language: inferred from `--spec`/`--abi`/`.clar`; default `typescript` |
 | `--abi <path>` | string | ABI JSON file (required for Clarity) |
 | `--spec <path>` | string | OpenAPI 3.x JSON document — path or URL (implies openapi) |
+| `--docs <patterns...>` | string[] | Markdown corpus for prose drift (overrides repo-local defaults) |
+| `--docs-map <file>` | string | Docs map (page→type) activating key-coverage mode |
+| `--annotations` | boolean | Emit GitHub Actions `::error`/`::warning` annotations for findings |
 
 ```bash
 drift            # bare drift = scan
@@ -100,6 +103,7 @@ drift scan src/index.ts --min 80
 drift scan --all --private
 drift scan --lang clarity --abi token.abi.json token.clar
 drift scan --lang openapi --spec openapi.json
+drift scan --docs-map drift.docs-map.json --annotations
 ```
 
 `--lang clarity` and `--lang openapi` run in single-package mode only (`--all` is TypeScript-only). Prose drift is TypeScript-only for now.
@@ -121,6 +125,40 @@ Data shape:
   "packageVersion": "1.0.0"
 }
 ```
+
+### Key-coverage mode (`--docs-map`)
+
+A docs map (`drift.docs-map.json`, JSON Schema at `@driftdev/cli/schemas/drift.docs-map.schema.json`) maps docs pages to spec types. Scan then diffs each page's documented option keys (backticked table cells inside option sections) against the type's real properties:
+
+- **gap** — a type key the page doesn't document (classified user-facing/internal/deprecated)
+- **ghost** — a documented key that exists on no spec type → **FAIL**
+- **inversion** — a documented deprecated key whose replacement isn't documented (replacement auto-derived from `@deprecated Use X instead`) → WARN
+- gaps above the committed `baselineGaps` ratchet → **FAIL** (drift shrinks, never grows)
+
+```json
+{
+  "$schema": "https://unpkg.com/@driftdev/cli/schemas/drift.docs-map.schema.json",
+  "version": 1,
+  "pages": [
+    {
+      "page": "contents/docs/node/index.mdx",
+      "extraPages": ["contents/docs/node/_snippets/*.mdx"],
+      "type": "PostHogOptions",
+      "spec": "specs/node.json",
+      "baselineGaps": 37
+    }
+  ]
+}
+```
+
+The scan envelope gains `data.docsCoverage.pages[]` with per-page counts, `gaps`, `ghosts`, `inversions`, and `status`. Bootstrap the map with `drift docs-map stub` (see below) or the `drift-docs-map` skill.
+
+### `drift docs-map stub|baseline`
+
+| Subcommand | Description |
+|------------|-------------|
+| `stub --docs <patterns...> [--out <file>]` | Scaffold a map: pages with option tables, types ranked by key overlap |
+| `baseline <map>` | Tighten each page's `baselineGaps` to current counts (ratchet — never raises) |
 
 Batch mode (`--all`) data shape:
 
