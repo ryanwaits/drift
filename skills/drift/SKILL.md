@@ -93,4 +93,4 @@ JSON report, GitHub issue, or PR comment on request. Keep the shape:
 - The spec is the source of truth; grep is only for searching doc content.
 - One `drift get` per claim you verify — never trust memory of an API.
 - Preserve doc prose; only fix code references, signatures, and factual claims.
-- Exit codes matter in CI: nonzero = issues found or threshold missed.
+- Exit codes matter in CI (grep convention): 0 = clean, 1 = findings/threshold missed/not found, 2 = usage or internal error.
