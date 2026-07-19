@@ -119,6 +119,77 @@ describe('drift scan --docs-map', () => {
   });
 });
 
+describe('drift scan --docs-map standalone (no package entry)', () => {
+  // Docs-only repo shape (e.g. a docs site gating SDK pages against committed
+  // specs): no package.json, no TS entry — every page carries its own spec.
+  const DIR = path.join(TMP, 'standalone');
+
+  beforeAll(() => {
+    mkdirSync(path.join(DIR, 'docs'), { recursive: true });
+    writeFileSync(
+      path.join(DIR, 'docs', 'config.mdx'),
+      readFileSync(path.join(TMP, 'docs', 'config.mdx')),
+    );
+    writeFileSync(
+      path.join(DIR, 'spec.json'),
+      JSON.stringify({
+        types: [
+          {
+            name: 'ClientOptions',
+            schema: {
+              type: 'object',
+              properties: {
+                host: { type: 'string', description: 'API host' },
+                flushInterval: { type: 'number', description: 'Flush interval ms' },
+                missingOption: { type: 'boolean', description: 'Not documented on the page' },
+                personalApiKey: {
+                  type: 'string',
+                  deprecated: true,
+                  'x-deprecated-reason': 'Use `secretKey` instead.',
+                },
+                secretKey: { type: 'string', description: 'Replacement credential' },
+              },
+            },
+          },
+        ],
+      }),
+    );
+    writeFileSync(
+      path.join(DIR, 'drift.docs-map.json'),
+      JSON.stringify({
+        version: 1,
+        pages: [
+          { page: 'docs/config.mdx', spec: 'spec.json', type: 'ClientOptions', baselineGaps: 2 },
+        ],
+      }),
+    );
+  });
+
+  test('runs key coverage without an entry when every page has a spec', () => {
+    const result = run(['scan', '--docs-map', 'drift.docs-map.json', '--json'], DIR);
+    const envelope = JSON.parse(result.stdout.toString());
+    expect(envelope.ok).toBe(true);
+    // No package under scan: coverage/lint/health absent, docsCoverage present
+    expect(envelope.data.coverage).toBeUndefined();
+    expect(envelope.data.lint).toBeUndefined();
+    const page = envelope.data.docsCoverage.pages[0];
+    expect(page.ghosts.map((g: { key: string }) => g.key)).toEqual(['ghostOption']);
+    expect(page.inversions).toEqual([
+      { documented: 'personalApiKey', replacement: 'secretKey', source: 'spec' },
+    ]);
+    expect(result.exitCode).toBe(1);
+  });
+
+  test('--annotations emits workspace-relative file paths', () => {
+    const result = Bun.spawnSync(
+      ['bun', 'run', CLI, 'scan', '--docs-map', 'drift.docs-map.json', '--annotations', '--json'],
+      { cwd: DIR, env: { ...process.env, NO_COLOR: '1' }, stdout: 'pipe', stderr: 'pipe' },
+    );
+    const stdout = result.stdout.toString();
+    expect(stdout).toContain('::error file=docs/config.mdx');
+  });
+});
+
 describe('drift docs-map', () => {
   test('stub proposes page→type mapping by key overlap', () => {
     const { envelope } = json(['docs-map', 'stub', '--docs', 'docs']);

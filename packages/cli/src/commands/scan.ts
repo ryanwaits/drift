@@ -32,7 +32,8 @@ interface LintIssue {
 }
 
 export interface ScanResult {
-  coverage: {
+  /** Absent in docs-map standalone mode (no package under scan) */
+  coverage?: {
     score: number;
     documented: number;
     total: number;
@@ -40,8 +41,8 @@ export interface ScanResult {
     /** External re-exports excluded from `total` (docs not resolvable here) */
     external?: number;
   };
-  lint: { issues: LintIssue[]; count: number };
-  health: number;
+  lint?: { issues: LintIssue[]; count: number };
+  health?: number;
   pass: boolean;
   packageName?: string;
   packageVersion?: string;
@@ -62,6 +63,26 @@ export interface ScanResult {
       documentedKeysFromOtherTypes: string[];
       annotated: KeyCoverageResult['annotated'];
     }>;
+  };
+}
+
+function toDocsCoverageResult(run: DocsCoverageRun): NonNullable<ScanResult['docsCoverage']> {
+  return {
+    pass: run.pass,
+    pages: run.pages.map((p) => ({
+      page: p.page,
+      type: p.type,
+      status: p.status,
+      baselineGaps: p.baselineGaps,
+      counts: p.result.counts,
+      failures: p.failures,
+      warnings: p.warnings,
+      gaps: p.result.gaps,
+      ghosts: p.result.ghosts,
+      inversions: p.result.inversions,
+      documentedKeysFromOtherTypes: p.result.documentedKeysFromOtherTypes,
+      annotated: p.result.annotated,
+    })),
   };
 }
 
@@ -201,6 +222,33 @@ export function registerScanCommand(program: Command): void {
             return;
           }
 
+          // Docs-map standalone mode: when every page carries its own truth
+          // (spec or entry), no package entry is needed — docs-only repos
+          // (e.g. a docs site gating SDK pages against committed specs) have
+          // nothing to detect.
+          if (options.docsMap && !entry) {
+            const loaded = loadDocsMap(options.docsMap);
+            if (loaded.map.pages.every((p) => p.spec || p.entry)) {
+              const run = await runDocsCoverage(loaded);
+              const data: ScanResult = { pass: run.pass, docsCoverage: toDocsCoverageResult(run) };
+              formatOutput('scan', data, startTime, version, renderScan);
+              if (options.annotations) {
+                emitAnnotations(run.annotations.errors, 'error');
+                emitAnnotations(run.annotations.warnings, 'warning');
+              }
+              if (!run.pass) {
+                if (!shouldRenderHuman()) {
+                  const covFails = run.pages.flatMap((p) =>
+                    p.failures.map((f) => `${p.page}: ${f}`),
+                  );
+                  process.stderr.write(`scan failed: docs coverage: ${covFails.join(' | ')}\n`);
+                }
+                process.exitCode = 1;
+              }
+              return;
+            }
+          }
+
           // Single-package mode
           const { config } = loadConfig();
           let entryFile = entry ? path.resolve(process.cwd(), entry) : undefined;
@@ -302,27 +350,7 @@ export function registerScanCommand(program: Command): void {
             pass,
             packageName,
             packageVersion,
-            ...(docsCoverage
-              ? {
-                  docsCoverage: {
-                    pass: docsCoverage.pass,
-                    pages: docsCoverage.pages.map((p) => ({
-                      page: p.page,
-                      type: p.type,
-                      status: p.status,
-                      baselineGaps: p.baselineGaps,
-                      counts: p.result.counts,
-                      failures: p.failures,
-                      warnings: p.warnings,
-                      gaps: p.result.gaps,
-                      ghosts: p.result.ghosts,
-                      inversions: p.result.inversions,
-                      documentedKeysFromOtherTypes: p.result.documentedKeysFromOtherTypes,
-                      annotated: p.result.annotated,
-                    })),
-                  },
-                }
-              : {}),
+            ...(docsCoverage ? { docsCoverage: toDocsCoverageResult(docsCoverage) } : {}),
           };
 
           // Compute next action hint

@@ -11,26 +11,28 @@ export function renderScan(data: ScanResult, next?: OutputNext): string {
     lines.push('');
   }
 
-  // Summary
-  const hColor = coverageColor(data.health);
-  lines.push(indent(`Health     ${hColor(`${data.health}%`)}`));
-  const externalNote = data.coverage.external
-    ? c.gray(`  +${data.coverage.external} external (not resolvable here)`)
-    : '';
-  lines.push(
-    indent(
-      `Coverage   ${coverageColor(data.coverage.score)(`${data.coverage.score}%`)}  (${data.coverage.documented}/${data.coverage.total} exports)${externalNote}`,
-    ),
-  );
-  lines.push(
-    indent(
-      `Lint       ${data.lint.count === 0 ? c.green('0 issues') : c.red(`${data.lint.count} issues`)}`,
-    ),
-  );
-  lines.push('');
+  // Summary — absent in docs-map standalone mode (no package under scan)
+  if (data.health !== undefined && data.coverage && data.lint) {
+    const hColor = coverageColor(data.health);
+    lines.push(indent(`Health     ${hColor(`${data.health}%`)}`));
+    const externalNote = data.coverage.external
+      ? c.gray(`  +${data.coverage.external} external (not resolvable here)`)
+      : '';
+    lines.push(
+      indent(
+        `Coverage   ${coverageColor(data.coverage.score)(`${data.coverage.score}%`)}  (${data.coverage.documented}/${data.coverage.total} exports)${externalNote}`,
+      ),
+    );
+    lines.push(
+      indent(
+        `Lint       ${data.lint.count === 0 ? c.green('0 issues') : c.red(`${data.lint.count} issues`)}`,
+      ),
+    );
+    lines.push('');
+  }
 
   // Issues (max 10)
-  if (data.lint.count > 0) {
+  if (data.lint && data.lint.count > 0) {
     lines.push(indent('Issues'));
     lines.push(indent(c.gray(separator())));
     const shown = data.lint.issues.slice(0, 10);

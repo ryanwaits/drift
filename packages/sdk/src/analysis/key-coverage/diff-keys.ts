@@ -20,7 +20,7 @@ type SpecEntry = ApiExport | ApiType;
 
 /** Find a type-like entry by name: exports first, then referenced types. */
 export function findTypeEntry(spec: ApiSpec, name: string): SpecEntry | undefined {
-  return spec.exports.find((e) => e.name === name) ?? spec.types?.find((t) => t.name === name);
+  return spec.exports?.find((e) => e.name === name) ?? spec.types?.find((t) => t.name === name);
 }
 
 /**
@@ -72,7 +72,7 @@ export function collectTypeKeys(entry: SpecEntry): Map<string, KeyMeta> {
 /** Union of property keys across every entry in the spec (ghost resolution). */
 export function collectAllTypeKeys(spec: ApiSpec): Set<string> {
   const all = new Set<string>();
-  for (const entry of [...spec.exports, ...(spec.types ?? [])]) {
+  for (const entry of [...(spec.exports ?? []), ...(spec.types ?? [])]) {
     for (const key of collectTypeKeys(entry).keys()) all.add(key);
   }
   return all;
@@ -98,7 +98,9 @@ export function computeKeyCoverage(
   // A spec can carry several entries with the same name (an export plus a
   // referenced-types variant, flattened to different depths). Merge their
   // keys — the fullest view of the type is the truthful one.
-  const entries = [...spec.exports, ...(spec.types ?? [])].filter((e) => e.name === typeName);
+  const entries = [...(spec.exports ?? []), ...(spec.types ?? [])].filter(
+    (e) => e.name === typeName,
+  );
   if (entries.length === 0) return null;
 
   const keyMeta = new Map<string, KeyMeta>();
