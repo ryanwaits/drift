@@ -14,6 +14,7 @@ import { registerConfigCommand } from './commands/config';
 import { registerContextCommand } from './commands/context';
 import { registerCoverageCommand } from './commands/coverage';
 import { registerDiffCommand } from './commands/diff';
+import { registerDocsMapCommand } from './commands/docs-map';
 import { registerExamplesCommand } from './commands/examples';
 import { registerExtractCommand } from './commands/extract';
 import { registerFilterCommand } from './commands/filter';
@@ -68,6 +69,7 @@ registerGetCommand(program);
 
 // Spec ops
 registerValidateCommand(program);
+registerDocsMapCommand(program);
 registerFilterCommand(program);
 
 // Analysis

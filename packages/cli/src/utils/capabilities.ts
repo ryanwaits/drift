@@ -70,6 +70,10 @@ const COMMAND_EXAMPLES: Record<string, string[]> = {
   filter: ['drift filter spec.json --kind function --json'],
   report: ['drift report --json'],
   cache: ['drift cache status', 'drift cache clear'],
+  'docs-map': [
+    'drift docs-map stub --docs docs/ --out drift.docs-map.json',
+    'drift docs-map baseline drift.docs-map.json',
+  ],
 };
 
 export function extractCapabilities(program: Command): Capabilities {
@@ -126,6 +130,15 @@ export function extractCapabilities(program: Command): Capabilities {
         description: 'Example validation results',
         operations: { read: 'examples' },
       },
+      {
+        name: 'docs-map',
+        description: 'Committed page→type map for docs key-coverage mode',
+        operations: {
+          create: 'docs-map stub',
+          update: 'docs-map baseline',
+          read: 'scan --docs-map <file>',
+        },
+      },
     ],
     workflows: {
       'detect-drift': {
@@ -141,6 +154,10 @@ export function extractCapabilities(program: Command): Capabilities {
       'pre-release': {
         steps: ['scan', 'breaking', 'release'],
         description: 'Full pre-release quality gate',
+      },
+      'docs-key-coverage': {
+        steps: ['docs-map stub', 'scan --docs-map', 'docs-map baseline'],
+        description: 'Gap/ghost/inversion gate: docs pages vs spec type keys',
       },
     },
   };
