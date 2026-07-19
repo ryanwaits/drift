@@ -13,10 +13,13 @@ export function getVersion(): string {
   // package.json above the install dir can't win.
   for (const rel of ['../package.json', '../../package.json']) {
     try {
-      const pkg = JSON.parse(readFileSync(join(__dirname, rel), 'utf-8'));
+      const pkg = JSON.parse(readFileSync(join(__dirname, rel), 'utf-8')) as {
+        name?: string;
+        version?: string;
+      };
       if (pkg.name === '@driftdev/cli' && typeof pkg.version === 'string') {
         cached = pkg.version;
-        return cached;
+        return pkg.version;
       }
     } catch {
       // keep looking
