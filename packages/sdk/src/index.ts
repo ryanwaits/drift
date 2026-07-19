@@ -97,6 +97,24 @@ export {
   findOrphanedTempFiles,
   IncrementalAnalyzer,
 } from './analysis/incremental';
+export type {
+  DocsKeyCorpus,
+  KeyAnnotation,
+  KeyCoverageOptions,
+  KeyCoverageResult,
+  KeyGap,
+  KeyGhost,
+  KeyInversion,
+} from './analysis/key-coverage';
+// Docs-page key coverage (gaps/ghosts/inversions vs a docs corpus)
+export {
+  collectAllTypeKeys,
+  collectTypeKeys,
+  computeKeyCoverage,
+  DEFAULT_SECTION_RE,
+  extractDocumentedKeys,
+  findTypeEntry,
+} from './analysis/key-coverage';
 // Lookup helpers (for composition pattern)
 export {
   getExportAnalysis,

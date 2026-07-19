@@ -65,6 +65,26 @@ export {
   type IncrementalExportResult,
   type PartialAnalysisState,
 } from './incremental';
+export type {
+  DocsKeyCorpus,
+  DocumentedKeyLocation,
+  KeyAnnotation,
+  KeyCoverageOptions,
+  KeyCoverageResult,
+  KeyGap,
+  KeyGhost,
+  KeyInversion,
+  KeyMeta,
+} from './key-coverage';
+export {
+  collectAllTypeKeys,
+  collectTypeKeys,
+  computeKeyCoverage,
+  DEFAULT_SECTION_RE,
+  extractDocumentedKeys,
+  findTypeEntry,
+  parseReplacement,
+} from './key-coverage';
 // Lookup helpers for composition pattern
 export {
   getExportAnalysis,
