@@ -123,6 +123,8 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
     const fileLocalDeclarations = new Set<string>();
     const filePackageDerived = new Set<string>();
     const filePackageDerivedTypes = new Map<string, string>();
+    const fileExternalDerived = new Set<string>();
+    const fileNonPackageParams = new Set<string>();
     const flaggedDeprecated = new Set<string>();
 
     for (const block of file.codeBlocks) {
@@ -135,6 +137,8 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
         filePackageDerived,
         registry,
         filePackageDerivedTypes,
+        fileExternalDerived,
+        fileNonPackageParams,
       );
 
       // 1. Check imports (existing behavior)
@@ -152,6 +156,8 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
           fileExternalImports,
           fileLocalDeclarations,
           filePackageDerived,
+          fileExternalDerived,
+          fileNonPackageParams,
         );
       }
 
@@ -230,6 +236,8 @@ function accumulateBlockContext(
   packageDerived?: Set<string>,
   registry?: ExportRegistry,
   packageDerivedTypes?: Map<string, string>,
+  externalDerived?: Set<string>,
+  nonPackageParams?: Set<string>,
 ): void {
   try {
     const imports = extractImportsAST(code);
@@ -254,6 +262,62 @@ function accumulateBlockContext(
       if (packageDerivedTypes && returnType) packageDerivedTypes.set(name, returnType);
     }
   }
+
+  // Track receivers provably bound to non-package types: variables derived
+  // from external-import calls (`const app = express()`) and function
+  // parameters not annotated with a package type (`(req, res) => …`). Their
+  // methods aren't ours to validate.
+  if (externalDerived && nonPackageParams) {
+    extractNonPackageReceivers(code, externalImports, registry, externalDerived, nonPackageParams);
+  }
+}
+
+/**
+ * Find receivers bound to non-package types:
+ * - `const x = ext(...)` / `new Ext(...)` where `ext` is an external import
+ * - function parameters without a type annotation naming a package export
+ */
+function extractNonPackageReceivers(
+  code: string,
+  externalImports: Set<string>,
+  registry: ExportRegistry | undefined,
+  externalDerived: Set<string>,
+  nonPackageParams: Set<string>,
+): void {
+  try {
+    const sourceFile = ts.createSourceFile(
+      'temp.ts',
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+
+    const walk = (node: TS.Node) => {
+      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+        let expr: TS.Expression = node.initializer;
+        if (ts.isAwaitExpression(expr)) expr = expr.expression;
+        if (
+          (ts.isCallExpression(expr) || ts.isNewExpression(expr)) &&
+          ts.isIdentifier(expr.expression) &&
+          externalImports.has(expr.expression.text)
+        ) {
+          externalDerived.add(node.name.text);
+        }
+      }
+      if (ts.isParameter(node) && ts.isIdentifier(node.name)) {
+        // Keep validating params explicitly annotated with a package type
+        const typeName = node.type?.getText(sourceFile).split('<')[0].trim();
+        if (!typeName || !registry?.all.has(typeName)) {
+          nonPackageParams.add(node.name.text);
+        }
+      }
+      ts.forEachChild(node, walk);
+    };
+    walk(sourceFile);
+  } catch {
+    // parse failure — skip
+  }
 }
 
 /**
@@ -269,6 +333,8 @@ function detectUnresolvedMembers(
   fileExternalImports: Set<string>,
   fileLocalDeclarations: Set<string>,
   filePackageDerived: Set<string>,
+  fileExternalDerived: Set<string>,
+  fileNonPackageParams: Set<string>,
 ): void {
   let calls = extractMethodCallsAST(code);
   if (calls.length === 0) return;
@@ -292,6 +358,12 @@ function detectUnresolvedMembers(
     // Skip objects derived from package export calls whose return type has no indexed members
     // (e.g. `const simnet = await initSimnet()` — Simnet type not fully resolved in registry)
     if (filePackageDerived.has(call.objectName)) continue;
+
+    // Skip receivers provably bound to non-package types: derived from an
+    // external import (`const app = express()`) or a function parameter not
+    // annotated with a package type (`(req, res) => res.sendStatus(200)`)
+    if (fileExternalDerived.has(call.objectName)) continue;
+    if (fileNonPackageParams.has(call.objectName)) continue;
 
     // For locally-declared objects, only skip built-in method names (get, set, map, etc.)
     // Domain-specific methods (callPublicFn, getDataVar, etc.) should still be validated
