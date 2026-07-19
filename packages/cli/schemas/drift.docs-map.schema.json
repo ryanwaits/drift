@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://unpkg.com/@driftdev/cli/schemas/drift.docs-map.schema.json",
+  "title": "Drift docs map",
+  "description": "Page→type mapping for docs key-coverage mode (drift scan --docs-map). The committed artifact of the LLM-writes-the-map / machine-runs-the-map split: an agent may propose it, a human commits it, CI runs it deterministically.",
+  "type": "object",
+  "required": ["version", "pages"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["page", "type"],
+        "properties": {
+          "page": {
+            "type": "string",
+            "description": "Docs page path, relative to this file's directory"
+          },
+          "extraPages": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Additional pages/globs merged into the same corpus (e.g. _snippets/*.mdx)"
+          },
+          "type": {
+            "type": "string",
+            "description": "Spec type whose property keys this page documents"
+          },
+          "spec": {
+            "type": "string",
+            "description": "Committed spec file to diff against (relative to this file). Mutually exclusive with entry; omit both to use the scan target."
+          },
+          "entry": {
+            "type": "string",
+            "description": "Entry file to extract the spec from. Mutually exclusive with spec."
+          },
+          "sectionRe": {
+            "type": "string",
+            "description": "Case-insensitive heading regex opening an options section (default: option|config)"
+          },
+          "internal": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Internal keys beyond the _-prefix convention (excluded from user-facing gaps)"
+          },
+          "deprecated": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Deprecated override — auto-derived from spec metadata when omitted"
+          },
+          "replacements": {
+            "type": "object",
+            "additionalProperties": { "type": "string" },
+            "description": "deprecatedKey → replacementKey override — auto-derived from spec deprecation reasons when omitted"
+          },
+          "annotations": {
+            "type": "object",
+            "additionalProperties": {
+              "enum": ["prose-documented", "internal-by-convention", "ignore"]
+            },
+            "description": "Agent-proposed, human-committed key classifications. prose-documented: genuinely documented in prose, excluded from gap FAIL; internal-by-convention: treated as internal; ignore: excluded entirely (state the reason in a nearby comment key)."
+          },
+          "baselineGaps": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Gap ratchet: CI fails when user-facing gaps exceed this committed count. Drift shrinks, never grows — use `drift docs-map baseline` to tighten."
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

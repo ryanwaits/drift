@@ -4,14 +4,18 @@ import {
   computeDrift,
   detectProseDrift,
   isExternalExport,
+  type KeyCoverageResult,
 } from '@driftdev/sdk';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
+import { loadDocsMap } from '../config/docs-map';
 import { loadConfig } from '../config/loader';
 import { renderBatchScan, renderScan } from '../formatters/scan';
+import { emitAnnotations } from '../utils/annotations';
 import { detectEntry } from '../utils/detect-entry';
 import { readPackageName, resolveDocsCorpus } from '../utils/docs-corpus';
 import { computeHealth } from '../utils/health';
+import { type DocsCoverageRun, runDocsCoverage } from '../utils/key-coverage-runner';
 import { resolveLang, resolveTruth } from '../utils/load-spec';
 import { formatError, formatOutput, formatWarning, type OutputNext } from '../utils/output';
 import { computeRatchetMin } from '../utils/ratchet';
@@ -41,6 +45,24 @@ export interface ScanResult {
   pass: boolean;
   packageName?: string;
   packageVersion?: string;
+  /** Key-coverage results, present when --docs-map is set */
+  docsCoverage?: {
+    pass: boolean;
+    pages: Array<{
+      page: string;
+      type: string;
+      status: 'pass' | 'warn' | 'fail';
+      baselineGaps: number;
+      counts: KeyCoverageResult['counts'];
+      failures: string[];
+      warnings: string[];
+      gaps: KeyCoverageResult['gaps'];
+      ghosts: KeyCoverageResult['ghosts'];
+      inversions: KeyCoverageResult['inversions'];
+      documentedKeysFromOtherTypes: string[];
+      annotated: KeyCoverageResult['annotated'];
+    }>;
+  };
 }
 
 export function registerScanCommand(program: Command): void {
@@ -60,6 +82,11 @@ export function registerScanCommand(program: Command): void {
       '--docs <patterns...>',
       'Markdown corpus for prose drift: glob patterns or directories (overrides repo-local defaults)',
     )
+    .option(
+      '--docs-map <file>',
+      'Docs map (page→type) activating key-coverage mode: gaps/ghosts/inversions per page',
+    )
+    .option('--annotations', 'Emit GitHub Actions ::error/::warning annotations for findings')
     .action(
       async (
         entry: string | undefined,
@@ -71,6 +98,8 @@ export function registerScanCommand(program: Command): void {
           abi?: string;
           spec?: string;
           docs?: string[];
+          docsMap?: string;
+          annotations?: boolean;
         },
       ) => {
         const startTime = Date.now();
@@ -90,6 +119,10 @@ export function registerScanCommand(program: Command): void {
               startTime,
               version,
             );
+            return;
+          }
+          if (options.all && options.docsMap) {
+            formatError('scan', '--docs-map is not supported with --all', startTime, version);
             return;
           }
           if (lang === 'clarity' && !options.abi) {
@@ -238,6 +271,13 @@ export function registerScanCommand(program: Command): void {
             }
           }
 
+          // Key coverage (docs-map mode)
+          let docsCoverage: DocsCoverageRun | undefined;
+          if (options.docsMap) {
+            const loaded = loadDocsMap(options.docsMap);
+            docsCoverage = await runDocsCoverage(loaded, apiSpec);
+          }
+
           // Health
           const healthIssues = issues.map((i) => ({ export: i.export, issue: i.issue }));
           const h = computeHealth(total, documented, healthIssues);
@@ -247,7 +287,7 @@ export function registerScanCommand(program: Command): void {
             const ratchet = computeRatchetMin(min);
             min = ratchet.effectiveMin;
           }
-          const pass = min === undefined || h.health >= min;
+          const pass = (min === undefined || h.health >= min) && (docsCoverage?.pass ?? true);
 
           const data: ScanResult = {
             coverage: {
@@ -262,6 +302,27 @@ export function registerScanCommand(program: Command): void {
             pass,
             packageName,
             packageVersion,
+            ...(docsCoverage
+              ? {
+                  docsCoverage: {
+                    pass: docsCoverage.pass,
+                    pages: docsCoverage.pages.map((p) => ({
+                      page: p.page,
+                      type: p.type,
+                      status: p.status,
+                      baselineGaps: p.baselineGaps,
+                      counts: p.result.counts,
+                      failures: p.failures,
+                      warnings: p.warnings,
+                      gaps: p.result.gaps,
+                      ghosts: p.result.ghosts,
+                      inversions: p.result.inversions,
+                      documentedKeysFromOtherTypes: p.result.documentedKeysFromOtherTypes,
+                      annotated: p.result.annotated,
+                    })),
+                  },
+                }
+              : {}),
           };
 
           // Compute next action hint
@@ -280,10 +341,19 @@ export function registerScanCommand(program: Command): void {
 
           formatOutput('scan', data, startTime, version, renderScan, next);
 
+          if (options.annotations && docsCoverage) {
+            emitAnnotations(docsCoverage.annotations.errors, 'error');
+            emitAnnotations(docsCoverage.annotations.warnings, 'warning');
+          }
+          if (options.annotations && issues.length > 0) emitAnnotations(issues);
+
           if (!pass) {
             if (!shouldRenderHuman()) {
+              const covFails = docsCoverage
+                ? docsCoverage.pages.flatMap((p) => p.failures.map((f) => `${p.page}: ${f}`))
+                : [];
               process.stderr.write(
-                `scan failed: health ${h.health}%${min !== undefined ? ` (need ${min}%)` : ''}, ${issues.length} issues\n`,
+                `scan failed: health ${h.health}%${min !== undefined ? ` (need ${min}%)` : ''}, ${issues.length} issues${covFails.length > 0 ? `; docs coverage: ${covFails.join(' | ')}` : ''}\n`,
               );
             }
             process.exitCode = 1;

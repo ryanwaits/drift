@@ -47,6 +47,29 @@ export function renderScan(data: ScanResult, next?: OutputNext): string {
     lines.push('');
   }
 
+  // Docs key coverage (--docs-map mode)
+  if (data.docsCoverage) {
+    lines.push(indent('Docs coverage'));
+    lines.push(indent(c.gray(separator())));
+    for (const page of data.docsCoverage.pages) {
+      const mark =
+        page.status === 'fail'
+          ? c.red(sym.x)
+          : page.status === 'warn'
+            ? c.yellow('!')
+            : c.green(sym.ok);
+      const cts = page.counts;
+      lines.push(
+        indent(
+          `${mark} ${page.page}  ${c.dim(`${page.type}: ${cts.documented} documented, ${cts.code} in code, ${cts.gapsUserFacing} gaps, ${cts.ghosts} ghosts, ${cts.inversions} inversions`)}`,
+        ),
+      );
+      for (const f of page.failures) lines.push(indent(`  ${c.red(f)}`));
+      for (const w of page.warnings) lines.push(indent(`  ${c.yellow(w)}`));
+    }
+    lines.push('');
+  }
+
   // Verdict
   if (data.pass) {
     lines.push(indent(`${c.green(sym.ok)} Scan passed`));
