@@ -1,6 +1,6 @@
 {
   "name": "@driftdev/sdk",
-  "version": "1.12.0",
+  "version": "1.12.2",
   "description": "Drift SDK - detect when your docs drift from your code",
   "keywords": [
     "typescript",
