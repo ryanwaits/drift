@@ -1,7 +1,7 @@
 /**
  * Spec extraction cache — mtime-based invalidation.
  *
- * Cache key = sha256(entryFile + entry_mtime + pkg_mtime + src_max_mtime + config_hash)
+ * Cache key = sha256(cli_version + entryFile + entry_mtime + pkg_mtime + src_max_mtime + config_hash)
  * Location: .drift/cache/ (fallback $TMPDIR/drift-cache/)
  */
 
@@ -18,6 +18,7 @@ import {
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { getProjectDir } from '../config/global';
+import { getVersion } from '../utils/version';
 
 let _noCache = false;
 
@@ -106,7 +107,9 @@ function buildCacheKey(input: CacheKeyInput): string {
   const pkgJson = findPackageJson(absEntry);
   const pkgMtime = pkgJson ? getMtime(pkgJson) : 0;
   const srcMtime = getSourceMaxMtime(absEntry);
-  const parts = [absEntry, String(entryMtime), String(pkgMtime), String(srcMtime)];
+  // CLI version in the key: an upgraded extractor (e.g. an @openpkg-ts bump
+  // that starts preserving @deprecated metadata) must never serve stale specs
+  const parts = [getVersion(), absEntry, String(entryMtime), String(pkgMtime), String(srcMtime)];
   if (input.configHash) parts.push(input.configHash);
   return hashString(parts.join('|'));
 }
