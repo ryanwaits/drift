@@ -8,6 +8,7 @@ import {
   type ExportCoverageData,
   REPORT_VERSION,
 } from '../types/report';
+import { nowISO } from '../utils/clock';
 import type { ApiExport, ApiSignature, ApiSpec, ApiType } from './api-spec';
 import { buildDriftSpec } from './drift-builder';
 import { isExportDocumented } from './health';
@@ -123,7 +124,7 @@ export function generateReportFromDrift(openpkg: ApiSpec, driftSpec: DriftSpec):
   return {
     $schema: 'https://drift.dev/schemas/v1.0.0/report.schema.json',
     version: REPORT_VERSION,
-    generatedAt: new Date().toISOString(),
+    generatedAt: nowISO(),
     spec: {
       name: openpkg.meta.name,
       version: openpkg.meta.version,

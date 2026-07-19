@@ -10,7 +10,8 @@ import type {
   MissingDocRule,
   TypeReferenceLocation,
 } from '../spec';
-import { DRIFT_CATEGORIES } from '../spec';
+import { DRIFT_CATEGORIES, SCHEMA_URL } from '../spec';
+import { nowISO } from '../utils/clock';
 import type { ApiExport, ApiSpec } from './api-spec';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';
 import { computeHealth, isExportDocumented, isExternalExport } from './health';
@@ -273,6 +274,7 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
   );
 
   return {
+    $schema: SCHEMA_URL,
     drift: '1.0.0',
     source: {
       file: sourcePath,
@@ -280,7 +282,7 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
       packageName,
       packageVersion,
     },
-    generatedAt: new Date().toISOString(),
+    generatedAt: nowISO(),
     summary,
     exports,
     ...(apiSurface ? { apiSurface } : {}),
