@@ -1,6 +1,6 @@
 {
   "name": "@driftdev/cli",
-  "version": "1.12.0",
+  "version": "1.12.1",
   "description": "Drift CLI - detect when your docs drift from your code",
   "keywords": [
     "typescript",

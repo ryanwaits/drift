@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 1.12.1
+
+### Patch Changes
+
+- 995781a: Fix version resolution in the published bundle: `meta.version` reported `0.0.0` from dist (and fed the spec-cache key, neutering version-based invalidation). Name-checked lookup now works from both src and dist layouts.
+
 ## 1.12.0
 
 ### Minor Changes
