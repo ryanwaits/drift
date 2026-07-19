@@ -63,6 +63,20 @@ Error shape:
 }
 ```
 
+## Exit Codes
+
+Grep convention, so CI and agents can branch without parsing:
+
+| Code | Meaning |
+|------|---------|
+| `0` | Clean — no findings, thresholds met |
+| `1` | Findings — drift issues, threshold missed, or lookup not found |
+| `2` | Error — bad usage or internal failure |
+
+## Reproducible Output
+
+Set `SOURCE_DATE_EPOCH` (seconds since epoch) to make JSON output byte-stable across runs: `meta.duration` reports `0` and spec/report `generatedAt` derives from the epoch instead of the wall clock. Use when diffing or caching `drift extract` output in CI.
+
 ---
 
 ## Composed Commands
@@ -242,11 +256,13 @@ Cross-reference JSDoc against code for accuracy issues.
 | `--lang <language>` | string | Source language: inferred from `--spec`/`--abi`/`.clar`; default `typescript` |
 | `--abi <path>` | string | ABI JSON file (required for Clarity) |
 | `--spec <path>` | string | OpenAPI 3.x JSON document — path or URL (implies openapi) |
+| `--annotations` | boolean | Emit GitHub Actions `::error file=…,line=…` annotations for findings |
 
 ```bash
 drift lint
 drift lint src/index.ts
 drift lint --all
+drift lint --annotations   # inline PR annotations in GitHub Actions
 ```
 
 Data shape:
@@ -523,7 +539,7 @@ claude mcp add drift -- drift mcp
 # Any MCP client: command = drift, args = ["mcp"]
 ```
 
-Tools: `drift_extract`, `drift_list`, `drift_get`, `drift_scan` (all accept `cwd`, `entry`, `lang`, `spec` path/URL, `abi`), plus `drift_diff` and `drift_breaking` (TypeScript only today). Each tool returns the same `{ok, data, meta}` envelope as the CLI's `--json` mode.
+Tools: `drift_extract`, `drift_list`, `drift_get`, `drift_scan`, `drift_lint`, `drift_coverage`, `drift_health` (all accept `cwd`, `entry`, `lang`, `spec` path/URL, `abi`), plus `drift_diff` and `drift_breaking` (TypeScript only today). Each tool returns the same `{ok, data, meta}` envelope as the CLI's `--json` mode.
 
 ```
 drift_get { name: "candidateInfo", spec: "https://developers.ashbyhq.com/openapi/ashby-api.json" }

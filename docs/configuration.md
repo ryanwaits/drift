@@ -34,6 +34,7 @@ Drift searches for config in this order (first match wins):
 
 ```json
 {
+  "$schema": "https://unpkg.com/@driftdev/cli/schemas/drift.config.schema.json",
   "entry": "src/index.ts",
   "coverage": {
     "min": 80,
@@ -76,8 +77,11 @@ Applied when no project-local config is found. Useful for personal defaults.
 
 ## All Config Keys
 
+A JSON Schema ships with the CLI (`@driftdev/cli/schemas/drift.config.schema.json`). Add the `$schema` key for editor autocomplete and agent-authored config validation.
+
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| `$schema` | `string` | none | Schema URL for editor/agent validation (ignored at runtime) |
 | `entry` | `string` | auto-detected | TypeScript entry point override |
 | `coverage.min` | `number` (0-100) | none | Minimum coverage threshold (exit 1 if below) |
 | `coverage.ratchet` | `boolean` | `false` | Ratchet: effective min = max(min, highest ever recorded) |
