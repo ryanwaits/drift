@@ -5,6 +5,7 @@ import { cachedExtract } from '../cache/cached-extract';
 import { loadConfig } from '../config/loader';
 import { renderBatchLint } from '../formatters/batch';
 import { renderLint } from '../formatters/lint';
+import { emitAnnotations } from '../utils/annotations';
 import { detectEntry } from '../utils/detect-entry';
 import { readPackageName, resolveDocsCorpus } from '../utils/docs-corpus';
 import { resolveLang, resolveTruth } from '../utils/load-spec';
@@ -37,6 +38,7 @@ export function registerLintCommand(program: Command): void {
       '--docs <patterns...>',
       'Markdown corpus for prose drift: glob patterns or directories (overrides repo-local defaults)',
     )
+    .option('--annotations', 'Emit GitHub Actions ::error annotations for findings')
     .action(
       async (
         entry: string | undefined,
@@ -47,6 +49,7 @@ export function registerLintCommand(program: Command): void {
           abi?: string;
           spec?: string;
           docs?: string[];
+          annotations?: boolean;
         },
       ) => {
         const startTime = Date.now();
@@ -175,6 +178,8 @@ export function registerLintCommand(program: Command): void {
               : undefined;
 
           formatOutput('lint', data, startTime, version, renderLint, next);
+
+          if (options.annotations && issues.length > 0) emitAnnotations(issues);
 
           if (issues.length > 0) {
             if (!shouldRenderHuman()) {
