@@ -1,6 +1,6 @@
 {
   "name": "@driftdev/sdk",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "Drift SDK - detect when your docs drift from your code",
   "keywords": [
     "typescript",
@@ -73,8 +73,8 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@openpkg-ts/sdk": "^0.40.0",
-    "@openpkg-ts/spec": "^0.37.0",
+    "@openpkg-ts/sdk": "^0.43.0",
+    "@openpkg-ts/spec": "^0.43.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "remark-mdx": "^3.1.0",

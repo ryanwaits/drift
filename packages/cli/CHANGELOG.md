@@ -1,5 +1,16 @@
 # @doccov/cli
 
+## 1.11.0
+
+### Minor Changes
+
+- Upgrade extraction pipeline to @openpkg-ts/sdk ^0.43.0 (+spec ^0.43.0): per-property `description` and `@deprecated` now survive alias flattening (`Omit<Base, K> & {...}`), underscore-prefixed members are no longer dropped, and wide types are no longer silently truncated. Restores the metadata needed for deprecation/inversion detection on flattened option types.
+
+### Patch Changes
+
+- Updated dependencies
+  - @driftdev/sdk@1.11.0
+
 ## 1.10.0
 
 ### Minor Changes
