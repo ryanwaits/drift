@@ -190,8 +190,10 @@ function renderNotFound(
       `Export '${exportName}' not found. Similar: ${suggestions.join(', ')}`,
       startTime,
       version,
+      undefined,
+      1,
     );
   } else {
-    formatError('get', `Export '${exportName}' not found`, startTime, version);
+    formatError('get', `Export '${exportName}' not found`, startTime, version, undefined, 1);
   }
 }

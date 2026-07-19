@@ -135,5 +135,6 @@ if (userArgs.length === 0 && !hasHelpOrVersion) {
 }
 
 program.parseAsync().catch(() => {
-  process.exit(1);
+  // Usage/internal failure — findings exit 1, errors exit 2 (grep convention)
+  process.exit(2);
 });

@@ -5,6 +5,16 @@
 
 import { c, shouldRenderHuman } from './render';
 
+/**
+ * Wall-clock duration for the envelope. Reports 0 when SOURCE_DATE_EPOCH is
+ * set (reproducible-builds convention) so JSON output is byte-stable across
+ * runs and can be diffed/cached in CI.
+ */
+function elapsed(startTime: number): number {
+  if (process.env.SOURCE_DATE_EPOCH !== undefined) return 0;
+  return Date.now() - startTime;
+}
+
 export interface OutputMeta {
   command: string;
   duration: number;
@@ -35,7 +45,7 @@ export function formatOutput<T>(
   humanRenderer?: (data: T, next?: OutputNext) => string,
   next?: OutputNext,
 ): OutputEnvelope<T> {
-  const duration = Date.now() - startTime;
+  const duration = elapsed(startTime);
   const envelope: OutputEnvelope<T> = {
     ok: true,
     data,
@@ -56,6 +66,10 @@ export function formatOutput<T>(
 
 /**
  * Write error output. Human-readable when TTY, JSON envelope otherwise.
+ *
+ * Exit codes follow the grep convention so agents/CI can distinguish outcomes
+ * without parsing: 0 = clean, 1 = findings or lookup miss, 2 = usage/internal
+ * error. Pass exitCode 1 for "not found" results; default 2 is for errors.
  */
 export function formatError(
   command: string,
@@ -63,8 +77,9 @@ export function formatError(
   startTime: number,
   version: string,
   suggestion?: string,
+  exitCode: 1 | 2 = 2,
 ): void {
-  const duration = Date.now() - startTime;
+  const duration = elapsed(startTime);
 
   if (shouldRenderHuman()) {
     process.stdout.write(`\n  ${c.red('x')} ${error}\n`);
@@ -80,7 +95,7 @@ export function formatError(
     process.stderr.write(`drift ${command} failed: ${error}\n`);
   }
 
-  process.exitCode = 1;
+  process.exitCode = exitCode;
 }
 
 /**
