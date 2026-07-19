@@ -8,11 +8,20 @@ let cached: string | undefined;
 
 export function getVersion(): string {
   if (cached) return cached;
-  try {
-    cached =
-      JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf-8')).version ?? '0.0.0';
-  } catch {
-    cached = '0.0.0';
+  // From source this file sits at src/utils/ (../../package.json); the bundled
+  // dist flattens to dist/ (../package.json). Check the name so a stray
+  // package.json above the install dir can't win.
+  for (const rel of ['../package.json', '../../package.json']) {
+    try {
+      const pkg = JSON.parse(readFileSync(join(__dirname, rel), 'utf-8'));
+      if (pkg.name === '@driftdev/cli' && typeof pkg.version === 'string') {
+        cached = pkg.version;
+        return cached;
+      }
+    } catch {
+      // keep looking
+    }
   }
-  return cached ?? '0.0.0';
+  cached = '0.0.0';
+  return cached;
 }
