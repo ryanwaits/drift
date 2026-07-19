@@ -174,6 +174,68 @@ export function registerMcpCommand(program: Command): void {
       );
 
       server.registerTool(
+        'drift_lint',
+        {
+          title: 'Lint docs accuracy',
+          description:
+            'Cross-reference docs against the real API surface: wrong parameter names/types, stale signatures, references to removed exports, prose drift in markdown docs. Returns issues with file/line locations. The primary fix loop: lint, fix what it reports, lint again until clean.',
+          inputSchema: {
+            ...truthShape,
+            docs: z
+              .array(z.string())
+              .optional()
+              .describe(
+                'Markdown corpus for prose drift: glob patterns or directories (overrides repo-local defaults)',
+              ),
+          },
+        },
+        async (args) => {
+          const cli = ['lint'];
+          if (args.entry) cli.push(args.entry);
+          if (args.docs?.length) cli.push('--docs', ...args.docs);
+          return toResult(await runDrift([...cli, ...truthFlags(args)], args.cwd));
+        },
+      );
+
+      server.registerTool(
+        'drift_coverage',
+        {
+          title: 'Measure docs coverage',
+          description:
+            'Documentation coverage of an API surface: documented vs total exports, score, what is missing per rule. Use to find undocumented surface before writing docs.',
+          inputSchema: {
+            ...truthShape,
+            min: z.number().optional().describe('Minimum coverage % (result fails below it)'),
+          },
+        },
+        async (args) => {
+          const cli = ['coverage'];
+          if (args.entry) cli.push(args.entry);
+          if (args.min !== undefined) cli.push('--min', String(args.min));
+          return toResult(await runDrift([...cli, ...truthFlags(args)], args.cwd));
+        },
+      );
+
+      server.registerTool(
+        'drift_health',
+        {
+          title: 'Docs health score',
+          description:
+            'Combined docs health score (coverage + accuracy) for an API surface, with the breakdown. The single number to gate on in CI.',
+          inputSchema: {
+            ...truthShape,
+            min: z.number().optional().describe('Minimum health % (result fails below it)'),
+          },
+        },
+        async (args) => {
+          const cli = ['health'];
+          if (args.entry) cli.push(args.entry);
+          if (args.min !== undefined) cli.push('--min', String(args.min));
+          return toResult(await runDrift([...cli, ...truthFlags(args)], args.cwd));
+        },
+      );
+
+      server.registerTool(
         'drift_diff',
         {
           title: 'Diff two API specs',

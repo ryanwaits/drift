@@ -111,9 +111,12 @@ describe('drift mcp', () => {
       .sort();
     expect(tools).toEqual([
       'drift_breaking',
+      'drift_coverage',
       'drift_diff',
       'drift_extract',
       'drift_get',
+      'drift_health',
+      'drift_lint',
       'drift_list',
       'drift_scan',
     ]);
