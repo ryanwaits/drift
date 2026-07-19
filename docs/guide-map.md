@@ -14,6 +14,12 @@ Use this page to pick the right Drift guide by role and goal.
 - Start here: [CI Integration](./ci-integration.md)
 - Then: [Configuration](./configuration.md)
 
+## If You Maintain A Docs Site For An SDK
+
+- Why: catch option tables drifting from the real API (gaps, ghosts, deprecated inversions).
+- Start here: [CLI Reference — key-coverage mode](./cli-reference.md#key-coverage-mode---docs-map)
+- Then: bootstrap the page→type map with `drift docs-map stub`
+
 ## If You Build Internal Tooling
 
 - Why: embed Drift analysis into custom workflows.

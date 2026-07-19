@@ -38,6 +38,8 @@ drift coverage [--min N]       # % documented
 drift lint                     # doc/code mismatches with filePath + line
 drift diff --base <ref>        # what changed vs a git ref (TS only)
 drift breaking --base <ref>    # breaking changes only (TS only)
+drift scan --docs-map <file>   # key-coverage gate: docs pages vs spec type keys
+drift docs-map stub|baseline   # scaffold / ratchet the page→type map
 ```
 
 Prefer MCP when available: `drift mcp` exposes these as `drift_*` tools.
@@ -65,6 +67,12 @@ Prefer MCP when available: `drift mcp` exposes these as `drift_*` tools.
 2. For each issue: `drift get <name> --json` → correct signature; edit the doc/JSDoc to match
 3. Only modify code references and signatures — preserve prose voice
 4. Re-run `drift lint` to confirm zero.
+
+### Docs-site key coverage
+1. `drift docs-map stub --docs <corpus> --out drift.docs-map.json --json` → scaffold
+2. Review/refine the map (page→type, sectionRe, annotations) — see the `drift-docs-map` skill
+3. `drift scan --docs-map drift.docs-map.json --json` → gaps/ghosts/inversions per page
+4. `drift docs-map baseline` once verified; commit the map. CI fails on ghosts or gap growth.
 
 ### Generate stubs
 1. `drift list --undocumented --json`

@@ -99,3 +99,16 @@ uninstallable @driftdev/cli@1.3.0 all carry deprecation notices now.
 Note: @driftdev/spec has no source repo anymore (consolidated into
 @driftdev/sdk in 4c8e3f0), so its stale "DocCov specification schema"
 description can't ship a fix — deprecation is the burial.
+
+## MCP parity: drift_scan lacks docs-map params (2026-07-18)
+`drift scan --docs-map`/`--annotations` shipped in 1.12.0 but the MCP
+`drift_scan` tool (packages/cli/src/commands/mcp.ts) doesn't expose
+`docsMap`/`annotations` inputs — an MCP-only agent can't run the key-coverage
+gate. Small additive change; ride the next minor.
+
+## openpkg Omit-stripping bump (when upstream publishes)
+openpkg fails to strip `Omit<Base, K>` keys during alias flattening
+(`before_send` phantom on posthog-node PostHogOptions; filed upstream, fix in
+flight). When the fixed @openpkg-ts publishes: bump both deps (0.x caret =
+locked minor, needs explicit bump + drift release), re-run the posthog corpus
+(node key count shifts by ~1), `drift docs-map baseline` re-tightens.
