@@ -6,8 +6,10 @@
 export type { DriftConfigInput } from './schema';
 export { driftConfigSchema, normalizeConfig } from './schema';
 export type {
+  CoverageConfig,
   DocsConfig,
   DriftConfig,
   ExampleValidationMode,
+  RemoteDocsTarget,
 } from './types';
 export { defineConfig } from './types';

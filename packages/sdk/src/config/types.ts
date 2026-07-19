@@ -1,7 +1,19 @@
 /**
  * Configuration types for Drift.
- * These types are shared between CLI and API.
+ * These types are shared between CLI and API — the CLI's drift.config.json
+ * (or package.json "drift" key) validates against this same shape. A JSON
+ * Schema for editors/agents ships with the CLI as drift.config.schema.json.
  */
+
+/**
+ * Remote repo whose docs should be synced on breaking changes.
+ */
+export interface RemoteDocsTarget {
+  /** Target repo in "owner/repo" format */
+  repo: string;
+  /** Target branch (defaults to repo's default branch) */
+  branch?: string;
+}
 
 /**
  * Documentation configuration options.
@@ -11,6 +23,18 @@ export interface DocsConfig {
   include?: string[];
   /** Glob patterns for markdown docs to exclude */
   exclude?: string[];
+  /** Remote repos to sync docs on breaking changes */
+  remote?: RemoteDocsTarget[];
+}
+
+/**
+ * Coverage threshold configuration.
+ */
+export interface CoverageConfig {
+  /** Minimum coverage % (exit 1 if below) */
+  min?: number;
+  /** Ratchet: effective min = max(min, highest_ever) */
+  ratchet?: boolean;
 }
 
 /**
@@ -22,10 +46,16 @@ export type ExampleValidationMode = 'presence' | 'typecheck' | 'run';
  * Normalized Drift configuration.
  */
 export interface DriftConfig {
+  /** Entry point override (otherwise auto-detected) */
+  entry?: string;
   /** Export include patterns */
   include?: string[];
   /** Export exclude patterns */
   exclude?: string[];
+  /** Coverage thresholds */
+  coverage?: CoverageConfig;
+  /** Enable lint checks (default true) */
+  lint?: boolean;
   /** Documentation configuration */
   docs?: DocsConfig;
 }

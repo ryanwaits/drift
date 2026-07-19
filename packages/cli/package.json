@@ -38,7 +38,8 @@
     "test": "bun run --cwd ../sdk build && bun run --cwd ../adapters/clarity build && bun run --cwd ../adapters/openapi build && for f in test/*.test.ts; do bun test \"$f\" || exit 1; done"
   },
   "files": [
-    "dist"
+    "dist",
+    "schemas"
   ],
   "engines": {
     "node": ">=20"

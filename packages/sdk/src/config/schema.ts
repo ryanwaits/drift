@@ -1,6 +1,7 @@
 /**
  * Zod validation schema for Drift configuration.
- * Used by CLI for config file validation.
+ * Mirrors the CLI's drift.config.json shape (see drift.config.schema.json in
+ * @driftdev/cli) — one config format, validated the same everywhere.
  */
 import { z } from 'zod';
 import type { DocsConfig, DriftConfig } from './types';
@@ -10,26 +11,61 @@ const stringList: z.ZodUnion<[z.ZodString, z.ZodArray<z.ZodString>]> = z.union([
   z.array(z.string()),
 ]);
 
+const remoteDocsTargetSchema: z.ZodObject<{
+  repo: z.ZodString;
+  branch: z.ZodOptional<z.ZodString>;
+}> = z.object({
+  /** Target repo in "owner/repo" format */
+  repo: z.string().regex(/^[^/]+\/[^/]+$/, 'must be in "owner/repo" format'),
+  /** Target branch (defaults to repo's default branch) */
+  branch: z.string().optional(),
+});
+
 /**
  * Docs configuration schema
  */
 const docsConfigSchema: z.ZodObject<{
   include: z.ZodOptional<typeof stringList>;
   exclude: z.ZodOptional<typeof stringList>;
+  remote: z.ZodOptional<z.ZodArray<typeof remoteDocsTargetSchema>>;
 }> = z.object({
   /** Glob patterns for markdown docs to include */
   include: stringList.optional(),
   /** Glob patterns for markdown docs to exclude */
   exclude: stringList.optional(),
+  /** Remote repos to sync docs on breaking changes */
+  remote: z.array(remoteDocsTargetSchema).optional(),
+});
+
+const coverageConfigSchema: z.ZodObject<{
+  min: z.ZodOptional<z.ZodNumber>;
+  ratchet: z.ZodOptional<z.ZodBoolean>;
+}> = z.object({
+  /** Minimum coverage % (exit 1 if below) */
+  min: z.number().min(0).max(100).optional(),
+  /** Ratchet: effective min = max(min, highest_ever) */
+  ratchet: z.boolean().optional(),
 });
 
 export const driftConfigSchema: z.ZodObject<{
+  $schema: z.ZodOptional<z.ZodString>;
+  entry: z.ZodOptional<z.ZodString>;
   include: z.ZodOptional<typeof stringList>;
   exclude: z.ZodOptional<typeof stringList>;
+  coverage: z.ZodOptional<typeof coverageConfigSchema>;
+  lint: z.ZodOptional<z.ZodBoolean>;
   docs: z.ZodOptional<typeof docsConfigSchema>;
 }> = z.object({
+  /** Editor/agent affordance — path or URL of drift.config.schema.json */
+  $schema: z.string().optional(),
+  /** Entry point override (otherwise auto-detected) */
+  entry: z.string().optional(),
   include: stringList.optional(),
   exclude: stringList.optional(),
+  /** Coverage thresholds */
+  coverage: coverageConfigSchema.optional(),
+  /** Enable lint checks (default true) */
+  lint: z.boolean().optional(),
   /** Markdown documentation configuration */
   docs: docsConfigSchema.optional(),
 });
@@ -55,17 +91,21 @@ export const normalizeConfig = (input: DriftConfigInput): DriftConfig => {
   if (input.docs) {
     const docsInclude = normalizeList(input.docs.include);
     const docsExclude = normalizeList(input.docs.exclude);
-    if (docsInclude || docsExclude) {
+    if (docsInclude || docsExclude || input.docs.remote?.length) {
       docs = {
         include: docsInclude,
         exclude: docsExclude,
+        remote: input.docs.remote?.length ? input.docs.remote : undefined,
       };
     }
   }
 
   return {
+    entry: input.entry,
     include,
     exclude,
+    coverage: input.coverage,
+    lint: input.lint,
     docs,
   };
 };

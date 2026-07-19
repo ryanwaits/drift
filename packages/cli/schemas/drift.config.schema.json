@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://unpkg.com/@driftdev/cli/schemas/drift.config.schema.json",
+  "title": "Drift configuration",
+  "description": "Configuration for the drift CLI, loaded from drift.config.json or the \"drift\" key in package.json. JSON only — no code execution.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path or URL of this schema, for editor/agent validation"
+    },
+    "entry": {
+      "type": "string",
+      "description": "Entry point override (otherwise auto-detected)"
+    },
+    "include": {
+      "description": "Export include patterns",
+      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+    },
+    "exclude": {
+      "description": "Export exclude patterns",
+      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+    },
+    "coverage": {
+      "type": "object",
+      "description": "Coverage thresholds",
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Minimum coverage % (exit 1 if below)"
+        },
+        "ratchet": {
+          "type": "boolean",
+          "description": "Ratchet: effective min = max(min, highest coverage ever recorded)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "lint": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable lint checks"
+    },
+    "docs": {
+      "type": "object",
+      "description": "Markdown docs discovery",
+      "properties": {
+        "include": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Glob patterns for markdown docs to include"
+        },
+        "exclude": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Glob patterns for markdown docs to exclude"
+        },
+        "remote": {
+          "type": "array",
+          "description": "Remote repos to sync docs on breaking changes",
+          "items": {
+            "type": "object",
+            "properties": {
+              "repo": {
+                "type": "string",
+                "pattern": "^[^/]+/[^/]+$",
+                "description": "Target repo in \"owner/repo\" format"
+              },
+              "branch": {
+                "type": "string",
+                "description": "Target branch (defaults to repo's default branch)"
+              }
+            },
+            "required": ["repo"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

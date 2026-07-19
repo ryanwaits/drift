@@ -118,5 +118,7 @@ export function validateConfig(
   }
 
   if (errors.length > 0) return { ok: false, errors };
-  return { ok: true, config: mergeDefaults(obj as DriftConfig) };
+  // $schema is an editor/agent affordance, not config
+  const { $schema: _schema, ...rest } = obj;
+  return { ok: true, config: mergeDefaults(rest as DriftConfig) };
 }

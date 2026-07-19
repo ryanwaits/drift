@@ -56,6 +56,7 @@ function generateConfig(packages: PackageScan[]): object {
   const threshold = Math.max(0, Math.floor(worstCoverage) - 5);
 
   return {
+    $schema: 'https://unpkg.com/@driftdev/cli/schemas/drift.config.schema.json',
     coverage: { min: threshold },
   };
 }

@@ -127,9 +127,11 @@ export type { DriftOptions } from './options';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type {
+  CoverageConfig,
   DocsConfig,
   DriftConfig,
   DriftConfigInput,
+  RemoteDocsTarget,
 } from './config';
 export { defineConfig, driftConfigSchema, normalizeConfig } from './config';
 
