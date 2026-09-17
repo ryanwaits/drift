@@ -92,57 +92,6 @@ export type ExampleAnalysis = {
 export type MissingDocRule = 'description' | 'params' | 'returns' | 'examples' | 'throws';
 
 // ============================================================================
-// Documentation Health Types
-// ============================================================================
-
-/**
- * Unified documentation health score combining completeness and accuracy.
- */
-export type DocumentationHealth = {
-  /** Overall health score (0-100), weighted combination of completeness + accuracy */
-  score: number;
-
-  /** Completeness (coverage) metrics */
-  completeness: {
-    /** Completeness score (0-100) */
-    score: number;
-    /** Number of documented exports */
-    documented: number;
-    /** Total exports analyzed */
-    total: number;
-    /** Missing docs by rule */
-    missing: Record<MissingDocRule, number>;
-    /**
-     * External re-exports excluded from `total` — declarations live outside
-     * the analyzed program, so their docs are not resolvable here.
-     */
-    external?: number;
-  };
-
-  /** Accuracy (drift) metrics */
-  accuracy: {
-    /** Accuracy score (0-100) */
-    score: number;
-    /** Total drift issues found */
-    issues: number;
-    /** Issues by category */
-    byCategory: Record<DriftCategory, number>;
-  };
-
-  /** Example validation metrics (if run) */
-  examples?: {
-    /** Example score (0-100) */
-    score: number;
-    /** Examples that passed validation */
-    passed: number;
-    /** Examples that failed validation */
-    failed: number;
-    /** Total examples analyzed */
-    total: number;
-  };
-};
-
-// ============================================================================
 // Drift Spec (drift.json schema)
 // ============================================================================
 
@@ -173,43 +122,25 @@ export type DriftSpec = {
 };
 
 export type DriftSummary = {
-  /**
-   * Overall coverage score (0-100)
-   * @deprecated Use `health.completeness.score` instead. Will be removed in next major.
-   */
+  /** Overall coverage score (0-100) */
   score: number;
 
-  /**
-   * Total exports analyzed
-   * @deprecated Use `health.completeness.total` instead. Will be removed in next major.
-   */
+  /** Total exports analyzed */
   totalExports: number;
 
-  /**
-   * Exports with complete documentation
-   * @deprecated Use `health.completeness.documented` instead. Will be removed in next major.
-   */
+  /** Exports with complete documentation */
   documentedExports: number;
 
-  /**
-   * Missing documentation by rule
-   * @deprecated Use `health.completeness.missing` instead. Will be removed in next major.
-   */
+  /** Missing documentation by rule */
   missingByRule: Record<MissingDocRule, number>;
 
-  /**
-   * Drift summary
-   * @deprecated Use `health.accuracy` instead. Will be removed in next major.
-   */
+  /** Drift summary */
   drift: {
     total: number;
     byCategory: Record<DriftCategory, number>;
   };
 
-  /**
-   * Example validation summary (if run)
-   * @deprecated Use `health.examples` instead. Will be removed in next major.
-   */
+  /** Example validation summary (if run) */
   examples?: {
     total: number;
     withExamples: number;
@@ -224,9 +155,6 @@ export type DriftSummary = {
    * outside the analyzed program, so their docs are not resolvable here.
    */
   externalExports?: number;
-
-  /** Unified documentation health metrics */
-  health?: DocumentationHealth;
 };
 
 export type ExportAnalysis = {

@@ -3,7 +3,6 @@ import type { ApiSpec } from '../src/analysis/api-spec';
 import { aggregateResults, createPackageResult, type PackageResult } from '../src/analysis/batch';
 import type { DriftSpec } from '../src/spec';
 
-// Minimal mock ApiSpec spec
 function createMockApiSpec(name: string, version: string): ApiSpec {
   return {
     meta: { name, version },
@@ -11,33 +10,30 @@ function createMockApiSpec(name: string, version: string): ApiSpec {
   };
 }
 
-// Minimal mock Drift spec
-function createMockDriftSpec(totalExports: number, health: number, driftTotal: number): DriftSpec {
+function createMockDriftSpec(
+  totalExports: number,
+  coverageScore: number,
+  driftTotal: number,
+): DriftSpec {
   return {
     summary: {
       totalExports,
-      score: health,
+      documentedExports: Math.round((totalExports * coverageScore) / 100),
+      score: coverageScore,
+      missingByRule: {
+        description: 0,
+        params: 0,
+        returns: 0,
+        examples: 0,
+        throws: 0,
+      },
       drift: {
         total: driftTotal,
-        byCategory: { structural: 0, semantic: 0, example: 0 },
-      },
-      health: {
-        score: health,
-        completeness: {
-          score: health,
-          total: totalExports,
-          documented: Math.round((totalExports * health) / 100),
-          missing: {},
-        },
-        accuracy: {
-          score: 100,
-          issues: driftTotal,
-          byCategory: { structural: 0, semantic: 0, example: 0 },
-        },
+        byCategory: { structural: 0, semantic: 0, example: 0, prose: 0 },
       },
     },
     exports: {},
-  };
+  } as DriftSpec;
 }
 
 describe('batch analysis', () => {
@@ -52,7 +48,8 @@ describe('batch analysis', () => {
       expect(result.version).toBe('1.0.0');
       expect(result.entryPath).toBe('packages/a/src/index.ts');
       expect(result.totalExports).toBe(10);
-      expect(result.health).toBe(80);
+      expect(result.coverageScore).toBe(80);
+      expect(result.documented).toBe(8);
       expect(result.driftCount).toBe(2);
     });
   });
@@ -63,7 +60,7 @@ describe('batch analysis', () => {
 
       expect(batch.packages).toHaveLength(0);
       expect(batch.aggregate.totalExports).toBe(0);
-      expect(batch.aggregate.health).toBe(0);
+      expect(batch.aggregate.coverageScore).toBe(0);
     });
 
     test('aggregates single package', () => {
@@ -73,7 +70,6 @@ describe('batch analysis', () => {
         entryPath: 'src/index.ts',
         totalExports: 20,
         documented: 15,
-        health: 75,
         driftCount: 3,
         coverageScore: 75,
         openpkg: createMockApiSpec('@test/single', '1.0.0'),
@@ -85,7 +81,7 @@ describe('batch analysis', () => {
       expect(batch.packages).toHaveLength(1);
       expect(batch.aggregate.totalExports).toBe(20);
       expect(batch.aggregate.documented).toBe(15);
-      expect(batch.aggregate.health).toBe(75);
+      expect(batch.aggregate.coverageScore).toBe(75);
       expect(batch.aggregate.driftCount).toBe(3);
     });
 
@@ -95,9 +91,8 @@ describe('batch analysis', () => {
           name: '@test/pkg-a',
           version: '1.0.0',
           entryPath: 'packages/a/src/index.ts',
-          totalExports: 100, // 100 exports at 90% = 9000 weighted
+          totalExports: 100,
           documented: 90,
-          health: 90,
           driftCount: 2,
           coverageScore: 90,
           openpkg: createMockApiSpec('@test/pkg-a', '1.0.0'),
@@ -107,9 +102,8 @@ describe('batch analysis', () => {
           name: '@test/pkg-b',
           version: '1.0.0',
           entryPath: 'packages/b/src/index.ts',
-          totalExports: 50, // 50 exports at 60% = 3000 weighted
+          totalExports: 50,
           documented: 30,
-          health: 60,
           driftCount: 5,
           coverageScore: 60,
           openpkg: createMockApiSpec('@test/pkg-b', '1.0.0'),
@@ -122,8 +116,7 @@ describe('batch analysis', () => {
       expect(batch.packages).toHaveLength(2);
       expect(batch.aggregate.totalExports).toBe(150);
       expect(batch.aggregate.documented).toBe(120);
-      // Weighted average: (100*90 + 50*60) / 150 = 12000 / 150 = 80
-      expect(batch.aggregate.health).toBe(80);
+      expect(batch.aggregate.coverageScore).toBe(80);
       expect(batch.aggregate.driftCount).toBe(7);
     });
 
@@ -135,7 +128,6 @@ describe('batch analysis', () => {
           entryPath: 'packages/empty/src/index.ts',
           totalExports: 0,
           documented: 0,
-          health: 0,
           driftCount: 0,
           coverageScore: 0,
           openpkg: createMockApiSpec('@test/empty', '1.0.0'),
@@ -147,7 +139,6 @@ describe('batch analysis', () => {
           entryPath: 'packages/real/src/index.ts',
           totalExports: 10,
           documented: 8,
-          health: 80,
           driftCount: 1,
           coverageScore: 80,
           openpkg: createMockApiSpec('@test/real', '1.0.0'),
@@ -157,9 +148,8 @@ describe('batch analysis', () => {
 
       const batch = aggregateResults(results);
 
-      // Empty package doesn't affect weighted average
       expect(batch.aggregate.totalExports).toBe(10);
-      expect(batch.aggregate.health).toBe(80);
+      expect(batch.aggregate.coverageScore).toBe(80);
     });
   });
 });

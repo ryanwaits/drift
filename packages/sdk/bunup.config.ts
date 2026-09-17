@@ -7,7 +7,6 @@ export default defineConfig({
     'src/types/index.ts',
     'src/markdown/index.ts',
     'src/examples/index.ts',
-    'src/history/index.ts',
     'src/cache/index.ts',
   ],
   dts: true,

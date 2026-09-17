@@ -199,8 +199,6 @@ describe('buildDriftSpec', () => {
       expect(result.summary.totalExports).toBe(2);
       expect(result.summary.documentedExports).toBe(1);
       expect(result.summary.externalExports).toBe(1);
-      expect(result.summary.health?.completeness.total).toBe(2);
-      expect(result.summary.health?.completeness.external).toBe(1);
       expect(result.exports.reexportedFn).toBeUndefined();
     });
 
@@ -248,7 +246,6 @@ describe('buildDriftSpec', () => {
       });
 
       expect(result.summary.externalExports).toBeUndefined();
-      expect(result.summary.health?.completeness.external).toBeUndefined();
     });
 
     test('all-external spec yields empty analysis, not 0% coverage', async () => {
@@ -652,13 +649,12 @@ describe('buildDriftSpec', () => {
       expect(result.source.file).toBe('unknown');
     });
 
-    test('computes coverage and health from ApiSpec', async () => {
+    test('computes coverage from ApiSpec', async () => {
       const apiSpec = createApiSpec(5);
       const result = await buildDriftSpec({ apiSpec });
 
       expect(result.summary.score).toBeGreaterThan(0);
-      expect(result.summary.health).toBeDefined();
-      expect(result.summary.health!.score).toBeGreaterThan(0);
+      expect(result.summary.totalExports).toBeGreaterThan(0);
     });
 
     test('errors if neither apiSpec nor openpkg provided', async () => {

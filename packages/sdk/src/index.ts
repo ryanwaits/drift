@@ -29,17 +29,17 @@ export {
   DRIFT_CATEGORY_DESCRIPTIONS,
   DRIFT_CATEGORY_LABELS,
 } from './analysis/docs-coverage';
-export type { ComputeDriftOptions } from './analysis/drift/compute';
-// Markdown — prefer @driftdev/sdk/markdown
-export { detectProseDrift, type ProseDriftOptions } from './analysis/drift/prose-drift';
-export type { BuildDriftOptions } from './analysis/drift-builder';
-export { buildDriftSpec } from './analysis/drift-builder';
 // Coverage helpers
 export {
   EXTERNAL_SOURCE_FILE,
   isExportDocumented,
   isExternalExport,
-} from './analysis/health';
+} from './analysis/documented';
+export type { ComputeDriftOptions } from './analysis/drift/compute';
+// Markdown — prefer @driftdev/sdk/markdown
+export { detectProseDrift, type ProseDriftOptions } from './analysis/drift/prose-drift';
+export type { BuildDriftOptions } from './analysis/drift-builder';
+export { buildDriftSpec } from './analysis/drift-builder';
 // Key coverage (option tables vs spec types)
 export type {
   DocsKeyCorpus,

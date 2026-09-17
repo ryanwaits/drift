@@ -3,7 +3,6 @@
 export { SCHEMA_URL, SCHEMA_VERSION } from './constants';
 export type {
   ApiSurfaceResult,
-  DocumentationHealth,
   DriftCategory,
   DriftIssue,
   DriftSpec,

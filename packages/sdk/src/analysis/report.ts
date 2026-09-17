@@ -10,8 +10,8 @@ import {
 } from '../types/report';
 import { nowISO } from '../utils/clock';
 import type { ApiExport, ApiSignature, ApiSpec, ApiType } from './api-spec';
+import { isExportDocumented } from './documented';
 import { buildDriftSpec } from './drift-builder';
-import { isExportDocumented } from './health';
 import { toApiSpec } from './spec-types';
 
 /**

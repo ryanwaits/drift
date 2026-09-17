@@ -1,14 +1,11 @@
 /**
- * FileSystem implementations for project detection.
+ * FileSystem implementation for project detection.
  *
- * - NodeFileSystem: Uses Node.js fs module (for CLI)
- * - SandboxFileSystem: Uses Vercel Sandbox commands (for API)
+ * NodeFileSystem: Node.js fs module (CLI / library).
  */
 
 import * as fs from 'node:fs';
 import * as nodePath from 'node:path';
-import { Writable } from 'node:stream';
-import type { Sandbox } from '@vercel/sandbox';
 import type { FileSystem } from './types';
 
 /**
@@ -38,92 +35,5 @@ export class NodeFileSystem implements FileSystem {
     const fullPath = this.resolve(relativePath);
     if (!fs.existsSync(fullPath)) return false;
     return fs.statSync(fullPath).isDirectory();
-  }
-}
-
-/**
- * Helper to capture stream output from sandbox commands.
- */
-function createCaptureStream(): { stream: Writable; getOutput: () => string } {
-  let output = '';
-  const stream = new Writable({
-    write(chunk, _encoding, callback) {
-      output += chunk.toString();
-      callback();
-    },
-  });
-  return { stream, getOutput: () => output };
-}
-
-/**
- * Error thrown when a file cannot be read in the sandbox.
- */
-export class FileNotFoundError extends Error {
-  constructor(
-    public readonly path: string,
-    message?: string,
-  ) {
-    super(message ?? `File not found: ${path}`);
-    this.name = 'FileNotFoundError';
-  }
-}
-
-/**
- * Vercel Sandbox filesystem implementation for API usage.
- * Uses sandbox.runCommand() with shell commands.
- */
-export class SandboxFileSystem implements FileSystem {
-  constructor(private sandbox: Sandbox) {}
-
-  async exists(path: string): Promise<boolean> {
-    const result = await this.sandbox.runCommand({
-      cmd: 'test',
-      args: ['-e', path],
-    });
-    return result.exitCode === 0;
-  }
-
-  async readFile(path: string): Promise<string> {
-    // Check if file exists first to throw typed error
-    const exists = await this.exists(path);
-    if (!exists) {
-      throw new FileNotFoundError(path);
-    }
-
-    const capture = createCaptureStream();
-    const result = await this.sandbox.runCommand({
-      cmd: 'cat',
-      args: [path],
-      stdout: capture.stream,
-    });
-
-    if (result.exitCode !== 0) {
-      throw new FileNotFoundError(path, `Failed to read file: ${path}`);
-    }
-
-    return capture.getOutput();
-  }
-
-  async readDir(path: string): Promise<string[]> {
-    const capture = createCaptureStream();
-    const result = await this.sandbox.runCommand({
-      cmd: 'ls',
-      args: ['-1', path],
-      stdout: capture.stream,
-    });
-
-    if (result.exitCode !== 0) {
-      return [];
-    }
-
-    return capture.getOutput().split('\n').filter(Boolean);
-  }
-
-  async isDirectory(path: string): Promise<boolean> {
-    const result = await this.sandbox.runCommand({
-      cmd: 'test',
-      args: ['-d', path],
-    });
-    return result.exitCode === 0;
   }
 }

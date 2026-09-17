@@ -152,11 +152,6 @@ const grouped = groupDriftsByCategory(drifts);
 - `NodeFileSystem` — File system adapter
 - `detectPackageManager` — Detect npm/yarn/pnpm/bun
 
-### History (via `@driftdev/sdk/history`)
-- `saveSnapshot` / `loadSnapshots` — Manage coverage history
-- `getTrend` / `getExtendedTrend` — Trend analysis
-- `pruneHistory` — Clean old snapshots
-
 ### Configuration
 - `normalizeConfig` — Config normalization
 - `driftConfigSchema` — Zod schema for validation

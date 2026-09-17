@@ -13,8 +13,8 @@ import type {
 import { DRIFT_CATEGORIES, SCHEMA_URL } from '../spec';
 import { nowISO } from '../utils/clock';
 import type { ApiExport, ApiSpec } from './api-spec';
+import { isExportDocumented, isExternalExport } from './documented';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';
-import { computeHealth, isExportDocumented, isExternalExport } from './health';
 import type { DocRequirements, StylePreset } from './presets';
 import { resolveRequirements } from './presets';
 import { toApiSpec } from './spec-types';
@@ -242,17 +242,6 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
   const exportCount = byName.size; // Count unique names, not individual overloads
   const coverageScore = exportCount > 0 ? Math.round(totalScore / exportCount) : 100;
 
-  // Compute health score
-  const health = computeHealth({
-    coverageScore,
-    documentedExports: documentedCount,
-    totalExports: exportCount,
-    missingByRule,
-    driftIssues: totalDrift,
-    driftByCategory,
-    externalExports: externalCount,
-  });
-
   const summary: DriftSummary = {
     score: coverageScore,
     totalExports: exportCount,
@@ -263,7 +252,6 @@ export async function buildDriftSpec(options: BuildDriftOptions): Promise<DriftS
       total: totalDrift,
       byCategory: driftByCategory,
     },
-    health,
   };
 
   // Compute API surface if forgotten exports provided

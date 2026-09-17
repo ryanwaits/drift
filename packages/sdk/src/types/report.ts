@@ -1,5 +1,5 @@
 import type { DriftCategory, SpecDocDrift } from '../analysis/drift/types';
-import type { ApiSurfaceResult, DocumentationHealth } from '../spec';
+import type { ApiSurfaceResult } from '../spec';
 
 /**
  * Drift report schema version.
@@ -176,9 +176,4 @@ export interface DriftReport {
    * API surface analysis (forgotten exports).
    */
   apiSurface?: ApiSurfaceResult;
-
-  /**
-   * Unified documentation health score.
-   */
-  health?: DocumentationHealth;
 }

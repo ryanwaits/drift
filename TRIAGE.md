@@ -55,12 +55,12 @@ render as opaque `x-ts-type`; (3) `string | undefined` return lost its
 ## posthog-js dogfood: coverage % inflated by external symbols — DONE 2026-07-10
 `drift scan` on posthog-js@1.399.1 counted `<external>` re-exports (docs live
 in @posthog/core, never cross the extraction boundary) as undocumented.
-Fixed: `isExternalExport` in packages/sdk/src/analysis/health.ts detects both
+Fixed: `isExternalExport` in packages/sdk/src/analysis/documented.ts detects both
 extraction forms (`source.file === '<external>'`, and package-only source
 with no file; file+package = resolved, counts normally). Bucketed out of the
-denominator in buildDriftSpec + scan/coverage/health CLI (single + batch);
-surfaced as `summary.externalExports` / `health.completeness.external` /
-`coverage.external` and "+N external (not resolvable here)" in human output.
+denominator in buildDriftSpec + scan (single + batch);
+surfaced as `summary.externalExports` / `coverage.external` and
+"+N external (not resolvable here)" in human output.
 - Same run, working as designed (don't re-file): `--json` piped output ends
   cleanly at `}` (timing line is TTY-only); posthog's pnpm
   `min-release-age=7` install friction is their .npmrc, not drift.

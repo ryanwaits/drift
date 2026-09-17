@@ -38,33 +38,6 @@ export {
   buildDriftSpec,
   type ExtractForgottenExport,
 } from './drift-builder';
-// History and trends
-export {
-  type CoverageSnapshot,
-  type CoverageTrend,
-  computeSnapshot,
-  type ExtendedTrendAnalysis,
-  formatDelta,
-  generateWeeklySummaries,
-  getExtendedTrend,
-  getTrend,
-  HISTORY_DIR,
-  loadSnapshots,
-  loadSnapshotsForDays,
-  pruneHistory,
-  renderSparkline,
-  saveSnapshot,
-  type WeeklySummary,
-} from './history';
-// Incremental analysis for crash recovery
-export {
-  cleanupOrphanedTempFiles,
-  findOrphanedTempFiles,
-  IncrementalAnalyzer,
-  type IncrementalAnalyzerOptions,
-  type IncrementalExportResult,
-  type PartialAnalysisState,
-} from './incremental';
 export type {
   DocsKeyCorpus,
   DocumentedKeyLocation,

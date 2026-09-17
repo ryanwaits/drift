@@ -48,10 +48,6 @@
       "import": "./dist/examples/index.js",
       "types": "./dist/examples/index.d.ts"
     },
-    "./history": {
-      "import": "./dist/history/index.js",
-      "types": "./dist/history/index.d.ts"
-    },
     "./cache": {
       "import": "./dist/cache/index.js",
       "types": "./dist/cache/index.d.ts"
@@ -88,7 +84,6 @@
     "@types/bun": "^1.3.14",
     "@types/mdast": "^4.0.4",
     "@types/node": "^24.0.0",
-    "@vercel/sandbox": "^2.5.0",
     "bunup": "0.16.26"
   },
   "peerDependencies": {

@@ -30,8 +30,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -59,6 +57,4 @@ jobs:
           cd ../openapi && bun test
 
       - name: Scan thresholds
-        run: |
-          bun run packages/cli/src/drift.ts scan --cwd packages/cli --min 60
-          bun run packages/cli/src/drift.ts scan --cwd packages/sdk --min 80
+        run: bun run packages/cli/src/drift.ts scan --cwd packages/sdk --min 80

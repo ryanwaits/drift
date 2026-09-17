@@ -21,7 +21,6 @@ export function Nav() {
             Changelog
           </a>
           <div className="hidden items-center gap-1.5 border-l border-border pl-5 sm:flex">
-            <ShieldBadge label="coverage" value="100%" variant="green" />
             <ShieldBadge label="license" value="MIT" />
           </div>
         </div>

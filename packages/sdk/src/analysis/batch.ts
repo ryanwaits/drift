@@ -31,11 +31,6 @@ export interface PackageResult {
   documented: number;
 
   /**
-   * Health score (0-100).
-   */
-  health: number;
-
-  /**
    * Number of drift issues.
    */
   driftCount: number;
@@ -80,11 +75,6 @@ export interface BatchResult {
     documented: number;
 
     /**
-     * Weighted average health score.
-     */
-    health: number;
-
-    /**
      * Total drift issues across all packages.
      */
     driftCount: number;
@@ -110,8 +100,7 @@ export function createPackageResult(
   entryPath: string,
 ): PackageResult {
   const totalExports = driftSpec.summary.totalExports;
-  const documented = driftSpec.summary.health?.completeness.documented ?? 0;
-  const health = driftSpec.summary.health?.score ?? driftSpec.summary.score;
+  const documented = driftSpec.summary.documentedExports;
   const driftCount = driftSpec.summary.drift.total;
   const coverageScore = driftSpec.summary.score;
 
@@ -121,7 +110,6 @@ export function createPackageResult(
     entryPath,
     totalExports,
     documented,
-    health,
     driftCount,
     coverageScore,
     openpkg,
@@ -132,7 +120,7 @@ export function createPackageResult(
 /**
  * Aggregate results from multiple package analyses.
  *
- * Health and coverage scores are weighted by export count so packages
+ * Coverage scores are weighted by export count so packages
  * with more exports have more influence on the aggregate.
  *
  * @param packages - Individual package results to aggregate
@@ -148,7 +136,7 @@ export function createPackageResult(
  * ];
  *
  * const batch = aggregateResults(results);
- * console.log(`Total health: ${batch.aggregate.health}%`);
+ * console.log(`Coverage: ${batch.aggregate.coverageScore}%`);
  * ```
  */
 export function aggregateResults(packages: PackageResult[]): BatchResult {
@@ -158,7 +146,6 @@ export function aggregateResults(packages: PackageResult[]): BatchResult {
       aggregate: {
         totalExports: 0,
         documented: 0,
-        health: 0,
         driftCount: 0,
         coverageScore: 0,
       },
@@ -168,12 +155,6 @@ export function aggregateResults(packages: PackageResult[]): BatchResult {
   const totalExports = packages.reduce((sum, p) => sum + p.totalExports, 0);
   const documented = packages.reduce((sum, p) => sum + p.documented, 0);
   const driftCount = packages.reduce((sum, p) => sum + p.driftCount, 0);
-
-  // Weighted average for health and coverage
-  const weightedHealth =
-    totalExports > 0
-      ? Math.round(packages.reduce((sum, p) => sum + p.health * p.totalExports, 0) / totalExports)
-      : 0;
 
   const weightedCoverage =
     totalExports > 0
@@ -187,7 +168,6 @@ export function aggregateResults(packages: PackageResult[]): BatchResult {
     aggregate: {
       totalExports,
       documented,
-      health: weightedHealth,
       driftCount,
       coverageScore: weightedCoverage,
     },

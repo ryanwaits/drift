@@ -2,8 +2,7 @@
  * Project detection module for I/O-agnostic project analysis.
  *
  * This module provides tools to detect project structure, package manager,
- * monorepo configuration, entry points, and build settings. It works with
- * both Node.js filesystem (for CLI) and Vercel Sandbox (for API).
+ * monorepo configuration, entry points, and build settings.
  *
  * @example
  * ```typescript
@@ -23,7 +22,7 @@ export { detectBuildInfo, getPrimaryBuildScript } from './build';
 // Entry point detection
 export { detectEntryPoint, findEntryPointForFile, isPackageEntryPoint } from './entry-point';
 // FileSystem implementations
-export { NodeFileSystem, SandboxFileSystem } from './filesystem';
+export { NodeFileSystem } from './filesystem';
 
 // Monorepo detection
 export { detectMonorepo, findPackageByName, formatPackageList } from './monorepo';
@@ -64,7 +63,7 @@ import type { AnalyzeProjectOptions, FileSystem, ProjectInfo } from './types';
  * If not specified and a monorepo is detected, an error is thrown with the
  * list of available packages.
  *
- * @param fs - FileSystem implementation (NodeFileSystem or SandboxFileSystem)
+ * @param fs - FileSystem implementation (NodeFileSystem)
  * @param [options] - Options including targetPackage for monorepos
  * @returns Promise that resolves to complete project info
  * @throws Error if monorepo detected without targetPackage specified

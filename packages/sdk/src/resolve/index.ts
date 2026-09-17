@@ -42,7 +42,7 @@ export interface ResolvedTarget {
  * 2. If no entry specified, auto-detect entry point
  * 3. If entry is a directory, detect entry point within it
  *
- * @param fs - FileSystem implementation (NodeFileSystem or SandboxFileSystem)
+ * @param fs - FileSystem implementation (NodeFileSystem)
  * @param options - Resolution options
  * @returns Promise resolving to resolved target info
  * @throws Error if monorepo package not found, or entry point detection fails

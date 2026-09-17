@@ -1,11 +1,10 @@
 /**
  * Project detection types for I/O-agnostic project analysis.
- * Used by both CLI (NodeFileSystem) and API (SandboxFileSystem).
  */
 
 /**
  * Minimal filesystem interface for I/O-agnostic detection.
- * Implementations: NodeFileSystem (CLI), SandboxFileSystem (API)
+ * Implementation: NodeFileSystem.
  */
 export interface FileSystem {
   /** Check if a file or directory exists */
