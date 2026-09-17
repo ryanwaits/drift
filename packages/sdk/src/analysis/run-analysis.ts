@@ -133,7 +133,7 @@ export async function runAnalysis(input: AnalysisContextInput): Promise<RunAnaly
     baseDir,
     content: input.content,
     maxTypeDepth: options.maxDepth,
-    resolveExternalTypes,
+    followExternal: resolveExternalTypes,
     includeSchema: true,
   });
 
