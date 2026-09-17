@@ -1,6 +1,6 @@
 # Drift Detection
 
-Drift is when your documentation says one thing but your code does another. Drift detects these mismatches by comparing JSDoc annotations and markdown docs against actual TypeScript signatures.
+Drift is when your documentation says one thing but your code does another. Drift diffs JSDoc, examples, markdown, and option tables against the real API spec (TypeScript via Openpkg, or OpenAPI / Clarity via adapters).
 
 ## Who This Is For
 
@@ -22,9 +22,9 @@ Drift is when your documentation says one thing but your code does another. Drif
 
 ## How It Works
 
-1. **Extract** -- Drift parses your TypeScript entry point and builds a spec of all exports with their signatures, types, JSDoc, and `@example` blocks.
-2. **Compare** -- Each export's documentation is cross-referenced against its actual code signature.
-3. **Report** -- Mismatches are reported with the export name, issue description, file path, and line number.
+1. **Extract** -- Openpkg (TypeScript) or an adapter (OpenAPI, Clarity) produces an ApiSpec.
+2. **Compare** -- JSDoc, examples, markdown, and option tables vs that spec.
+3. **Report** -- file:line findings. Exit 1 on issues. No model.
 
 ## The 4 Drift Categories
 
@@ -60,8 +60,6 @@ Issues with `@example` code blocks.
 |------------|-------------|
 | `example-drift` | Example imports or references non-existent exports |
 | `example-syntax-error` | Example has syntax errors |
-| `example-runtime-error` | Example throws at runtime (requires `--run`; only examples with `// =>` assertions execute) |
-| `example-assertion-failed` | Example assertion comment doesn't match actual output (requires `--run`) |
 
 ### Prose
 
@@ -83,7 +81,7 @@ drift
 
 Output includes file path and line number for each issue:
 
-```
+```text
   3 issues found
 
   parseConfig    @param 'options' type mismatch: documented as 'object', actual 'ParseOptions'
@@ -115,7 +113,7 @@ JSON output:
     },
     "pass": false
   },
-  "meta": { "command": "scan", "duration": 450, "version": "1.12.2" },
+  "meta": { "command": "scan", "duration": 450, "version": "1.15.1" },
   "next": { "suggested": "drift get <name>", "reason": "2 issues found" }
 }
 ```

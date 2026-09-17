@@ -27,8 +27,10 @@ export function ChangelogMarkdown({ content }: { content: string }) {
         ),
         li: (props) => <li className="leading-relaxed" {...props} />,
         code: ({ className, children, ...props }) => {
-          const isBlock = /language-/.test(className || '');
-          if (isBlock) {
+          const fenced =
+            (className && /(?:^|\s)language-/.test(className)) ||
+            (typeof children === 'string' && children.includes('\n'));
+          if (fenced) {
             return (
               <code className="font-mono text-text text-xs" {...props}>
                 {children}

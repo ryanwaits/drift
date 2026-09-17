@@ -30,7 +30,7 @@ Extract a typed API spec from a TypeScript entry point:
 import { Drift } from '@driftdev/sdk';
 
 const drift = new Drift({
-  resolveExternalTypes: true,
+  resolveExternalTypes: true, // Openpkg followExternal
   maxDepth: 10,
 });
 
@@ -44,7 +44,7 @@ Options:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `resolveExternalTypes` | `boolean` | `true` | Resolve types from dependencies |
+| `resolveExternalTypes` | `boolean` | `true` | Follow types from dependencies (Openpkg `followExternal`) |
 | `maxDepth` | `number` | `10` | Max depth for type resolution |
 | `useCache` | `boolean` | `true` | Use spec cache |
 

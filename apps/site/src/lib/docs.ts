@@ -37,10 +37,31 @@ export function getDocMeta(slug: string): DocMeta {
   return { slug, title: titleFromContent(content, slug) };
 }
 
+/** Sidebar order = four paths. `guide-map` is `/docs`, not a nav item. */
+const DOCS_NAV_ORDER = [
+  'getting-started',
+  'ci-integration',
+  'action',
+  'configuration',
+  'cli-reference',
+  'coverage',
+  'drift-detection',
+  'sdk',
+] as const;
+
 export function getAllDocsMeta(): DocMeta[] {
-  return getDocSlugs()
-    .map((slug) => getDocMeta(slug))
-    .sort((a, b) => a.title.localeCompare(b.title));
+  const bySlug = new Map(getDocSlugs().map((slug) => [slug, getDocMeta(slug)]));
+  const ordered: DocMeta[] = [];
+  for (const slug of DOCS_NAV_ORDER) {
+    const meta = bySlug.get(slug);
+    if (meta) {
+      ordered.push(meta);
+      bySlug.delete(slug);
+    }
+  }
+  bySlug.delete('guide-map');
+  const rest = [...bySlug.values()].sort((a, b) => a.title.localeCompare(b.title));
+  return [...ordered, ...rest];
 }
 
 /**

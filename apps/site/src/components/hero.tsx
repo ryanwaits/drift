@@ -1,9 +1,12 @@
 import { HeroInstall } from '@/components/hero-install';
 import { SkillCopyLine } from '@/components/skill-copy-line';
+import { getChangelogEntries } from '@/lib/changelog';
 
 const SKILL_INSTALL_COMMAND = 'bunx skills add ryanwaits/drift';
 
 export function Hero() {
+  const latest = getChangelogEntries()[0]?.version;
+
   return (
     <section className="relative z-10 mx-auto max-w-2xl px-6 pt-10 pb-16 text-center lg:pt-14 lg:pb-24">
       <p className="mb-5 flex flex-nowrap items-center justify-center gap-2 text-sm text-text-muted">
@@ -11,8 +14,9 @@ export function Hero() {
           New
         </span>
         <span className="min-w-0 truncate">
-          <b className="font-medium text-text">v1.9.0</b>
-          {' — drift catches deprecated APIs your docs still teach.'}
+          {latest ? <b className="font-medium text-text">v{latest}</b> : null}
+          {latest ? ' — ' : null}
+          one check, locally and in CI. No model.
         </span>
         <a
           href="/changelog"

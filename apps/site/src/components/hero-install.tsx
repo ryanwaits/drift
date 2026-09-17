@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { CopyButton } from '@/components/ui/docskit';
 
 const CLI_COMMANDS = {
-  bun: 'bun add -g @driftdev/cli',
-  npm: 'npm install -g @driftdev/cli',
-  pnpm: 'pnpm add -g @driftdev/cli',
+  bun: 'bun add -D @driftdev/cli',
+  npm: 'npm install -D @driftdev/cli',
+  pnpm: 'pnpm add -D @driftdev/cli',
 } as const;
 
 type Manager = keyof typeof CLI_COMMANDS;

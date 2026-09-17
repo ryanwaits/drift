@@ -1,8 +1,19 @@
+import type { ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 import { DocsCodeBlock } from '@/components/docs-code-block';
 import { getDocSlugs } from '@/lib/docs';
+
+/** Fenced blocks (with or without a language) vs inline `code`. */
+function isFencedCode(className: string | undefined, children: ReactNode): boolean {
+  if (className && /(?:^|\s)language-/.test(className)) return true;
+  if (typeof children === 'string') return children.includes('\n');
+  if (Array.isArray(children)) {
+    return children.some((child) => typeof child === 'string' && child.includes('\n'));
+  }
+  return false;
+}
 
 /**
  * Resolves a relative `.md` link (optionally with a `#fragment`) to a real
@@ -71,8 +82,7 @@ export function DocsMarkdown({ content }: { content: string }) {
           />
         ),
         code: ({ className, children, ...props }) => {
-          const isBlock = /language-/.test(className || '');
-          if (isBlock) {
+          if (isFencedCode(className, children)) {
             return (
               <code className={`font-mono text-sm text-text ${className ?? ''}`} {...props}>
                 {children}
