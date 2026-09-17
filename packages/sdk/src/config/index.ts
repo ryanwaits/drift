@@ -11,6 +11,5 @@ export type {
   DriftConfig,
   ExamplesConfig,
   ExampleValidationMode,
-  RemoteDocsTarget,
 } from './types';
 export { defineConfig } from './types';

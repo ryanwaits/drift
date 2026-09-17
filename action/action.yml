@@ -1,5 +1,5 @@
 name: 'Drift'
-description: 'Documentation coverage and drift detection for TypeScript'
+description: 'Documentation coverage and drift detection'
 author: 'Ryan Waits'
 
 branding:
@@ -16,39 +16,15 @@ inputs:
     required: false
     default: '.'
   min-coverage:
-    description: 'Minimum coverage percentage (0-100)'
+    description: 'Minimum coverage percentage (0-100). Empty uses config.'
     required: false
-    default: '80'
+    default: ''
   check-all:
-    description: 'Check all packages, not just changed'
+    description: 'Check all workspace packages'
     required: false
     default: 'false'
   include-private:
     description: 'Include private packages'
-    required: false
-    default: 'false'
-  anthropic-key:
-    description: 'Anthropic API key for docs sync on merge (optional)'
-    required: false
-    default: ''
-  docs-pr:
-    description: 'Create AI-generated PRs on remote docs repos on merge (requires anthropic-key)'
-    required: false
-    default: 'false'
-  docs-issue:
-    description: 'Create issues on remote docs repos for breaking changes (no AI needed)'
-    required: false
-    default: 'false'
-  validate-examples:
-    description: 'Type-check @example JSDoc blocks on PRs'
-    required: false
-    default: 'false'
-  release-gate:
-    description: 'Run drift release check on GitHub Release publish'
-    required: false
-    default: 'false'
-  release-changelog:
-    description: 'Append API changelog to GitHub Release body'
     required: false
     default: 'false'
 
@@ -67,101 +43,27 @@ runs:
       shell: bash
       run: bun install -g @driftdev/cli
 
-    - name: Run drift ci
-      if: github.event_name == 'pull_request' && github.event.action != 'closed'
-      id: drift_ci
+    - name: Run drift
+      if: github.event.action != 'closed'
+      id: drift
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
       run: |
-        ARGS=""
+        ARGS="--annotations --json"
+        if [ -n "${{ inputs.min-coverage }}" ]; then
+          ARGS="$ARGS --min ${{ inputs.min-coverage }}"
+        fi
         if [ "${{ inputs.check-all }}" = "true" ]; then
           ARGS="$ARGS --all"
         fi
         if [ "${{ inputs.include-private }}" = "true" ]; then
           ARGS="$ARGS --private"
         fi
-        drift ci $ARGS --min "${{ inputs.min-coverage }}"
-
-    - name: Validate examples
-      if: >
-        github.event_name == 'pull_request'
-        && github.event.action != 'closed'
-        && inputs.validate-examples == 'true'
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: |
-        ARGS="--typecheck"
-        if [ "${{ inputs.check-all }}" = "true" ]; then
-          ARGS="$ARGS --all"
-        fi
-        if [ "${{ inputs.include-private }}" = "true" ]; then
-          ARGS="$ARGS --private"
-        fi
-        drift examples $ARGS
-
-    - name: Docs PR on merge
-      if: >
-        github.event.pull_request.merged == true
-        && inputs.docs-pr == 'true'
-        && inputs.anthropic-key != ''
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
-        ANTHROPIC_API_KEY: ${{ inputs.anthropic-key }}
-      run: |
-        bun install --cwd $GITHUB_ACTION_PATH
-        bun run $GITHUB_ACTION_PATH/docs-pr.ts
-
-    - name: Docs issue on merge
-      if: >
-        github.event.pull_request.merged == true
-        && inputs.docs-issue == 'true'
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
-        GH_TOKEN: ${{ inputs.github-token }}
-      run: bun run $GITHUB_ACTION_PATH/docs-issue.ts
-
-    - name: Release gate
-      if: >
-        github.event_name == 'release'
-        && inputs.release-gate == 'true'
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: |
-        ARGS=""
-        if [ "${{ inputs.check-all }}" = "true" ]; then
-          ARGS="$ARGS --all"
-        fi
-        drift release $ARGS
-
-    - name: Append API changelog to release
-      if: >
-        github.event_name == 'release'
-        && inputs.release-changelog == 'true'
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
-      run: |
-        TAG="${{ github.event.release.tag_name }}"
-        PREV_TAG=$(git tag --sort=-v:refname | grep -A1 "^${TAG}$" | tail -1)
-        if [ -z "$PREV_TAG" ] || [ "$PREV_TAG" = "$TAG" ]; then
-          echo "No previous tag found, skipping changelog"
-          exit 0
-        fi
-        CHANGELOG=$(drift changelog --base "$PREV_TAG" --format md 2>/dev/null || echo "")
-        if [ -n "$CHANGELOG" ]; then
-          EXISTING=$(gh release view "$TAG" --json body -q .body)
-          gh release edit "$TAG" --notes "${EXISTING}
-
-        ---
-
-        ### API Changes (drift)
-
-        ${CHANGELOG}"
-        fi
+        set +e
+        drift $ARGS > "${{ github.action_path }}/drift-out.txt"
+        CODE=$?
+        set -e
+        bun run "${{ github.action_path }}/comment.ts" "${{ github.action_path }}/drift-out.txt" || true
+        exit $CODE

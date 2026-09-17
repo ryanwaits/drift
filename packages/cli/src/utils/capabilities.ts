@@ -49,31 +49,12 @@ function extractFlags(cmd: Command): FlagInfo[] {
 }
 
 const COMMAND_EXAMPLES: Record<string, string[]> = {
-  scan: ['drift scan --json', 'drift scan --all --json', 'drift scan --ci --json'],
-  lint: ['drift lint --json', 'drift lint --all --json'],
-  coverage: ['drift coverage --json', 'drift coverage --min 80 --json'],
-  extract: ['drift extract --json'],
-  list: ['drift list --json'],
+  scan: ['drift --json', 'drift --all --json', 'drift --min 80 --json'],
+  list: ['drift list --undocumented --json', 'drift list --json'],
   get: ['drift get createClient --json'],
-  diff: ['drift diff --base main --json'],
-  breaking: ['drift breaking --base main --json'],
-  semver: ['drift semver --base main --json'],
-  changelog: ['drift changelog --base main --json'],
-  ci: ['drift ci --json', 'drift ci --all --json'],
-  release: ['drift release --json'],
-  context: ['drift context --json', 'drift context --all --json'],
-  examples: ['drift examples --typecheck --json'],
-  health: ['drift health --json'],
-  config: ['drift config list --json', 'drift config get coverage.min --json'],
-  init: ['drift init --json'],
-  validate: ['drift validate spec.json --json'],
-  filter: ['drift filter spec.json --kind function --json'],
-  report: ['drift report --json'],
-  cache: ['drift cache status', 'drift cache clear'],
-  'docs-map': [
-    'drift docs-map stub --docs docs/ --out drift.docs-map.json',
-    'drift docs-map baseline drift.docs-map.json',
-  ],
+  extract: ['drift extract --json'],
+  docs: ['drift docs init contents/docs', 'drift docs propose', 'drift docs baseline'],
+  mcp: ['drift mcp'],
 };
 
 export function extractCapabilities(program: Command): Capabilities {
@@ -95,69 +76,35 @@ export function extractCapabilities(program: Command): Capabilities {
   return {
     version: program.version() ?? '0.0.0',
     hint: "Run 'drift' for human output. Use these primitives with --json for agent workflows.",
-    humanCommands: ['scan', 'ci', 'init'],
+    humanCommands: ['scan', 'list', 'get', 'docs', 'mcp'],
     commands,
     globalFlags: extractFlags(program),
     entities: [
       {
         name: 'spec',
-        description: 'Extracted TypeScript API spec',
+        description: 'Extracted API spec (ground truth)',
         operations: { read: 'extract', list: 'list', get: 'get' },
       },
       {
         name: 'drift-issue',
         description: 'Documentation drift issue',
-        operations: { read: 'lint', list: 'scan' },
+        operations: { read: 'scan' },
       },
       {
-        name: 'coverage',
-        description: 'Documentation coverage metrics',
-        operations: { read: 'coverage' },
-      },
-      {
-        name: 'config',
-        description: 'Drift configuration',
-        operations: { read: 'config get', list: 'config list', update: 'config set' },
-      },
-      { name: 'context', description: 'Agent context file', operations: { create: 'context' } },
-      {
-        name: 'history',
-        description: 'Coverage/lint history over time',
-        operations: { read: 'ci' },
-      },
-      {
-        name: 'examples',
-        description: 'Example validation results',
-        operations: { read: 'examples' },
-      },
-      {
-        name: 'docs-map',
-        description: 'Committed page→type map for docs key-coverage mode',
+        name: 'docs',
+        description: 'Committed page→type file for key coverage',
         operations: {
-          create: 'docs-map stub',
-          update: 'docs-map baseline',
-          read: 'scan --docs-map <file>',
+          create: 'docs init',
+          update: 'docs baseline',
+          read: 'scan',
         },
       },
     ],
     workflows: {
-      'detect-drift': {
-        steps: ['extract', 'lint'],
-        description: 'Find stale JSDoc and prose drift',
-      },
-      'full-scan': { steps: ['scan'], description: 'Coverage + lint + prose in one pass' },
-      'detect-and-enrich': {
-        steps: ['scan', 'context'],
-        description: 'Scan and generate agent context',
-      },
-      'ci-pipeline': { steps: ['ci'], description: 'Run CI checks on changed packages' },
-      'pre-release': {
-        steps: ['scan', 'breaking', 'release'],
-        description: 'Full pre-release quality gate',
-      },
-      'docs-key-coverage': {
-        steps: ['docs-map stub', 'scan --docs-map', 'docs-map baseline'],
-        description: 'Gap/ghost/inversion gate: docs pages vs spec type keys',
+      check: { steps: ['scan'], description: 'Coverage + lint + prose + key coverage' },
+      'docs-setup': {
+        steps: ['docs init', 'docs propose', 'scan', 'docs baseline'],
+        description: 'Scaffold, optional propose, gate, ratchet',
       },
     },
   };

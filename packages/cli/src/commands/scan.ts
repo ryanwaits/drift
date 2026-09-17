@@ -8,17 +8,15 @@ import {
 } from '@driftdev/sdk';
 import type { Command } from 'commander';
 import { cachedExtract } from '../cache/cached-extract';
-import { loadDocsMap } from '../config/docs-map';
+import { loadDocsMap, resolveDocsFile } from '../config/docs-map';
 import { loadConfig } from '../config/loader';
 import { renderBatchScan, renderScan } from '../formatters/scan';
 import { emitAnnotations } from '../utils/annotations';
 import { detectEntry } from '../utils/detect-entry';
 import { readPackageName, resolveDocsCorpus } from '../utils/docs-corpus';
-import { computeHealth } from '../utils/health';
 import { type DocsCoverageRun, runDocsCoverage } from '../utils/key-coverage-runner';
 import { resolveLang, resolveTruth } from '../utils/load-spec';
 import { formatError, formatOutput, formatWarning, type OutputNext } from '../utils/output';
-import { computeRatchetMin } from '../utils/ratchet';
 import { shouldRenderHuman } from '../utils/render';
 import { getVersion } from '../utils/version';
 import { discoverPackages, filterPublic } from '../utils/workspaces';
@@ -32,7 +30,7 @@ interface LintIssue {
 }
 
 export interface ScanResult {
-  /** Absent in docs-map standalone mode (no package under scan) */
+  /** Absent in docs-only mode (no package under scan) */
   coverage?: {
     score: number;
     documented: number;
@@ -42,11 +40,10 @@ export interface ScanResult {
     external?: number;
   };
   lint?: { issues: LintIssue[]; count: number };
-  health?: number;
   pass: boolean;
   packageName?: string;
   packageVersion?: string;
-  /** Key-coverage results, present when --docs-map is set */
+  /** Key-coverage results, present when a docs file is loaded */
   docsCoverage?: {
     pass: boolean;
     pages: Array<{
@@ -86,11 +83,21 @@ function toDocsCoverageResult(run: DocsCoverageRun): NonNullable<ScanResult['doc
   };
 }
 
+async function runKeyCoverage(
+  mapFlag: string | undefined,
+  apiSpec?: Parameters<typeof runDocsCoverage>[1],
+): Promise<DocsCoverageRun | undefined> {
+  const mapPath = resolveDocsFile(mapFlag);
+  if (!mapPath) return undefined;
+  const loaded = loadDocsMap(mapPath);
+  return runDocsCoverage(loaded, apiSpec);
+}
+
 export function registerScanCommand(program: Command): void {
   program
     .command('scan [entry]')
-    .description('Run coverage + lint + prose drift in one pass')
-    .option('--min <n>', 'Minimum health threshold (exit 1 if below)')
+    .description('Coverage + lint + prose + key coverage in one pass')
+    .option('--min <n>', 'Minimum coverage % (exit 1 if below)')
     .option('--all', 'Run across all workspace packages')
     .option('--private', 'Include private packages in --all mode')
     .option(
@@ -103,10 +110,7 @@ export function registerScanCommand(program: Command): void {
       '--docs <patterns...>',
       'Markdown corpus for prose drift: glob patterns or directories (overrides repo-local defaults)',
     )
-    .option(
-      '--docs-map <file>',
-      'Docs map (page→type) activating key-coverage mode: gaps/ghosts/inversions per page',
-    )
+    .option('--map <file>', 'Docs file (page→type). Default: auto-load drift.docs.json')
     .option('--annotations', 'Emit GitHub Actions ::error/::warning annotations for findings')
     .action(
       async (
@@ -119,7 +123,7 @@ export function registerScanCommand(program: Command): void {
           abi?: string;
           spec?: string;
           docs?: string[];
-          docsMap?: string;
+          map?: string;
           annotations?: boolean;
         },
       ) => {
@@ -142,10 +146,6 @@ export function registerScanCommand(program: Command): void {
             );
             return;
           }
-          if (options.all && options.docsMap) {
-            formatError('scan', '--docs-map is not supported with --all', startTime, version);
-            return;
-          }
           if (lang === 'clarity' && !options.abi) {
             formatError('scan', '--abi is required when --lang clarity', startTime, version);
             return;
@@ -155,7 +155,7 @@ export function registerScanCommand(program: Command): void {
             return;
           }
 
-          // Batch mode
+          // Batch mode: JSDoc per package; map once at cwd
           if (options.all) {
             const allPackages = discoverPackages(process.cwd());
             if (!allPackages || allPackages.length === 0) {
@@ -171,12 +171,13 @@ export function registerScanCommand(program: Command): void {
               return;
             }
 
+            const { config } = loadConfig();
+            const min = options.min ? parseInt(options.min, 10) : config.coverage?.min;
             const rows: Array<{
               name: string;
               exports: number;
               coverage: number;
               lintIssues: number;
-              health: number;
             }> = [];
             let anyFail = false;
 
@@ -190,44 +191,90 @@ export function registerScanCommand(program: Command): void {
               const coverage = exps.length > 0 ? Math.round((documented / exps.length) * 100) : 100;
 
               const driftResult = computeDrift(spec);
-              const issues: Array<{ export: string; issue: string }> = [];
-              for (const [exportName, drifts] of driftResult.exports) {
-                for (const d of drifts) issues.push({ export: exportName, issue: d.issue });
+              let lintIssues = 0;
+              for (const [, drifts] of driftResult.exports) lintIssues += drifts.length;
+
+              if (lang === 'typescript' || options.docs) {
+                try {
+                  const pkgName = readPackageName(path.dirname(pkg.entry)) ?? pkg.name;
+                  if (pkgName) {
+                    const registry = buildExportRegistry(spec);
+                    const markdownFiles = resolveDocsCorpus(
+                      path.dirname(pkg.entry),
+                      options.docs,
+                      config.docs,
+                    );
+                    lintIssues += detectProseDrift({
+                      packageName: pkgName,
+                      markdownFiles,
+                      registry,
+                    }).length;
+                  }
+                } catch (err) {
+                  formatWarning(
+                    `Prose drift skipped (${pkg.name}): ${err instanceof Error ? err.message : String(err)}`,
+                  );
+                }
               }
 
-              const h = computeHealth(exps.length, documented, issues);
-              const min = options.min ? parseInt(options.min, 10) : undefined;
-              if (min !== undefined && h.health < min) anyFail = true;
+              if (lintIssues > 0) anyFail = true;
+              if (min !== undefined && coverage < min) anyFail = true;
 
               rows.push({
                 name: pkg.name,
                 exports: exps.length,
                 coverage,
-                lintIssues: issues.length,
-                health: h.health,
+                lintIssues,
               });
             }
 
-            const data = { packages: rows, ...(skipped.length > 0 ? { skipped } : {}) };
+            let docsCoverage: DocsCoverageRun | undefined;
+            try {
+              docsCoverage = await runKeyCoverage(options.map);
+            } catch (err) {
+              formatError(
+                'scan',
+                err instanceof Error ? err.message : String(err),
+                startTime,
+                version,
+              );
+              return;
+            }
+            if (docsCoverage && !docsCoverage.pass) anyFail = true;
+
             const totalIssues = rows.reduce((s, r) => s + r.lintIssues, 0);
-            const batchNext: OutputNext | undefined =
+            const next: OutputNext | undefined =
               totalIssues > 0
                 ? {
-                    suggested: 'drift-fix skill',
+                    suggested: 'drift get <name>',
                     reason: `${totalIssues} issues across ${rows.filter((r) => r.lintIssues > 0).length} packages`,
                   }
                 : undefined;
-            formatOutput('scan', data, startTime, version, renderBatchScan, batchNext);
+            formatOutput(
+              'scan',
+              {
+                packages: rows,
+                pass: !anyFail,
+                ...(skipped.length > 0 ? { skipped } : {}),
+                ...(docsCoverage ? { docsCoverage: toDocsCoverageResult(docsCoverage) } : {}),
+              },
+              startTime,
+              version,
+              renderBatchScan,
+              next,
+            );
+            if (options.annotations && docsCoverage) {
+              emitAnnotations(docsCoverage.annotations.errors, 'error');
+              emitAnnotations(docsCoverage.annotations.warnings, 'warning');
+            }
             if (anyFail) process.exitCode = 1;
             return;
           }
 
-          // Docs-map standalone mode: when every page carries its own truth
-          // (spec or entry), no package entry is needed — docs-only repos
-          // (e.g. a docs site gating SDK pages against committed specs) have
-          // nothing to detect.
-          if (options.docsMap && !entry) {
-            const loaded = loadDocsMap(options.docsMap);
+          // Docs-only: map present, every page has spec/entry, no package needed
+          const mapPathEarly = resolveDocsFile(options.map);
+          if (mapPathEarly && !entry && lang === 'typescript' && !options.spec) {
+            const loaded = loadDocsMap(mapPathEarly);
             if (loaded.map.pages.every((p) => p.spec || p.entry)) {
               const run = await runDocsCoverage(loaded);
               const data: ScanResult = { pass: run.pass, docsCoverage: toDocsCoverageResult(run) };
@@ -249,7 +296,6 @@ export function registerScanCommand(program: Command): void {
             }
           }
 
-          // Single-package mode
           const { config } = loadConfig();
           let entryFile = entry ? path.resolve(process.cwd(), entry) : undefined;
           if (lang === 'typescript' && !entryFile) {
@@ -262,8 +308,6 @@ export function registerScanCommand(program: Command): void {
             abi: options.abi,
           });
 
-          // Coverage — external re-exports excluded: their docs live in
-          // another package, so counting them inflates the denominator
           const allExports = apiSpec.exports ?? [];
           const exports = allExports.filter((exp) => !isExternalExport(exp));
           const external = allExports.length - exports.length;
@@ -274,7 +318,6 @@ export function registerScanCommand(program: Command): void {
           }
           const coverageScore = total > 0 ? Math.round((documented / total) * 100) : 100;
 
-          // Drift
           const driftResult = computeDrift(apiSpec);
           const issues: LintIssue[] = [];
           for (const [exportName, drifts] of driftResult.exports) {
@@ -289,8 +332,6 @@ export function registerScanCommand(program: Command): void {
             }
           }
 
-          // Prose drift — TS by default (import heuristics assume npm
-          // packages); an explicit --docs corpus runs for any language
           if (lang === 'typescript' || options.docs) {
             try {
               const pkgName = readPackageName() ?? packageName;
@@ -319,23 +360,13 @@ export function registerScanCommand(program: Command): void {
             }
           }
 
-          // Key coverage (docs-map mode)
-          let docsCoverage: DocsCoverageRun | undefined;
-          if (options.docsMap) {
-            const loaded = loadDocsMap(options.docsMap);
-            docsCoverage = await runDocsCoverage(loaded, apiSpec);
-          }
+          const docsCoverage = await runKeyCoverage(options.map, apiSpec);
 
-          // Health
-          const healthIssues = issues.map((i) => ({ export: i.export, issue: i.issue }));
-          const h = computeHealth(total, documented, healthIssues);
-
-          let min = options.min ? parseInt(options.min, 10) : config.coverage?.min;
-          if (min !== undefined && config.coverage?.ratchet) {
-            const ratchet = computeRatchetMin(min);
-            min = ratchet.effectiveMin;
-          }
-          const pass = (min === undefined || h.health >= min) && (docsCoverage?.pass ?? true);
+          const min = options.min ? parseInt(options.min, 10) : config.coverage?.min;
+          const coverageFail = min !== undefined && coverageScore < min;
+          const lintFail = issues.length > 0;
+          const mapFail = docsCoverage ? !docsCoverage.pass : false;
+          const pass = !coverageFail && !lintFail && !mapFail;
 
           const data: ScanResult = {
             coverage: {
@@ -346,23 +377,21 @@ export function registerScanCommand(program: Command): void {
               ...(external > 0 ? { external } : {}),
             },
             lint: { issues, count: issues.length },
-            health: h.health,
             pass,
             packageName,
             packageVersion,
             ...(docsCoverage ? { docsCoverage: toDocsCoverageResult(docsCoverage) } : {}),
           };
 
-          // Compute next action hint
           let next: OutputNext | undefined;
           if (issues.length > 0) {
             next = {
-              suggested: 'drift-fix skill',
+              suggested: 'drift get <name>',
               reason: `${issues.length} issue${issues.length === 1 ? '' : 's'} found`,
             };
           } else if (total - documented > 0) {
             next = {
-              suggested: 'drift-enrich skill',
+              suggested: 'drift list --undocumented',
               reason: `${total - documented} exports lack documentation`,
             };
           }
@@ -380,9 +409,12 @@ export function registerScanCommand(program: Command): void {
               const covFails = docsCoverage
                 ? docsCoverage.pages.flatMap((p) => p.failures.map((f) => `${p.page}: ${f}`))
                 : [];
-              process.stderr.write(
-                `scan failed: health ${h.health}%${min !== undefined ? ` (need ${min}%)` : ''}, ${issues.length} issues${covFails.length > 0 ? `; docs coverage: ${covFails.join(' | ')}` : ''}\n`,
-              );
+              const parts = [
+                `coverage ${coverageScore}%${min !== undefined ? ` (need ${min}%)` : ''}`,
+                `${issues.length} issues`,
+              ];
+              if (covFails.length > 0) parts.push(`docs: ${covFails.join(' | ')}`);
+              process.stderr.write(`scan failed: ${parts.join(', ')}\n`);
             }
             process.exitCode = 1;
           }

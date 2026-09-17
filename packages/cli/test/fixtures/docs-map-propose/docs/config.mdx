@@ -1,0 +1,20 @@
+# Configuring
+
+Intro mentioning nothing important.
+
+## Configuration options
+
+| Option | Description |
+| --- | --- |
+| `host` | API host |
+| `flushInterval` | Flush interval |
+| `apiKey` | Public API key |
+| `timeout` | Request timeout |
+
+## Tracing headers
+
+Set `tracingHeaders` to true to propagate W3C trace context:
+
+```ts
+createClient({ tracingHeaders: true })
+```

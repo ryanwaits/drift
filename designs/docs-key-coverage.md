@@ -20,16 +20,14 @@ gap-finder was a 120-line custom script. This design makes that script a drift c
 
 ### D1. Command surface: extend `drift scan`
 
-`drift scan --docs-map <file>` activates key-coverage mode (one-command philosophy; scan is already
-the composed CI gate with `--min` + exit codes). No new top-level analysis command. `--annotations`
-(from lint) is added to scan for gate parity. A small `drift docs-map <stub|baseline>` utility command
-family handles map lifecycle (see D5) — utilities, not analysis.
+`drift` auto-loads `drift.docs.json`. `--map` overrides. `--annotations` for GHA. Lifecycle:
+`drift docs init|propose|baseline`.
 
-### D2. The committed artifact: `drift.docs-map.json` (central file, v1)
+### D2. The committed artifact: `drift.docs.json` (central file, v1)
 
 ```jsonc
 {
-  "$schema": "https://unpkg.com/@driftdev/cli/schemas/drift.docs-map.schema.json",
+  "$schema": "https://unpkg.com/@driftdev/cli/schemas/drift.docs.schema.json",
   "version": 1,
   "pages": [
     {
@@ -94,20 +92,23 @@ existing scaffolding:
 - **WARN** inversions; **WARN** at-baseline gaps
 - Config errors (type not in spec, bad map) = exit **2**; findings = exit **1**; clean = **0**
 - `--annotations` → `::error file=<page>::…` / `::warning file=<page>::…`
-- `drift docs-map baseline` rewrites `baselineGaps` **downward only** to current counts (ratchet
+- `drift docs baseline` rewrites `baselineGaps` **downward only** to current counts (ratchet
   tightening is mechanical; loosening requires a human editing the committed map)
 
 ### D5. LLM integrations (each optional, each writes committed artifacts)
 
-1. **`drift docs-map stub`** (deterministic, no LLM): scans `--docs` corpus for pages whose tables
+1. **`drift docs init`** (deterministic, no LLM): scans `--docs` corpus for pages whose tables
    contain ≥N backtick keys, lists candidate object types from the spec, emits a skeleton map with
    `"type": null` markers. The scaffold an agent (or human) fills in.
-2. **Skill `drift-docs-map`**: agent runs stub → reads pages + `drift list`/`drift get` → fills
-   page→type mapping, proposes `internal`/`annotations`, runs `drift scan --docs-map` once, sets
+2. **Skill `/drift`**: agent runs init → reads pages + `drift list`/`drift get` → fills
+   page→type mapping, proposes `internal`/`annotations`, runs `drift scan --map` once, sets
    `baselineGaps` from the verified first run → human reviews and commits.
 3. **Gap annotation / ranking / fix drafts**: agent tags gaps in the map (`prose-documented`, …) and
    drafts doc snippets from spec descriptions (possible now that 0.43 preserves them). Extends
-   `drift-docs-map` + `drift-enrich` skills; deterministic runs simply respect the committed tags.
+   `/drift` skill; deterministic runs simply respect the committed tags.
+4. **`drift docs propose`** (opt-in Jev): one batched TypeSafe System One call confirms
+   page→type (top-3 overlap candidates) and triages undocumented keys. Writes a proposed map;
+   human commits; `scan`/`ci` stay zero-network. Requires `TYPESAFE_API_KEY`. Not the default.
 
 ### D6. Prose-mode false-positive fix (independent, ships whenever)
 
@@ -120,10 +121,10 @@ known exported type). Covers both reproduced cases: `const app = express()` (ext
 
 1. ~~Extraction metadata P0~~ — done (openpkg 0.43, drift 1.11.0)
 2. SDK `analysis/docs-coverage/` (extract-keys + diff-keys + types) with fixture tests
-3. Docs-map loader + JSON Schema + `scan --docs-map` wiring + gate policy/exit codes + `--annotations`
-4. `drift docs-map stub|baseline`
+3. Docs-map loader + JSON Schema + `scan --map` wiring + gate policy/exit codes + `--annotations`
+4. `drift docs init|baseline`
 5. Prose false-positive fix (D6)
-6. Skill `drift-docs-map`
+6. Skill `/drift`
 7. Phase 4 re-run vs posthog.com corpus — acceptance: js 41/0/0, node 37/0/1
    (`personalApiKey`→`secretKey`), rn 12/0/0 (gaps/ghosts/inversions), Express FP gone
 

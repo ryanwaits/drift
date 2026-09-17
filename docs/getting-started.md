@@ -1,25 +1,6 @@
 # Getting Started
 
-Drift detects when your docs drift from your code. It extracts the real API surface — TypeScript exports, OpenAPI operations, or Clarity contract functions — and checks that docs, JSDoc, and `@example` blocks are accurate and complete.
-
-## Who This Is For
-
-- Maintainers of TypeScript packages with public APIs.
-- API teams checking hand-written guides against an OpenAPI spec.
-- Teams that want PR-time docs quality gates, not manual release checks.
-- Engineers who need fast, file-level guidance for fixing stale docs.
-
-## Why Teams Use Drift
-
-- Prevent docs regressions before merge.
-- Keep examples and markdown aligned with shipped exports.
-- Turn docs quality into an objective CI signal.
-
-## How To Use This Guide
-
-1. Install Drift.
-2. Run an initial scan and inspect what failed.
-3. Add a CI threshold once your baseline is known.
+Drift extracts the real API surface and checks that JSDoc, examples, and markdown still describe it.
 
 ## Install
 
@@ -27,127 +8,53 @@ Drift detects when your docs drift from your code. It extracts the real API surf
 bun add -D @driftdev/cli
 ```
 
-Or globally:
+## Hour one
 
 ```bash
-bun add -g @driftdev/cli
-```
-
-This gives you the `drift` binary.
-
-## First Run
-
-Navigate to a TypeScript package with an exported API surface (library, SDK, or CLI package) and run:
-
-```bash
-drift scan
-```
-
-Drift auto-detects your entry point from `package.json` `"types"`, `"typings"`, `"exports"`, `"main"`, `"module"`, and `"bin"` fields. No configuration needed for standard package layouts.
-
-If your package has a custom layout, pass an explicit entry:
-
-```bash
-drift scan src/drift.ts
-```
-
-Recommended first pass:
-
-```bash
-drift scan
-drift lint
+drift
 drift list --undocumented
 ```
 
-Example output:
+No config. Entry auto-detects from `package.json` (`types`, `exports`, `main`, `module`, `bin`). Pass an entry if the layout is custom: `drift src/index.ts`.
 
-```
-  my-lib v1.2.0
+JSON when piped: `{ok, data, meta}`. Exit 0 clean, 1 findings, 2 error.
 
-  Coverage   72%  (18/25 exports documented)
-  Lint        3 issues
-  Health     68%
+## CI this sprint
 
-  Issues:
-    parseConfig    @param 'options' type mismatch: documented as 'object', actual 'ParseOptions'
-    createClient   @returns type mismatch: documented as 'Client', actual 'Promise<Client>'
-    formatOutput   @param 'input' not in signature (has: 'data')
-
-  Health below threshold? Use drift scan --min 80 to enforce.
+```yaml
+- uses: ryanwaits/drift/action@v1
+  with:
+    min-coverage: 80
 ```
 
-JSON output (piped or `--json`):
+Same check as local `drift`. Floor cannot drop. No model.
 
-```json
-{
-  "ok": true,
-  "data": {
-    "coverage": { "score": 72, "documented": 18, "total": 25, "undocumented": 7 },
-    "lint": { "issues": [...], "count": 3 },
-    "health": 68,
-    "pass": true,
-    "packageName": "my-lib",
-    "packageVersion": "1.2.0"
-  },
-  "meta": { "command": "scan", "duration": 342, "version": "1.4.0" }
-}
-```
+Or: `drift --min 80` in any CI.
 
-## What to Do Next
-
-Based on your scan results:
-
-- **Low coverage** -- Add JSDoc descriptions to undocumented exports. Run `drift list --undocumented` to see which ones.
-- **Lint issues** -- Your JSDoc is out of sync with code. Run `drift lint` for details with file paths and line numbers.
-- **Low health** -- Health is a 50/50 blend of coverage and accuracy. Fix lint issues first (they tank accuracy), then fill in missing docs.
-
-## Useful Follow-Up Commands
+## Docs site (option tables)
 
 ```bash
-# List all exports, filter to undocumented
-drift list --undocumented
-
-# List exports with stale JSDoc
-drift list --drifted
-
-# Check just coverage
-drift coverage
-
-# Check just lint (JSDoc accuracy)
-drift lint
-
-# Validate @example blocks
-drift examples
-
-# Set a coverage floor
-drift config set coverage.min 80
-
-# Run in CI with PR comments
-drift ci
+drift docs init contents/docs
+drift docs propose              # optional, needs TYPESAFE_API_KEY
+# review + commit drift.docs.json
+drift                           # key coverage now on
+drift docs baseline
 ```
 
-## Monorepo Support
+Ghosts fail. Gaps above baseline fail. Inversions warn.
 
-All analysis commands support `--all` to run across workspace packages:
+## Agents
 
 ```bash
-drift scan --all
-drift coverage --all
-drift lint --all
+drift mcp
+drift get createClient --json
 ```
 
-Private packages are excluded by default. Add `--private` to include them.
+One get per claim. Never from memory.
 
-## Zero Footprint
+## Other truth sources
 
-Drift stores all state in `~/.drift/` -- nothing is written to your project directory. Config can optionally live in `drift.config.json` or `package.json` `"drift"` key. See [Configuration](./configuration.md).
-
-## Further Reading
-
-- [Guide Map](./guide-map.md) -- pick the right doc by role and goal
-- [CLI Reference](./cli-reference.md) -- every command and flag
-- [Drift Detection](./drift-detection.md) -- what drift is and how detection works
-- [Coverage and Health](./coverage-and-health.md) -- scoring details
-- [CI Integration](./ci-integration.md) -- GitHub Actions setup
-- [Configuration](./configuration.md) -- config file locations and all keys
-- [SDK](./sdk.md) -- using `@driftdev/sdk` programmatically
+```bash
+drift --spec openapi.json
+drift token.clar --abi token.abi.json
+```

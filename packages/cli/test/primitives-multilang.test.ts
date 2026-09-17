@@ -144,24 +144,15 @@ describe('multi-lang primitives — openapi (--spec implies lang)', () => {
     expect(result.exitCode).toBe(1);
   });
 
-  test('coverage --spec', () => {
-    const envelope = json(['coverage', '--spec', 'acme-api.json']);
-    expect(envelope.data.total).toBe(2);
-    expect(envelope.data.documented).toBe(1);
-    expect(envelope.data.undocumented).toEqual(['userList']);
-  });
-
-  test('lint --spec runs computeDrift without prose drift', () => {
-    const envelope = json(['lint', '--spec', 'acme-api.json']);
-    expect(envelope.ok).toBe(true);
-    expect(envelope.data.count).toBe(0);
-  });
-
-  test('health --spec reports package meta from spec', () => {
-    const envelope = json(['health', '--spec', 'acme-api.json']);
+  test('scan --spec reports coverage and package meta', () => {
+    const envelope = json(['scan', '--spec', 'acme-api.json']);
+    expect(envelope.data.coverage.total).toBe(2);
+    expect(envelope.data.coverage.documented).toBe(1);
+    expect(envelope.data.coverage.undocumented).toBe(1);
     expect(envelope.data.packageName).toBe('Acme API');
     expect(envelope.data.packageVersion).toBe('2.1.0');
-    expect(envelope.data.health).toBeGreaterThanOrEqual(0);
+    expect(envelope.data.lint.count).toBe(0);
+    expect(envelope.data.health).toBeUndefined();
   });
 
   test('--all guarded for non-TS', () => {

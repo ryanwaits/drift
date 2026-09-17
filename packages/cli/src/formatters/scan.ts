@@ -11,10 +11,7 @@ export function renderScan(data: ScanResult, next?: OutputNext): string {
     lines.push('');
   }
 
-  // Summary — absent in docs-map standalone mode (no package under scan)
-  if (data.health !== undefined && data.coverage && data.lint) {
-    const hColor = coverageColor(data.health);
-    lines.push(indent(`Health     ${hColor(`${data.health}%`)}`));
+  if (data.coverage && data.lint) {
     const externalNote = data.coverage.external
       ? c.gray(`  +${data.coverage.external} external (not resolvable here)`)
       : '';
@@ -31,7 +28,6 @@ export function renderScan(data: ScanResult, next?: OutputNext): string {
     lines.push('');
   }
 
-  // Issues (max 10)
   if (data.lint && data.lint.count > 0) {
     lines.push(indent('Issues'));
     lines.push(indent(c.gray(separator())));
@@ -49,7 +45,6 @@ export function renderScan(data: ScanResult, next?: OutputNext): string {
     lines.push('');
   }
 
-  // Docs key coverage (--docs-map mode)
   if (data.docsCoverage) {
     lines.push(indent('Docs coverage'));
     lines.push(indent(c.gray(separator())));
@@ -72,7 +67,6 @@ export function renderScan(data: ScanResult, next?: OutputNext): string {
     lines.push('');
   }
 
-  // Verdict
   if (data.pass) {
     lines.push(indent(`${c.green(sym.ok)} Scan passed`));
   } else {
@@ -91,27 +85,40 @@ interface BatchScanRow {
   exports: number;
   coverage: number;
   lintIssues: number;
-  health: number;
 }
 
 interface BatchScanData {
   packages: BatchScanRow[];
   skipped?: string[];
+  pass?: boolean;
+  docsCoverage?: ScanResult['docsCoverage'];
 }
 
-export function renderBatchScan(data: BatchScanData): string {
+export function renderBatchScan(data: BatchScanData, next?: OutputNext): string {
   const lines: string[] = [''];
 
-  const headers = ['Package', 'Exports', 'Coverage', 'Lint', 'Health'];
+  const headers = ['Package', 'Exports', 'Coverage', 'Lint'];
   const rows = data.packages.map((p) => [
     p.name,
     String(p.exports),
     `${p.coverage}%`,
     String(p.lintIssues),
-    `${p.health}%`,
   ]);
 
   lines.push(table([headers, ...rows]));
+
+  if (data.docsCoverage) {
+    lines.push('');
+    for (const page of data.docsCoverage.pages) {
+      const mark =
+        page.status === 'fail'
+          ? c.red(sym.x)
+          : page.status === 'warn'
+            ? c.yellow('!')
+            : c.green(sym.ok);
+      lines.push(indent(`${mark} ${page.page}  ${c.dim(page.type)}`));
+    }
+  }
 
   if (data.skipped && data.skipped.length > 0) {
     lines.push(
@@ -121,6 +128,15 @@ export function renderBatchScan(data: BatchScanData): string {
         ),
       ),
     );
+  }
+
+  if (data.pass === false) {
+    lines.push(indent(`${c.red(sym.x)} Scan failed`));
+  } else if (data.pass === true) {
+    lines.push(indent(`${c.green(sym.ok)} Scan passed`));
+  }
+  if (next) {
+    lines.push(indent(c.gray(`-> Next: ${next.suggested}  (${next.reason})`)));
   }
 
   lines.push('');

@@ -86,17 +86,6 @@ export {
   isExportDocumented,
   isExternalExport,
 } from './analysis/health';
-// Incremental analysis (crash recovery)
-export type {
-  IncrementalAnalyzerOptions,
-  IncrementalExportResult,
-  PartialAnalysisState,
-} from './analysis/incremental';
-export {
-  cleanupOrphanedTempFiles,
-  findOrphanedTempFiles,
-  IncrementalAnalyzer,
-} from './analysis/incremental';
 export type {
   DocsKeyCorpus,
   KeyAnnotation,
@@ -149,8 +138,6 @@ export type {
   DocsConfig,
   DriftConfig,
   DriftConfigInput,
-  ExamplesConfig,
-  RemoteDocsTarget,
 } from './config';
 export { defineConfig, driftConfigSchema, normalizeConfig } from './config';
 
@@ -205,6 +192,6 @@ export { typecheckExamples } from './typecheck';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Additional Exports removed — use subpath imports instead:
-//   @driftdev/sdk/analysis, @driftdev/sdk/history, @driftdev/sdk/cache,
+//   @driftdev/sdk/analysis, @driftdev/sdk/cache,
 //   @driftdev/sdk/markdown, @driftdev/sdk/examples, @driftdev/sdk/types
 // ─────────────────────────────────────────────────────────────────────────────

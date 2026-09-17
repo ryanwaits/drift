@@ -21,7 +21,7 @@ const instrumentSerif = Instrument_Serif({
 const siteUrl = 'https://driftdev.sh';
 const title = "drift — code changes. docs don't. drift catches it.";
 const description =
-  'Detect when your docs drift from your code — TypeScript packages, OpenAPI specs, Clarity contracts. Finds stale docs, broken references, and outdated examples.';
+  'Detect when your docs drift from your code — TypeScript packages, OpenAPI specs, Clarity contracts. One check, locally and in CI. No model.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

@@ -6,16 +6,6 @@
  */
 
 /**
- * Remote repo whose docs should be synced on breaking changes.
- */
-export interface RemoteDocsTarget {
-  /** Target repo in "owner/repo" format */
-  repo: string;
-  /** Target branch (defaults to repo's default branch) */
-  branch?: string;
-}
-
-/**
  * Documentation configuration options.
  */
 export interface DocsConfig {
@@ -23,8 +13,6 @@ export interface DocsConfig {
   include?: string[];
   /** Glob patterns for markdown docs to exclude */
   exclude?: string[];
-  /** Remote repos to sync docs on breaking changes */
-  remote?: RemoteDocsTarget[];
 }
 
 /**
@@ -33,8 +21,6 @@ export interface DocsConfig {
 export interface CoverageConfig {
   /** Minimum coverage % (exit 1 if below) */
   min?: number;
-  /** Ratchet: effective min = max(min, highest_ever) */
-  ratchet?: boolean;
 }
 
 /**
@@ -62,8 +48,6 @@ export interface DriftConfig {
   exclude?: string[];
   /** Coverage thresholds */
   coverage?: CoverageConfig;
-  /** Enable lint checks (default true) */
-  lint?: boolean;
   /** Documentation configuration */
   docs?: DocsConfig;
   /** Example execution policy */

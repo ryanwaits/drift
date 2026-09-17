@@ -12,7 +12,7 @@ export function Hero() {
         </span>
         <span className="min-w-0 truncate">
           <b className="font-medium text-text">v1.9.0</b>
-          {' — drift catches deprecated code your agent would'}&apos;ve missed.
+          {' — drift catches deprecated APIs your docs still teach.'}
         </span>
         <a
           href="/changelog"

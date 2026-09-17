@@ -63,7 +63,7 @@ afterAll(() => {
 });
 
 describe('drift scan --lang clarity', () => {
-  test('produces valid scan result with coverage + health', () => {
+  test('produces valid scan result with coverage', () => {
     const result = run([
       'scan',
       '--lang',
@@ -82,8 +82,7 @@ describe('drift scan --lang clarity', () => {
     expect(envelope.data.coverage).toBeDefined();
     expect(envelope.data.coverage.total).toBe(4); // 2 fns + 1 map + 1 var
     expect(envelope.data.coverage.documented).toBeGreaterThan(0); // transfer + get-balance have docs
-    expect(envelope.data.health).toBeGreaterThanOrEqual(0);
-    expect(envelope.data.health).toBeLessThanOrEqual(100);
+    expect(envelope.data.health).toBeUndefined();
     expect(envelope.data.pass).toBe(true);
     expect(envelope.data.packageName).toBe('token');
   });

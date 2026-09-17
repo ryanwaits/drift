@@ -153,29 +153,7 @@ if (result.typecheck) {
 }
 ```
 
-Validation levels: `'presence'`, `'typecheck'`, `'run'`.
-
-### `computeHealth` -- Health Scoring
-
-Compute the SDK-level health score (more detailed than the CLI's simplified version):
-
-```typescript
-import { computeHealth, type HealthInput } from '@driftdev/sdk';
-
-const input: HealthInput = {
-  coverageScore: 88,
-  documentedExports: 22,
-  totalExports: 25,
-  missingByRule: { description: 3 },
-  driftIssues: 4,
-  driftByCategory: { structural: 3, semantic: 1, example: 0, prose: 0 },
-};
-
-const health = computeHealth(input);
-console.log(`Score: ${health.score}`);
-console.log(`Completeness: ${health.completeness.score}`);
-console.log(`Accuracy: ${health.accuracy.score}`);
-```
+Validation levels: `'presence'`, `'typecheck'`, `'run'`. Not on the default CLI gate — static example-drift is inside `computeDrift`.
 
 ## Key Types
 
@@ -188,7 +166,6 @@ import type {
   ExportRegistry,        // Lookup table for cross-reference validation
   DriftReport,          // Full coverage report
   CoverageSummary,       // Coverage stats
-  HealthInput,           // Input to computeHealth
 } from '@driftdev/sdk';
 ```
 
@@ -198,10 +175,10 @@ The SDK also exposes subpath imports for specialized use:
 
 ```typescript
 // Analysis utilities
-import { generateReport, computeSnapshot } from '@driftdev/sdk/analysis';
+import { generateReport } from '@driftdev/sdk/analysis';
 
 // Type definitions
-import type { DriftReport, FilterOptions } from '@driftdev/sdk/types';
+import type { DriftReport } from '@driftdev/sdk/types';
 ```
 
 ## Constants

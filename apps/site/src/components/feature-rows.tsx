@@ -20,14 +20,14 @@ const tileClass =
 export function FeatureRows() {
   const findingHref = getDocAnchor('drift-detection', 'Prose Drift Detection');
   const rulesHref = getDocAnchor('drift-detection', 'The 4 Drift Categories');
-  const coverageHref = getDocAnchor('coverage-and-health', 'External Exports');
-  const surfacesHref = getDocAnchor('cli-reference', 'drift scan [entry]');
+  const coverageHref = getDocAnchor('coverage', 'External exports');
+  const surfacesHref = getDocAnchor('cli-reference', 'drift / drift scan [entry]');
 
   return (
     <section id="features" className="mx-auto max-w-5xl px-6 py-16 text-center lg:py-20">
       <h2 className="text-2xl font-semibold tracking-tight text-text">See it in action</h2>
       <p className="mx-auto mt-2 max-w-md text-text-muted">
-        The actual commands and output — four things drift catches every day.
+        One check. Same locally and in CI. Docs vs the real API.
       </p>
 
       <div className="mt-10 flex flex-col gap-5 text-left">
@@ -39,22 +39,22 @@ export function FeatureRows() {
           >
             <div className="px-6 pt-7 text-center sm:px-8">
               <h3 className="text-lg font-semibold tracking-tight text-text">
-                Catches outdated code automatically.
+                Catches when the docs are lying.
               </h3>
               <p className="mx-auto mt-2 max-w-[34ch] text-sm text-text-muted">
-                Someone told your docs to call a method that&apos;s already dead. Drift catches it
-                and tells you exactly what to use instead.
+                A guide still calls a method that&apos;s already dead. Drift names the file, the
+                line, and what to use instead.
               </p>
             </div>
             <div className="mx-6 mt-5 overflow-hidden rounded-xl border border-border sm:mx-8">
               <div className="flex items-center justify-between px-4 py-2.5 font-mono text-xs text-text-muted">
-                <span>lint · clarinet-sdk</span>
+                <span>drift · clarinet-sdk</span>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-code-flag/15 px-2 py-0.5 text-[11px] font-bold text-code-flag">
                   <span className="size-1.5 rounded-full bg-current" />1 finding
                 </span>
               </div>
               <pre className="overflow-x-auto bg-code-bg px-4 pb-4 font-mono text-[13px] leading-7 text-text">
-                <span className="text-text-muted">$</span> drift lint clarinet-sdk{' '}
+                <span className="text-text-muted">$</span> drift{' '}
                 <span className="text-code-key">--docs</span>{' '}
                 <span className="text-code-string">guides/</span>
                 {'\n\n'}
@@ -111,21 +111,22 @@ export function FeatureRows() {
           <a href="/docs/ci-integration" className={`${tileClass} pb-6 sm:col-span-2`}>
             <div className="px-6 pt-7 text-center sm:px-8">
               <h3 className="text-lg font-semibold tracking-tight text-text">
-                Catches it before it ships.
+                Same check in CI. No model.
               </h3>
               <p className="mx-auto mt-2 max-w-[38ch] text-sm text-text-muted">
-                Wire drift into CI and every pull request gets checked automatically.
+                The Action runs <code className="font-mono text-[13px]">drift</code>. Floor cannot
+                drop. Reviewers stop being the linter.
               </p>
             </div>
             <div className="mx-6 mt-5 overflow-hidden rounded-xl border border-border sm:mx-8">
               <div className="flex items-center justify-between px-4 py-2.5 font-mono text-xs text-text-muted">
-                <span>ci · pull_request #482</span>
+                <span>drift · pull_request #482</span>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-code-flag/15 px-2 py-0.5 text-[11px] font-bold text-code-flag">
                   <span className="size-1.5 rounded-full bg-current" />2 issues
                 </span>
               </div>
               <pre className="overflow-x-auto bg-code-bg px-4 pb-4 font-mono text-[13px] leading-7 text-text">
-                <span className="text-text-muted">$</span> drift ci
+                <span className="text-text-muted">$</span> drift
                 {'\n\n'}
                 <span className="font-bold text-code-flag">✕ 2 issues found</span>
                 {'\n  '}packages/sdk/scan.ts — missing @param docs

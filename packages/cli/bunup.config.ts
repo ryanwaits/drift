@@ -16,5 +16,6 @@ export default defineConfig({
     'commander',
     'chalk',
     '@inquirer/prompts',
+    '@typesafe-ai/sdk',
   ],
 });
