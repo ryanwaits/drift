@@ -73,7 +73,7 @@ afterAll(() => {
 });
 
 describe('drift scan --lang openapi', () => {
-  test('produces valid scan result with coverage + health', () => {
+  test('produces valid scan result with coverage', () => {
     const result = run(['scan', '--lang', 'openapi', '--spec', 'acme-api.json', '--json']);
     expect(result.exitCode).toBe(0);
 
@@ -82,8 +82,7 @@ describe('drift scan --lang openapi', () => {
     expect(envelope.meta.command).toBe('scan');
     expect(envelope.data.coverage.total).toBe(2); // userInfo + userList
     expect(envelope.data.coverage.documented).toBe(1); // only userInfo has description
-    expect(envelope.data.health).toBeGreaterThanOrEqual(0);
-    expect(envelope.data.health).toBeLessThanOrEqual(100);
+    expect(envelope.data.health).toBeUndefined();
     expect(envelope.data.packageName).toBe('Acme API');
     expect(envelope.data.packageVersion).toBe('2.1.0');
   });

@@ -1,39 +1,25 @@
 # Guide Map
 
-Use this page to pick the right Drift guide by role and goal.
+## Hour one — one package
 
-## If You Maintain A TypeScript Package
+[Getting Started](./getting-started.md)
 
-- Why: prevent stale docs from reaching users.
-- Start here: [Getting Started](./getting-started.md)
-- Then: [Coverage and Health](./coverage-and-health.md)
+## CI / merge gate
 
-## If You Own CI / Release Quality
+[CI Integration](./ci-integration.md) then [Configuration](./configuration.md)
 
-- Why: enforce docs quality as a merge gate.
-- Start here: [CI Integration](./ci-integration.md)
-- Then: [Configuration](./configuration.md)
+## Docs site / option tables
 
-## If You Maintain A Docs Site For An SDK
+[CLI Reference — docs](./cli-reference.md#drift-docs) then [Getting Started](./getting-started.md)
 
-- Why: catch option tables drifting from the real API (gaps, ghosts, deprecated inversions).
-- Start here: [CLI Reference — key-coverage mode](./cli-reference.md#key-coverage-mode---docs-map)
-- Then: bootstrap the page→type map with `drift docs-map stub`
+## Embed in tooling
 
-## If You Build Internal Tooling
+[SDK](./sdk.md)
 
-- Why: embed Drift analysis into custom workflows.
-- Start here: [SDK](./sdk.md)
-- Then: [CLI Reference](./cli-reference.md)
+## Coverage floor
 
-## If You Need Pricing / Packaging Context
+[Coverage](./coverage.md)
 
-- Why: align OSS usage with hosted/enterprise roadmap.
-- Start here: [Pricing & Packaging](./pricing-packaging.md)
-- Then: use the waitlist/contact links in the same page to enter the hosted plan pipeline
+## What the checker catches
 
-## If You Are Evaluating Product Fit
-
-- Why: decide quickly whether Drift should be a team gate.
-- Start here: [Getting Started](./getting-started.md)
-- Then: [Drift Detection](./drift-detection.md)
+[Drift Detection](./drift-detection.md)

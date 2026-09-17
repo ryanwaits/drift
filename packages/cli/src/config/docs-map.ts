@@ -8,6 +8,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
 
+/** Committed page→type file. Auto-loaded by `drift` when present. */
+export const DEFAULT_DOCS_FILE = 'drift.docs.json';
+
 export type DocsMapAnnotation = 'prose-documented' | 'internal-by-convention' | 'ignore';
 
 export interface DocsMapPage {
@@ -134,9 +137,28 @@ export function validateDocsMap(
   return { ok: true, map: obj as unknown as DocsMap };
 }
 
+/** Walk up from cwd for `drift.docs.json`. */
+export function findDocsFile(cwd = process.cwd()): string | null {
+  let current = path.resolve(cwd);
+  const { root } = path.parse(current);
+  while (true) {
+    const candidate = path.join(current, DEFAULT_DOCS_FILE);
+    if (existsSync(candidate)) return candidate;
+    if (current === root) break;
+    current = path.dirname(current);
+  }
+  return null;
+}
+
+/** `--map` wins; else auto-load `drift.docs.json`. */
+export function resolveDocsFile(mapFlag: string | undefined, cwd = process.cwd()): string | null {
+  if (mapFlag) return path.resolve(cwd, mapFlag);
+  return findDocsFile(cwd);
+}
+
 export function loadDocsMap(mapPath: string, cwd = process.cwd()): LoadedDocsMap {
   const absPath = path.resolve(cwd, mapPath);
-  if (!existsSync(absPath)) throw new Error(`Docs map not found: ${absPath}`);
+  if (!existsSync(absPath)) throw new Error(`Docs file not found: ${absPath}`);
   let raw: unknown;
   try {
     raw = JSON.parse(readFileSync(absPath, 'utf-8'));

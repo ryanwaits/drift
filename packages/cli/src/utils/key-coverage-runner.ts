@@ -36,7 +36,10 @@ export interface DocsCoverageRun {
   annotations: { errors: AnnotatableIssue[]; warnings: AnnotatableIssue[] };
 }
 
-function resolvePages(page: DocsMapPage, dir: string): Array<{ path: string; content: string }> {
+export function resolvePages(
+  page: DocsMapPage,
+  dir: string,
+): Array<{ path: string; content: string }> {
   const files = [path.resolve(dir, page.page)];
   for (const pattern of page.extraPages ?? []) {
     for (const match of globSync(pattern, { cwd: dir })) {
@@ -46,7 +49,7 @@ function resolvePages(page: DocsMapPage, dir: string): Array<{ path: string; con
   return files.map((p) => ({ path: p, content: readFileSync(p, 'utf-8') }));
 }
 
-async function resolvePageSpec(
+export async function resolvePageSpec(
   page: DocsMapPage,
   dir: string,
   fallback: ApiSpec | undefined,

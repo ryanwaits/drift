@@ -4,7 +4,7 @@ Drift is when your documentation says one thing but your code does another. Drif
 
 ## Who This Is For
 
-- Maintainers debugging why `drift lint` or `drift scan` failed.
+- Maintainers debugging why `drift` failed.
 - Teams defining a shared policy for docs quality issues.
 - Engineers deciding which drift classes should block merge.
 
@@ -73,12 +73,12 @@ Broken references in markdown documentation.
 | `prose-unresolved-member` | Markdown code block calls a method that doesn't exist on any exported type |
 | `prose-deprecated-reference` | Markdown references a deprecated export/member with no deprecation note nearby |
 
-## Using `drift lint`
+## Using `drift`
 
-`drift lint` runs all drift detection and reports issues:
+`drift` runs drift detection and reports issues:
 
 ```bash
-drift lint
+drift
 ```
 
 Output includes file path and line number for each issue:
@@ -102,34 +102,25 @@ JSON output:
 {
   "ok": true,
   "data": {
-    "issues": [
-      {
-        "export": "parseConfig",
-        "issue": "@param 'options' type mismatch: documented as 'object', actual 'ParseOptions'",
-        "location": "options",
-        "filePath": "src/config.ts",
-        "line": 42
-      },
-      {
-        "export": "",
-        "issue": "Import 'formatJSON' from 'my-lib' does not exist in package exports",
-        "location": "Did you mean 'formatJson'?",
-        "filePath": "README.md",
-        "line": 28
-      }
-    ],
-    "count": 2
+    "lint": {
+      "count": 2,
+      "issues": [
+        {
+          "export": "parseConfig",
+          "issue": "@param 'options' type mismatch: documented as 'object', actual 'ParseOptions'",
+          "filePath": "src/config.ts",
+          "line": 42
+        }
+      ]
+    },
+    "pass": false
   },
-  "meta": { "command": "lint", "duration": 450, "version": "1.4.0" },
-  "next": { "suggested": "drift-fix skill", "reason": "2 issues found" }
+  "meta": { "command": "scan", "duration": 450, "version": "1.12.2" },
+  "next": { "suggested": "drift get <name>", "reason": "2 issues found" }
 }
 ```
 
-Exit code 1 when issues are found. Disable lint entirely with `lint: false` in [config](./configuration.md).
-
-## Using `drift scan`
-
-`drift scan` includes lint as part of its combined pass (coverage + lint + prose drift + health). Same drift detection, bundled with coverage and health scoring. See [CLI Reference](./cli-reference.md#drift-scan-entry).
+Exit 1 when issues are found. See [CLI Reference](./cli-reference.md).
 
 ## Prose Drift Detection
 
@@ -165,16 +156,14 @@ See [Configuration](./configuration.md) for config file locations.
 Override at the command line instead with `--docs <patterns...>` (globs or directories) — useful for pointing at a hosted docs site pulled down locally, without touching the config file. Runs for any language when passed explicitly, not just TypeScript:
 
 ```bash
-drift lint --docs guides/**/*.md
+drift --docs guides/**/*.md
 ```
 
 ## Monorepo Mode
 
-Run lint across all workspace packages:
-
 ```bash
-drift lint --all
-drift lint --all --private
+drift --all
+drift --all --private
 ```
 
 Batch output shows per-package issue counts:

@@ -3,13 +3,6 @@
  * Loaded from drift.config.json or package.json "drift" key.
  */
 
-export interface RemoteDocsTarget {
-  /** Target repo in "owner/repo" format */
-  repo: string;
-  /** Target branch (defaults to repo's default branch) */
-  branch?: string;
-}
-
 export interface DriftConfig {
   /** Entry point override (otherwise auto-detected) */
   entry?: string;
@@ -17,30 +10,18 @@ export interface DriftConfig {
   coverage?: {
     /** Minimum coverage % (exit 1 if below) */
     min?: number;
-    /** Ratchet: effective min = max(min, highest_ever) */
-    ratchet?: boolean;
   };
-  /** Enable lint checks (default true) */
-  lint?: boolean;
   /** Markdown docs discovery patterns */
   docs?: {
     include?: string[];
     exclude?: string[];
-    /** Remote repos to sync docs on breaking changes */
-    remote?: RemoteDocsTarget[];
   };
 }
 
-const DEFAULTS: DriftConfig = {
-  lint: true,
-};
-
 export function mergeDefaults(config: DriftConfig): DriftConfig {
   return {
-    ...DEFAULTS,
     ...config,
     coverage: {
-      ...DEFAULTS.coverage,
       ...config.coverage,
     },
   };
@@ -68,14 +49,7 @@ export function validateConfig(
       if (cov.min !== undefined && (typeof cov.min !== 'number' || cov.min < 0 || cov.min > 100)) {
         errors.push('"coverage.min" must be a number 0-100');
       }
-      if (cov.ratchet !== undefined && typeof cov.ratchet !== 'boolean') {
-        errors.push('"coverage.ratchet" must be a boolean');
-      }
     }
-  }
-
-  if (obj.lint !== undefined && typeof obj.lint !== 'boolean') {
-    errors.push('"lint" must be a boolean');
   }
 
   if (obj.docs !== undefined) {
@@ -94,25 +68,6 @@ export function validateConfig(
         (!Array.isArray(docs.exclude) || !docs.exclude.every((i) => typeof i === 'string'))
       ) {
         errors.push('"docs.exclude" must be an array of strings');
-      }
-      if (docs.remote !== undefined) {
-        if (!Array.isArray(docs.remote)) {
-          errors.push('"docs.remote" must be an array');
-        } else {
-          for (let i = 0; i < docs.remote.length; i++) {
-            const target = docs.remote[i] as Record<string, unknown>;
-            if (typeof target !== 'object' || target === null) {
-              errors.push(`"docs.remote[${i}]" must be an object`);
-              continue;
-            }
-            if (typeof target.repo !== 'string' || !/^[^/]+\/[^/]+$/.test(target.repo)) {
-              errors.push(`"docs.remote[${i}].repo" must be in "owner/repo" format`);
-            }
-            if (target.branch !== undefined && typeof target.branch !== 'string') {
-              errors.push(`"docs.remote[${i}].branch" must be a string`);
-            }
-          }
-        }
       }
     }
   }

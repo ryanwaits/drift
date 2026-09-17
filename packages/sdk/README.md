@@ -10,7 +10,7 @@ Programmatic API for documentation coverage analysis, drift detection, and spec 
 
 ## Why Use It
 
-- Build bespoke workflows (reporting, gating, docs sync) with one engine.
+- Build bespoke workflows (reporting, gating) with one engine.
 - Access lower-level primitives for analysis, diffing, and validation.
 - Keep behavior consistent between local tools and CI services.
 
@@ -77,21 +77,6 @@ const driftSpec = buildDriftSpec({ openpkg, openpkgPath, packagePath });
 const drifts = getExportDrift(someExport, driftSpec);
 ```
 
-### Health Scoring
-
-```typescript
-import { computeHealth, isExportDocumented } from '@driftdev/sdk';
-
-const health = computeHealth({
-  coverageScore: 88,
-  documentedExports: 243,
-  totalExports: 275,
-  driftIssues: 36,
-  fixableDrift: 20,
-  driftByCategory: { structural: 20, semantic: 10, example: 5, prose: 1 },
-});
-```
-
 ### Markdown Discovery
 
 ```typescript
@@ -130,16 +115,6 @@ const { entryFile, targetDir, packageInfo } = await resolveTarget(fs, {
 });
 ```
 
-### History & Trends
-
-```typescript
-import { saveSnapshot, loadSnapshots, getTrend, computeSnapshot } from '@driftdev/sdk/history';
-
-saveSnapshot(computeSnapshot(spec), process.cwd());
-const snapshots = loadSnapshots(process.cwd());
-const trend = getTrend(spec, process.cwd());
-```
-
 ### Categorize & Summarize
 
 ```typescript
@@ -158,7 +133,6 @@ const grouped = groupDriftsByCategory(drifts);
 - `Drift` — Main analysis class
 - `buildDriftSpec` — Build coverage spec
 - `computeDrift` / `computeExportDrift` — Drift detection
-- `computeHealth` — Health score computation
 - `generateReport` — Generate coverage reports
 
 ### Drift Detection
@@ -170,7 +144,6 @@ const grouped = groupDriftsByCategory(drifts);
 - `discoverMarkdownFiles` — Auto-discover markdown files by glob patterns
 - `parseMarkdownFiles` — Parse markdown for code blocks
 - `findExportReferences` — Find export references in markdown
-- `diffSpecWithDocs` — Diff specs with doc impact analysis
 
 ### Examples
 - `validateExamples` — Full example validation

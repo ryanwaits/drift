@@ -51,20 +51,20 @@ afterAll(() => {
   rmSync(TMP, { recursive: true, force: true });
 });
 
-describe('drift lint --docs', () => {
+describe('drift --docs', () => {
   test('default discovery does not see the external corpus', () => {
-    const result = run(['lint', 'index.ts', '--json']);
+    const result = run(['scan', 'index.ts', '--json']);
     const envelope = JSON.parse(result.stdout.toString());
     expect(envelope.ok).toBe(true);
-    const issues = envelope.data.issues as Array<{ issue: string }>;
+    const issues = envelope.data.lint.issues as Array<{ issue: string }>;
     expect(issues.some((i) => i.issue.includes('removedFn'))).toBe(false);
   });
 
   test('--docs <dir> ingests the corpus and flags claims not in spec', () => {
-    const result = run(['lint', 'index.ts', '--docs', 'external-docs', '--json']);
+    const result = run(['scan', 'index.ts', '--docs', 'external-docs', '--json']);
     const envelope = JSON.parse(result.stdout.toString());
     expect(envelope.ok).toBe(true);
-    const issues = envelope.data.issues as Array<{ issue: string; filePath?: string }>;
+    const issues = envelope.data.lint.issues as Array<{ issue: string; filePath?: string }>;
     const hit = issues.find((i) => i.issue.includes('removedFn'));
     expect(hit).toBeDefined();
     expect(hit?.filePath).toContain('usage.md');
@@ -72,14 +72,14 @@ describe('drift lint --docs', () => {
   });
 
   test('--docs <glob> works like a directory', () => {
-    const result = run(['lint', 'index.ts', '--docs', 'external-docs/**/*.md', '--json']);
+    const result = run(['scan', 'index.ts', '--docs', 'external-docs/**/*.md', '--json']);
     const envelope = JSON.parse(result.stdout.toString());
-    const issues = envelope.data.issues as Array<{ issue: string }>;
+    const issues = envelope.data.lint.issues as Array<{ issue: string }>;
     expect(issues.some((i) => i.issue.includes('removedFn'))).toBe(true);
   });
 
   test('--docs matching nothing warns but does not fail', () => {
-    const result = run(['lint', 'index.ts', '--docs', 'no-such-dir', '--json']);
+    const result = run(['scan', 'index.ts', '--docs', 'no-such-dir', '--json']);
     const envelope = JSON.parse(result.stdout.toString());
     expect(envelope.ok).toBe(true);
     expect(result.stderr.toString()).toContain('matched no markdown files');

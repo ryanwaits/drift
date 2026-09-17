@@ -91,8 +91,8 @@ export function detectEntry(cwd = process.cwd()): string {
     lines.push(
       '',
       '  Examples:',
-      `    drift coverage --cwd ${dirs[0] ?? 'packages/foo'}`,
-      '    drift coverage --all',
+      `    drift --cwd ${dirs[0] ?? 'packages/foo'}`,
+      '    drift --all',
     );
     throw new Error(lines.join('\n'));
   }

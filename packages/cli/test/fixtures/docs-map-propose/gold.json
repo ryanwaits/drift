@@ -1,0 +1,26 @@
+{
+  "pages": [
+    {
+      "page": "docs/config.mdx",
+      "type": "ClientOptions",
+      "gaps": [
+        "retry",
+        "debug",
+        "missing01",
+        "missing02",
+        "missing03",
+        "missing04",
+        "missing05",
+        "missing06",
+        "missing07",
+        "missing08",
+        "missing09",
+        "missing10"
+      ],
+      "annotations": {
+        "tracingHeaders": "prose-documented",
+        "token": "internal-by-convention"
+      }
+    }
+  ]
+}

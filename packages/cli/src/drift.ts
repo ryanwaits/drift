@@ -5,30 +5,12 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { setNoCache } from './cache/spec-cache';
-import { registerBreakingCommand } from './commands/breaking';
-import { registerCacheCommand } from './commands/cache';
-import { registerChangelogCommand } from './commands/changelog';
-import { registerCiCommand } from './commands/ci';
-import { registerCommandsCommand } from './commands/commands';
-import { registerConfigCommand } from './commands/config';
-import { registerContextCommand } from './commands/context';
-import { registerCoverageCommand } from './commands/coverage';
-import { registerDiffCommand } from './commands/diff';
-import { registerDocsMapCommand } from './commands/docs-map';
-import { registerExamplesCommand } from './commands/examples';
+import { registerDocsCommand } from './commands/docs';
 import { registerExtractCommand } from './commands/extract';
-import { registerFilterCommand } from './commands/filter';
 import { registerGetCommand } from './commands/get';
-import { registerHealthCommand } from './commands/health';
-import { registerInitCommand } from './commands/init';
-import { registerLintCommand } from './commands/lint';
 import { registerListCommand } from './commands/list';
 import { registerMcpCommand } from './commands/mcp';
-import { registerReleaseCommand } from './commands/release';
-import { registerReportCommand } from './commands/report';
 import { registerScanCommand } from './commands/scan';
-import { registerSemverCommand } from './commands/semver';
-import { registerValidateCommand } from './commands/validate';
 import { setConfigPath } from './config/loader';
 import { extractCapabilities } from './utils/capabilities';
 import { setOutputMode } from './utils/render';
@@ -60,56 +42,15 @@ program
     if (opts.cache === false) setNoCache(true);
   });
 
-registerHealthCommand(program);
-
-// Extraction
-registerExtractCommand(program);
+registerScanCommand(program);
 registerListCommand(program);
 registerGetCommand(program);
-
-// Spec ops
-registerValidateCommand(program);
-registerDocsMapCommand(program);
-registerFilterCommand(program);
-
-// Analysis
-registerCoverageCommand(program);
-registerExamplesCommand(program);
-registerLintCommand(program);
-registerScanCommand(program);
-
-// Comparison
-registerDiffCommand(program);
-registerBreakingCommand(program);
-registerSemverCommand(program);
-registerChangelogCommand(program);
-
-// CI + Release
-registerCiCommand(program);
-registerReleaseCommand(program);
-registerReportCommand(program);
-
-// Setup
-registerInitCommand(program);
-registerConfigCommand(program);
-
-// Context
-registerContextCommand(program);
-
-// Cache management
-registerCacheCommand(program);
-
-// Command discovery
-registerCommandsCommand(program);
-
-// MCP server (agent-facing)
+registerDocsCommand(program);
 registerMcpCommand(program);
+registerExtractCommand(program);
 
-// Hide non-human commands from --help (still functional)
-const HUMAN_COMMANDS = new Set(['scan', 'ci', 'init', 'commands']);
 for (const cmd of program.commands) {
-  if (!HUMAN_COMMANDS.has(cmd.name())) {
-    // Commander has no public API for hiding registered commands; set its private flag structurally
+  if (cmd.name() === 'extract') {
     (cmd as unknown as { _hidden?: boolean })._hidden = true;
   }
 }
@@ -126,7 +67,6 @@ if (process.argv.includes('--tools')) {
 }
 
 // Bare `drift` always runs scan
-// Skip if user passed --help/-h/--version/-V (let commander handle those)
 const rawArgs = process.argv.slice(2);
 const hasHelpOrVersion = rawArgs.some((a) =>
   ['-h', '--help', '-V', '--version', '--tools'].includes(a),
@@ -137,6 +77,5 @@ if (userArgs.length === 0 && !hasHelpOrVersion) {
 }
 
 program.parseAsync().catch(() => {
-  // Usage/internal failure — findings exit 1, errors exit 2 (grep convention)
   process.exit(2);
 });

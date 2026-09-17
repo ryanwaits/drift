@@ -7,7 +7,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { type DriftConfig, mergeDefaults, validateConfig } from './drift-config';
-import { getGlobalConfigPath } from './global';
 
 export interface LoadedConfig {
   config: DriftConfig;
@@ -83,20 +82,5 @@ export function loadConfig(cwd = process.cwd()): LoadedConfig {
     current = path.dirname(current);
   }
 
-  // Check global config: ~/.drift/config.json
-  const globalPath = getGlobalConfigPath();
-  if (existsSync(globalPath)) {
-    try {
-      const raw = JSON.parse(readFileSync(globalPath, 'utf-8'));
-      const result = validateConfig(raw);
-      if (result.ok) {
-        return { config: result.config, configPath: globalPath };
-      }
-    } catch {
-      // Ignore malformed global config, fall through to defaults
-    }
-  }
-
-  // No config found — return defaults
   return { config: mergeDefaults({}), configPath: null };
 }
