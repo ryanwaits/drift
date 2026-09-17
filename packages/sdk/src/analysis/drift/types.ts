@@ -26,6 +26,7 @@ export type DriftType =
   | 'prose-unresolved-member'
   | 'prose-deprecated-reference';
 
+/** One docs-vs-spec finding (JSDoc, example, or prose). */
 export type SpecDocDrift = {
   type: DriftType;
   target?: string;

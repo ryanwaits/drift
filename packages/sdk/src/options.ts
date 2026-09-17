@@ -16,6 +16,7 @@ function findRepoRoot(startDir: string): string {
   return startDir;
 }
 
+/** Options for the `Drift` analyzer. */
 export interface DriftOptions {
   includePrivate?: boolean;
   followImports?: boolean;

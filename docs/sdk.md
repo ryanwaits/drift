@@ -163,7 +163,6 @@ import type {
   DriftType,             // 'param-mismatch' | 'return-type-mismatch' | ...
   DriftCategory,         // 'structural' | 'semantic' | 'example' | 'prose'
   DriftResult,           // { exports: Map<string, SpecDocDrift[]> }
-  ExportRegistry,        // Lookup table for cross-reference validation
   DriftReport,          // Full coverage report
   CoverageSummary,       // Coverage stats
 } from '@driftdev/sdk';

@@ -35,6 +35,7 @@ export interface KeyMeta {
 /** Agent-proposed, human-committed key annotations (docs-map `annotations`). */
 export type KeyAnnotation = 'prose-documented' | 'internal-by-convention' | 'ignore';
 
+/** Options for `computeKeyCoverage` (internal keys, annotations, replacements). */
 export interface KeyCoverageOptions {
   /** Extra internal keys beyond the `_`-prefix convention */
   internal?: string[];
@@ -46,6 +47,7 @@ export interface KeyCoverageOptions {
   annotations?: Record<string, KeyAnnotation>;
 }
 
+/** Spec key the page does not document. */
 export interface KeyGap {
   key: string;
   /** Spec description, when the extractor preserved it */
@@ -54,11 +56,13 @@ export interface KeyGap {
   mentioned: boolean;
 }
 
+/** Documented key that exists on no spec type. */
 export interface KeyGhost {
   key: string;
   locations: DocumentedKeyLocation[];
 }
 
+/** Documented deprecated key whose replacement is missing from the page. */
 export interface KeyInversion {
   /** Deprecated key that IS documented */
   documented: string;
@@ -68,6 +72,7 @@ export interface KeyInversion {
   source: 'spec' | 'map';
 }
 
+/** Gap/ghost/inversion diff for one page→type pair. */
 export interface KeyCoverageResult {
   type: string;
   counts: {

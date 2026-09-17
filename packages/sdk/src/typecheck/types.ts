@@ -1,3 +1,4 @@
+/** TypeScript error from typechecking a JSDoc `@example` block. */
 export interface ExampleTypeError {
   /** Index of the example in the examples array */
   exampleIndex: number;
@@ -11,6 +12,7 @@ export interface ExampleTypeError {
   code: number;
 }
 
+/** Aggregate typecheck result across `@example` blocks. */
 export interface TypecheckResult {
   /** All type errors found across examples */
   errors: ExampleTypeError[];

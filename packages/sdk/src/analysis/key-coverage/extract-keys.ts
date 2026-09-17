@@ -15,6 +15,7 @@ const HEADING = /^(#{1,6})\s+(.*)/;
 const FENCE = /^\s*(```|~~~)/;
 const BACKTICK_TOKEN = /`([^`\n]+)`/g;
 
+/** Default heading regex for option-table sections (`option` or `config`). */
 export const DEFAULT_SECTION_RE: RegExp = /option|config/i;
 
 /** Normalize a backticked token to a candidate key: dotted → prefix. */

@@ -32,6 +32,7 @@ const examplesConfigSchema: z.ZodObject<{
   run: z.boolean().optional(),
 });
 
+/** Zod schema for `drift.config.json` / package.json `"drift"`. */
 export const driftConfigSchema: z.ZodObject<{
   $schema: z.ZodOptional<z.ZodString>;
   entry: z.ZodOptional<z.ZodString>;
@@ -51,6 +52,7 @@ export const driftConfigSchema: z.ZodObject<{
   examples: examplesConfigSchema.optional(),
 });
 
+/** Raw config shape before `normalizeConfig` (lists may be string or string[]). */
 export type DriftConfigInput = z.infer<typeof driftConfigSchema>;
 
 const normalizeList = (value?: string | string[]): string[] | undefined => {
@@ -64,6 +66,7 @@ const normalizeList = (value?: string | string[]): string[] | undefined => {
   return normalized.length > 0 ? normalized : undefined;
 };
 
+/** Normalize raw config: trim lists, drop empty docs/examples blocks. */
 export const normalizeConfig = (input: DriftConfigInput): DriftConfig => {
   const include = normalizeList(input.include);
   const exclude = normalizeList(input.exclude);

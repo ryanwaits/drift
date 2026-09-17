@@ -40,6 +40,7 @@ export interface ExtractForgottenExport {
   fix?: string;
 }
 
+/** Options for `buildDriftSpec`. */
 export interface BuildDriftOptions {
   /** Source spec — provide ONE of these */
   openpkg?: OpenPkg;

@@ -98,6 +98,7 @@ const JS_BUILTIN_METHODS = new Set([
   'throw',
 ]);
 
+/** Inputs for `detectProseDrift`: package name, markdown corpus, export registry. */
 export interface ProseDriftOptions {
   packageName: string;
   markdownFiles: MarkdownDocFile[];

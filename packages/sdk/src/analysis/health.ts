@@ -29,6 +29,7 @@ export function isExternalExport(exp: Pick<ApiExport, 'source'>): boolean {
   return source.package != null && source.file == null;
 }
 
+/** True if the export has a description or a meaningful JSDoc tag (not `@internal`). */
 export function isExportDocumented(exp: ApiExport): boolean {
   // Has direct description
   if (exp.description && exp.description.trim().length > 0) return true;

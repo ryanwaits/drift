@@ -67,6 +67,13 @@ Prefer MCP when available: `drift mcp` → `drift_extract`, `drift_list`, `drift
 2. For each: `drift get <name> --json` → signature-accurate stub with `<!-- TODO -->` / `TODO:`
 3. Never invent descriptions.
 
+### Pay down undocumented (maintainers)
+1. `drift list --undocumented --json`
+2. For each: `drift get <name> --json`
+3. If it is the product: add a real JSDoc description. Never invent. Never `TODO` to game coverage.
+4. If leftover: **unexport** from the public barrel. Do not document dead API.
+5. Re-run `drift --min <new score>`. Only raise the floor. Never lower `--min` to pass CI.
+
 ## Rules
 
 - Spec is source of truth. Grep only searches doc content.
@@ -74,3 +81,4 @@ Prefer MCP when available: `drift mcp` → `drift_extract`, `drift_list`, `drift
 - Preserve doc prose; only fix code references, signatures, factual claims.
 - Propose never runs in CI. The committed file is the gate.
 - Don't inflate `baselineGaps` to mute CI.
+- Don't lower `--min` to mute CI. Unexport leftovers or document keepers.

@@ -69,12 +69,10 @@ Every `SpecDocDrift` includes `filePath` and `line` for agent-driven fixes.
 ### Coverage Analysis
 
 ```typescript
-import { buildDriftSpec, getExportDrift } from '@driftdev/sdk';
+import { Drift, computeDrift } from '@driftdev/sdk';
 
-const driftSpec = buildDriftSpec({ openpkg, openpkgPath, packagePath });
-
-// Get drift for specific export
-const drifts = getExportDrift(someExport, driftSpec);
+const { spec } = await new Drift().analyzeFileWithDiagnostics('src/index.ts');
+const drift = computeDrift(spec);
 ```
 
 ### Markdown Discovery

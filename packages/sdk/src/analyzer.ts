@@ -25,6 +25,7 @@ import { normalizeDriftOptions } from './options';
 import type { DriftSpec } from './spec';
 import { ts } from './ts-module';
 
+/** Extract/analyze diagnostic (file/line when known). */
 export interface Diagnostic {
   message: string;
   severity: 'error' | 'warning' | 'info';
@@ -37,6 +38,7 @@ export interface Diagnostic {
   };
 }
 
+/** Result of extracting a package spec, with diagnostics and cache status. */
 export interface AnalysisResult {
   spec: OpenPkgSpec;
   diagnostics: Diagnostic[];
@@ -72,12 +74,15 @@ export interface AnalysisMetadata {
   sourceFiles?: string[];
 }
 
+/** Options for `analyze` / `analyzeFile`. */
 export interface AnalyzeOptions {
   filters?: FilterOptions;
 }
 
+/** Options for `scan` (buildDriftSpec without the spec paths). */
 export type ScanOptions = Omit<BuildDriftOptions, 'openpkg' | 'openpkgPath' | 'packagePath'>;
 
+/** Programmatic extract + scan for a TypeScript entry. */
 export class Drift {
   private readonly options: NormalizedDriftOptions;
 
@@ -447,10 +452,12 @@ export class Drift {
   }
 }
 
+/** Extract an OpenPkg spec from a source string. */
 export async function analyze(code: string, options: AnalyzeOptions = {}): Promise<OpenPkgSpec> {
   return new Drift().analyze(code, 'temp.ts', options);
 }
 
+/** Extract an OpenPkg spec from a TypeScript entry file. */
 export async function analyzeFile(
   filePath: string,
   options: AnalyzeOptions = {},
@@ -458,6 +465,7 @@ export async function analyzeFile(
   return new Drift().analyzeFile(filePath, options);
 }
 
+/** Extract a spec and build a coverage/drift report for an entry file. */
 export async function scan(entry: string, options?: ScanOptions): Promise<DriftSpec> {
   return new Drift().scan(entry, options);
 }
