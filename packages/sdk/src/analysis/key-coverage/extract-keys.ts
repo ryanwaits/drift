@@ -27,7 +27,7 @@ function toKey(raw: string): string | null {
  * Extract documented option keys from a docs corpus.
  *
  * @param files - Corpus pages (path + raw content)
- * @param sectionRe - Heading regex that opens an options section (default /option|config/i)
+ * @param [sectionRe] - Heading regex that opens an options section (default /option|config/i)
  */
 export function extractDocumentedKeys(
   files: Array<{ path: string; content: string }>,
