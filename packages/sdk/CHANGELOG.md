@@ -1,5 +1,12 @@
 # @doccov/sdk
 
+## 1.15.1
+
+### Patch Changes
+
+- 75c4ca6: Drop leftover health score, coverage-history subpath, sandbox/GitHub URL helpers, and unused CLI progress UI. Coverage floor stays `coverage.min` / `--min`.
+- 7ce04d4: Bump `@openpkg-ts/sdk` to `^0.53.0`. Spec stays `^0.52.0` (not published).
+
 ## 1.15.0
 
 ### Minor Changes
