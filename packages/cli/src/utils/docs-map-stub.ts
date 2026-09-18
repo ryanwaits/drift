@@ -6,6 +6,7 @@
 import * as path from 'node:path';
 import { collectTypeKeys, DEFAULT_SECTION_RE, extractDocumentedKeys } from '@driftdev/sdk';
 import type { ApiSpec } from '@driftdev/sdk/types';
+import type { DocsMapPage } from '../config/docs-map';
 
 export const DOCS_MAP_SCHEMA = 'https://unpkg.com/@driftdev/cli/schemas/drift.docs.schema.json';
 export const MATCH_ALL = /(?:)/;
@@ -94,4 +95,14 @@ export function collectStubCandidates(
     });
   }
   return pages;
+}
+
+/** Docs-file entry for a stub candidate. Single builder for init and propose. */
+export function stubPage(c: StubCandidate): DocsMapPage {
+  return {
+    page: c.page,
+    type: c.type,
+    ...(c.sectionRe ? { sectionRe: c.sectionRe } : {}),
+    baselineGaps: 0,
+  };
 }

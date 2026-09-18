@@ -21,6 +21,7 @@ import {
   collectStubCandidates,
   DOCS_MAP_SCHEMA,
   rankPageTypes,
+  stubPage,
   typeKeySets,
 } from '../utils/docs-map-stub';
 import { resolvePageSpec, resolvePages, runDocsCoverage } from '../utils/key-coverage-runner';
@@ -107,12 +108,7 @@ export function registerDocsCommand(program: Command): void {
           const stub = {
             $schema: DOCS_MAP_SCHEMA,
             version: 1 as const,
-            pages: candidates.map((p) => ({
-              page: p.page,
-              type: p.type,
-              ...(p.sectionRe ? { sectionRe: p.sectionRe } : {}),
-              baselineGaps: 0,
-            })),
+            pages: candidates.map(stubPage),
           };
 
           const outFile = options.out ?? DEFAULT_DOCS_FILE;
@@ -225,7 +221,7 @@ export function registerDocsCommand(program: Command): void {
             for (const c of candidates) {
               const file = byRel.get(c.page);
               inputs.push({
-                entry: { page: c.page, type: c.type, baselineGaps: 0 },
+                entry: stubPage(c),
                 files: [{ path: file?.path ?? c.page, content: file?.content ?? '' }],
                 spec: fallback,
                 candidates: c.candidates,

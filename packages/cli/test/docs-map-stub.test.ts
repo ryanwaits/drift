@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { collectStubCandidates } from '../src/utils/docs-map-stub';
+import { collectStubCandidates, stubPage } from '../src/utils/docs-map-stub';
 
 const types = new Map([['Cl', new Set(['int', 'uint', 'bool', 'list', 'tuple'])]]);
 
@@ -38,5 +38,21 @@ describe('collectStubCandidates', () => {
     );
     expect(stub.sectionRe).toBe('Clarity values \\(Cl\\.\\*\\)');
     expect(new RegExp(stub.sectionRe ?? '', 'i').test('Clarity values (Cl.*)')).toBe(true);
+  });
+
+  // init and propose --docs both build entries from candidates; one builder so
+  // neither can drop sectionRe.
+  test('stubPage carries sectionRe into the docs-file entry', () => {
+    const [stub] = collectStubCandidates(
+      [{ path: '/repo/README.md', content: page('Clarity values') }],
+      types,
+      '/repo',
+    );
+    expect(stubPage(stub)).toEqual({
+      page: 'README.md',
+      type: 'Cl',
+      sectionRe: 'Clarity values',
+      baselineGaps: 0,
+    });
   });
 });
