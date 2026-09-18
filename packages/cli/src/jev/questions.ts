@@ -16,19 +16,22 @@ export const KEY_CRITERIA: Record<string, string> = {
     'Known-irrelevant or phantom extractor key. Requires a human-committed reason before commit.',
 };
 
-export function snippetAround(text: string, key: string, radius = 180): string | undefined {
-  const needle = `\`${key}\``;
-  let idx = text.indexOf(needle);
-  let width = needle.length;
-  if (idx < 0) {
-    const alt = `${key}:`;
-    idx = text.indexOf(alt);
-    width = alt.length;
-    if (idx < 0) return undefined;
+/** Evidence window for Jev: the first \`key\`, \`key:\` or qualified \`Type.key\` occurrence. */
+export function snippetAround(
+  text: string,
+  key: string,
+  type?: string,
+  radius = 180,
+): string | undefined {
+  const needles = [`\`${key}\``, `${key}:`, ...(type ? [`${type}.${key}`] : [])];
+  for (const needle of needles) {
+    const idx = text.indexOf(needle);
+    if (idx < 0) continue;
+    const start = Math.max(0, idx - radius);
+    const end = Math.min(text.length, idx + needle.length + radius);
+    return text.slice(start, end).replace(/\s+/g, ' ').trim();
   }
-  const start = Math.max(0, idx - radius);
-  const end = Math.min(text.length, idx + width + radius);
-  return text.slice(start, end).replace(/\s+/g, ' ').trim();
+  return undefined;
 }
 
 export function typeQuestion(

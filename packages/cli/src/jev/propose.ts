@@ -177,7 +177,7 @@ export async function proposeDocsMap(opts: ProposeOptions): Promise<ProposeResul
         key: gap.key,
         description: gap.description ?? null,
         mentioned: gap.mentioned,
-        snippet: snippetAround(text, gap.key) ?? null,
+        snippet: snippetAround(text, gap.key, p.entry.type) ?? null,
       });
     }
   }
