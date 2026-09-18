@@ -1,5 +1,14 @@
 # @doccov/cli
 
+## 1.15.3
+
+### Patch Changes
+
+- a780c8b: Bump `@openpkg-ts/sdk` to ^0.54.0: external type origins resolve to the real package on pnpm and bun installs (was `.pnpm`), and the extractor no longer carries a model dependency.
+- c9ac7c9: `drift docs propose --docs` (no docs file yet) now carries the stub's `sectionRe`, same as `drift docs init`. Both build entries through one `stubPage`, so pages whose tables sit under non-default headings no longer reach Jev with every key counted as a gap.
+- Updated dependencies [a780c8b]
+  - @driftdev/sdk@1.15.3
+
 ## 1.15.2
 
 ### Patch Changes
