@@ -110,6 +110,7 @@ export function registerDocsCommand(program: Command): void {
             pages: candidates.map((p) => ({
               page: p.page,
               type: p.type,
+              ...(p.sectionRe ? { sectionRe: p.sectionRe } : {}),
               baselineGaps: 0,
             })),
           };

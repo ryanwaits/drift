@@ -4,7 +4,7 @@
  */
 
 import * as path from 'node:path';
-import { collectTypeKeys, extractDocumentedKeys } from '@driftdev/sdk';
+import { collectTypeKeys, DEFAULT_SECTION_RE, extractDocumentedKeys } from '@driftdev/sdk';
 import type { ApiSpec } from '@driftdev/sdk/types';
 
 export const DOCS_MAP_SCHEMA = 'https://unpkg.com/@driftdev/cli/schemas/drift.docs.schema.json';
@@ -22,6 +22,8 @@ export interface StubCandidate {
   page: string;
   keys: number;
   type: string;
+  /** Set when the matched tables sit under headings the default section regex misses. */
+  sectionRe?: string;
   candidates: RankedType[];
 }
 
@@ -49,6 +51,24 @@ export function rankPageTypes(
     .slice(0, 3);
 }
 
+/**
+ * Ranking matches every heading; scan only opens DEFAULT_SECTION_RE sections.
+ * When the winning type's keys sit under other headings, name those headings
+ * so the stub reproduces under scan instead of reporting 0 documented keys.
+ */
+function stubSectionRe(
+  documented: Map<string, Array<{ section: string }>>,
+  typeKeys: Set<string>,
+): string | undefined {
+  const sections = new Set<string>();
+  for (const [key, locs] of documented) {
+    if (!typeKeys.has(key)) continue;
+    for (const loc of locs) sections.add(loc.section);
+  }
+  if ([...sections].every((s) => DEFAULT_SECTION_RE.test(s))) return undefined;
+  return [...sections].map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+}
+
 export function collectStubCandidates(
   corpus: Array<{ path: string; content?: string }>,
   types: Map<string, Set<string>>,
@@ -64,10 +84,12 @@ export function collectStubCandidates(
     if (pageKeys.size < MIN_PAGE_KEYS) continue;
     const ranked = rankPageTypes(pageKeys, types);
     if (ranked.length === 0) continue;
+    const sectionRe = stubSectionRe(extraction.documented, types.get(ranked[0].type) ?? new Set());
     pages.push({
       page: path.relative(cwd, file.path),
       keys: pageKeys.size,
       type: ranked[0].type,
+      ...(sectionRe ? { sectionRe } : {}),
       candidates: ranked,
     });
   }
