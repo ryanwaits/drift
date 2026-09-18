@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 1.15.4
+
+### Patch Changes
+
+- 5deca3c: Bump `@openpkg-ts/sdk` to ^0.54.2: stubbed `typescript` API types carry their package origin, and a platform global's origin no longer depends on TypeScript's declaration order.
+
 ## 1.15.3
 
 ### Patch Changes
