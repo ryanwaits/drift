@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 1.15.2
+
+### Patch Changes
+
+- e9db4a0: `drift docs init` writes `sectionRe` into the stub when the matched table sits under a heading the default `option|config` regex misses, so the stub reproduces under scan. Key coverage counts qualified `Type.key` references (namespaces, classes) as mentions, and `drift docs propose` sends that evidence to Jev. Bump `@openpkg-ts/sdk` to ^0.53.1 (no more path-named types from `export * as Ns`).
+
 ## 1.15.1
 
 ### Patch Changes
