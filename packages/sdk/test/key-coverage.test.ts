@@ -177,6 +177,31 @@ describe('computeKeyCoverage', () => {
     expect(silent?.mentioned).toBe(false);
   });
 
+  // Namespaces/classes are written `Type.key(…)`; the dotted-prefix rule files
+  // that under `Type`, so the member itself must be matched in qualified form.
+  test('mentioned flag sees qualified Type.key references, whole-word only', () => {
+    const spec = {
+      exports: [
+        {
+          name: 'Cl',
+          kind: 'namespace',
+          members: [{ name: 'buffer' }, { name: 'bufferFromHex' }, { name: 'serialize' }],
+        },
+      ],
+    } as unknown as ApiSpec;
+    const page =
+      "## Values\n\n| Type | Form |\n| --- | --- |\n| `buff` | `Cl.bufferFromHex('a1')` |\n";
+    const cov = computeKeyCoverage(
+      spec,
+      'Cl',
+      extractDocumentedKeys([{ path: 'README.md', content: page }], /values/i),
+    );
+    const flag = (k: string) => cov?.gaps.userFacing.find((g) => g.key === k)?.mentioned;
+    expect(flag('bufferFromHex')).toBe(true);
+    expect(flag('buffer')).toBe(false);
+    expect(flag('serialize')).toBe(false);
+  });
+
   test('gap keeps spec description for fix drafts', () => {
     const gap = result.gaps.userFacing.find((g) => g.key === 'undocumented_opt');
     expect(gap?.description).toBe('Not documented anywhere');

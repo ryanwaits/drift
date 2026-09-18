@@ -134,8 +134,13 @@ export function computeKeyCoverage(
     const fromSpec = parseReplacement(keyMeta.get(k)?.deprecationReason);
     return fromSpec ? { key: fromSpec, source: 'spec' } : undefined;
   };
+  // Namespace/class members are written `Type.key(…)`; the dotted-prefix rule
+  // files that token under `Type`, so match the qualified form, whole-word.
+  const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const qualified = (k: string): RegExp =>
+    new RegExp(`(?<![\\w$.])${escapeRe(typeName)}\\.${escapeRe(k)}(?![\\w$])`);
   const mentioned = (k: string): boolean =>
-    corpus.inlineMentions.has(k) || corpus.text.includes(`${k}:`);
+    corpus.inlineMentions.has(k) || corpus.text.includes(`${k}:`) || qualified(k).test(corpus.text);
 
   const documentedSet = new Set(corpus.documented.keys());
 
