@@ -73,7 +73,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@openpkg-ts/sdk": "^0.54.5",
+    "@openpkg-ts/sdk": "^0.54.6",
     "@openpkg-ts/spec": "^0.54.4",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
