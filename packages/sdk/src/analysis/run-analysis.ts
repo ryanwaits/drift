@@ -109,8 +109,10 @@ export async function runAnalysis(input: AnalysisContextInput): Promise<RunAnaly
 
   const packageJsonPath = findNearestPackageJson(baseDir);
   const hasNodeModules = canResolveExternalModules(program, baseDir);
-  const resolveExternalTypes =
-    options.resolveExternalTypes !== undefined ? options.resolveExternalTypes : hasNodeModules;
+  // Default off: omit followExternal so OpenPkg stubs non-workspace packages
+  // (same as `drift page` / cachedExtract). `true` maps to followExternal: true
+  // and expands every dependency — OOMs on zod's generic graph at @openpkg-ts/sdk@0.54.2.
+  const resolveExternalTypes = options.resolveExternalTypes === true;
 
   // Skip ts.getPreEmitDiagnostics - it's expensive and users already have IDE/build for this
   const diagnostics: readonly TS.Diagnostic[] = [];
@@ -133,7 +135,9 @@ export async function runAnalysis(input: AnalysisContextInput): Promise<RunAnaly
     baseDir,
     content: input.content,
     maxTypeDepth: options.maxDepth,
-    followExternal: resolveExternalTypes,
+    ...(options.resolveExternalTypes !== undefined
+      ? { followExternal: options.resolveExternalTypes }
+      : {}),
     includeSchema: true,
   });
 

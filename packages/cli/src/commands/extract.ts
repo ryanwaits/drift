@@ -114,7 +114,6 @@ export function registerExtractCommand(program: Command): void {
           if (hasFilters) {
             // Filters change output — skip cache
             const drift = new Drift({
-              resolveExternalTypes: true,
               maxDepth: options.maxDepth ? parseInt(options.maxDepth, 10) : 10,
               useCache: false,
             });

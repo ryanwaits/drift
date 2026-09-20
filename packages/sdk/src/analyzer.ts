@@ -266,7 +266,7 @@ export class Drift {
       tsconfigPath,
       packageJsonPath,
       config: {
-        resolveExternalTypes: resolveExternalTypes ?? true,
+        resolveExternalTypes: resolveExternalTypes ?? false,
       },
       cwd,
     };

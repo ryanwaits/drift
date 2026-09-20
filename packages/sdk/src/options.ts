@@ -21,6 +21,12 @@ export interface DriftOptions {
   includePrivate?: boolean;
   followImports?: boolean;
   maxDepth?: number;
+  /**
+   * Maps to OpenPkg `followExternal`. Default: unset (OpenPkg stubs
+   * non-workspace packages; same as CLI extract). `true` fully expands
+   * every referenced dependency — can OOM on packages that reach zod or
+   * the TypeScript compiler API.
+   */
   resolveExternalTypes?: boolean;
   /** Enable spec caching (default: true) */
   useCache?: boolean;

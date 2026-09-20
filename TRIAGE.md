@@ -4,6 +4,26 @@ Confirmed real by adversarial verification; not landed because each needs a
 deliberate migration or judgment call. Safe fixes from the same audit already
 shipped (see CHANGELOG).
 
+## OpenPkg `followExternal: true` OOMs on zod (2026-09-19)
+Drift's `Drift` class defaulted `resolveExternalTypes` to on whenever
+`node_modules` existed, passed as OpenPkg `followExternal: true`. That
+mode fully expands every referenced package. This repo's SDK entry
+exports `driftConfigSchema: z.ZodObject<…>`; the expansion walk fans
+out through Zod's generic method graph (`Set<ts.Type>` identity misses
+instantiations; `maxTypeDepth` is not applied). Node OOM at a 1 GB
+cap; Bun reached 31 GB RSS.
+
+Verified (heap capped, same entry):
+- `extract({ entryFile })` / `followExternal: ['typescript']` — ~1–2 s, ~350 MB
+- `followExternal: ['zod']` or `true` — OOM at 1 GB
+- `new Drift({ resolveExternalTypes: false })` — ~1.4 s
+
+Landed in Drift: default extract omits `followExternal` (same as CLI
+`cachedExtract` / `drift page`). Pin `@openpkg-ts/sdk@^0.54.3` so
+`resolveExternalTypes: true` is bounded (foreign method/namespace
+fan-out skipped; `types[]` capped at 10k). Do not re-default the class
+to `true`.
+
 ## lucide-react 0.563.0 → 1.x (apps/site)
 Crossed its 1.0 major (2026-03-23). Runtime dep of the site; icon API renames
 possible.
