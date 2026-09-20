@@ -9,10 +9,13 @@ import { findExportReferences, parseMarkdownFile } from '../markdown/parser';
 import { detectCallSiteHits } from './call-sites';
 import {
   blockContaining,
+  collectPackageNamespaces,
   extractExportBindings,
   extractFenceCalls,
   extractFenceImports,
   extractFenceMembers,
+  fenceImportKind,
+  isMigrationFence,
 } from './fences';
 import {
   attachHeading,
@@ -203,15 +206,29 @@ function fenceClaims(
 
 function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): Claim[] {
   const { spec, registry, file, content } = opts;
+  const packageName = opts.packageName ?? spec.meta.name;
   const parsed = parseMarkdownFile(content, file);
   const bindings = new Map<string, string>();
   const claims: Claim[] = [];
+  const { namespaces, namedImports } = collectPackageNamespaces(
+    parsed.codeBlocks.map((b) => b.code),
+    registry.all,
+    packageName,
+    opts.importSpecifier,
+  );
 
   for (const block of parsed.codeBlocks) {
     for (const [k, v] of extractExportBindings(block.code, registry.all, spec, bindings)) {
       bindings.set(k, v);
     }
-    for (const hit of detectCallSiteHits(block.code, spec, registry, bindings)) {
+    const skip =
+      isMigrationFence(content, block.lineStart, block.code) ||
+      fenceImportKind(block.code, packageName, opts.importSpecifier) === 'foreign';
+    for (const hit of detectCallSiteHits(block.code, spec, registry, bindings, {
+      namespaces,
+      namedImports,
+      skip,
+    })) {
       const hintLine = block.lineStart + hit.line;
       const loc =
         locatorForSpan(file, content, hit.text, hintLine, headings, block.lineStart + 1) ??

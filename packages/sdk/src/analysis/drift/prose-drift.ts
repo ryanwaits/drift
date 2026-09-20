@@ -5,6 +5,12 @@ import {
   type ImportInfo,
 } from '../../markdown/ast-extractor';
 import type { MarkdownDocFile } from '../../markdown/types';
+import {
+  collectPackageNamespaces,
+  extractFenceCalls,
+  fenceImportKind,
+  isMigrationFence,
+} from '../../page/fences';
 import { ts } from '../../ts-module';
 import type { ExportRegistry, SpecDocDrift } from './types';
 import { findClosestMatch } from './utils';
@@ -163,6 +169,12 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
     const fileNonPackageParams = new Set<string>();
     const filePackageParamTypes = new Map<string, string>();
     const flaggedDeprecated = new Set<string>();
+    const { namespaces } = collectPackageNamespaces(
+      file.codeBlocks.map((b) => b.code),
+      registry.all,
+      packageName,
+      importSpecifier,
+    );
 
     for (const block of file.codeBlocks) {
       // Accumulate imports and declarations from this block
@@ -179,6 +191,10 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
         filePackageParamTypes,
       );
 
+      const skipFence =
+        isMigrationFence(file.content, block.lineStart, block.code) ||
+        fenceImportKind(block.code, packageName, importSpecifier) === 'foreign';
+
       // 1. Check imports (existing behavior)
       detectBrokenImports(
         block.code,
@@ -190,8 +206,20 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
         importSpecifier,
       );
 
+      if (!skipFence) {
+        detectNamespaceExportRefs(
+          block.code,
+          namespaces,
+          registry,
+          file.path,
+          block.lineStart,
+          issues,
+          importSpecifier ?? packageName,
+        );
+      }
+
       // 2. Check method/property access against type members
-      if (registry.typeMembers.size > 0) {
+      if (!skipFence && registry.typeMembers.size > 0) {
         detectUnresolvedMembers(
           block.code,
           registry,
@@ -200,6 +228,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
           issues,
           filePackageDerivedTypes,
           filePackageParamTypes,
+          namespaces,
         );
       }
 
@@ -245,7 +274,7 @@ function detectBrokenImports(
   const packageImports = imports.filter((imp) => imp.from === from);
 
   for (const imp of packageImports) {
-    if (imp.kind === 'side-effect') continue;
+    if (imp.kind === 'side-effect' || imp.kind === 'namespace') continue;
     if (registry.all.has(imp.name)) continue;
 
     const match = findClosestMatch(imp.name, registry.allNames);
@@ -260,6 +289,38 @@ function detectBrokenImports(
       suggestion,
       filePath,
       line: lineStart,
+    });
+  }
+}
+
+/**
+ * `ns.member` on a package namespace alias is the export `member`.
+ * The alias itself is never a broken reference.
+ */
+function detectNamespaceExportRefs(
+  code: string,
+  namespaces: ReadonlySet<string>,
+  registry: ExportRegistry,
+  filePath: string,
+  lineStart: number,
+  issues: SpecDocDrift[],
+  specifier: string,
+): void {
+  if (namespaces.size === 0) return;
+  for (const call of extractFenceCalls(code)) {
+    if (!namespaces.has(call.objectName)) continue;
+    if (JS_BUILTIN_METHODS.has(call.methodName)) continue;
+    if (registry.all.has(call.methodName)) continue;
+    const match = findClosestMatch(call.methodName, registry.allNames);
+    issues.push({
+      type: 'prose-broken-reference',
+      target: `${call.objectName}.${call.methodName}`,
+      issue: `'${call.methodName}' on '${call.objectName}' does not exist in package exports`,
+      suggestion: match
+        ? `Did you mean '${match.value}'?`
+        : `'${call.methodName}' is not exported from '${specifier}'`,
+      filePath,
+      line: lineStart + call.line,
     });
   }
 }
@@ -372,14 +433,13 @@ function extractNonPackageReceivers(
 }
 
 /**
- * Receiver we can judge: a package type name, a var derived from a package
- * call (`const x = new PostHog()` → PostHog), or a param annotated with one.
- * Unknown identifiers (db, jwt, crypto, room) are not ours — flagging them
- * is why lively's overlay was all false positives.
+ * Receiver we can judge: a var derived from a package call
+ * (`const x = new PostHog()` → PostHog) or a param annotated with a package
+ * type. An identifier that merely matches an export or type name is not a
+ * binding (`Schema.decode`, `value.toISOString`).
  */
 function packageReceiverType(
   objectName: string,
-  registry: ExportRegistry,
   packageDerivedTypes: Map<string, string>,
   packageParamTypes: Map<string, string>,
 ): string | undefined {
@@ -387,9 +447,6 @@ function packageReceiverType(
   if (derived) return derived;
   const annotated = packageParamTypes.get(objectName);
   if (annotated) return annotated;
-  if (registry.typeNames.includes(objectName) || registry.callableReturnTypes.has(objectName)) {
-    return registry.callableReturnTypes.get(objectName) ?? objectName;
-  }
   return undefined;
 }
 
@@ -405,6 +462,7 @@ function detectUnresolvedMembers(
   issues: SpecDocDrift[],
   packageDerivedTypes: Map<string, string>,
   packageParamTypes: Map<string, string>,
+  namespaces: ReadonlySet<string> = new Set(),
 ): void {
   let calls = extractMethodCallsAST(code);
   if (calls.length === 0) return;
@@ -420,13 +478,9 @@ function detectUnresolvedMembers(
 
   for (const call of calls) {
     if (GLOBAL_RECEIVERS.has(call.objectName)) continue;
+    if (namespaces.has(call.objectName)) continue;
     if (JS_BUILTIN_METHODS.has(call.methodName)) continue;
-    const typeName = packageReceiverType(
-      call.objectName,
-      registry,
-      packageDerivedTypes,
-      packageParamTypes,
-    );
+    const typeName = packageReceiverType(call.objectName, packageDerivedTypes, packageParamTypes);
     if (!typeName) continue;
     if (!registry.closedReceivers.has(typeName)) continue;
     if (registry.typeMembers.get(call.methodName)?.has(typeName)) continue;

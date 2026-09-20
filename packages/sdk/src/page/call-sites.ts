@@ -305,14 +305,37 @@ function jsxPropShape(spec: ApiSpec, overloads: OverloadShape[]): ClosedShape | 
   return shape;
 }
 
+export type CallSiteContext = {
+  namespaces?: ReadonlySet<string>;
+  namedImports?: ReadonlySet<string>;
+  skip?: boolean;
+};
+
+function bareCalleeAllowed(name: string, ctx?: CallSiteContext): boolean {
+  if (!ctx) return true;
+  if (ctx.namedImports?.has(name)) return true;
+  if (
+    ctx.namespaces &&
+    ctx.namespaces.size > 0 &&
+    (!ctx.namedImports || ctx.namedImports.size === 0)
+  ) {
+    return false;
+  }
+  if (ctx.namedImports && ctx.namedImports.size > 0) return false;
+  return true;
+}
+
 function resolveCallee(
   site: CallSite,
   registry: ExportRegistry,
   bindings: Map<string, string>,
+  ctx?: CallSiteContext,
 ): { exportName: string; member?: string } | null {
+  if (ctx?.skip) return null;
   if (site.objectName) {
-    if (registry.all.has(site.objectName)) {
-      return { exportName: site.objectName, member: site.name };
+    if (ctx?.namespaces?.has(site.objectName)) {
+      if (registry.all.has(site.name)) return { exportName: site.name };
+      return null;
     }
     const bound = bindings.get(site.objectName);
     if (!bound) return null;
@@ -320,6 +343,7 @@ function resolveCallee(
     if (!registry.all.has(resolved) && !registry.typeNames.includes(resolved)) return null;
     return { exportName: resolved, member: site.name };
   }
+  if (!bareCalleeAllowed(site.name, ctx)) return null;
   if (registry.all.has(site.name)) return { exportName: site.name };
   return null;
 }
@@ -418,9 +442,10 @@ function judgeSite(
   spec: ApiSpec,
   registry: ExportRegistry,
   bindings: Map<string, string>,
+  ctx?: CallSiteContext,
 ): CallSiteHit[] {
   if (site.elided) return [];
-  const callee = resolveCallee(site, registry, bindings);
+  const callee = resolveCallee(site, registry, bindings, ctx);
   if (!callee) return [];
   const sigs = signaturesOf(spec, callee.exportName, callee.member);
   if (sigs.length === 0) return [];
@@ -493,10 +518,12 @@ export function detectCallSiteHits(
   spec: ApiSpec,
   registry: ExportRegistry,
   bindings: Map<string, string>,
+  ctx?: CallSiteContext,
 ): CallSiteHit[] {
+  if (ctx?.skip) return [];
   const hits: CallSiteHit[] = [];
   for (const site of extractCallSites(code)) {
-    hits.push(...judgeSite(site, spec, registry, bindings));
+    hits.push(...judgeSite(site, spec, registry, bindings, ctx));
   }
   return hits;
 }

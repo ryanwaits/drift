@@ -1904,3 +1904,221 @@ import { atomFamily } from 'jotai/utils'
     expect(hit?.rule?.issue).toContain('atom');
   });
 });
+
+function valibotSpec(): ApiSpec {
+  return {
+    meta: { name: 'valibot' },
+    exports: [
+      {
+        id: 'lazy',
+        name: 'lazy',
+        kind: 'function',
+        signatures: [
+          { parameters: [{ name: 'getter', required: true, schema: { type: 'function' } }] },
+        ],
+      },
+      { id: 'union', name: 'union', kind: 'function' },
+      { id: 'string', name: 'string', kind: 'function' },
+      { id: 'number', name: 'number', kind: 'function' },
+      {
+        id: 'size',
+        name: 'size',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [
+              { name: 'schema', required: true, schema: { type: 'object' } },
+              { name: 'requirement', required: true, schema: { type: 'number' } },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'value',
+        name: 'value',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [{ name: 'requirement', required: true, schema: { type: 'string' } }],
+            returns: { schema: { $ref: '#/types/ValueAction' } },
+          },
+        ],
+      },
+    ],
+    types: [
+      {
+        id: 'Schema',
+        name: 'Schema',
+        kind: 'interface',
+        members: [{ name: 'parse', kind: 'method' }],
+      },
+      {
+        id: 'ValueAction',
+        name: 'ValueAction',
+        kind: 'interface',
+        members: [{ name: 'pipe', kind: 'method' }],
+      },
+    ],
+  };
+}
+
+function valibotPage(content: string, file = 'docs/lazy.md') {
+  const spec = valibotSpec();
+  return buildPageDocument({
+    spec,
+    registry: buildExportRegistry(spec),
+    file,
+    content,
+    packageName: 'valibot',
+  });
+}
+
+describe('namespace alias is not a missing export', () => {
+  test('import * as v from the package is not prose-broken-reference', () => {
+    const d = valibotPage(`# lazy
+
+\`\`\`ts
+import * as v from 'valibot'
+const JsonSchema: v.GenericSchema<JsonData> = v.lazy(() =>
+  v.union([v.string(), v.number()]),
+);
+\`\`\`
+`);
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-broken-reference')).toEqual([]);
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-unresolved-member')).toEqual([]);
+  });
+
+  test('v.member in a later fence still uses the namespace binding', () => {
+    const d = valibotPage(`# lazy
+
+\`\`\`ts
+import * as v from 'valibot'
+\`\`\`
+
+Then:
+
+\`\`\`ts
+v.lazy(() => v.string())
+\`\`\`
+`);
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-broken-reference')).toEqual([]);
+  });
+
+  test('unknown ns.member is a broken reference against exports', () => {
+    const d = valibotPage(`# lazy
+
+\`\`\`ts
+import * as v from 'valibot'
+v.notAThing()
+\`\`\`
+`);
+    const hit = d.claims.find((c) => c.rule?.type === 'prose-broken-reference');
+    expect(hit).toBeDefined();
+    expect(hit?.rule?.issue).toContain('notAThing');
+    expect(hit?.rule?.issue).not.toMatch(/Import 'v'/);
+  });
+
+  test('short ident used as x.export( for many exports is a namespace even without an import', () => {
+    const d = valibotPage(`# lazy
+
+\`\`\`ts
+const JsonSchema = v.lazy(() => v.union([v.string(), v.number()]));
+\`\`\`
+`);
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-broken-reference')).toEqual([]);
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-unresolved-member')).toEqual([]);
+  });
+});
+
+describe('receivers and callees are not bound by name coincidence', () => {
+  test('local Schema.decode is not unresolved-member on the Schema type', () => {
+    const d = valibotPage(`# Migration
+
+\`\`\`ts
+// Change this
+const Schema = t.type({ name: t.string });
+const result = Schema.decode(input);
+Schema.is(input);
+Schema.validate(input);
+\`\`\`
+`);
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-unresolved-member')).toEqual([]);
+  });
+
+  test('callback param value is not the value() export / ValueAction', () => {
+    const d = valibotPage(`# Migration
+
+\`\`\`ts
+.Encode((value) => value.toISOString())
+\`\`\`
+`);
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-unresolved-member')).toEqual([]);
+  });
+
+  test('bare size() in a foreign-import fence is not valibot size', () => {
+    const d = valibotPage(`# Migration
+
+\`\`\`ts
+import { size, pattern, string } from 'superstruct'
+size(pattern(string(), /^[a-z]+$/), 3, 30)
+\`\`\`
+`);
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-arity-mismatch')).toEqual([]);
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-missing-required')).toEqual([]);
+  });
+
+  test('bare size() under a Before heading is not a claim', () => {
+    const d = valibotPage(`# Migration
+
+## Before
+
+\`\`\`ts
+size(pattern(string(), /^[a-z]+$/), 3, 30)
+\`\`\`
+`);
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-arity-mismatch')).toEqual([]);
+  });
+
+  test('named import of size still fires arity', () => {
+    const d = valibotPage(`# size
+
+\`\`\`ts
+import { size } from 'valibot'
+size(schema, 3, 30)
+\`\`\`
+`);
+    const hit = d.claims.find((c) => c.rule?.type === 'prose-arity-mismatch');
+    expect(hit).toBeDefined();
+    expect(hit?.specRef?.export).toBe('size');
+  });
+
+  test('new Schema() is still a binding', () => {
+    const spec: ApiSpec = {
+      meta: { name: 'valibot' },
+      exports: [
+        {
+          id: 'Schema',
+          name: 'Schema',
+          kind: 'class',
+          members: [{ name: 'parse', kind: 'method' }],
+        },
+      ],
+    };
+    const d = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/schema.md',
+      content: `# Schema
+
+\`\`\`ts
+const Schema = new Schema();
+Schema.decode(input);
+\`\`\`
+`,
+      packageName: 'valibot',
+    });
+    expect(
+      d.claims.filter((c) => c.rule?.type === 'prose-unresolved-member').map((c) => c.rule?.issue),
+    ).toEqual(["Method 'decode' called on 'Schema' does not exist on 'Schema'"]);
+  });
+});

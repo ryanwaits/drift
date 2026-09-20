@@ -46,6 +46,7 @@ export type FenceImport = {
   from: string;
   line: number;
   text: string;
+  kind: 'named' | 'default' | 'namespace';
 };
 
 /**
@@ -490,6 +491,7 @@ export function extractFenceImports(code: string): FenceImport[] {
           from,
           line: lineOf(clause.name),
           text: clause.name.getText(sourceFile),
+          kind: 'default',
         });
       }
       const named = clause.namedBindings;
@@ -499,6 +501,7 @@ export function extractFenceImports(code: string): FenceImport[] {
           from,
           line: lineOf(named.name),
           text: named.name.getText(sourceFile),
+          kind: 'namespace',
         });
       }
       if (named && ts.isNamedImports(named)) {
@@ -508,6 +511,7 @@ export function extractFenceImports(code: string): FenceImport[] {
             from,
             line: lineOf(el.name),
             text: el.name.getText(sourceFile),
+            kind: 'named',
           });
         }
       }
@@ -523,4 +527,85 @@ export function blockContaining(
   line: number,
 ): MarkdownCodeBlock | undefined {
   return blocks.find((b) => line >= b.lineStart && line <= b.lineEnd);
+}
+
+export function isPackageSpecifier(
+  from: string,
+  packageName: string,
+  importSpecifier?: string,
+): boolean {
+  return from === (importSpecifier ?? packageName);
+}
+
+/** Heading or fence comment that presents another library's "before" code. */
+export function isMigrationFence(
+  markdown: string | undefined,
+  blockLineStart: number,
+  code: string,
+): boolean {
+  if (/^\s*(\/\/|\/\*)\s*(change this|before|previous)\b/im.test(code)) return true;
+  if (!markdown) return false;
+  const lines = markdown.split('\n');
+  let heading = '';
+  const end = Math.min(lines.length, Math.max(0, blockLineStart - 1));
+  for (let i = 0; i < end; i++) {
+    const m = lines[i].match(/^(#{1,6})\s+(.*)$/);
+    if (m) heading = m[2].replace(/`([^`]+)`/g, '$1').trim();
+  }
+  return /^(change this|before|previous)(\s+api)?$/i.test(heading);
+}
+
+export function fenceImportKind(
+  code: string,
+  packageName: string,
+  importSpecifier?: string,
+): 'ours' | 'foreign' | 'none' {
+  let ours = false;
+  let foreign = false;
+  for (const imp of extractFenceImports(code)) {
+    if (isPackageSpecifier(imp.from, packageName, importSpecifier)) ours = true;
+    else foreign = true;
+  }
+  if (ours) return 'ours';
+  if (foreign) return 'foreign';
+  return 'none';
+}
+
+/**
+ * `import * as ns from '<pkg>'`, plus a short ident used as `x.<export>(`
+ * for two or more distinct package exports when the page never shows the import.
+ */
+export function collectPackageNamespaces(
+  codes: readonly string[],
+  exportNames: ReadonlySet<string>,
+  packageName: string,
+  importSpecifier?: string,
+): { namespaces: Set<string>; namedImports: Set<string> } {
+  const namespaces = new Set<string>();
+  const namedImports = new Set<string>();
+  for (const code of codes) {
+    for (const imp of extractFenceImports(code)) {
+      if (!isPackageSpecifier(imp.from, packageName, importSpecifier)) continue;
+      if (imp.kind === 'namespace') namespaces.add(imp.name);
+      else namedImports.add(imp.name);
+    }
+  }
+  if (namespaces.size === 0) {
+    const hits = new Map<string, Set<string>>();
+    for (const code of codes) {
+      for (const call of extractFenceCalls(code)) {
+        if (!exportNames.has(call.methodName)) continue;
+        if (exportNames.has(call.objectName)) continue;
+        if (call.objectName.length > 3) continue;
+        let set = hits.get(call.objectName);
+        if (!set) {
+          set = new Set();
+          hits.set(call.objectName, set);
+        }
+        set.add(call.methodName);
+      }
+    }
+    for (const [ident, names] of hits) if (names.size >= 2) namespaces.add(ident);
+  }
+  return { namespaces, namedImports };
 }

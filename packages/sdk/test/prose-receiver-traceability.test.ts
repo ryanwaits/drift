@@ -215,3 +215,40 @@ counterState.increment()
     expect(unresolved(issues)).toEqual([]);
   });
 });
+
+describe('name coincidence is not a receiver binding', () => {
+  test('untyped local Schema is not the Schema type', () => {
+    const spec: ApiSpec = {
+      meta: { name: 'valibot' },
+      exports: [
+        {
+          id: 'Schema',
+          name: 'Schema',
+          kind: 'interface',
+          members: [{ name: 'parse', kind: 'method' }],
+        },
+      ],
+      types: [
+        {
+          id: 'Schema',
+          name: 'Schema',
+          kind: 'interface',
+          members: [{ name: 'parse', kind: 'method' }],
+        },
+      ],
+    };
+    const registry = buildExportRegistry(spec);
+    const file = parseMarkdownFile(
+      `# Guide
+
+\`\`\`ts
+const Schema = t.type({ name: t.string });
+Schema.decode(input);
+\`\`\`
+`,
+      'docs/guide.md',
+    );
+    const issues = detectProseDrift({ packageName: 'valibot', markdownFiles: [file], registry });
+    expect(unresolved(issues)).toEqual([]);
+  });
+});

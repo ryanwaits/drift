@@ -78,12 +78,18 @@ export type RuleHit = {
  * Unknown receiver = no claim. Type arguments are not arguments. A fence that
  * prints a signature (`name: Type` params, `): ReturnType`) is not a call.
  * An argument list that is only a comment or `...` is an elision: no arity
- * or missing-required claim. `prose-unknown-key` matches an object literal to
- * the parameter at that position and fires only when that parameter's type is
- * a closed object shape (intersection = union of arms; interface = own keys
- * plus `extends`; any external/unresolved/generic arm opens the shape).
- * JSX props are the top-level properties of the component's first parameter
- * (or the destructured param names); nested JSX elements are each checked.
+ * or missing-required claim. `import * as ns from '<pkg>'` is a namespace
+ * alias, never a missing export; `ns.member` is checked as the export
+ * `member`. A receiver is a spec type only through a visible binding
+ * (`new T()`, a typed return, `: T`, an import) — not because its name
+ * matches. Bare callees in a fence that imports another library, or under
+ * a Change this / Before / Previous heading or comment, are not claims.
+ * `prose-unknown-key` matches an object literal to the parameter at that
+ * position and fires only when that parameter's type is a closed object
+ * shape (intersection = union of arms; interface = own keys plus `extends`;
+ * any external/unresolved/generic arm opens the shape). JSX props are the
+ * top-level properties of the component's first parameter (or the
+ * destructured param names); nested JSX elements are each checked.
  */
 export type Claim = {
   /** Stable: `${path}:${kind}:${export}.${member}:${start.line}` */
