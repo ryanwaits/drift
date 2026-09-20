@@ -3,7 +3,7 @@
  *
  * @example
  * ```ts
- * import { Drift, computeDrift, detectProseDrift } from '@driftdev/sdk';
+ * import { Drift, computeDrift, detectProseDrift, buildPageDocument } from '@driftdev/sdk';
  * import { discoverMarkdownFiles } from '@driftdev/sdk/markdown';
  * import { validateExamples } from '@driftdev/sdk/examples';
  * ```
@@ -92,6 +92,21 @@ export { discoverMarkdownFiles } from './markdown/discover';
 export { findExportReferences, parseMarkdownFiles } from './markdown/parser';
 export type { MarkdownCodeBlock, MarkdownDocFile } from './markdown/types';
 export type { DriftOptions } from './options';
+export type {
+  BuildPageDocumentOptions,
+  BuildPageDocumentsOptions,
+  Claim,
+  ClaimKind,
+  Locator,
+  PageDocsMap,
+  PageDocsMapPage,
+  PageDocument,
+  RuleHit,
+  SourcePos,
+  SpecRef,
+  SpecSlice,
+} from './page';
+export { buildPageDocument, buildPageDocuments } from './page';
 export type { ResolvedTarget, ResolveTargetOptions } from './resolve';
 export { resolveTarget } from './resolve';
 export type { ExampleTypeError, TypecheckResult } from './typecheck';

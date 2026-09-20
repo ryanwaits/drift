@@ -51,6 +51,16 @@ Fails if: lint/prose issues, coverage `< min`, ghosts, or user-facing gaps `> ba
 
 One export/operation. Fuzzy suggestions if missing.
 
+## `drift page <markdown> [entry]`
+
+Headless `PageDocument` for one markdown file: claims with `line`/`col` locators, spec slices, rule hits. For hosts — not a review UI. Exit 0 on success (candidates and gaps do not fail CI; `drift scan` is still the gate).
+
+`--map` / auto-load `drift.docs.json` joins option-table key coverage. Truth flags: `--lang`, `--spec`, `--abi`.
+
+```bash
+drift page docs/sdk-reference.md --json
+```
+
 ## `drift docs`
 
 Lifecycle for `drift.docs.json` (schema: `@driftdev/cli/schemas/drift.docs.schema.json`).
@@ -67,7 +77,7 @@ Key coverage: **ghost** fail, **gap** above baseline fail, **inversion** warn.
 
 ## `drift mcp`
 
-stdio MCP: `drift_extract`, `drift_list`, `drift_get`, `drift_scan`.
+stdio MCP: `drift_extract`, `drift_list`, `drift_get`, `drift_page`, `drift_scan`.
 
 ## `drift extract`
 

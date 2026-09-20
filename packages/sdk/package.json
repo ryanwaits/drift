@@ -44,6 +44,10 @@
       "import": "./dist/markdown/index.js",
       "types": "./dist/markdown/index.d.ts"
     },
+    "./page": {
+      "import": "./dist/page/index.js",
+      "types": "./dist/page/index.d.ts"
+    },
     "./examples": {
       "import": "./dist/examples/index.js",
       "types": "./dist/examples/index.d.ts"

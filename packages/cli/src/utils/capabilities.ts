@@ -52,6 +52,7 @@ const COMMAND_EXAMPLES: Record<string, string[]> = {
   scan: ['drift --json', 'drift --all --json', 'drift --min 80 --json'],
   list: ['drift list --undocumented --json', 'drift list --json'],
   get: ['drift get createClient --json'],
+  page: ['drift page docs/guide.md --json'],
   extract: ['drift extract --json'],
   docs: ['drift docs init contents/docs', 'drift docs propose', 'drift docs baseline'],
   mcp: ['drift mcp'],
@@ -76,7 +77,7 @@ export function extractCapabilities(program: Command): Capabilities {
   return {
     version: program.version() ?? '0.0.0',
     hint: "Run 'drift' for human output. Use these primitives with --json for agent workflows.",
-    humanCommands: ['scan', 'list', 'get', 'docs', 'mcp'],
+    humanCommands: ['scan', 'list', 'get', 'page', 'docs', 'mcp'],
     commands,
     globalFlags: extractFlags(program),
     entities: [

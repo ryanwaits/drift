@@ -6,6 +6,7 @@ export default defineConfig({
     'src/analysis/index.ts',
     'src/types/index.ts',
     'src/markdown/index.ts',
+    'src/page/index.ts',
     'src/examples/index.ts',
     'src/cache/index.ts',
   ],

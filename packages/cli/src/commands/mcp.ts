@@ -152,6 +152,29 @@ export function registerMcpCommand(program: Command): void {
       );
 
       server.registerTool(
+        'drift_page',
+        {
+          title: 'Page claims document',
+          description:
+            'Build a headless PageDocument for one markdown file: claims with source locators, spec slices, and rule hits. Hosts paint this JSON. Does not run scan or fail CI.',
+          inputSchema: {
+            ...truthShape,
+            markdown: z.string().describe('Repo-relative markdown path'),
+            map: z
+              .string()
+              .optional()
+              .describe('Docs file override (default: auto-load drift.docs.json)'),
+          },
+        },
+        async (args) => {
+          const cli = ['page', args.markdown];
+          if (args.entry) cli.push(args.entry);
+          if (args.map) cli.push('--map', args.map);
+          return toResult(await runDrift([...cli, ...truthFlags(args)], args.cwd));
+        },
+      );
+
+      server.registerTool(
         'drift_scan',
         {
           title: 'Scan docs vs API',

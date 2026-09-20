@@ -1,0 +1,167 @@
+[
+  {
+    "packageName": "@stacks/clarinet-sdk",
+    "path": "docs/browser-sdk-reference.md",
+    "title": "Browser SDK reference",
+    "claims": [
+      {
+        "id": "docs/browser-sdk-reference.md:fence:Simnet.runSnippet:6",
+        "kind": "fence",
+        "text": "simnet.runSnippet(\"(+ 1 2)\")",
+        "locator": {
+          "path": "docs/browser-sdk-reference.md",
+          "start": {
+            "line": 6,
+            "col": 1
+          },
+          "end": {
+            "line": 6,
+            "col": 28
+          },
+          "headingId": "empty-session",
+          "headingText": "empty-session"
+        },
+        "specRef": {
+          "export": "Simnet",
+          "member": "runSnippet",
+          "deprecated": true,
+          "deprecationNote": "use simnet.execute(command) instead",
+          "replacement": "execute",
+          "signature": "Simnet.runSnippet(command: string)"
+        },
+        "rule": {
+          "type": "prose-deprecated-reference",
+          "issue": "Docs reference deprecated API 'runSnippet' without noting the deprecation",
+          "suggestion": "Deprecation note: use simnet.execute(command) instead"
+        },
+        "candidate": false
+      },
+      {
+        "id": "docs/browser-sdk-reference.md:gap:Simnet.execute:3",
+        "kind": "gap",
+        "text": "execute",
+        "locator": {
+          "path": "docs/browser-sdk-reference.md",
+          "start": {
+            "line": 3,
+            "col": 4
+          },
+          "end": {
+            "line": 3,
+            "col": 16
+          },
+          "headingId": "empty-session",
+          "headingText": "empty-session"
+        },
+        "specRef": {
+          "export": "Simnet",
+          "member": "execute",
+          "signature": "Simnet.execute(snippet: string)"
+        },
+        "rule": {
+          "type": "spec-not-in-claims",
+          "issue": "Spec member 'Simnet.execute' is not mentioned on this page",
+          "suggestion": "Document Simnet.execute(snippet: string)"
+        },
+        "candidate": false
+      }
+    ],
+    "slices": [
+      {
+        "export": "Simnet",
+        "member": "execute",
+        "signature": "Simnet.execute(snippet: string)",
+        "body": "Simnet.execute(snippet: string)"
+      },
+      {
+        "export": "Simnet",
+        "member": "runSnippet",
+        "deprecated": true,
+        "deprecationNote": "use simnet.execute(command) instead",
+        "replacement": "execute",
+        "signature": "Simnet.runSnippet(command: string)",
+        "body": "Simnet.runSnippet(command: string)"
+      }
+    ]
+  },
+  {
+    "packageName": "@stacks/clarinet-sdk",
+    "path": "docs/sdk-reference.md",
+    "title": "SDK reference",
+    "claims": [
+      {
+        "id": "docs/sdk-reference.md:heading:Simnet.runSnippet:3",
+        "kind": "heading",
+        "text": "runSnippet",
+        "locator": {
+          "path": "docs/sdk-reference.md",
+          "start": {
+            "line": 3,
+            "col": 4
+          },
+          "end": {
+            "line": 3,
+            "col": 13
+          },
+          "headingId": "runsnippet",
+          "headingText": "runSnippet"
+        },
+        "specRef": {
+          "export": "Simnet",
+          "member": "runSnippet",
+          "deprecated": true,
+          "deprecationNote": "use simnet.execute(command) instead",
+          "replacement": "execute",
+          "signature": "Simnet.runSnippet(command: string)"
+        },
+        "candidate": true
+      },
+      {
+        "id": "docs/sdk-reference.md:gap:Simnet.execute:3",
+        "kind": "gap",
+        "text": "execute",
+        "locator": {
+          "path": "docs/sdk-reference.md",
+          "start": {
+            "line": 3,
+            "col": 4
+          },
+          "end": {
+            "line": 3,
+            "col": 13
+          },
+          "headingId": "runsnippet",
+          "headingText": "runSnippet"
+        },
+        "specRef": {
+          "export": "Simnet",
+          "member": "execute",
+          "signature": "Simnet.execute(snippet: string)"
+        },
+        "rule": {
+          "type": "spec-not-in-claims",
+          "issue": "Spec member 'Simnet.execute' is not mentioned on this page",
+          "suggestion": "Document Simnet.execute(snippet: string)"
+        },
+        "candidate": false
+      }
+    ],
+    "slices": [
+      {
+        "export": "Simnet",
+        "member": "execute",
+        "signature": "Simnet.execute(snippet: string)",
+        "body": "Simnet.execute(snippet: string)"
+      },
+      {
+        "export": "Simnet",
+        "member": "runSnippet",
+        "deprecated": true,
+        "deprecationNote": "use simnet.execute(command) instead",
+        "replacement": "execute",
+        "signature": "Simnet.runSnippet(command: string)",
+        "body": "Simnet.runSnippet(command: string)"
+      }
+    ]
+  }
+]

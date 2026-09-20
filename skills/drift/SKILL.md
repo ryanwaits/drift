@@ -27,6 +27,7 @@ drift token.clar --abi token.abi.json    # Clarity
 drift                         # the check: coverage + lint + prose + key coverage
 drift list [--undocumented]   # exports/operations
 drift get <name>              # ONE export in full. one get per claim.
+drift page <md> --json        # PageDocument: locators + spec slices. hosts paint this.
 drift docs init [dir]         # scaffold drift.docs.json (never networks)
 drift docs propose            # optional Jev. TYPESAFE_API_KEY. never CI
 drift docs baseline           # ratchet baselineGaps. never raises
@@ -35,7 +36,7 @@ drift mcp                     # extract/list/get/scan tools
 
 `drift.docs.json` auto-loads when present. `--map` overrides. `--docs` sets the prose corpus.
 
-Prefer MCP when available: `drift mcp` → `drift_extract`, `drift_list`, `drift_get`, `drift_scan`.
+Prefer MCP when available: `drift mcp` → `drift_extract`, `drift_list`, `drift_get`, `drift_page`, `drift_scan`.
 
 ## Workflows
 

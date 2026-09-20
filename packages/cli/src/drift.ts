@@ -10,6 +10,7 @@ import { registerExtractCommand } from './commands/extract';
 import { registerGetCommand } from './commands/get';
 import { registerListCommand } from './commands/list';
 import { registerMcpCommand } from './commands/mcp';
+import { registerPageCommand } from './commands/page';
 import { registerScanCommand } from './commands/scan';
 import { setConfigPath } from './config/loader';
 import { extractCapabilities } from './utils/capabilities';
@@ -45,6 +46,7 @@ program
 registerScanCommand(program);
 registerListCommand(program);
 registerGetCommand(program);
+registerPageCommand(program);
 registerDocsCommand(program);
 registerMcpCommand(program);
 registerExtractCommand(program);

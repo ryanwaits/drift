@@ -115,6 +115,49 @@ for (const issue of issues) {
 }
 ```
 
+### `buildPageDocument` -- Host JSON
+
+Page-level claims for a docs host (Vercel, Mintlify, Fumadocs, or a separate review product). Coordinates are source markdown (`line` + `col` + heading slug), plus a spec slice. Not a review UI. Jev is not in this package. `candidate` claims are inventory; only `rule` hits are the existing detectors. Scan/CI do not consume this document.
+
+```typescript
+import { buildExportRegistry, buildPageDocument } from '@driftdev/sdk';
+// or: import { buildPageDocument } from '@driftdev/sdk/page';
+
+const registry = buildExportRegistry(spec);
+const page = buildPageDocument({
+  spec,
+  registry,
+  file: 'docs/sdk-reference.md',
+  content,
+});
+```
+
+CLI: `drift page docs/sdk-reference.md --json`.
+
+```json
+{
+  "packageName": "@stacks/clarinet-sdk",
+  "path": "docs/sdk-reference.md",
+  "title": "SDK reference",
+  "claims": [
+    {
+      "id": "docs/sdk-reference.md:heading:Simnet.runSnippet:3",
+      "kind": "heading",
+      "text": "runSnippet",
+      "locator": {
+        "path": "docs/sdk-reference.md",
+        "start": { "line": 3, "col": 4 },
+        "end": { "line": 3, "col": 13 },
+        "headingId": "runsnippet"
+      },
+      "specRef": { "export": "Simnet", "member": "runSnippet", "deprecated": true, "replacement": "execute" },
+      "candidate": true
+    }
+  ],
+  "slices": [{ "export": "Simnet", "member": "runSnippet", "body": "Simnet.runSnippet(command: string)" }]
+}
+```
+
 ### `generateReport` -- Full Report
 
 Generate a coverage report from a spec:

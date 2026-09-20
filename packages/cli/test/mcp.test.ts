@@ -109,7 +109,7 @@ describe('drift mcp', () => {
     const tools = ((toolsList?.result?.tools ?? []) as Array<{ name: string }>)
       .map((t) => t.name)
       .sort();
-    expect(tools).toEqual(['drift_extract', 'drift_get', 'drift_list', 'drift_scan']);
+    expect(tools).toEqual(['drift_extract', 'drift_get', 'drift_list', 'drift_page', 'drift_scan']);
 
     const call = responses.find((r) => r.id === 3);
     expect(call?.error).toBeUndefined();

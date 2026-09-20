@@ -39,7 +39,7 @@ Ghosts fail. Gaps above baseline fail. Inversions warn.
 ## Agents
 
 ```bash
-drift mcp                       # drift_extract, drift_list, drift_get, drift_scan
+drift mcp                       # drift_extract, drift_list, drift_get, drift_page, drift_scan
 drift get createClient --json   # one export. one claim per get.
 drift --tools
 ```
@@ -72,6 +72,7 @@ drift token.clar --abi token.abi.json
 | `drift` | The check: coverage + lint + prose + key coverage |
 | `drift list --undocumented` | Backlog |
 | `drift get <name>` | One export, full signature |
+| `drift page <md> --json` | PageDocument for hosts (locators + spec slices) |
 | `drift docs init \| propose \| baseline` | Page→type file lifecycle |
 | `drift mcp` | Agent tools |
 
