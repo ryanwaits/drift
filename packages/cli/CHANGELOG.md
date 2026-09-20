@@ -1,5 +1,13 @@
 # @doccov/cli
 
+## 1.16.4
+
+### Patch Changes
+
+- afc39df: PageDocument call-site precision: object-literal keys match the parameter type at that position (no claim on T / Partial<T>); JSX props are top-level only and every element in the fence is checked; gap mentions include call-return bindings and heading-scoped `x.member`; ambiguous bare members resolve through heading ancestors.
+- Updated dependencies [afc39df]
+  - @driftdev/sdk@1.16.4
+
 ## 1.16.3
 
 ### Patch Changes
