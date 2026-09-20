@@ -202,6 +202,38 @@ export function buildExportRegistry(spec: ApiSpec): ExportRegistry {
     if (entry.kind === 'class') callableReturnTypes.set(entry.name, entry.name);
   }
 
+  const genericWrappers = new Set<string>();
+  const mark = (entry: {
+    name: string;
+    kind?: string;
+    typeParameters?: { name: string }[];
+    schema?: unknown;
+  }): void => {
+    const kind = entry.kind;
+    if (kind === 'class' || kind === 'interface') return;
+    if (entry.typeParameters && entry.typeParameters.length > 0) {
+      genericWrappers.add(entry.name);
+      return;
+    }
+    if (entry.schema && typeof entry.schema === 'object') {
+      const s = entry.schema as Record<string, unknown>;
+      if (s['x-ts-mapped'] === true || s['x-ts-conditional'] === true) {
+        genericWrappers.add(entry.name);
+      }
+    }
+  };
+  for (const entry of spec.exports ?? []) mark(entry);
+  for (const type of spec.types ?? []) mark(type);
+
+  const typesWithMembers = new Set<string>();
+  for (const parents of typeMembers.values()) {
+    for (const p of parents) typesWithMembers.add(p);
+  }
+  const closedReceivers = new Set<string>();
+  for (const name of typesWithMembers) {
+    if (!genericWrappers.has(name)) closedReceivers.add(name);
+  }
+
   return {
     exports,
     types,
@@ -215,6 +247,7 @@ export function buildExportRegistry(spec: ApiSpec): ExportRegistry {
     deprecated,
     deprecatedMembers,
     callableReturnTypes,
+    closedReceivers,
   };
 }
 

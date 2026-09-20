@@ -130,6 +130,12 @@ export interface ProseDriftOptions {
   packageName: string;
   markdownFiles: MarkdownDocFile[];
   registry: ExportRegistry;
+  /**
+   * Module specifier whose imports are checked (`prose-broken-reference`).
+   * Defaults to `packageName`. Pass `jotai/utils` when the spec is that
+   * `package.json` `exports` path so `import { atom } from 'jotai'` is silent.
+   */
+  importSpecifier?: string;
 }
 
 /**
@@ -138,11 +144,12 @@ export interface ProseDriftOptions {
  *
  * Two checks:
  * 1. Imports from the package that reference non-existent exports
- * 2. Method/property access on receivers typed as a package export that
- *    don't exist on that type. Unknown receivers (db, jwt, crypto) are not flagged.
+ * 2. Method/property access on receivers typed as a package class/interface
+ *    that don't exist on that type. Unknown receivers (db, jwt, crypto) and
+ *    generic wrappers (`Snapshot<T>`, `ExtractState<S>`) are not flagged.
  */
 export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
-  const { packageName, markdownFiles, registry } = options;
+  const { packageName, markdownFiles, registry, importSpecifier } = options;
   const issues: SpecDocDrift[] = [];
 
   for (const file of markdownFiles) {
@@ -173,7 +180,15 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
       );
 
       // 1. Check imports (existing behavior)
-      detectBrokenImports(block.code, packageName, registry, file.path, block.lineStart, issues);
+      detectBrokenImports(
+        block.code,
+        packageName,
+        registry,
+        file.path,
+        block.lineStart,
+        issues,
+        importSpecifier,
+      );
 
       // 2. Check method/property access against type members
       if (registry.typeMembers.size > 0) {
@@ -217,6 +232,7 @@ function detectBrokenImports(
   filePath: string,
   lineStart: number,
   issues: SpecDocDrift[],
+  importSpecifier?: string,
 ): void {
   let imports: ImportInfo[];
   try {
@@ -225,15 +241,12 @@ function detectBrokenImports(
     return;
   }
 
-  const packageImports = imports.filter(
-    (imp) => imp.from === packageName || imp.from.startsWith(`${packageName}/`),
-  );
+  const from = importSpecifier ?? packageName;
+  const packageImports = imports.filter((imp) => imp.from === from);
 
   for (const imp of packageImports) {
     if (imp.kind === 'side-effect') continue;
     if (registry.all.has(imp.name)) continue;
-    // Skip subpath imports — registry only covers the main entry point
-    if (imp.from !== packageName) continue;
 
     const match = findClosestMatch(imp.name, registry.allNames);
     const suggestion = match
@@ -415,6 +428,7 @@ function detectUnresolvedMembers(
       packageParamTypes,
     );
     if (!typeName) continue;
+    if (!registry.closedReceivers.has(typeName)) continue;
     if (registry.typeMembers.get(call.methodName)?.has(typeName)) continue;
 
     const match = findClosestMatch(call.methodName, registry.allMemberNames);

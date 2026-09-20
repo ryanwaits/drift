@@ -155,6 +155,8 @@ export interface ExportRegistry {
   deprecatedMembers: Map<string, { parents: Set<string>; note: string }>;
   /** Callable export name → named type it returns (Promise unwrapped), for instance typing */
   callableReturnTypes: Map<string, string>;
+  /** Class/interface names with a closed member list. Generic type aliases are not. */
+  closedReceivers: Set<string>;
 }
 
 /**

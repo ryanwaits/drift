@@ -65,18 +65,23 @@ export type RuleHit = {
  * calls (`const t = new Foo(); t.start()`) count as mentioned, including when
  * the binding is in an earlier fence. A binding from a call whose spec return
  * type is a spec type (`const room = client.joinRoom()`) counts like `new Room()`.
- * Under a heading that names type T, a backticked `member` or `member(...)`,
- * and fence `x.member` / `x.member(`, count as `T.member`. The gap locator
- * is the heading that names the type, not the page title.
+ * Under a heading that names type T, a backticked `member` or `member(...)`
+ * or `.member` / `.member()`, and fence `x.member` / `x.member(`, count as
+ * `T.member`. The gap locator is the heading that names the type, not the
+ * page title.
  *
  * `kind: 'prose'` is inventory for a judge: a sentence / list item / table
  * cell that names an export or `Type.member`. No rule. Scan/CI ignore it.
  *
  * Fence call-site rules (`prose-unknown-key`, `prose-arity-mismatch`,
  * `prose-missing-required`) fire only when the callee resolves to an export.
- * Unknown receiver = no claim. Type arguments are not arguments.
- * `prose-unknown-key` matches an object literal to the parameter at that
- * position and fires only when that parameter's type is a closed object shape.
+ * Unknown receiver = no claim. Type arguments are not arguments. A fence that
+ * prints a signature (`name: Type` params, `): ReturnType`) is not a call.
+ * An argument list that is only a comment or `...` is an elision: no arity
+ * or missing-required claim. `prose-unknown-key` matches an object literal to
+ * the parameter at that position and fires only when that parameter's type is
+ * a closed object shape (intersection = union of arms; interface = own keys
+ * plus `extends`; any external/unresolved/generic arm opens the shape).
  * JSX props are the top-level properties of the component's first parameter
  * (or the destructured param names); nested JSX elements are each checked.
  */
@@ -138,6 +143,13 @@ export type BuildPageDocumentOptions = {
   docsMap?: PageDocsMap;
   /** Override `spec.meta.name` for prose import checks */
   packageName?: string;
+  /**
+   * Module specifier whose fence imports are checked (`prose-broken-reference`).
+   * Defaults to `packageName`. When the spec is a `package.json` `exports`
+   * subpath (entry `src/vanilla/utils.ts` → `jotai/utils`), pass that specifier
+   * so imports from the package root and other subpaths are silent.
+   */
+  importSpecifier?: string;
 };
 
 /** Inputs for `buildPageDocuments`. */

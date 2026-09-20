@@ -660,6 +660,7 @@ export function buildPageDocument(options: BuildPageDocumentOptions): PageDocume
     packageName,
     markdownFiles: [parsed],
     registry: opts.registry,
+    ...(opts.importSpecifier ? { importSpecifier: opts.importSpecifier } : {}),
   });
 
   const claims: Claim[] = [];

@@ -212,9 +212,83 @@ export type CallSite = {
   jsxKeys: string[];
   hasJsxSpread: boolean;
   hasChildren: boolean;
+  /** Argument list is only a comment, `...`, or a block-comment placeholder. */
+  elided: boolean;
   line: number;
   text: string;
 };
+
+const TYPED_PARAM: RegExp = /^\s*(?:\.\.\.)?[A-Za-z_$][\w$]*\s*\??\s*:/;
+
+/** Split on top-level commas, respecting `<> [] {} ()` and strings. */
+function splitTopLevel(src: string): string[] {
+  const parts: string[] = [];
+  let start = 0;
+  let angle = 0;
+  let square = 0;
+  let curly = 0;
+  let paren = 0;
+  let quote: string | null = null;
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (quote) {
+      if (ch === '\\') {
+        i++;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      quote = ch;
+      continue;
+    }
+    if (ch === '<') angle++;
+    else if (ch === '>' && angle > 0) angle--;
+    else if (ch === '[') square++;
+    else if (ch === ']' && square > 0) square--;
+    else if (ch === '{') curly++;
+    else if (ch === '}' && curly > 0) curly--;
+    else if (ch === '(') paren++;
+    else if (ch === ')' && paren > 0) paren--;
+    else if (ch === ',' && angle === 0 && square === 0 && curly === 0 && paren === 0) {
+      const part = src.slice(start, i).trim();
+      if (part) parts.push(part);
+      start = i + 1;
+    }
+  }
+  const last = src.slice(start).trim();
+  if (last) parts.push(last);
+  return parts;
+}
+
+function parenInner(node: TS.CallExpression | TS.NewExpression, sourceFile: TS.SourceFile): string {
+  const text = node.getText(sourceFile);
+  const open = text.indexOf('(');
+  const close = text.lastIndexOf(')');
+  if (open === -1 || close <= open) return '';
+  return text.slice(open + 1, close);
+}
+
+/** Bare `name<...>(a: T, b?: U): R` printed in a fence — a declaration, not a call. */
+function isBareSignature(node: TS.CallExpression, sourceFile: TS.SourceFile): boolean {
+  if (/^\s*:/.test(sourceFile.text.slice(node.getEnd()))) return true;
+  const parts = splitTopLevel(parenInner(node, sourceFile));
+  return parts.length > 0 && parts.every((p) => TYPED_PARAM.test(p));
+}
+
+function isElidedArgList(
+  node: TS.CallExpression | TS.NewExpression,
+  sourceFile: TS.SourceFile,
+): boolean {
+  const inner = parenInner(node, sourceFile);
+  const stripped = inner
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/[^\n]*/g, '')
+    .trim();
+  if (stripped === '...' || stripped === '…') return true;
+  return stripped === '' && /\/\*|\/\//.test(inner);
+}
 
 function objectLiteralKeys(
   expr: TS.Expression,
@@ -314,6 +388,7 @@ export function extractCallSites(code: string): CallSite[] {
         const { argCount, hasSpreadArg, args } = valueArgs(node);
         const expr = node.expression;
         if (ts.isIdentifier(expr)) {
+          if (isBareSignature(node, sourceFile)) return;
           sites.push({
             kind: 'call',
             name: expr.text,
@@ -323,6 +398,7 @@ export function extractCallSites(code: string): CallSite[] {
             jsxKeys: [],
             hasJsxSpread: false,
             hasChildren: false,
+            elided: isElidedArgList(node, sourceFile),
             line: pos.line,
             text: node.getText(sourceFile),
           });
@@ -337,6 +413,7 @@ export function extractCallSites(code: string): CallSite[] {
             jsxKeys: [],
             hasJsxSpread: false,
             hasChildren: false,
+            elided: isElidedArgList(node, sourceFile),
             line: pos.line,
             text: node.getText(sourceFile),
           });
@@ -354,6 +431,7 @@ export function extractCallSites(code: string): CallSite[] {
           jsxKeys: [],
           hasJsxSpread: false,
           hasChildren: false,
+          elided: isElidedArgList(node, sourceFile),
           line: pos.line,
           text: node.getText(sourceFile),
         });
@@ -374,6 +452,7 @@ export function extractCallSites(code: string): CallSite[] {
             jsxKeys: keys,
             hasJsxSpread: hasSpread,
             hasChildren: ts.isJsxElement(node) ? jsxHasChildren(node) : false,
+            elided: false,
             line: pos.line,
             text: open.getText(sourceFile),
           });

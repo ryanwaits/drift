@@ -1437,3 +1437,470 @@ See \`toImmutable()\` for a snapshot.
     ).toEqual([]);
   });
 });
+
+describe('signature fence is not a call (prose-arity-mismatch)', () => {
+  function middlewareSpec(): ApiSpec {
+    return {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'combine',
+          name: 'combine',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'initialState', required: true, schema: { type: 'object' } },
+                { name: 'additionalStateCreatorFn', required: true, schema: { type: 'function' } },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'devtools',
+          name: 'devtools',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'stateCreatorFn', required: true, schema: { type: 'function' } },
+                { name: 'devtoolsOptions', required: false, schema: { type: 'object' } },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'redux',
+          name: 'redux',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'reducer', required: true, schema: { type: 'function' } },
+                { name: 'initialState', required: true, schema: { type: 'object' } },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'subscribeWithSelector',
+          name: 'subscribeWithSelector',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'stateCreatorFn', required: true, schema: { type: 'function' } },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'useAtomCallback',
+          name: 'useAtomCallback',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'callback', required: true, schema: { type: 'function' } },
+                { name: 'options', required: false, schema: { type: 'object' } },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  function doc(content: string) {
+    const spec = middlewareSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/middleware.md',
+      content,
+      packageName: PKG,
+    });
+  }
+
+  test('reference signature with name: Type params and return type is not arity-mismatch', () => {
+    const content = `# Middleware
+
+\`\`\`ts
+combine<T extends object, U extends object>(initialState: T, additionalStateCreatorFn: StateCreator<T, [], [], U>): StateCreator<Omit<T, keyof U> & U, [], []>
+devtools<T>(stateCreatorFn: StateCreator<T, [], []>, devtoolsOptions?: DevtoolsOptions): StateCreator<T, [['zustand/devtools', never]]>
+redux<T, A extends { type: string }>(reducer: (state: T, action: A) => T, initialState: T): StateCreator<T, [], []>
+subscribeWithSelector<T>(stateCreatorFn: StateCreator<T, [], []>): StateCreator<T, [], []>
+useAtomCallback<Result, Args extends unknown[]>(callback: (get: Getter, set: Setter, ...args: Args) => Result): (...args: Args) => Result
+\`\`\`
+`;
+    const d = doc(content);
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-arity-mismatch')).toEqual([]);
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-missing-required')).toEqual([]);
+  });
+
+  test('real extra positional args still fire', () => {
+    const content = `# Middleware
+
+\`\`\`ts
+combine(state, fn, extra)
+\`\`\`
+`;
+    const hit = doc(content).claims.find((c) => c.rule?.type === 'prose-arity-mismatch');
+    expect(hit).toBeDefined();
+    expect(hit?.specRef?.export).toBe('combine');
+  });
+});
+
+describe('prose-unknown-key on intersection and extended option types', () => {
+  test('intersection arm keys are allowed (valtio Options & Config)', () => {
+    const spec: ApiSpec = {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'devtools',
+          name: 'devtools',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'state', required: true, schema: { type: 'object' } },
+                { name: 'options', required: false, schema: { $ref: '#/types/Options' } },
+              ],
+            },
+          ],
+        },
+      ],
+      types: [
+        {
+          id: 'Options',
+          name: 'Options',
+          kind: 'type',
+          schema: {
+            allOf: [
+              {
+                type: 'object',
+                properties: {
+                  enabled: { type: 'boolean' },
+                  name: { type: 'string' },
+                },
+              },
+              { $ref: '#/types/Config' },
+            ],
+          },
+          members: [
+            { name: 'enabled', kind: 'property' },
+            { name: 'name', kind: 'property' },
+          ],
+        },
+        {
+          id: 'Config',
+          name: 'Config',
+          kind: 'interface',
+          schema: {
+            type: 'object',
+            properties: { serialize: { type: 'boolean' } },
+          },
+        },
+      ],
+    };
+    const d = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/utils.md',
+      content: '# Utils\n\n```ts\ndevtools(state, { name: "state name", enabled: true })\n```\n',
+      packageName: PKG,
+    });
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-unknown-key')).toEqual([]);
+  });
+
+  test('unresolved intersection arm makes the shape open', () => {
+    const spec: ApiSpec = {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'devtools',
+          name: 'devtools',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'state', required: true, schema: { type: 'object' } },
+                { name: 'options', required: false, schema: { $ref: '#/types/Options' } },
+              ],
+            },
+          ],
+        },
+      ],
+      types: [
+        {
+          id: 'Options',
+          name: 'Options',
+          kind: 'type',
+          schema: {
+            allOf: [
+              {
+                type: 'object',
+                properties: {
+                  enabled: { type: 'boolean' },
+                  name: { type: 'string' },
+                },
+              },
+              { $ref: '#/types/Config' },
+            ],
+          },
+        },
+      ],
+    };
+    const d = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/utils.md',
+      content: '# Utils\n\n```ts\ndevtools(state, { name: "x", notAKey: true })\n```\n',
+      packageName: PKG,
+    });
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-unknown-key')).toEqual([]);
+  });
+
+  test('interface own keys plus closed extends are unioned', () => {
+    const spec: ApiSpec = {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'devtools',
+          name: 'devtools',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'fn', required: true, schema: { type: 'function' } },
+                { name: 'options', required: false, schema: { $ref: '#/types/DevtoolsOptions' } },
+              ],
+            },
+          ],
+        },
+      ],
+      types: [
+        {
+          id: 'DevtoolsOptions',
+          name: 'DevtoolsOptions',
+          kind: 'interface',
+          extends: 'Config',
+          schema: {
+            type: 'object',
+            properties: { actionsDenylist: { type: 'string' } },
+          },
+          members: [{ name: 'actionsDenylist', kind: 'property' }],
+        },
+        {
+          id: 'Config',
+          name: 'Config',
+          kind: 'interface',
+          schema: {
+            type: 'object',
+            properties: { name: { type: 'string' } },
+          },
+        },
+      ],
+    };
+    const ok = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/middleware.md',
+      content:
+        '# Middleware\n\n```ts\ndevtools(fn, { name: "store", actionsDenylist: "inc" })\n```\n',
+      packageName: PKG,
+    });
+    expect(ok.claims.filter((c) => c.rule?.type === 'prose-unknown-key')).toEqual([]);
+    const bad = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/middleware.md',
+      content: '# Middleware\n\n```ts\ndevtools(fn, { notAKey: true })\n```\n',
+      packageName: PKG,
+    });
+    const hit = bad.claims.find((c) => c.rule?.type === 'prose-unknown-key');
+    expect(hit?.rule?.issue).toContain('notAKey');
+  });
+
+  test('external or unresolved extends makes the shape open (zustand Config)', () => {
+    const spec: ApiSpec = {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'devtools',
+          name: 'devtools',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'fn', required: true, schema: { type: 'function' } },
+                { name: 'options', required: false, schema: { $ref: '#/types/DevtoolsOptions' } },
+              ],
+            },
+          ],
+        },
+      ],
+      types: [
+        {
+          id: 'DevtoolsOptions',
+          name: 'DevtoolsOptions',
+          kind: 'interface',
+          extends: 'Config',
+          schema: {
+            allOf: [{ $ref: '#/types/Config' }],
+            type: 'object',
+            properties: { actionsDenylist: { type: 'string' } },
+          },
+          members: [{ name: 'actionsDenylist', kind: 'property' }],
+        },
+        {
+          id: 'Config',
+          name: 'Config',
+          kind: 'type',
+          source: { package: '@redux-devtools/extension', file: '<external>' },
+          schema: {
+            type: 'object',
+            properties: { serialize: { type: 'boolean' } },
+          },
+        },
+      ],
+    };
+    const d = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/middleware.md',
+      content:
+        '# Middleware\n\n```ts\ndevtools(fn, { actionsDenylist: ["inc"], notAKey: true })\n```\n',
+      packageName: PKG,
+    });
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-unknown-key')).toEqual([]);
+  });
+});
+
+describe('elided argument lists are not missing-required', () => {
+  test('useMutation(/* ... */) is an elision', () => {
+    const content = `# Mutations
+
+\`\`\`ts
+const deleteShape = useMutation(/* ... */);
+\`\`\`
+`;
+    const doc = guidePage('docs/guides/mutations.md', content);
+    expect(doc.claims.filter((c) => c.rule?.type === 'prose-missing-required')).toEqual([]);
+    expect(doc.claims.filter((c) => c.rule?.type === 'prose-arity-mismatch')).toEqual([]);
+  });
+
+  test('useMutation(...) is an elision', () => {
+    const content = `# Mutations
+
+\`\`\`ts
+useMutation(...)
+\`\`\`
+`;
+    const doc = guidePage('docs/guides/mutations.md', content);
+    expect(doc.claims.filter((c) => c.rule?.type === 'prose-missing-required')).toEqual([]);
+  });
+
+  test('empty parens still missing-required; one real arg still missing deps', () => {
+    const empty = guidePage(
+      'docs/guides/mutations.md',
+      '# Mutations\n\n```ts\nuseMutation()\n```\n',
+    );
+    expect(
+      empty.claims.find((c) => c.rule?.type === 'prose-missing-required')?.rule?.issue,
+    ).toContain('callback');
+    const one = guidePage(
+      'docs/guides/mutations.md',
+      '# Mutations\n\n```ts\nuseMutation(cb)\n```\n',
+    );
+    expect(
+      one.claims.find((c) => c.rule?.type === 'prose-missing-required')?.rule?.issue,
+    ).toContain('deps');
+  });
+});
+
+describe('backticked .member() under a type heading counts as T.member', () => {
+  test('exposes `.start()` / `.stop()` covers LivelyServer.stop', () => {
+    const spec: ApiSpec = {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'LivelyServer',
+          name: 'LivelyServer',
+          kind: 'class',
+          members: [
+            { name: 'start', kind: 'method' },
+            { name: 'stop', kind: 'method' },
+            { name: 'restart', kind: 'method' },
+          ],
+        },
+      ],
+    };
+    const d = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/server.md',
+      content: `# Server
+
+## LivelyServer
+
+exposes \`.start()\` / \`.stop()\`
+`,
+      packageName: PKG,
+    });
+    expect(
+      gaps(d)
+        .map((c) => c.text)
+        .sort(),
+    ).toEqual(['restart']);
+    const stop = d.claims.find(
+      (c) =>
+        c.kind !== 'gap' && c.specRef?.export === 'LivelyServer' && c.specRef?.member === 'stop',
+    );
+    expect(stop).toBeDefined();
+  });
+});
+
+describe('prose-broken-reference scoped to the entry export path', () => {
+  test('import from package root is silent when the spec is a subpath entry', () => {
+    const spec: ApiSpec = {
+      meta: { name: 'jotai' },
+      exports: [{ id: 'atomFamily', name: 'atomFamily', kind: 'function' }],
+    };
+    const content = `# Utils
+
+\`\`\`ts
+import { atom } from 'jotai'
+import { atomFamily } from 'jotai/utils'
+\`\`\`
+`;
+    const d = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/utils.md',
+      content,
+      packageName: 'jotai',
+      importSpecifier: 'jotai/utils',
+    });
+    const broken = d.claims.filter((c) => c.rule?.type === 'prose-broken-reference');
+    expect(broken).toEqual([]);
+  });
+
+  test('import from the entry specifier still fires when the name is missing', () => {
+    const spec: ApiSpec = {
+      meta: { name: 'jotai' },
+      exports: [{ id: 'atomFamily', name: 'atomFamily', kind: 'function' }],
+    };
+    const d = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/utils.md',
+      content: "# Utils\n\n```ts\nimport { atom } from 'jotai/utils'\n```\n",
+      packageName: 'jotai',
+      importSpecifier: 'jotai/utils',
+    });
+    const hit = d.claims.find((c) => c.rule?.type === 'prose-broken-reference');
+    expect(hit).toBeDefined();
+    expect(hit?.rule?.issue).toContain('atom');
+  });
+});

@@ -120,3 +120,98 @@ toast.info('ok')
     expect(unresolved(issues)).toEqual([]);
   });
 });
+
+describe('generic wrapper return types are not closed receivers', () => {
+  test('mapped Snapshot<T> from useSnapshot does not flag snap.fullName()', () => {
+    const spec: ApiSpec = {
+      meta: { name: 'valtio' },
+      exports: [
+        {
+          id: 'proxy',
+          name: 'proxy',
+          kind: 'function',
+          signatures: [{ returns: { schema: { $ref: '#/types/Proxy' } } }],
+        },
+        {
+          id: 'useSnapshot',
+          name: 'useSnapshot',
+          kind: 'function',
+          signatures: [{ returns: { schema: { $ref: '#/types/Snapshot' } } }],
+        },
+      ],
+      types: [
+        {
+          id: 'Proxy',
+          name: 'Proxy',
+          kind: 'interface',
+          members: [{ name: 'subscribe', kind: 'method' }],
+        },
+        {
+          id: 'Snapshot',
+          name: 'Snapshot',
+          kind: 'type',
+          typeParameters: [{ name: 'T' }],
+          schema: { 'x-ts-type': 'Snapshot', 'x-ts-mapped': true },
+        },
+      ],
+    };
+    const registry = buildExportRegistry(spec);
+    const file = parseMarkdownFile(
+      `# Guide
+
+\`\`\`ts
+const snap = useSnapshot(state)
+snap.fullName()
+\`\`\`
+`,
+      'docs/guide.md',
+    );
+    const issues = detectProseDrift({ packageName: 'valtio', markdownFiles: [file], registry });
+    expect(unresolved(issues)).toEqual([]);
+  });
+
+  test('conditional ExtractState<S> from useStore does not flag increment()', () => {
+    const spec: ApiSpec = {
+      meta: { name: 'zustand' },
+      exports: [
+        {
+          id: 'StoreApi',
+          name: 'StoreApi',
+          kind: 'interface',
+          members: [
+            { name: 'getState', kind: 'method' },
+            { name: 'setState', kind: 'method' },
+          ],
+        },
+        {
+          id: 'useStore',
+          name: 'useStore',
+          kind: 'function',
+          signatures: [{ returns: { schema: { $ref: '#/types/ExtractState' } } }],
+        },
+      ],
+      types: [
+        {
+          id: 'ExtractState',
+          name: 'ExtractState',
+          kind: 'type',
+          typeParameters: [{ name: 'S' }],
+          schema: { 'x-ts-type': 'ExtractState', 'x-ts-conditional': true },
+        },
+      ],
+    };
+    const registry = buildExportRegistry(spec);
+    const file = parseMarkdownFile(
+      `# Guide
+
+\`\`\`ts
+const counterState = useStore()
+counterState.increment()
+\`\`\`
+`,
+      'docs/guide.md',
+    );
+    const issues = detectProseDrift({ packageName: 'zustand', markdownFiles: [file], registry });
+    expect(unresolved(issues)).toEqual([]);
+  });
+});

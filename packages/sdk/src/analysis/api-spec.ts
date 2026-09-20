@@ -48,6 +48,7 @@ export type ApiType = {
   members?: ApiMember[];
   source?: ApiSource;
   tags?: ApiTag[];
+  typeParameters?: ApiTypeParameter[];
   extends?: string;
   implements?: string[];
 };

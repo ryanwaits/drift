@@ -45,6 +45,7 @@ export function normalizeApiName(text: string): string {
 
 /**
  * Backticked API token without call/type args: `joinRoom(roomId, options)` → `joinRoom`.
+ * A leading dot (`.start()`) is stripped so heading-scoped `.member` counts.
  */
 export function unwrapApiToken(text: string): string {
   let s = unwrapHeadingText(text).trim();
@@ -56,7 +57,7 @@ export function unwrapApiToken(text: string): string {
     if (next === s) break;
     s = next;
   }
-  return s;
+  return s.replace(/^\./, '');
 }
 
 /**

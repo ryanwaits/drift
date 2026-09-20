@@ -1,4 +1,5 @@
 import type { ApiSchema, ApiSignature, ApiSignatureParameter, ApiSpec } from '../analysis/api-spec';
+import { isExternalExport } from '../analysis/documented';
 import type { ExportRegistry } from '../analysis/drift/types';
 import { findTypeEntry } from '../analysis/key-coverage';
 import type { CallSite } from './fences';
@@ -51,6 +52,17 @@ const UTILITY_XTS = new Set([
   'NonNullable',
   'Awaited',
 ]);
+const INDEXED_OPEN = new Set([
+  'Parameters',
+  'ReturnType',
+  'InstanceType',
+  'ConstructorParameters',
+  'ThisParameterType',
+  'OmitThisParameter',
+]);
+
+type SpecEntry = NonNullable<ReturnType<typeof findTypeEntry>>;
+type ShapeHit = ClosedShape | 'open' | null;
 
 function hasIndexSignature(s: Record<string, unknown>): boolean {
   return s.additionalProperties !== undefined && s.additionalProperties !== false;
@@ -91,7 +103,9 @@ function mergeClosed(shapes: ClosedShape[], mode: 'union' | 'all'): ClosedShape 
 /**
  * Closed object shape: named interface / type alias / inline object type with
  * known properties and no index signature. Null for type parameters, utilities
- * over them, object/any/unknown, Record, open unions, or unresolved refs.
+ * over them, object/any/unknown, Record, open unions, unresolved/external
+ * refs, or a generic mapped/conditional alias. Intersection keys are the union
+ * of every arm; interface keys include `extends`. Any open arm opens the shape.
  * Top-level properties only — never members of nested property types.
  */
 function closedObjectShape(
@@ -99,78 +113,26 @@ function closedObjectShape(
   schema: ApiSchema | undefined,
   seen: Set<string>,
 ): ClosedShape | null {
-  if (schema === undefined || schema === null) return null;
-  if (typeof schema === 'string') {
-    if (schema === 'object' || schema === 'any' || schema === 'unknown') return null;
-    if (seen.has(schema)) return null;
-    seen.add(schema);
-    const entry = findTypeEntry(spec, schema);
-    if (!entry) return null;
-    return closedEntryShape(spec, entry, seen);
-  }
-  if (typeof schema !== 'object') return null;
-  const s = schema as Record<string, unknown>;
-  if (hasIndexSignature(s)) return null;
-
-  const union = (Array.isArray(s.anyOf) ? s.anyOf : Array.isArray(s.oneOf) ? s.oneOf : null) as
-    | ApiSchema[]
-    | null;
-  if (union && union.length > 0) {
-    const shapes: ClosedShape[] = [];
-    for (const arm of union) {
-      const sh = closedObjectShape(spec, arm, seen);
-      if (!sh) return null;
-      shapes.push(sh);
-    }
-    return mergeClosed(shapes, 'union');
-  }
-
-  if (Array.isArray(s.allOf) && s.allOf.length > 0) {
-    const shapes: ClosedShape[] = [];
-    for (const arm of s.allOf) {
-      const sh = closedObjectShape(spec, arm as ApiSchema, seen);
-      if (!sh) return null;
-      shapes.push(sh);
-    }
-    const self = propertiesShape(s);
-    if (self) shapes.push(self);
-    return mergeClosed(shapes, 'all');
-  }
-
-  if (typeof s.$ref === 'string') {
-    const name = s.$ref.split('/').pop() ?? '';
-    if (!name || seen.has(name)) return null;
-    seen.add(name);
-    const entry = findTypeEntry(spec, name);
-    if (!entry) return null;
-    return closedEntryShape(spec, entry, seen);
-  }
-
-  const xts = s['x-ts-type'];
-  if (typeof xts === 'string') {
-    if (OPEN_XTS.has(xts)) return null;
-    if (UTILITY_XTS.has(xts)) {
-      return propertiesShape(s);
-    }
-    if (!s.properties) {
-      const entry = findTypeEntry(spec, xts);
-      if (!entry) return null;
-      return closedEntryShape(spec, entry, seen);
-    }
-  }
-
-  if (s.type === 'object' || s.properties) return propertiesShape(s);
-  return null;
+  const hit = schemaShape(spec, schema, seen);
+  return hit === 'open' || hit === null ? null : hit;
 }
 
-function closedEntryShape(
-  spec: ApiSpec,
-  entry: { kind?: string; schema?: ApiSchema; members?: Array<{ name?: string; kind?: string }> },
-  seen: Set<string>,
-): ClosedShape | null {
-  const fromSchema = closedObjectShape(spec, entry.schema, seen);
-  if (fromSchema) return fromSchema;
-  if (entry.kind === 'class') return null;
+function splitHeritage(raw: string): string[] {
+  return raw
+    .split(/[,&]/)
+    .map((p) => p.replace(/<[\s\S]*$/, '').trim())
+    .filter(Boolean);
+}
+
+function isMappedOrConditional(schema: ApiSchema | undefined): boolean {
+  if (!schema || typeof schema !== 'object') return false;
+  const s = schema as Record<string, unknown>;
+  return s['x-ts-mapped'] === true || s['x-ts-conditional'] === true;
+}
+
+function membersShape(entry: {
+  members?: Array<{ name?: string; kind?: string }>;
+}): ClosedShape | null {
   const keys = new Set<string>();
   for (const m of entry.members ?? []) {
     if (!m.name) continue;
@@ -179,6 +141,103 @@ function closedEntryShape(
   }
   if (keys.size === 0) return null;
   return { keys, required: new Set() };
+}
+
+function schemaShape(spec: ApiSpec, schema: ApiSchema | undefined, seen: Set<string>): ShapeHit {
+  if (schema === undefined || schema === null) return null;
+  if (typeof schema === 'string') {
+    if (schema === 'object' || schema === 'any' || schema === 'unknown') return 'open';
+    if (seen.has(schema)) return 'open';
+    seen.add(schema);
+    const entry = findTypeEntry(spec, schema);
+    if (!entry) return 'open';
+    return entryShape(spec, entry, seen);
+  }
+  if (typeof schema !== 'object') return null;
+  const s = schema as Record<string, unknown>;
+  if (hasIndexSignature(s)) return 'open';
+
+  const union = (Array.isArray(s.anyOf) ? s.anyOf : Array.isArray(s.oneOf) ? s.oneOf : null) as
+    | ApiSchema[]
+    | null;
+  if (union && union.length > 0) {
+    const shapes: ClosedShape[] = [];
+    for (const arm of union) {
+      const sh = schemaShape(spec, arm, seen);
+      if (sh === 'open' || sh === null) return 'open';
+      shapes.push(sh);
+    }
+    return mergeClosed(shapes, 'union');
+  }
+
+  if (Array.isArray(s.allOf) && s.allOf.length > 0) {
+    const shapes: ClosedShape[] = [];
+    for (const arm of s.allOf) {
+      const sh = schemaShape(spec, arm as ApiSchema, seen);
+      if (sh === 'open') return 'open';
+      if (sh) shapes.push(sh);
+    }
+    const self = propertiesShape(s);
+    if (self) shapes.push(self);
+    if (shapes.length === 0) return 'open';
+    return mergeClosed(shapes, 'all');
+  }
+
+  if (typeof s.$ref === 'string') {
+    const name = s.$ref.split('/').pop() ?? '';
+    if (!name || seen.has(name)) return 'open';
+    seen.add(name);
+    const entry = findTypeEntry(spec, name);
+    if (!entry) return 'open';
+    return entryShape(spec, entry, seen);
+  }
+
+  const xts = s['x-ts-type'];
+  if (typeof xts === 'string') {
+    if (OPEN_XTS.has(xts) || INDEXED_OPEN.has(xts)) return 'open';
+    if (UTILITY_XTS.has(xts)) return propertiesShape(s) ?? 'open';
+    if (!s.properties) {
+      const entry = findTypeEntry(spec, xts);
+      if (!entry) return 'open';
+      return entryShape(spec, entry, seen);
+    }
+  }
+
+  if (s.type === 'object' || s.properties) return propertiesShape(s);
+  return null;
+}
+
+function entryShape(spec: ApiSpec, entry: SpecEntry, seen: Set<string>): ShapeHit {
+  if (isExternalExport(entry)) return 'open';
+  const typeParams = entry.typeParameters;
+  if (
+    (entry.kind === 'type' || entry.kind === 'alias') &&
+    ((typeParams && typeParams.length > 0) || isMappedOrConditional(entry.schema))
+  ) {
+    return 'open';
+  }
+
+  const shapes: ClosedShape[] = [];
+  const heritage = entry.extends;
+  if (typeof heritage === 'string' && heritage.trim()) {
+    for (const name of splitHeritage(heritage)) {
+      const base = findTypeEntry(spec, name);
+      if (!base) return 'open';
+      const sh = entryShape(spec, base, seen);
+      if (sh === 'open') return 'open';
+      if (sh) shapes.push(sh);
+    }
+  }
+
+  const fromSchema = schemaShape(spec, entry.schema, seen);
+  if (fromSchema === 'open') return 'open';
+  if (fromSchema) shapes.push(fromSchema);
+
+  const fromMembers = membersShape(entry);
+  if (fromMembers) shapes.push(fromMembers);
+
+  if (shapes.length === 0) return null;
+  return mergeClosed(shapes, 'all');
 }
 
 function paramShape(p: ApiSignatureParameter): ParamShape {
@@ -360,6 +419,7 @@ function judgeSite(
   registry: ExportRegistry,
   bindings: Map<string, string>,
 ): CallSiteHit[] {
+  if (site.elided) return [];
   const callee = resolveCallee(site, registry, bindings);
   if (!callee) return [];
   const sigs = signaturesOf(spec, callee.exportName, callee.member);
