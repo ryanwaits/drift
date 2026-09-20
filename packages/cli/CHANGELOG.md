@@ -1,5 +1,15 @@
 # @doccov/cli
 
+## 1.16.6
+
+### Patch Changes
+
+- c28d727: PageDocument precision: `import * as ns` is a namespace alias (never a missing export; `ns.member` is checked as the export); receivers and bare callees bind only through a visible import or construction, not a coincidental name; foreign-import and Before/Previous fences are silent.
+- f46da0b: Bump `@openpkg-ts/sdk` to ^0.54.6. Utilities over type params stay written form (`Readonly<T>`), and param defaults land on `parameter.default`. Spec stays ^0.54.4.
+- Updated dependencies [c28d727]
+- Updated dependencies [f46da0b]
+  - @driftdev/sdk@1.16.6
+
 ## 1.16.5
 
 ### Patch Changes
