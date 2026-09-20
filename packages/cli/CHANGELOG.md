@@ -1,5 +1,15 @@
 # @doccov/cli
 
+## 1.16.1
+
+### Patch Changes
+
+- f5ef56a: PageDocument accuracy: `spec-not-in-claims` only for mapped types or headings that name the type/member; private/`_` and docs-map `internal` keys are never gaps; instance calls on `new Type()` count as mentioned; gap locator is the type heading. `prose-unresolved-member` only for package-typed receivers. `headingText` is the written heading. TypeScript `meta.name` comes from the nearest package.json. Locator paths are repo-relative.
+- e15654a: Default `new Drift()` no longer sets OpenPkg `followExternal: true` when node_modules exists. That mode expands every dependency (zod's type graph OOMs on this repo's SDK entry). Default now matches CLI extract / `drift page`. Bump `@openpkg-ts/sdk` to ^0.54.3 so explicit `resolveExternalTypes: true` is bounded.
+- Updated dependencies [f5ef56a]
+- Updated dependencies [e15654a]
+  - @driftdev/sdk@1.16.1
+
 ## 1.16.0
 
 ### Minor Changes
