@@ -46,6 +46,27 @@ function findExport(spec: ApiSpec, name: string): ApiExport | undefined {
   return spec.exports?.find((e) => e.name === name || e.id === name);
 }
 
+function extraSignatures(entry: {
+  signatures?: ApiSignature[];
+  schema?: ApiSchema;
+}): ApiSignature[] {
+  if (entry.signatures?.length) return entry.signatures;
+  if (!entry.schema || typeof entry.schema !== 'object') return [];
+  const extra = (entry.schema as Record<string, unknown>)['x-ts-signatures'];
+  return Array.isArray(extra) ? (extra as ApiSignature[]) : [];
+}
+
+/** Overload list for an export or `Type.member`. Empty when the spec has none. */
+export function signaturesOf(spec: ApiSpec, exportName: string, member?: string): ApiSignature[] {
+  if (member) {
+    const mem = findMember(spec, exportName, member);
+    return mem?.signatures ?? [];
+  }
+  const exp = findExport(spec, exportName);
+  if (exp) return extraSignatures(exp);
+  return [];
+}
+
 function findMember(spec: ApiSpec, parent: string, member: string): ApiMember | undefined {
   const entries = [...(spec.exports ?? []), ...(spec.types ?? [])].filter((e) => e.name === parent);
   for (const entry of entries) {

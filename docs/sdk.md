@@ -117,7 +117,11 @@ for (const issue of issues) {
 
 Page-level claims for a docs host (Vercel, Mintlify, Fumadocs, or a separate review product). Coordinates are source markdown (`line` + `col` + heading slug), plus a spec slice. Not a review UI. Jev is not in this package. `candidate` claims are inventory; only `rule` hits are the existing detectors. Scan/CI do not consume this document.
 
-`spec-not-in-claims` is a rule only when the page is on the hook for that type: a `drift.docs.json` row, or a heading that names the type or a member. Mentioning a type in a fence or backtick is a candidate, never a gap dump. Private/`_` members and map `internal` keys are never gaps. Instance calls on `new Type()` count as mentioned. The gap locator is the heading that names the type. `locator.headingText` is the written heading, not the slug. `locator.path` is repo-relative.
+`spec-not-in-claims` is a rule only when the page is on the hook for that type: a `drift.docs.json` row, or a heading that names the type or a member. Mentioning a type in a fence or backtick is a candidate, never a gap dump. Private/`_` members and map `internal` keys are never gaps. Instance calls on `new Type()` count as mentioned, including when the binding is in an earlier fence on the page. Under a heading that names type T, a backticked `member` or `member(...)` counts as `T.member`. The gap locator is the heading that names the type. `locator.headingText` is the written heading, not the slug. `locator.path` is repo-relative.
+
+`kind: 'prose'` candidates are sentence / list-item / table-cell spans that name an export or `Type.member`. No rule — scan/CI ignore them. Bare-word match only for camelCase, PascalCase with 2+ humps, or names with digits/underscores; dictionary-plain names (`Room`, `atom`) still need backticks.
+
+Fence call-site rules (PageDocument only, not scan): `prose-unknown-key` (JSX prop / object-literal key not on the resolved parameter type), `prose-arity-mismatch` (more positional args than any overload), `prose-missing-required` (required in every overload; JSX `children` counts). Type arguments are not arguments (`foo<A, B>()` is zero args). Unknown receiver = no claim.
 
 ```typescript
 import { buildExportRegistry, buildPageDocument } from '@driftdev/sdk';

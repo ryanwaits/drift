@@ -43,6 +43,33 @@ export function normalizeApiName(text: string): string {
     .trim();
 }
 
+/**
+ * Backticked API token without call/type args: `joinRoom(roomId, options)` → `joinRoom`.
+ */
+export function unwrapApiToken(text: string): string {
+  let s = unwrapHeadingText(text).trim();
+  for (let i = 0; i < 4; i++) {
+    const next = s
+      .replace(/<[^<>]*>\s*$/, '')
+      .replace(/\([^)]*\)\s*$/, '')
+      .trim();
+    if (next === s) break;
+    s = next;
+  }
+  return s;
+}
+
+/**
+ * Bare-word matchable: camelCase, PascalCase with 2+ humps, or digits/underscores.
+ * Dictionary-plain names (`Room`, `atom`) still need backticks.
+ */
+export function isDistinctiveApiName(name: string): boolean {
+  if (!name) return false;
+  if (/[\d_]/.test(name)) return true;
+  if (/[a-z][A-Z]/.test(name)) return true;
+  return /^[A-Z][a-z0-9]*[A-Z]/.test(name);
+}
+
 export function indexToPos(content: string, index: number): SourcePos {
   const before = content.slice(0, index);
   const lastNl = before.lastIndexOf('\n');

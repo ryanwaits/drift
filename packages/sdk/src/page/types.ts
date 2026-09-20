@@ -39,7 +39,15 @@ export type SpecRef = {
 
 /** Deterministic detector hit. Absent when the claim is inventory only. */
 export type RuleHit = {
-  type: SpecDocDrift['type'] | 'key-gap' | 'key-ghost' | 'key-inversion' | 'spec-not-in-claims';
+  type:
+    | SpecDocDrift['type']
+    | 'key-gap'
+    | 'key-ghost'
+    | 'key-inversion'
+    | 'spec-not-in-claims'
+    | 'prose-unknown-key'
+    | 'prose-arity-mismatch'
+    | 'prose-missing-required';
   issue: string;
   suggestion?: string;
 };
@@ -54,8 +62,17 @@ export type RuleHit = {
  * type: a `docsMap` row, or a heading that names the type or one of its
  * members. Citing `Room` in a fence or backtick is a candidate, never a gap.
  * Private/`_` members and docs-map `internal` keys are never gaps. Instance
- * calls (`const t = new Foo(); t.start()`) count as mentioned. The gap locator
+ * calls (`const t = new Foo(); t.start()`) count as mentioned, including when
+ * the binding is in an earlier fence. Under a heading that names type T, a
+ * backticked `member` or `member(...)` counts as `T.member`. The gap locator
  * is the heading that names the type, not the page title.
+ *
+ * `kind: 'prose'` is inventory for a judge: a sentence / list item / table
+ * cell that names an export or `Type.member`. No rule. Scan/CI ignore it.
+ *
+ * Fence call-site rules (`prose-unknown-key`, `prose-arity-mismatch`,
+ * `prose-missing-required`) fire only when the callee resolves to an export.
+ * Unknown receiver = no claim. Type arguments are not arguments.
  */
 export type Claim = {
   /** Stable: `${path}:${kind}:${export}.${member}:${start.line}` */

@@ -6,11 +6,12 @@ import {
   extractDocumentedKeys,
 } from '../analysis/key-coverage';
 import { findExportReferences, parseMarkdownFile } from '../markdown/parser';
+import { detectCallSiteHits } from './call-sites';
 import {
   blockContaining,
+  extractExportBindings,
   extractFenceCalls,
   extractFenceImports,
-  extractInstanceBindings,
 } from './fences';
 import {
   attachHeading,
@@ -24,7 +25,9 @@ import {
   normalizeApiName,
   type PageHeading,
   pageTitle,
+  unwrapApiToken,
 } from './locators';
+import { findProseHits } from './prose';
 import { makeSpecRef, resolveApiName, resolveCall, specRefKey, uniqueSlices } from './spec-ref';
 import type {
   BuildPageDocumentOptions,
@@ -74,9 +77,12 @@ function claimId(
   specRef: SpecRef | null,
   text: string,
   line: number,
+  ruleType?: string,
 ): string {
   const target = specRefKey(specRef) ?? text;
-  return `${path}:${kind}:${target}:${line}`;
+  return ruleType
+    ? `${path}:${kind}:${target}:${ruleType}:${line}`
+    : `${path}:${kind}:${target}:${line}`;
 }
 
 function toRule(issue: SpecDocDrift): RuleHit {
@@ -99,7 +105,7 @@ function sortClaims(claims: Claim[]): Claim[] {
 }
 
 function seenKey(claim: Claim): string {
-  return `${claim.kind}:${specRefKey(claim.specRef) ?? claim.text}:${claim.locator.start.line}`;
+  return `${claim.kind}:${specRefKey(claim.specRef) ?? claim.text}:${claim.rule?.type ?? ''}:${claim.locator.start.line}`;
 }
 
 function pushUnique(claims: Claim[], claim: Claim): void {
@@ -190,6 +196,41 @@ function fenceClaims(
     });
   }
 
+  return claims;
+}
+
+function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): Claim[] {
+  const { spec, registry, file, content } = opts;
+  const parsed = parseMarkdownFile(content, file);
+  const bindings = new Map<string, string>();
+  const claims: Claim[] = [];
+
+  for (const block of parsed.codeBlocks) {
+    for (const [k, v] of extractExportBindings(block.code, registry.all)) {
+      bindings.set(k, v);
+    }
+    for (const hit of detectCallSiteHits(block.code, spec, registry, bindings)) {
+      const hintLine = block.lineStart + hit.line;
+      const loc =
+        locatorForSpan(file, content, hit.text, hintLine, headings, block.lineStart + 1) ??
+        locatorForSpan(file, content, hit.text.split('\n')[0] ?? hit.text, hintLine, headings);
+      if (!loc) continue;
+      const specRef = makeSpecRef(spec, registry, hit.exportName, hit.member);
+      pushUnique(claims, {
+        id: claimId(file, 'fence', specRef, hit.text, loc.start.line, hit.type),
+        kind: 'fence',
+        text: hit.text,
+        locator: loc,
+        specRef,
+        rule: {
+          type: hit.type,
+          issue: hit.issue,
+          ...(hit.suggestion ? { suggestion: hit.suggestion } : {}),
+        },
+        candidate: false,
+      });
+    }
+  }
   return claims;
 }
 
@@ -306,8 +347,14 @@ function inlineClaims(
 
     for (const m of line.matchAll(BACKTICK)) {
       const raw = m[1];
-      const name = normalizeApiName(raw);
-      const specRef = resolveApiName(spec, registry, name);
+      const name = unwrapApiToken(raw);
+      const enclosing = enclosingTypeName(spec, headings, lineNo);
+      const preferred = preferredParents(existing, registry);
+      if (enclosing) preferred.add(enclosing);
+      let specRef = resolveApiName(spec, registry, name, preferred);
+      if (!specRef && enclosing && listedMembers(spec, enclosing).includes(name)) {
+        specRef = makeSpecRef(spec, registry, enclosing, name);
+      }
       if (!specRef) continue;
       const already = existing.some(
         (c) =>
@@ -387,6 +434,20 @@ function headingClaims(
   return claims;
 }
 
+function enclosingTypeName(
+  spec: BuildPageDocumentOptions['spec'],
+  headings: PageHeading[],
+  line: number,
+): string | undefined {
+  for (let i = headings.length - 1; i >= 0; i--) {
+    const h = headings[i];
+    if (h.line > line) continue;
+    const name = normalizeApiName(h.text);
+    if (listedMembers(spec, name).length > 0) return name;
+  }
+  return undefined;
+}
+
 function preferredParents(claims: Claim[], registry: ExportRegistry): Set<string> {
   const parents = new Set<string>();
   for (const c of claims) {
@@ -446,6 +507,7 @@ function mentionedMembers(
   opts: BuildPageDocumentOptions,
   typeName: string,
   claims: Claim[],
+  headings: PageHeading[],
 ): Set<string> {
   const mentioned = new Set<string>();
   for (const c of claims) {
@@ -456,10 +518,42 @@ function mentionedMembers(
   for (const m of opts.content.matchAll(qualified)) mentioned.add(m[1]);
 
   const parsed = parseMarkdownFile(opts.content, opts.file);
+  const bindings = new Map<string, string>();
   for (const block of parsed.codeBlocks) {
-    const bindings = extractInstanceBindings(block.code);
+    for (const [k, v] of extractExportBindings(block.code, opts.registry.all)) {
+      bindings.set(k, v);
+    }
     for (const call of extractFenceCalls(block.code)) {
-      if (bindings.get(call.objectName) === typeName) mentioned.add(call.methodName);
+      const bound = bindings.get(call.objectName);
+      if (!bound) continue;
+      const resolved = opts.registry.callableReturnTypes.get(bound) ?? bound;
+      if (resolved === typeName) mentioned.add(call.methodName);
+    }
+  }
+
+  const members = new Set(listedMembers(opts.spec, typeName));
+  if (members.size > 0) {
+    const lines = opts.content.split('\n');
+    for (const th of headings) {
+      if (normalizeApiName(th.text) !== typeName) continue;
+      const sectionEnd =
+        headings.find((h) => h.line > th.line && h.level <= th.level)?.line ??
+        Number.POSITIVE_INFINITY;
+      let inFence = false;
+      for (let i = th.line; i < lines.length; i++) {
+        const lineNo = i + 1;
+        if (lineNo >= sectionEnd) break;
+        const line = lines[i];
+        if (FENCE.test(line)) {
+          inFence = !inFence;
+          continue;
+        }
+        if (inFence) continue;
+        for (const m of line.matchAll(BACKTICK)) {
+          const token = unwrapApiToken(m[1]);
+          if (members.has(token)) mentioned.add(token);
+        }
+      }
     }
   }
   return mentioned;
@@ -504,7 +598,7 @@ function gapClaims(
   for (const typeName of types) {
     const members = listedMembers(spec, typeName, typeName === mapped?.type ? internal : new Set());
     if (members.length === 0) continue;
-    const mentioned = mentionedMembers(opts, typeName, existing);
+    const mentioned = mentionedMembers(opts, typeName, existing, headings);
     const locator = gapLocator(file, typeName, members, headings, existing);
 
     for (const member of members) {
@@ -527,6 +621,23 @@ function gapClaims(
       });
       if (key) cited.add(key);
     }
+  }
+  return claims;
+}
+
+function proseClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): Claim[] {
+  const { spec, registry, file, content } = opts;
+  const claims: Claim[] = [];
+  for (const hit of findProseHits(content, spec, registry)) {
+    const locator = attachHeading({ path: file, start: hit.start, end: hit.end }, headings);
+    pushUnique(claims, {
+      id: claimId(file, 'prose', hit.specRef, hit.text, locator.start.line),
+      kind: 'prose',
+      text: hit.text,
+      locator,
+      specRef: hit.specRef,
+      candidate: true,
+    });
   }
   return claims;
 }
@@ -554,9 +665,11 @@ export function buildPageDocument(options: BuildPageDocumentOptions): PageDocume
 
   const claims: Claim[] = [];
   for (const c of fenceClaims(opts, headings, issues)) pushUnique(claims, c);
+  for (const c of callSiteClaims(opts, headings)) pushUnique(claims, c);
   for (const c of tableKeyClaims(opts, headings)) pushUnique(claims, c);
   for (const c of inlineClaims(opts, headings, claims)) pushUnique(claims, c);
   for (const c of headingClaims(opts, headings, claims)) pushUnique(claims, c);
+  for (const c of proseClaims(opts, headings)) pushUnique(claims, c);
   for (const c of gapClaims(opts, headings, claims)) pushUnique(claims, c);
 
   const ordered = sortClaims(claims);
