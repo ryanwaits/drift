@@ -98,6 +98,33 @@ const JS_BUILTIN_METHODS = new Set([
   'throw',
 ]);
 
+/** Receivers that are never the package API. */
+const GLOBAL_RECEIVERS = new Set([
+  'crypto',
+  'React',
+  'window',
+  'document',
+  'console',
+  'Math',
+  'JSON',
+  'process',
+  'Buffer',
+  'globalThis',
+  'Intl',
+  'navigator',
+  'location',
+  'history',
+  'localStorage',
+  'sessionStorage',
+  'fetch',
+  'Date',
+  'Promise',
+  'Array',
+  'Object',
+  'Map',
+  'Set',
+]);
+
 /** Inputs for `detectProseDrift`: package name, markdown corpus, export registry. */
 export interface ProseDriftOptions {
   packageName: string;
@@ -111,7 +138,8 @@ export interface ProseDriftOptions {
  *
  * Two checks:
  * 1. Imports from the package that reference non-existent exports
- * 2. Method/property access on objects that don't match any exported type's members
+ * 2. Method/property access on receivers typed as a package export that
+ *    don't exist on that type. Unknown receivers (db, jwt, crypto) are not flagged.
  */
 export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
   const { packageName, markdownFiles, registry } = options;
@@ -126,6 +154,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
     const filePackageDerivedTypes = new Map<string, string>();
     const fileExternalDerived = new Set<string>();
     const fileNonPackageParams = new Set<string>();
+    const filePackageParamTypes = new Map<string, string>();
     const flaggedDeprecated = new Set<string>();
 
     for (const block of file.codeBlocks) {
@@ -140,6 +169,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
         filePackageDerivedTypes,
         fileExternalDerived,
         fileNonPackageParams,
+        filePackageParamTypes,
       );
 
       // 1. Check imports (existing behavior)
@@ -149,16 +179,12 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
       if (registry.typeMembers.size > 0) {
         detectUnresolvedMembers(
           block.code,
-          packageName,
           registry,
           file.path,
           block.lineStart,
           issues,
-          fileExternalImports,
-          fileLocalDeclarations,
-          filePackageDerived,
-          fileExternalDerived,
-          fileNonPackageParams,
+          filePackageDerivedTypes,
+          filePackageParamTypes,
         );
       }
 
@@ -239,6 +265,7 @@ function accumulateBlockContext(
   packageDerivedTypes?: Map<string, string>,
   externalDerived?: Set<string>,
   nonPackageParams?: Set<string>,
+  packageParamTypes?: Map<string, string>,
 ): void {
   try {
     const imports = extractImportsAST(code);
@@ -269,7 +296,14 @@ function accumulateBlockContext(
   // parameters not annotated with a package type (`(req, res) => …`). Their
   // methods aren't ours to validate.
   if (externalDerived && nonPackageParams) {
-    extractNonPackageReceivers(code, externalImports, registry, externalDerived, nonPackageParams);
+    extractNonPackageReceivers(
+      code,
+      externalImports,
+      registry,
+      externalDerived,
+      nonPackageParams,
+      packageParamTypes,
+    );
   }
 }
 
@@ -284,6 +318,7 @@ function extractNonPackageReceivers(
   registry: ExportRegistry | undefined,
   externalDerived: Set<string>,
   nonPackageParams: Set<string>,
+  packageParamTypes?: Map<string, string>,
 ): void {
   try {
     const sourceFile = ts.createSourceFile(
@@ -309,7 +344,9 @@ function extractNonPackageReceivers(
       if (ts.isParameter(node) && ts.isIdentifier(node.name)) {
         // Keep validating params explicitly annotated with a package type
         const typeName = node.type?.getText(sourceFile).split('<')[0].trim();
-        if (!typeName || !registry?.all.has(typeName)) {
+        if (typeName && registry?.all.has(typeName)) {
+          packageParamTypes?.set(node.name.text, typeName);
+        } else {
           nonPackageParams.add(node.name.text);
         }
       }
@@ -322,20 +359,39 @@ function extractNonPackageReceivers(
 }
 
 /**
- * Detect method/property calls on objects that don't match any exported type's members.
+ * Receiver we can judge: a package type name, a var derived from a package
+ * call (`const x = new PostHog()` → PostHog), or a param annotated with one.
+ * Unknown identifiers (db, jwt, crypto, room) are not ours — flagging them
+ * is why lively's overlay was all false positives.
+ */
+function packageReceiverType(
+  objectName: string,
+  registry: ExportRegistry,
+  packageDerivedTypes: Map<string, string>,
+  packageParamTypes: Map<string, string>,
+): string | undefined {
+  const derived = packageDerivedTypes.get(objectName);
+  if (derived) return derived;
+  const annotated = packageParamTypes.get(objectName);
+  if (annotated) return annotated;
+  if (registry.typeNames.includes(objectName) || registry.callableReturnTypes.has(objectName)) {
+    return registry.callableReturnTypes.get(objectName) ?? objectName;
+  }
+  return undefined;
+}
+
+/**
+ * Detect method/property calls on package-typed receivers that don't exist
+ * on that type. Unknown receivers are not flagged.
  */
 function detectUnresolvedMembers(
   code: string,
-  _packageName: string,
   registry: ExportRegistry,
   filePath: string,
   lineStart: number,
   issues: SpecDocDrift[],
-  fileExternalImports: Set<string>,
-  fileLocalDeclarations: Set<string>,
-  filePackageDerived: Set<string>,
-  fileExternalDerived: Set<string>,
-  fileNonPackageParams: Set<string>,
+  packageDerivedTypes: Map<string, string>,
+  packageParamTypes: Map<string, string>,
 ): void {
   let calls = extractMethodCallsAST(code);
   if (calls.length === 0) return;
@@ -350,32 +406,17 @@ function detectUnresolvedMembers(
   });
 
   for (const call of calls) {
-    // Skip if the object itself is a known export
-    if (registry.all.has(call.objectName)) continue;
+    if (GLOBAL_RECEIVERS.has(call.objectName)) continue;
+    if (JS_BUILTIN_METHODS.has(call.methodName)) continue;
+    const typeName = packageReceiverType(
+      call.objectName,
+      registry,
+      packageDerivedTypes,
+      packageParamTypes,
+    );
+    if (!typeName) continue;
+    if (registry.typeMembers.get(call.methodName)?.has(typeName)) continue;
 
-    // Skip if the object is imported from an external package (this or prior blocks)
-    if (fileExternalImports.has(call.objectName)) continue;
-
-    // Skip objects derived from package export calls whose return type has no indexed members
-    // (e.g. `const simnet = await initSimnet()` — Simnet type not fully resolved in registry)
-    if (filePackageDerived.has(call.objectName)) continue;
-
-    // Skip receivers provably bound to non-package types: derived from an
-    // external import (`const app = express()`) or a function parameter not
-    // annotated with a package type (`(req, res) => res.sendStatus(200)`)
-    if (fileExternalDerived.has(call.objectName)) continue;
-    if (fileNonPackageParams.has(call.objectName)) continue;
-
-    // For locally-declared objects, only skip built-in method names (get, set, map, etc.)
-    // Domain-specific methods (callPublicFn, getDataVar, etc.) should still be validated
-    if (fileLocalDeclarations.has(call.objectName) && JS_BUILTIN_METHODS.has(call.methodName))
-      continue;
-
-    // Check if the method exists on ANY exported type
-    const parentTypes = registry.typeMembers.get(call.methodName);
-    if (parentTypes && parentTypes.size > 0) continue;
-
-    // Method not found on any type — this is drift
     const match = findClosestMatch(call.methodName, registry.allMemberNames);
     const parentHint = match
       ? (() => {
@@ -385,12 +426,12 @@ function detectUnresolvedMembers(
       : '';
     const suggestion = match
       ? `Did you mean '${match.value}'${parentHint}?`
-      : `'${call.methodName}' does not exist on any exported type`;
+      : `'${call.methodName}' is not a member of '${typeName}'`;
 
     issues.push({
       type: 'prose-unresolved-member',
       target: `${call.objectName}.${call.methodName}`,
-      issue: `Method '${call.methodName}' called on '${call.objectName}' does not exist on any exported type`,
+      issue: `Method '${call.methodName}' called on '${call.objectName}' does not exist on '${typeName}'`,
       suggestion,
       filePath,
       line: lineStart + call.line,
@@ -527,8 +568,8 @@ function extractLocalDeclarations(code: string): Set<string> {
 /**
  * Find variables that are assigned from a call to a known package export.
  * e.g. `const simnet = await initSimnet()` — `initSimnet` is in registry.
- * These objects ARE the package API, but if their return type has no indexed
- * members in the registry, we can't validate method calls on them.
+ * These objects ARE the package API. Method calls on them are judged against
+ * the export's return type (or the class itself for `new`).
  */
 function extractPackageDerivedNames(code: string, registry: ExportRegistry): Map<string, string> {
   const names = new Map<string, string>();
@@ -542,18 +583,27 @@ function extractPackageDerivedNames(code: string, registry: ExportRegistry): Map
       ts.ScriptKind.TSX,
     );
 
+    const bindFromInit = (name: string, initializer: TS.Expression): void => {
+      let expr: TS.Expression = initializer;
+      if (ts.isAwaitExpression(expr)) expr = expr.expression;
+      if (
+        (ts.isCallExpression(expr) || ts.isNewExpression(expr)) &&
+        ts.isIdentifier(expr.expression) &&
+        registry.all.has(expr.expression.text)
+      ) {
+        names.set(name, expr.expression.text);
+      }
+    };
+
     const walk = (node: TS.Node) => {
-      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
-        let expr: TS.Expression = node.initializer;
-        // Unwrap `await expr`
-        if (ts.isAwaitExpression(expr)) expr = expr.expression;
-        // `const x = knownExport(...)` and `const x = new KnownClass(...)`
-        if (
-          (ts.isCallExpression(expr) || ts.isNewExpression(expr)) &&
-          ts.isIdentifier(expr.expression)
-        ) {
-          if (registry.all.has(expr.expression.text)) {
-            names.set(node.name.text, expr.expression.text);
+      if (ts.isVariableDeclaration(node) && node.initializer) {
+        if (ts.isIdentifier(node.name)) {
+          bindFromInit(node.name.text, node.initializer);
+        } else if (ts.isObjectBindingPattern(node.name) || ts.isArrayBindingPattern(node.name)) {
+          for (const el of node.name.elements) {
+            if (ts.isBindingElement(el) && ts.isIdentifier(el.name)) {
+              bindFromInit(el.name.text, node.initializer);
+            }
           }
         }
       }

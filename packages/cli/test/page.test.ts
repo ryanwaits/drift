@@ -45,13 +45,23 @@ beforeAll(() => {
     [
       '# Browser SDK reference',
       '',
-      '## empty-session',
+      '## Empty session',
       '',
       '```ts',
       'simnet.runSnippet("(+ 1 2)")',
       '```',
       '',
     ].join('\n'),
+  );
+  writeFileSync(
+    path.join(TMP, 'drift.docs.json'),
+    JSON.stringify({
+      version: 1,
+      pages: [
+        { page: 'docs/browser-sdk-reference.md', type: 'Simnet' },
+        { page: 'docs/sdk-reference.md', type: 'Simnet' },
+      ],
+    }),
   );
   writeFileSync(
     path.join(TMP, 'docs', 'sdk-reference.md'),
@@ -107,5 +117,35 @@ describe('drift page --json', () => {
     const { envelope, exitCode } = json(['page', 'docs/missing.md', 'index.ts']);
     expect(exitCode).toBe(2);
     expect(envelope.ok).toBe(false);
+  });
+
+  test('packageName is nearest package.json, not the src folder; path is repo-relative', () => {
+    const nest = path.join(TMP, 'monorepo');
+    const pkg = path.join(nest, 'packages/sdk');
+    mkdirSync(path.join(pkg, 'src'), { recursive: true });
+    mkdirSync(path.join(nest, 'docs'), { recursive: true });
+    mkdirSync(path.join(nest, '.git'));
+    writeFileSync(
+      path.join(nest, 'package.json'),
+      JSON.stringify({ name: 'monorepo', private: true }),
+    );
+    writeFileSync(
+      path.join(pkg, 'package.json'),
+      JSON.stringify({ name: '@acme/sdk', version: '1.0.0' }),
+    );
+    writeFileSync(
+      path.join(pkg, 'src/index.ts'),
+      'export class Client { connect() {} disconnect() {} }\n',
+    );
+    writeFileSync(
+      path.join(nest, 'docs/guide.md'),
+      '# Client\n\n```ts\nconst c = new Client();\nc.connect();\n```\n',
+    );
+
+    const result = run(['page', '../../docs/guide.md', 'src/index.ts', '--json'], pkg);
+    const envelope = JSON.parse(result.stdout.toString());
+    expect(result.exitCode).toBe(0);
+    expect(envelope.data.packageName).toBe('@acme/sdk');
+    expect(envelope.data.path).toBe('docs/guide.md');
   });
 });

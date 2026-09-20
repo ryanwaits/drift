@@ -14,9 +14,11 @@ export type SourcePos = {
 /**
  * Source-markdown coordinates for a claim. Address space is the file, not the
  * rendered DOM. `headingId` is a GitHub/Fumadocs slug of the nearest heading.
+ * `headingText` is the unwrapped heading as written ("Empty session"), never
+ * the slug ("empty-session").
  */
 export type Locator = {
-  /** Repo-relative markdown path */
+  /** Repo-relative markdown path (git root when present, else cwd) */
   path: string;
   start: SourcePos;
   end: SourcePos;
@@ -47,6 +49,13 @@ export type RuleHit = {
  *
  * `candidate: true` is inventory — a name/heading/backtick mention with no
  * rule. Scan/CI ignore it. `rule` is present iff a deterministic detector fired.
+ *
+ * `spec-not-in-claims` is a rule only when this page is on the hook for that
+ * type: a `docsMap` row, or a heading that names the type or one of its
+ * members. Citing `Room` in a fence or backtick is a candidate, never a gap.
+ * Private/`_` members and docs-map `internal` keys are never gaps. Instance
+ * calls (`const t = new Foo(); t.start()`) count as mentioned. The gap locator
+ * is the heading that names the type, not the page title.
  */
 export type Claim = {
   /** Stable: `${path}:${kind}:${export}.${member}:${start.line}` */
@@ -80,7 +89,7 @@ export type PageDocument = {
   slices: SpecSlice[];
 };
 
-/** Committed page→type rows used to join gaps and option-table coverage. */
+/** Committed page→type rows. One join path for spec-not-in-claims (the other is a heading that names the type/member). Also drives option-table key-gaps. */
 export type PageDocsMapPage = {
   page: string;
   type: string;

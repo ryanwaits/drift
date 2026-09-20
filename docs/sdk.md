@@ -29,23 +29,21 @@ Extract a typed API spec from a TypeScript entry point:
 ```typescript
 import { Drift } from '@driftdev/sdk';
 
-const drift = new Drift({
-  resolveExternalTypes: true, // Openpkg followExternal
-  maxDepth: 10,
-});
-
+const drift = new Drift();
 const result = await drift.analyzeFileWithDiagnostics('src/index.ts');
 const spec = result.spec;
 
 console.log(`${spec.exports.length} exports found`);
 ```
 
+Same extract as `drift page` / CLI scan: OpenPkg stubs non-workspace packages. Pass `resolveExternalTypes: true` only to opt into OpenPkg `followExternal: true` (full expansion of every dependency).
+
 Options:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `resolveExternalTypes` | `boolean` | `true` | Follow types from dependencies (Openpkg `followExternal`) |
-| `maxDepth` | `number` | `10` | Max depth for type resolution |
+| `resolveExternalTypes` | `boolean` | unset | OpenPkg `followExternal`. Unset = stub non-workspace packages (safe). `true` expands every dependency |
+| `maxDepth` | `number` | `4` | Max depth for type resolution |
 | `useCache` | `boolean` | `true` | Use spec cache |
 
 ### `computeDrift` -- Drift Detection
@@ -118,6 +116,8 @@ for (const issue of issues) {
 ### `buildPageDocument` -- Host JSON
 
 Page-level claims for a docs host (Vercel, Mintlify, Fumadocs, or a separate review product). Coordinates are source markdown (`line` + `col` + heading slug), plus a spec slice. Not a review UI. Jev is not in this package. `candidate` claims are inventory; only `rule` hits are the existing detectors. Scan/CI do not consume this document.
+
+`spec-not-in-claims` is a rule only when the page is on the hook for that type: a `drift.docs.json` row, or a heading that names the type or a member. Mentioning a type in a fence or backtick is a candidate, never a gap dump. Private/`_` members and map `internal` keys are never gaps. Instance calls on `new Type()` count as mentioned. The gap locator is the heading that names the type. `locator.headingText` is the written heading, not the slug. `locator.path` is repo-relative.
 
 ```typescript
 import { buildExportRegistry, buildPageDocument } from '@driftdev/sdk';

@@ -16,6 +16,13 @@ function load(name: string): string {
   return readFileSync(path.join(FIXTURES, name), 'utf-8');
 }
 
+const CLARINET_MAP = {
+  pages: [
+    { page: 'docs/browser-sdk-reference.md', type: 'Simnet' },
+    { page: 'docs/sdk-reference.md', type: 'Simnet' },
+  ],
+};
+
 function build(file: string, content: string, spec = clarinetSpec()): PageDocument {
   return buildPageDocument({
     spec,
@@ -23,6 +30,7 @@ function build(file: string, content: string, spec = clarinetSpec()): PageDocume
     file,
     content,
     packageName: spec.meta.name,
+    docsMap: CLARINET_MAP,
   });
 }
 
@@ -50,6 +58,15 @@ describe('PageDocument clarinet fixture', () => {
     const dep = issues.filter((i) => i.type === 'prose-deprecated-reference');
     expect(dep).toHaveLength(1);
     expect(dep[0].target).toBe('runSnippet');
+  });
+
+  test('headingText is the written heading, not the slug', () => {
+    const fence = claimOf(
+      browser,
+      (c) => c.kind === 'fence' && c.rule?.type === 'prose-deprecated-reference',
+    );
+    expect(fence.locator.headingId).toBe('empty-session');
+    expect(fence.locator.headingText).toBe('Empty session');
   });
 
   test('browser fence: runSnippet deprecated, specRef + replacement', () => {
@@ -114,10 +131,39 @@ describe('PageDocument clarinet fixture', () => {
     expect(doc.claims.filter((c) => c.kind === 'gap')).toEqual([]);
   });
 
+  test('mentioning a type or function does not dump its members as gaps', () => {
+    const fat: ApiSpec = {
+      meta: { name: '@acme/sdk' },
+      exports: [
+        {
+          id: 'LiveObject',
+          name: 'LiveObject',
+          kind: 'class',
+          members: Array.from({ length: 20 }, (_, i) => ({ name: `m${i}`, kind: 'method' })),
+          schema: {
+            type: 'object',
+            properties: Object.fromEntries(
+              Array.from({ length: 200 }, (_, i) => [`k${i}`, { type: 'string' }]),
+            ),
+          },
+        },
+        {
+          id: 'useStorage',
+          name: 'useStorage',
+          kind: 'function',
+          signatures: [{ returns: { schema: { $ref: '#/types/LiveObject' } } }],
+        },
+      ],
+    };
+    const doc = build('docs/hooks.md', '# Storage\n\nUse `useStorage` with a `LiveObject`.\n', fat);
+    expect(doc.claims.filter((c) => c.kind === 'gap')).toEqual([]);
+  });
+
   test('golden stringify', () => {
     const docs = buildPageDocuments({
       spec,
       registry,
+      docsMap: CLARINET_MAP,
       files: [
         { file: 'docs/browser-sdk-reference.md', content: browserMd },
         { file: 'docs/sdk-reference.md', content: sdkMd },

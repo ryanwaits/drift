@@ -94,13 +94,29 @@ export function track(client: PostHog) {
     expect(unresolved(issues)).toEqual(['client.captureX']);
   });
 
-  test('undeclared receivers keep catching real drift', () => {
+  test('package-constructed receivers flag missing members', () => {
+    const issues = drift(`# Guide
+
+\`\`\`ts
+import { PostHog } from 'posthog-node'
+const posthog = new PostHog('phc_key')
+posthog.captureX({})
+\`\`\`
+`);
+    expect(unresolved(issues)).toEqual(['posthog.captureX']);
+  });
+
+  test('undeclared receivers are not flagged', () => {
     const issues = drift(`# Guide
 
 \`\`\`ts
 posthog.captureEventX({ event: 'x' })
+db.query('select 1')
+jwt.verify(token, SECRET)
+crypto.randomUUID()
+toast.info('ok')
 \`\`\`
 `);
-    expect(unresolved(issues)).toEqual(['posthog.captureEventX']);
+    expect(unresolved(issues)).toEqual([]);
   });
 });

@@ -6,7 +6,12 @@ import {
   extractDocumentedKeys,
 } from '../analysis/key-coverage';
 import { findExportReferences, parseMarkdownFile } from '../markdown/parser';
-import { blockContaining, extractFenceCalls, extractFenceImports } from './fences';
+import {
+  blockContaining,
+  extractFenceCalls,
+  extractFenceImports,
+  extractInstanceBindings,
+} from './fences';
 import {
   attachHeading,
   collectHeadings,
@@ -20,14 +25,7 @@ import {
   type PageHeading,
   pageTitle,
 } from './locators';
-import {
-  makeSpecRef,
-  resolveApiName,
-  resolveCall,
-  specRefKey,
-  typeKeyMeta,
-  uniqueSlices,
-} from './spec-ref';
+import { makeSpecRef, resolveApiName, resolveCall, specRefKey, uniqueSlices } from './spec-ref';
 import type {
   BuildPageDocumentOptions,
   BuildPageDocumentsOptions,
@@ -54,9 +52,15 @@ function posixPath(file: string): string {
   return file.replace(/\\/g, '/').replace(/^\.\//, '');
 }
 
+function pageKey(p: string): string {
+  return posixPath(p)
+    .replace(/^\//, '')
+    .replace(/\.(mdx?|html?)$/i, '');
+}
+
 function pageMatches(mapPage: string, file: string): boolean {
-  const a = posixPath(mapPage);
-  const b = posixPath(file);
+  const a = pageKey(mapPage);
+  const b = pageKey(file);
   return a === b || b.endsWith(`/${a}`) || a.endsWith(`/${b}`);
 }
 
@@ -246,12 +250,15 @@ function tableKeyClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
     }
   }
 
-  if (coverage && parentType) {
-    const sectionHeading = headings.find((h) => sectionRe.test(h.text)) ?? headings[0];
+  const sectionHeading = headings.find((h) => sectionRe.test(h.text));
+  // Mapped pages without an options table are method/type references —
+  // spec-not-in-claims covers missing members. Don't treat every member as a key-gap.
+  if (coverage && parentType && (sectionHeading || corpus.documented.size > 0)) {
+    const anchor = sectionHeading ?? headings[0];
     for (const gap of coverage.gaps.userFacing) {
       const specRef = makeSpecRef(spec, registry, parentType, gap.key);
-      const locator = sectionHeading
-        ? headingLocator(file, sectionHeading)
+      const locator = anchor
+        ? headingLocator(file, anchor)
         : attachHeading(
             { path: file, start: { line: 1, col: 1 }, end: { line: 1, col: 1 } },
             headings,
@@ -396,14 +403,43 @@ function joinTypes(opts: BuildPageDocumentOptions, claims: Claim[]): Set<string>
   const types = new Set<string>();
   const mapped = mappedPage(opts);
   if (mapped) types.add(mapped.type);
+  // Stronger than a mention: the page's own heading names the type or a member.
+  // Inline/fence citations stay inventory (candidate), never join a gap dump.
   for (const c of claims) {
-    if (c.specRef?.member) types.add(c.specRef.export);
-    if (c.specRef && !c.specRef.member) {
-      const ret = opts.registry.callableReturnTypes.get(c.specRef.export);
-      if (ret) types.add(ret);
+    if (c.kind !== 'heading' || !c.specRef) continue;
+    if (c.specRef.member) {
+      types.add(c.specRef.export);
+      continue;
+    }
+    if (listedMembers(opts.spec, c.specRef.export).length > 0) {
+      types.add(c.specRef.export);
     }
   }
   return types;
+}
+
+function isPrivateMember(name: string, visibility: string | undefined): boolean {
+  if (name.startsWith('_')) return true;
+  return visibility === 'private' || visibility === 'protected';
+}
+
+/** Public members for spec-not-in-claims. Schema properties are key-coverage, not this. */
+function listedMembers(
+  spec: BuildPageDocumentOptions['spec'],
+  typeName: string,
+  skip: ReadonlySet<string> = new Set(),
+): string[] {
+  const names = new Set<string>();
+  for (const entry of [...(spec.exports ?? []), ...(spec.types ?? [])]) {
+    if (entry.name !== typeName) continue;
+    for (const member of entry.members ?? []) {
+      if (!member.name) continue;
+      if (isPrivateMember(member.name, member.visibility)) continue;
+      if (skip.has(member.name)) continue;
+      names.add(member.name);
+    }
+  }
+  return [...names];
 }
 
 function mentionedMembers(
@@ -418,7 +454,34 @@ function mentionedMembers(
   const escaped = typeName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const qualified = new RegExp(`${escaped}\\.([A-Za-z_$][\\w$]*)`, 'g');
   for (const m of opts.content.matchAll(qualified)) mentioned.add(m[1]);
+
+  const parsed = parseMarkdownFile(opts.content, opts.file);
+  for (const block of parsed.codeBlocks) {
+    const bindings = extractInstanceBindings(block.code);
+    for (const call of extractFenceCalls(block.code)) {
+      if (bindings.get(call.objectName) === typeName) mentioned.add(call.methodName);
+    }
+  }
   return mentioned;
+}
+
+function gapLocator(
+  file: string,
+  typeName: string,
+  memberNames: string[],
+  headings: PageHeading[],
+  existing: Claim[],
+): Locator {
+  const typeHeading = headings.find((h) => normalizeApiName(h.text) === typeName);
+  if (typeHeading) return headingLocator(file, typeHeading);
+  const memberHeading = headings.find((h) => memberNames.includes(normalizeApiName(h.text)));
+  if (memberHeading) return headingLocator(file, memberHeading);
+  const firstClaim = existing.find((c) => c.specRef?.export === typeName);
+  const anchorLine = firstClaim?.locator.start.line ?? headings[0]?.line ?? 1;
+  const heading = nearestHeading(headings, anchorLine) ?? headings[0];
+  return heading
+    ? headingLocator(file, heading)
+    : { path: file, start: { line: 1, col: 1 }, end: { line: 1, col: 1 } };
 }
 
 function gapClaims(
@@ -435,18 +498,16 @@ function gapClaims(
     existing.map((c) => specRefKey(c.specRef)).filter((k): k is string => k !== null),
   );
 
-  for (const typeName of types) {
-    const keys = typeKeyMeta(spec, typeName);
-    if (keys.size === 0) continue;
-    const mentioned = mentionedMembers(opts, typeName, existing);
-    const firstClaim = existing.find((c) => c.specRef?.export === typeName);
-    const anchorLine = firstClaim?.locator.start.line ?? headings[0]?.line ?? 1;
-    const heading = nearestHeading(headings, anchorLine) ?? headings[0];
-    const locator = heading
-      ? headingLocator(file, heading)
-      : { path: file, start: { line: 1, col: 1 }, end: { line: 1, col: 1 } };
+  const mapped = mappedPage(opts);
+  const internal = new Set(mapped?.internal ?? []);
 
-    for (const member of keys.keys()) {
+  for (const typeName of types) {
+    const members = listedMembers(spec, typeName, typeName === mapped?.type ? internal : new Set());
+    if (members.length === 0) continue;
+    const mentioned = mentionedMembers(opts, typeName, existing);
+    const locator = gapLocator(file, typeName, members, headings, existing);
+
+    for (const member of members) {
       if (mentioned.has(member)) continue;
       const specRef = makeSpecRef(spec, registry, typeName, member);
       const key = specRefKey(specRef);

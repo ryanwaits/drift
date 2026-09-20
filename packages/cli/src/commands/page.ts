@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { buildExportRegistry, buildPageDocument, type PageDocument } from '@driftdev/sdk';
 import type { Command } from 'commander';
+import { packageNameFromEntry } from '../cache/cached-extract';
 import { loadDocsMap, resolveDocsFile } from '../config/docs-map';
 import { detectEntry } from '../utils/detect-entry';
 import { resolveLang, resolveTruth } from '../utils/load-spec';
@@ -14,6 +15,23 @@ interface PageOptions {
   abi?: string;
   spec?: string;
   map?: string;
+}
+
+/** Git root if present, else cwd. Matches Locator.path: repo-relative. */
+export function repoRelativePath(absFile: string, cwd: string = process.cwd()): string {
+  let dir = path.dirname(path.resolve(absFile));
+  let root = path.resolve(cwd);
+  while (true) {
+    if (existsSync(path.join(dir, '.git'))) {
+      root = dir;
+      break;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  const rel = path.relative(root, path.resolve(absFile)).replace(/\\/g, '/');
+  return rel || path.basename(absFile);
 }
 
 function renderPage(data: PageDocument): string {
@@ -63,7 +81,7 @@ export function registerPageCommand(program: Command): void {
           return;
         }
         const content = readFileSync(mdAbs, 'utf-8');
-        const file = path.relative(process.cwd(), mdAbs).replace(/\\/g, '/') || markdown;
+        const file = repoRelativePath(mdAbs);
 
         const lang = resolveLang({
           entry,
@@ -73,7 +91,7 @@ export function registerPageCommand(program: Command): void {
         });
         const entryFile =
           entry ?? (lang === 'typescript' && !options.spec ? detectEntry() : undefined);
-        const { apiSpec } = await resolveTruth({
+        const { apiSpec, packageName } = await resolveTruth({
           entry: entryFile,
           lang,
           spec: options.spec,
@@ -82,6 +100,7 @@ export function registerPageCommand(program: Command): void {
 
         const mapPath = resolveDocsFile(options.map);
         const docsMap = mapPath ? loadDocsMap(mapPath).map : undefined;
+        const fromEntry = entryFile ? packageNameFromEntry(entryFile) : undefined;
 
         const data = buildPageDocument({
           spec: apiSpec,
@@ -89,7 +108,7 @@ export function registerPageCommand(program: Command): void {
           file,
           content,
           docsMap,
-          packageName: apiSpec.meta.name,
+          packageName: apiSpec.meta.name || fromEntry || packageName,
         });
 
         formatOutput('page', data, startTime, version, renderPage);

@@ -11,6 +11,34 @@ export type FenceCall = {
   text: string;
 };
 
+/** `const x = new Foo(...)` / `const x = await new Foo(...)` in a fence. */
+export function extractInstanceBindings(code: string): Map<string, string> {
+  const names = new Map<string, string>();
+  try {
+    const sourceFile = ts.createSourceFile(
+      'temp.ts',
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const walk = (node: TS.Node): void => {
+      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+        let expr = node.initializer;
+        if (ts.isAwaitExpression(expr)) expr = expr.expression;
+        if (ts.isNewExpression(expr) && expr.expression && ts.isIdentifier(expr.expression)) {
+          names.set(node.name.text, expr.expression.text);
+        }
+      }
+      ts.forEachChild(node, walk);
+    };
+    walk(sourceFile);
+  } catch {
+    // parse failure
+  }
+  return names;
+}
+
 export type FenceImport = {
   name: string;
   from: string;

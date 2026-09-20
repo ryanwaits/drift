@@ -1,6 +1,6 @@
 # Browser SDK reference
 
-## empty-session
+## Empty session
 
 ```ts
 simnet.runSnippet("(+ 1 2)")

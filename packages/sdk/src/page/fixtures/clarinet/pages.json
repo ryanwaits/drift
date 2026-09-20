@@ -19,7 +19,7 @@
             "col": 28
           },
           "headingId": "empty-session",
-          "headingText": "empty-session"
+          "headingText": "Empty session"
         },
         "specRef": {
           "export": "Simnet",
@@ -51,7 +51,7 @@
             "col": 16
           },
           "headingId": "empty-session",
-          "headingText": "empty-session"
+          "headingText": "Empty session"
         },
         "specRef": {
           "export": "Simnet",

@@ -122,8 +122,8 @@ export async function resolveTruth(opts: TruthOptions): Promise<TruthResult> {
   const pkg = getPackageInfo(process.cwd());
   return {
     apiSpec: spec as unknown as ApiSpec,
-    packageName: pkg.name,
-    packageVersion: pkg.version,
+    packageName: spec.meta.name || pkg.name,
+    packageVersion: spec.meta.version ?? pkg.version,
     lang,
   };
 }
