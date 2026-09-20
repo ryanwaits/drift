@@ -4,8 +4,8 @@ import { collectTypeKeys, findTypeEntry, parseReplacement } from '../analysis/ke
 import type { KeyMeta } from '../analysis/key-coverage/types';
 import type { SpecRef, SpecSlice } from './types';
 
-const IDENT = /^[A-Za-z_$][\w$]*$/;
-const QUALIFIED = /^([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)$/;
+const IDENT: RegExp = /^[A-Za-z_$][\w$]*$/;
+const QUALIFIED: RegExp = /^([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)$/;
 
 export function parseDeprecationReplacement(note: string | undefined): string | undefined {
   if (!note) return undefined;

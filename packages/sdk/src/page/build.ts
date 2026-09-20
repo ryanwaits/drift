@@ -40,7 +40,7 @@ import type {
   SpecRef,
 } from './types';
 
-const BACKTICK = /`([^`\n]+)`/g;
+const BACKTICK: RegExp = /`([^`\n]+)`/g;
 const KIND_ORDER: Record<ClaimKind, number> = {
   fence: 0,
   'table-key': 1,

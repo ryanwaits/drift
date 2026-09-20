@@ -1,10 +1,10 @@
 import type { Locator, SourcePos } from './types';
 
 /** github-slugger punctuation strip (hyphen/underscore kept). */
-const SLUG_PUNCT = /[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g;
+const SLUG_PUNCT: RegExp = /[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g;
 
-const HEADING = /^(#{1,6})\s+(.*)$/;
-const FENCE = /^\s*(```|~~~)/;
+export const HEADING: RegExp = /^(#{1,6})\s+(.*)$/;
+export const FENCE: RegExp = /^\s*(```|~~~)/;
 
 export type PageHeading = {
   line: number;
@@ -18,7 +18,7 @@ export type PageHeading = {
 
 /** GitHub/Fumadocs heading slug, occurrence-aware per page. */
 export class PageSlugger {
-  private readonly seen = new Map<string, number>();
+  private readonly seen: Map<string, number> = new Map();
 
   slug(value: string): string {
     const base = value.toLowerCase().replace(SLUG_PUNCT, '').replace(/ /g, '-');
@@ -170,5 +170,3 @@ export function pageTitle(headings: PageHeading[]): string | undefined {
 export function isFenceLine(line: string): boolean {
   return FENCE.test(line);
 }
-
-export { FENCE, HEADING };
