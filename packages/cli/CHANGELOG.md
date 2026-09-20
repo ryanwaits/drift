@@ -1,5 +1,13 @@
 # @doccov/cli
 
+## 1.16.5
+
+### Patch Changes
+
+- 28b68e7: PageDocument precision: printed signatures are not calls; intersection/extends keys union (open if any arm is external); generic wrappers are not closed receivers; comment-only arg lists are elisions; heading-scoped `.member()` counts; `importSpecifier` scopes prose-broken-reference to the entry export path.
+- Updated dependencies [28b68e7]
+  - @driftdev/sdk@1.16.5
+
 ## 1.16.4
 
 ### Patch Changes
