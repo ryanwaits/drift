@@ -56,6 +56,28 @@ function extraSignatures(entry: {
   return Array.isArray(extra) ? (extra as ApiSignature[]) : [];
 }
 
+/** Named `$ref` target of a return schema. Unwraps `Promise<T>`. */
+export function namedReturnType(schema: ApiSchema | undefined): string | undefined {
+  if (!schema || typeof schema !== 'object') return undefined;
+  const s = schema as Record<string, unknown>;
+  const ref = typeof s.$ref === 'string' ? s.$ref.split('/').pop() : undefined;
+  if (ref === 'Promise') {
+    const args = s['x-ts-type-arguments'] ?? s.typeArguments;
+    if (Array.isArray(args) && args.length > 0) return namedReturnType(args[0] as ApiSchema);
+    return undefined;
+  }
+  return ref;
+}
+
+/** Spec type returned by `Type.member(...)`, if the spec names one. */
+export function memberReturnType(
+  spec: ApiSpec,
+  typeName: string,
+  member: string,
+): string | undefined {
+  return namedReturnType(signaturesOf(spec, typeName, member)[0]?.returns?.schema);
+}
+
 /** Overload list for an export or `Type.member`. Empty when the spec has none. */
 export function signaturesOf(spec: ApiSpec, exportName: string, member?: string): ApiSignature[] {
   if (member) {

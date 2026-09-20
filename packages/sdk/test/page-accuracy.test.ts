@@ -832,3 +832,608 @@ useMutation(...args)
     expect(hit?.rule?.issue).toContain('token');
   });
 });
+
+describe('call-site: object-literal keys match the parameter type at that position', () => {
+  test('Partial<T> constructor arg is not unknown-key (LiveObject initial)', () => {
+    const spec: ApiSpec = {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'LiveObject',
+          name: 'LiveObject',
+          kind: 'class',
+          typeParameters: [{ name: 'T' }],
+          signatures: [
+            {
+              parameters: [
+                {
+                  name: 'initial',
+                  required: false,
+                  schema: {
+                    type: 'object',
+                    'x-ts-type': 'Partial',
+                    'x-ts-type-arguments': [{ 'x-ts-type': 'T' }],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/storage.md',
+      content:
+        '# Storage\n\n```ts\nnew LiveObject({ name, avatar, role: "viewer", joinedAt: Date.now() })\n```\n',
+      packageName: PKG,
+    });
+    expect(doc.claims.filter((c) => c.rule?.type === 'prose-unknown-key')).toEqual([]);
+  });
+
+  test('type-parameter initialValue is not unknown-key (useLiveState)', () => {
+    const spec: ApiSpec = {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'useLiveState',
+          name: 'useLiveState',
+          kind: 'function',
+          typeParameters: [{ name: 'T' }],
+          signatures: [
+            {
+              parameters: [
+                { name: 'key', required: true, schema: { type: 'string' } },
+                { name: 'initialValue', required: true, schema: { 'x-ts-type': 'T' } },
+                {
+                  name: 'opts',
+                  required: false,
+                  schema: {
+                    type: 'object',
+                    properties: { syncDuration: { type: 'number' } },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/hooks/use-live-state.md',
+      content: '# Hook\n\n```ts\nuseLiveState("mousePos", { x: 0, y: 0 })\n```\n',
+      packageName: PKG,
+    });
+    expect(doc.claims.filter((c) => c.rule?.type === 'prose-unknown-key')).toEqual([]);
+  });
+
+  test('type-parameter value arg is not unknown-key (LiveMap.set)', () => {
+    const spec: ApiSpec = {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'LiveMap',
+          name: 'LiveMap',
+          kind: 'class',
+          typeParameters: [{ name: 'V' }],
+          members: [
+            {
+              name: 'set',
+              kind: 'method',
+              signatures: [
+                {
+                  parameters: [
+                    { name: 'key', required: true, schema: { type: 'string' } },
+                    { name: 'value', required: true, schema: { 'x-ts-type': 'V' } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/storage.md',
+      content:
+        '# Map\n\n```ts\nconst map = new LiveMap();\nmap.set("carol", { score: 30 });\n```\n',
+      packageName: PKG,
+    });
+    expect(doc.claims.filter((c) => c.rule?.type === 'prose-unknown-key')).toEqual([]);
+  });
+
+  test('closed options object still fires when a key is not on that type', () => {
+    const spec: ApiSpec = {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'buildPage',
+          name: 'buildPage',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                {
+                  name: 'options',
+                  required: true,
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      registry: { type: 'object' },
+                      file: { type: 'string' },
+                      content: { type: 'string' },
+                    },
+                    required: ['registry', 'file', 'content'],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/page.md',
+      content: '# Page\n\n```ts\nbuildPage({ spec, registry, file, content })\n```\n',
+      packageName: PKG,
+    });
+    const hit = doc.claims.find((c) => c.rule?.type === 'prose-unknown-key');
+    expect(hit).toBeDefined();
+    expect(hit?.rule?.issue).toContain('spec');
+    expect(hit?.rule?.suggestion).toContain('registry');
+    expect(hit?.rule?.suggestion).not.toContain('options');
+  });
+});
+
+describe('call-site: JSX props are the component top-level props', () => {
+  function providerSpec(): ApiSpec {
+    return {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'LivelyClient',
+          name: 'LivelyClient',
+          kind: 'class',
+          schema: {
+            type: 'object',
+            properties: {
+              config: { type: 'object' },
+              rooms: { type: 'object' },
+              joinRoom: { type: 'function' },
+              leaveRoom: { type: 'function' },
+              getRoom: { type: 'function' },
+              getRooms: { type: 'function' },
+            },
+            required: ['config', 'rooms', 'joinRoom', 'leaveRoom', 'getRoom', 'getRooms'],
+          },
+          members: [
+            { name: 'config', kind: 'property' },
+            { name: 'rooms', kind: 'property' },
+            { name: 'joinRoom', kind: 'method' },
+            { name: 'leaveRoom', kind: 'method' },
+            { name: 'getRoom', kind: 'method' },
+            { name: 'getRooms', kind: 'method' },
+          ],
+        },
+        {
+          id: 'LivelyProvider',
+          name: 'LivelyProvider',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'client', required: true, schema: { $ref: '#/types/LivelyClient' } },
+                { name: 'children', required: true, schema: { type: 'object' } },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'RoomProvider',
+          name: 'RoomProvider',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'roomId', required: true, schema: { type: 'string' } },
+                { name: 'userId', required: true, schema: { type: 'string' } },
+                { name: 'displayName', required: true, schema: { type: 'string' } },
+                { name: 'children', required: true, schema: { type: 'object' } },
+              ],
+            },
+          ],
+        },
+      ],
+      types: [
+        {
+          id: 'LivelyClient',
+          name: 'LivelyClient',
+          kind: 'class',
+          schema: {
+            type: 'object',
+            properties: {
+              config: { type: 'object' },
+              rooms: { type: 'object' },
+              joinRoom: { type: 'function' },
+              leaveRoom: { type: 'function' },
+              getRoom: { type: 'function' },
+              getRooms: { type: 'function' },
+            },
+            required: ['config', 'rooms', 'joinRoom', 'leaveRoom', 'getRoom', 'getRooms'],
+          },
+          members: [
+            { name: 'config', kind: 'property' },
+            { name: 'rooms', kind: 'property' },
+            { name: 'joinRoom', kind: 'method' },
+            { name: 'leaveRoom', kind: 'method' },
+            { name: 'getRoom', kind: 'method' },
+            { name: 'getRooms', kind: 'method' },
+          ],
+        },
+      ],
+    };
+  }
+
+  test('does not flatten LivelyClient members into LivelyProvider props', () => {
+    const spec = providerSpec();
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/guides/quick-start.md',
+      content: `# Quick Start
+
+\`\`\`tsx
+<LivelyProvider client={client}>
+  <App />
+</LivelyProvider>
+\`\`\`
+`,
+      packageName: PKG,
+    });
+    expect(doc.claims.filter((c) => c.rule?.type === 'prose-missing-required')).toEqual([]);
+    const unknown = doc.claims.filter((c) => c.rule?.type === 'prose-unknown-key');
+    expect(unknown).toEqual([]);
+  });
+
+  test('unknown JSX prop Allowed lists top-level props only', () => {
+    const spec = providerSpec();
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/guides/quick-start.md',
+      content: `# Quick Start
+
+\`\`\`tsx
+<LivelyProvider serverUrl="ws://localhost:1999">
+  <App />
+</LivelyProvider>
+\`\`\`
+`,
+      packageName: PKG,
+    });
+    const hit = doc.claims.find((c) => c.rule?.type === 'prose-unknown-key');
+    expect(hit?.rule?.issue).toContain('serverUrl');
+    expect(hit?.rule?.suggestion).toBe('Allowed: children, client');
+    expect(hit?.rule?.suggestion).not.toContain('joinRoom');
+  });
+
+  test('nested JSX element missing required props is a claim', () => {
+    const spec = providerSpec();
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/guides/quick-start.md',
+      content: `# Quick Start
+
+\`\`\`tsx
+<LivelyProvider serverUrl="ws://localhost:1999">
+  <RoomProvider roomId="my-room">
+    <YourApp />
+  </RoomProvider>
+</LivelyProvider>
+\`\`\`
+`,
+      packageName: PKG,
+    });
+    const missing = doc.claims.filter((c) => c.rule?.type === 'prose-missing-required');
+    const room = missing.find((c) => c.specRef?.export === 'RoomProvider');
+    expect(room).toBeDefined();
+    expect(room?.rule?.issue).toContain('userId');
+    expect(room?.rule?.issue).toContain('displayName');
+    expect(room?.rule?.issue).not.toContain('roomId');
+    const outer = doc.claims.find(
+      (c) => c.rule?.type === 'prose-unknown-key' && c.specRef?.export === 'LivelyProvider',
+    );
+    expect(outer?.rule?.issue).toContain('serverUrl');
+  });
+});
+
+describe('gap: call-return bindings and heading-scoped fence members', () => {
+  function clientRoomSpec(): ApiSpec {
+    return {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'Room',
+          name: 'Room',
+          kind: 'class',
+          members: [
+            { name: 'getStatus', kind: 'method' },
+            { name: 'followUser', kind: 'method' },
+            { name: 'getOthers', kind: 'method' },
+            { name: 'batch', kind: 'method' },
+            { name: 'subscribe', kind: 'method' },
+          ],
+        },
+        {
+          id: 'LivelyClient',
+          name: 'LivelyClient',
+          kind: 'class',
+          members: [
+            {
+              name: 'joinRoom',
+              kind: 'method',
+              signatures: [
+                {
+                  parameters: [
+                    { name: 'roomId', required: true, schema: { type: 'string' } },
+                    { name: 'options', required: false, schema: { type: 'object' } },
+                  ],
+                  returns: { schema: { $ref: '#/types/Room' } },
+                },
+              ],
+            },
+            { name: 'leaveRoom', kind: 'method' },
+          ],
+        },
+      ],
+    };
+  }
+
+  test('const room = client.joinRoom() counts Room.member calls as mentioned', () => {
+    const spec = clientRoomSpec();
+    const content = `# Client
+
+## Room
+
+\`\`\`ts
+const client = new LivelyClient();
+const room = client.joinRoom("room-1", { userId: "a", displayName: "A" });
+room.getStatus();
+room.followUser("user-456");
+room.getOthers();
+room.batch(() => {});
+room.subscribe(() => {});
+\`\`\`
+`;
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/client.md',
+      content,
+      packageName: PKG,
+    });
+    expect(
+      gaps(doc)
+        .map((c) => c.text)
+        .sort(),
+    ).toEqual([]);
+  });
+
+  test('joinRoom in a later fence still binds room to Room', () => {
+    const spec = clientRoomSpec();
+    const content = `# Client
+
+## LivelyClient
+
+\`\`\`ts
+const client = new LivelyClient();
+\`\`\`
+
+Then:
+
+\`\`\`ts
+const room = client.joinRoom("room-1", { userId: "a", displayName: "A" });
+room.getStatus();
+room.subscribe(() => {});
+\`\`\`
+
+## Room
+`;
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/client.md',
+      content,
+      packageName: PKG,
+    });
+    expect(
+      gaps(doc)
+        .map((c) => c.text)
+        .sort(),
+    ).toEqual(['batch', 'followUser', 'getOthers', 'leaveRoom']);
+  });
+
+  test('under ## Room, x.member() counts as Room.member with no binding', () => {
+    const spec = clientRoomSpec();
+    const content = `# Client
+
+## Room
+
+\`\`\`ts
+room.getStatus();
+room.followUser("user-456");
+\`\`\`
+`;
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/client.md',
+      content,
+      packageName: PKG,
+    });
+    expect(
+      gaps(doc)
+        .map((c) => c.text)
+        .sort(),
+    ).toEqual(['batch', 'getOthers', 'subscribe']);
+  });
+});
+
+describe('ambiguous bare members resolve via heading ancestors', () => {
+  function crdtSpec(): ApiSpec {
+    return {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'LiveObject',
+          name: 'LiveObject',
+          kind: 'class',
+          signatures: [
+            {
+              parameters: [
+                {
+                  name: 'initial',
+                  required: false,
+                  schema: {
+                    type: 'object',
+                    properties: { seed: { type: 'number' } },
+                  },
+                },
+              ],
+            },
+          ],
+          members: [
+            {
+              name: 'toImmutable',
+              kind: 'method',
+              signatures: [{ returns: { schema: { type: 'object' } } }],
+            },
+            { name: 'get', kind: 'method' },
+          ],
+        },
+        {
+          id: 'LiveMap',
+          name: 'LiveMap',
+          kind: 'class',
+          members: [
+            {
+              name: 'toImmutable',
+              kind: 'method',
+              signatures: [{ returns: { schema: { type: 'object' } } }],
+            },
+          ],
+        },
+        {
+          id: 'LiveList',
+          name: 'LiveList',
+          kind: 'class',
+          members: [
+            { name: 'toArray', kind: 'method' },
+            {
+              name: 'toImmutable',
+              kind: 'method',
+              signatures: [{ returns: { schema: { type: 'array' } } }],
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  test('toImmutable under ## LiveList is LiveList.toImmutable, not LiveObject', () => {
+    const spec = crdtSpec();
+    const content = `# Storage
+
+## LiveObject
+
+\`\`\`ts
+const obj = new LiveObject({ a: 1 });
+obj.toImmutable();
+\`\`\`
+
+\`get()\` reads a field. \`toImmutable()\` freezes the object.
+
+## LiveList
+
+#### Methods
+
+\`toArray()\` - snapshot as plain array. \`toImmutable()\` - frozen \`readonly T[]\`
+`;
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/storage.md',
+      content,
+      packageName: PKG,
+    });
+    const listImm = doc.claims.filter(
+      (c) =>
+        c.kind !== 'gap' && c.specRef?.export === 'LiveList' && c.specRef?.member === 'toImmutable',
+    );
+    expect(listImm.length).toBeGreaterThan(0);
+    const underList = doc.claims.filter(
+      (c) =>
+        c.kind !== 'gap' &&
+        c.specRef?.member === 'toImmutable' &&
+        (c.locator.headingText === 'LiveList' || c.locator.headingText === 'Methods'),
+    );
+    expect(underList.every((c) => c.specRef?.export === 'LiveList')).toBe(true);
+    expect(underList.some((c) => c.specRef?.export === 'LiveObject')).toBe(false);
+  });
+
+  test('table row under #### Methods in a LiveList section is LiveList.toImmutable', () => {
+    const spec = crdtSpec();
+    const content = `# useStorage
+
+## LiveObject
+
+\`\`\`ts
+new LiveObject({ a: 1 })
+\`\`\`
+
+## LiveList
+
+#### Methods
+
+| Method | Returns |
+| --- | --- |
+| \`toImmutable()\` | \`readonly T[]\` |
+`;
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/hooks/use-storage.md',
+      content,
+      packageName: PKG,
+    });
+    const hits = doc.claims.filter((c) => c.kind !== 'gap' && c.specRef?.member === 'toImmutable');
+    expect(hits.length).toBeGreaterThan(0);
+    expect(hits.every((c) => c.specRef?.export === 'LiveList')).toBe(true);
+  });
+
+  test('ambiguous member with no type heading emits no specRef', () => {
+    const spec = crdtSpec();
+    const content = `# Storage
+
+See \`toImmutable()\` for a snapshot.
+`;
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/storage.md',
+      content,
+      packageName: PKG,
+    });
+    expect(
+      doc.claims.filter((c) => c.kind !== 'gap' && c.specRef?.member === 'toImmutable'),
+    ).toEqual([]);
+  });
+});

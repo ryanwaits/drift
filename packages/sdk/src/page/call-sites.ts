@@ -24,102 +24,226 @@ type ParamShape = {
   name: string;
   required: boolean;
   rest: boolean;
-  keys: Set<string>;
-  requiredKeys: Set<string>;
+  schema: ApiSchema | undefined;
 };
 
 type OverloadShape = {
   params: ParamShape[];
   maxPositional: number;
-  allKeys: Set<string>;
+};
+
+type ClosedShape = {
+  keys: Set<string>;
+  required: Set<string>;
 };
 
 const JSX_RESERVED = new Set(['key', 'ref']);
+const OPEN_XTS = new Set(['any', 'unknown', 'object']);
+const UTILITY_XTS = new Set([
+  'Partial',
+  'Required',
+  'Readonly',
+  'Pick',
+  'Omit',
+  'Record',
+  'Exclude',
+  'Extract',
+  'NonNullable',
+  'Awaited',
+]);
 
-function schemaKeys(
-  spec: ApiSpec,
-  schema: ApiSchema | undefined,
-  seen: Set<string>,
-): { keys: Set<string>; required: Set<string> } {
-  const keys = new Set<string>();
+function hasIndexSignature(s: Record<string, unknown>): boolean {
+  return s.additionalProperties !== undefined && s.additionalProperties !== false;
+}
+
+function propertiesShape(s: Record<string, unknown>): ClosedShape | null {
+  if (hasIndexSignature(s)) return null;
+  const props = s.properties;
+  if (typeof props !== 'object' || props === null) return null;
+  const keys = new Set(Object.keys(props as Record<string, unknown>));
+  if (keys.size === 0) return null;
   const required = new Set<string>();
-  if (schema === undefined || schema === null) return { keys, required };
-  if (typeof schema === 'string') {
-    if (seen.has(schema)) return { keys, required };
-    seen.add(schema);
-    const entry = findTypeEntry(spec, schema);
-    if (!entry) return { keys, required };
-    return mergeKeys(schemaKeys(spec, entry.schema, seen), memberNames(entry));
-  }
-  if (typeof schema !== 'object') return { keys, required };
-  const s = schema as Record<string, unknown>;
-  if (typeof s.$ref === 'string') {
-    const name = s.$ref.split('/').pop() ?? '';
-    if (name && !seen.has(name)) {
-      seen.add(name);
-      const entry = findTypeEntry(spec, name);
-      if (entry) {
-        const inner = mergeKeys(schemaKeys(spec, entry.schema, seen), memberNames(entry));
-        for (const k of inner.keys) keys.add(k);
-        for (const k of inner.required) required.add(k);
-      }
-    }
-  }
-  if (Array.isArray(s.allOf)) {
-    for (const m of s.allOf) {
-      const inner = schemaKeys(spec, m as ApiSchema, seen);
-      for (const k of inner.keys) keys.add(k);
-      for (const k of inner.required) required.add(k);
-    }
-  }
-  if (typeof s.properties === 'object' && s.properties !== null) {
-    for (const k of Object.keys(s.properties as Record<string, unknown>)) keys.add(k);
-  }
   if (Array.isArray(s.required)) {
-    for (const k of s.required) if (typeof k === 'string') required.add(k);
+    for (const k of s.required) if (typeof k === 'string' && keys.has(k)) required.add(k);
   }
   return { keys, required };
 }
 
-function memberNames(entry: { members?: Array<{ name?: string }> }): {
-  keys: Set<string>;
-  required: Set<string>;
-} {
+function mergeClosed(shapes: ClosedShape[], mode: 'union' | 'all'): ClosedShape {
   const keys = new Set<string>();
-  for (const m of entry.members ?? []) if (m.name) keys.add(m.name);
+  const required = new Set<string>();
+  if (mode === 'union') {
+    for (const s of shapes) for (const k of s.keys) keys.add(k);
+    if (shapes[0]) {
+      for (const k of shapes[0].required) {
+        if (shapes.every((s) => s.required.has(k))) required.add(k);
+      }
+    }
+  } else {
+    for (const s of shapes) {
+      for (const k of s.keys) keys.add(k);
+      for (const k of s.required) required.add(k);
+    }
+  }
+  return { keys, required };
+}
+
+/**
+ * Closed object shape: named interface / type alias / inline object type with
+ * known properties and no index signature. Null for type parameters, utilities
+ * over them, object/any/unknown, Record, open unions, or unresolved refs.
+ * Top-level properties only — never members of nested property types.
+ */
+function closedObjectShape(
+  spec: ApiSpec,
+  schema: ApiSchema | undefined,
+  seen: Set<string>,
+): ClosedShape | null {
+  if (schema === undefined || schema === null) return null;
+  if (typeof schema === 'string') {
+    if (schema === 'object' || schema === 'any' || schema === 'unknown') return null;
+    if (seen.has(schema)) return null;
+    seen.add(schema);
+    const entry = findTypeEntry(spec, schema);
+    if (!entry) return null;
+    return closedEntryShape(spec, entry, seen);
+  }
+  if (typeof schema !== 'object') return null;
+  const s = schema as Record<string, unknown>;
+  if (hasIndexSignature(s)) return null;
+
+  const union = (Array.isArray(s.anyOf) ? s.anyOf : Array.isArray(s.oneOf) ? s.oneOf : null) as
+    | ApiSchema[]
+    | null;
+  if (union && union.length > 0) {
+    const shapes: ClosedShape[] = [];
+    for (const arm of union) {
+      const sh = closedObjectShape(spec, arm, seen);
+      if (!sh) return null;
+      shapes.push(sh);
+    }
+    return mergeClosed(shapes, 'union');
+  }
+
+  if (Array.isArray(s.allOf) && s.allOf.length > 0) {
+    const shapes: ClosedShape[] = [];
+    for (const arm of s.allOf) {
+      const sh = closedObjectShape(spec, arm as ApiSchema, seen);
+      if (!sh) return null;
+      shapes.push(sh);
+    }
+    const self = propertiesShape(s);
+    if (self) shapes.push(self);
+    return mergeClosed(shapes, 'all');
+  }
+
+  if (typeof s.$ref === 'string') {
+    const name = s.$ref.split('/').pop() ?? '';
+    if (!name || seen.has(name)) return null;
+    seen.add(name);
+    const entry = findTypeEntry(spec, name);
+    if (!entry) return null;
+    return closedEntryShape(spec, entry, seen);
+  }
+
+  const xts = s['x-ts-type'];
+  if (typeof xts === 'string') {
+    if (OPEN_XTS.has(xts)) return null;
+    if (UTILITY_XTS.has(xts)) {
+      return propertiesShape(s);
+    }
+    if (!s.properties) {
+      const entry = findTypeEntry(spec, xts);
+      if (!entry) return null;
+      return closedEntryShape(spec, entry, seen);
+    }
+  }
+
+  if (s.type === 'object' || s.properties) return propertiesShape(s);
+  return null;
+}
+
+function closedEntryShape(
+  spec: ApiSpec,
+  entry: { kind?: string; schema?: ApiSchema; members?: Array<{ name?: string; kind?: string }> },
+  seen: Set<string>,
+): ClosedShape | null {
+  const fromSchema = closedObjectShape(spec, entry.schema, seen);
+  if (fromSchema) return fromSchema;
+  if (entry.kind === 'class') return null;
+  const keys = new Set<string>();
+  for (const m of entry.members ?? []) {
+    if (!m.name) continue;
+    if (m.kind === 'method' || m.kind === 'function') continue;
+    keys.add(m.name);
+  }
+  if (keys.size === 0) return null;
   return { keys, required: new Set() };
 }
 
-function mergeKeys(
-  a: { keys: Set<string>; required: Set<string> },
-  b: { keys: Set<string>; required: Set<string> },
-): { keys: Set<string>; required: Set<string> } {
-  return {
-    keys: new Set([...a.keys, ...b.keys]),
-    required: new Set([...a.required, ...b.required]),
-  };
-}
-
-function paramShape(spec: ApiSpec, p: ApiSignatureParameter): ParamShape {
-  const { keys, required: requiredKeys } = schemaKeys(spec, p.schema, new Set());
+function paramShape(p: ApiSignatureParameter): ParamShape {
   return {
     name: p.name,
     required: p.required !== false && p.default === undefined && !p.rest,
     rest: !!p.rest,
-    keys,
-    requiredKeys,
+    schema: p.schema,
   };
 }
 
-function overloadShape(spec: ApiSpec, sig: ApiSignature): OverloadShape {
-  const params = (sig.parameters ?? []).map((p) => paramShape(spec, p));
+function overloadShape(sig: ApiSignature): OverloadShape {
+  const params = (sig.parameters ?? []).map(paramShape);
   const rest = params.some((p) => p.rest);
-  const allKeys = new Set<string>();
-  for (const p of params) {
-    allKeys.add(p.name);
-    for (const k of p.keys) allKeys.add(k);
+  return { params, maxPositional: rest ? Number.POSITIVE_INFINITY : params.length };
+}
+
+function paramAt(ov: OverloadShape, index: number): ParamShape | undefined {
+  if (index < ov.params.length) {
+    const p = ov.params[index];
+    if (p && !p.rest) return p;
   }
-  return { params, maxPositional: rest ? Number.POSITIVE_INFINITY : params.length, allKeys };
+  return ov.params.find((p) => p.rest);
+}
+
+function closedAt(spec: ApiSpec, ov: OverloadShape, index: number): ClosedShape | null {
+  const p = paramAt(ov, index);
+  if (!p) return null;
+  return closedObjectShape(spec, p.schema, new Set());
+}
+
+function jsxPropsForOverload(spec: ApiSpec, ov: OverloadShape): ClosedShape | null {
+  const p0 = ov.params[0];
+  if (!p0) return { keys: new Set(), required: new Set() };
+  if (ov.params.length === 1) {
+    const closed = closedObjectShape(spec, p0.schema, new Set());
+    if (closed) return closed;
+  }
+  const keys = new Set<string>();
+  const required = new Set<string>();
+  for (const p of ov.params) {
+    if (p.rest) continue;
+    keys.add(p.name);
+    if (p.required) required.add(p.name);
+  }
+  if (keys.size === 0) return null;
+  return { keys, required };
+}
+
+function jsxPropShape(spec: ApiSpec, overloads: OverloadShape[]): ClosedShape | null {
+  let shape: ClosedShape | null = null;
+  for (const ov of overloads) {
+    const next = jsxPropsForOverload(spec, ov);
+    if (!next) continue;
+    if (!shape) {
+      shape = { keys: new Set(next.keys), required: new Set(next.required) };
+      continue;
+    }
+    const keys = new Set<string>();
+    for (const k of shape.keys) if (next.keys.has(k)) keys.add(k);
+    const required = new Set<string>();
+    for (const k of shape.required) if (next.required.has(k)) required.add(k);
+    shape = { keys, required };
+  }
+  return shape;
 }
 
 function resolveCallee(
@@ -148,40 +272,55 @@ function displayName(callee: { exportName: string; member?: string }, site: Call
   return callee.exportName;
 }
 
-function allowedKeys(overloads: OverloadShape[], site: CallSite): Set<string> {
+function unknownLiteralKeys(
+  spec: ApiSpec,
+  overloads: OverloadShape[],
+  site: CallSite,
+): { unknown: string[]; allowed: string[] } | null {
+  const unknown: string[] = [];
   const allowed = new Set<string>();
-  for (const ov of overloads) for (const k of ov.allKeys) allowed.add(k);
-  if (site.kind === 'jsx') for (const k of JSX_RESERVED) allowed.add(k);
-  return allowed;
+  let anyClosed = false;
+  site.args.forEach((arg, i) => {
+    if (!arg.keys || arg.keys.length === 0) return;
+    const shapes: ClosedShape[] = [];
+    for (const ov of overloads) {
+      const sh = closedAt(spec, ov, i);
+      if (sh) shapes.push(sh);
+    }
+    if (shapes.length === 0) return;
+    anyClosed = true;
+    const keys = new Set<string>();
+    for (const sh of shapes) for (const k of sh.keys) keys.add(k);
+    for (const k of keys) allowed.add(k);
+    for (const k of arg.keys) if (!keys.has(k)) unknown.push(k);
+  });
+  if (!anyClosed) return null;
+  return { unknown, allowed: [...allowed].sort() };
 }
 
-function explicitKeys(site: CallSite): string[] {
-  if (site.kind === 'jsx') return site.jsxKeys.filter((k) => !JSX_RESERVED.has(k));
-  const keys: string[] = [];
-  for (const arg of site.args) {
-    if (arg.keys) keys.push(...arg.keys);
-  }
-  return keys;
-}
-
-function missingRequired(overloads: OverloadShape[], site: CallSite): string[] {
+function missingRequired(spec: ApiSpec, overloads: OverloadShape[], site: CallSite): string[] {
   if (site.hasSpreadArg || site.hasJsxSpread) return [];
+
+  if (site.kind === 'jsx') {
+    const shape = jsxPropShape(spec, overloads);
+    if (!shape || shape.required.size === 0) return [];
+    const supplied = new Set(site.jsxKeys);
+    if (site.hasChildren) supplied.add('children');
+    return [...shape.required].filter((k) => !supplied.has(k));
+  }
+
   let required: Set<string> | null = null;
   for (const ov of overloads) {
     const names = new Set<string>();
-    if (site.kind === 'jsx') {
-      const p0 = ov.params[0];
-      if (p0) for (const k of p0.requiredKeys) names.add(k);
-    } else {
-      ov.params.forEach((p, i) => {
-        if (p.rest) return;
-        if (p.requiredKeys.size > 0) {
-          for (const k of p.requiredKeys) names.add(k);
-        } else if (p.required) {
-          names.add(`param:${i}:${p.name}`);
-        }
-      });
-    }
+    ov.params.forEach((p, i) => {
+      if (p.rest) return;
+      if (p.required) names.add(`param:${i}:${p.name}`);
+      const arg = site.args[i];
+      if (arg?.keys) {
+        const sh = closedAt(spec, ov, i);
+        if (sh) for (const k of sh.required) names.add(`key:${k}`);
+      }
+    });
     if (required === null) required = names;
     else {
       const next = new Set<string>();
@@ -191,31 +330,28 @@ function missingRequired(overloads: OverloadShape[], site: CallSite): string[] {
   }
   if (!required || required.size === 0) return [];
 
-  const supplied = new Set<string>();
-  if (site.kind === 'jsx') {
-    for (const k of site.jsxKeys) supplied.add(k);
-    if (site.hasChildren) supplied.add('children');
-  } else {
-    let nonLiteral = false;
-    for (const arg of site.args) {
-      if (arg.keys) for (const k of arg.keys) supplied.add(k);
-      else if (!arg.hasSpread) nonLiteral = true;
-    }
-    const missing: string[] = [];
-    for (const slot of required) {
-      if (slot.startsWith('param:')) {
-        const parts = slot.split(':');
-        const i = Number(parts[1]);
-        if (site.argCount <= i) missing.push(parts[2]);
-      } else if (!supplied.has(slot)) {
-        if (nonLiteral && site.argCount > 0) continue;
-        missing.push(slot);
-      }
-    }
-    return missing;
+  const suppliedKeys = new Set<string>();
+  let nonLiteral = false;
+  for (const arg of site.args) {
+    if (arg.keys) for (const k of arg.keys) suppliedKeys.add(k);
+    else if (!arg.hasSpread) nonLiteral = true;
   }
 
-  return [...required].filter((k) => !supplied.has(k));
+  const missing: string[] = [];
+  for (const slot of required) {
+    if (slot.startsWith('param:')) {
+      const parts = slot.split(':');
+      const i = Number(parts[1]);
+      if (site.argCount <= i) missing.push(parts[2]);
+    } else if (slot.startsWith('key:')) {
+      const key = slot.slice(4);
+      if (!suppliedKeys.has(key)) {
+        if (nonLiteral && site.argCount > 0) continue;
+        missing.push(key);
+      }
+    }
+  }
+  return missing;
 }
 
 function judgeSite(
@@ -228,7 +364,7 @@ function judgeSite(
   if (!callee) return [];
   const sigs = signaturesOf(spec, callee.exportName, callee.member);
   if (sigs.length === 0) return [];
-  const overloads = sigs.map((s) => overloadShape(spec, s));
+  const overloads = sigs.map((s) => overloadShape(s));
   const hits: CallSiteHit[] = [];
   const label = displayName(callee, site);
   const base = {
@@ -249,25 +385,33 @@ function judgeSite(
     }
   }
 
-  const allowed = allowedKeys(overloads, site);
-  const known = [...allowed].filter((k) => !JSX_RESERVED.has(k));
-  const unknown = explicitKeys(site).filter((k) => !allowed.has(k));
-  if (unknown.length > 0 && known.length > 0) {
-    const kind = site.kind === 'jsx' ? 'prop' : 'key';
-    hits.push({
-      ...base,
-      type: 'prose-unknown-key',
-      issue: `Unknown ${kind} '${unknown.join("', '")}' on '${label}'`,
-      suggestion: `Allowed: ${
-        [...allowed]
-          .filter((k) => !JSX_RESERVED.has(k))
-          .sort()
-          .join(', ') || '(none)'
-      }`,
-    });
+  if (site.kind === 'jsx') {
+    const shape = jsxPropShape(spec, overloads);
+    const allowed = new Set(shape?.keys ?? []);
+    for (const k of JSX_RESERVED) allowed.add(k);
+    const known = [...allowed].filter((k) => !JSX_RESERVED.has(k));
+    const unknown = site.jsxKeys.filter((k) => !JSX_RESERVED.has(k) && !allowed.has(k));
+    if (unknown.length > 0 && known.length > 0) {
+      hits.push({
+        ...base,
+        type: 'prose-unknown-key',
+        issue: `Unknown prop '${unknown.join("', '")}' on '${label}'`,
+        suggestion: `Allowed: ${known.sort().join(', ') || '(none)'}`,
+      });
+    }
+  } else {
+    const found = unknownLiteralKeys(spec, overloads, site);
+    if (found && found.unknown.length > 0 && found.allowed.length > 0) {
+      hits.push({
+        ...base,
+        type: 'prose-unknown-key',
+        issue: `Unknown key '${found.unknown.join("', '")}' on '${label}'`,
+        suggestion: `Allowed: ${found.allowed.join(', ') || '(none)'}`,
+      });
+    }
   }
 
-  const missing = missingRequired(overloads, site);
+  const missing = missingRequired(spec, overloads, site);
   if (missing.length > 0) {
     const kind = site.kind === 'jsx' ? 'prop' : 'argument';
     hits.push({

@@ -1,6 +1,14 @@
 import type { ApiSpec } from '../analysis/api-spec';
 import type { ExportRegistry } from '../analysis/drift/types';
-import { FENCE, HEADING, indexToPos, isDistinctiveApiName, unwrapApiToken } from './locators';
+import {
+  FENCE,
+  HEADING,
+  headingAncestorNames,
+  indexToPos,
+  isDistinctiveApiName,
+  type PageHeading,
+  unwrapApiToken,
+} from './locators';
 import { resolveApiName, specRefKey } from './spec-ref';
 import type { SourcePos, SpecRef } from './types';
 
@@ -119,7 +127,24 @@ function extractUnits(content: string): Span[] {
   return units;
 }
 
-function refsInText(text: string, spec: ApiSpec, registry: ExportRegistry): SpecRef[] {
+function ancestorPreferred(
+  registry: ExportRegistry,
+  headings: PageHeading[],
+  line: number,
+): Set<string> | undefined {
+  const preferred = new Set<string>();
+  for (const name of headingAncestorNames(headings, line)) {
+    if (registry.all.has(name) || registry.typeNames.includes(name)) preferred.add(name);
+  }
+  return preferred.size > 0 ? preferred : undefined;
+}
+
+function refsInText(
+  text: string,
+  spec: ApiSpec,
+  registry: ExportRegistry,
+  preferred?: Set<string>,
+): SpecRef[] {
   const found = new Map<string, SpecRef>();
   const add = (ref: SpecRef | null): void => {
     if (!ref) return;
@@ -128,7 +153,7 @@ function refsInText(text: string, spec: ApiSpec, registry: ExportRegistry): Spec
   };
 
   for (const m of text.matchAll(BACKTICK)) {
-    add(resolveApiName(spec, registry, unwrapApiToken(m[1])));
+    add(resolveApiName(spec, registry, unwrapApiToken(m[1]), preferred));
   }
   for (const m of text.matchAll(QUALIFIED_G)) {
     add(resolveApiName(spec, registry, `${m[1]}.${m[2]}`));
@@ -149,13 +174,19 @@ export function findProseHits(
   content: string,
   spec: ApiSpec,
   registry: ExportRegistry,
+  headings: PageHeading[] = [],
 ): ProseHit[] {
   const hits: ProseHit[] = [];
   for (const unit of extractUnits(content)) {
     if (!unit.text.trim()) continue;
-    const refs = refsInText(unit.text, spec, registry);
-    if (refs.length === 0) continue;
     const start = indexToPos(content, unit.start);
+    const refs = refsInText(
+      unit.text,
+      spec,
+      registry,
+      ancestorPreferred(registry, headings, start.line),
+    );
+    if (refs.length === 0) continue;
     const end = indexToPos(content, Math.max(unit.start, unit.end - 1));
     for (const specRef of refs) {
       hits.push({ text: unit.text, specRef, start, end });

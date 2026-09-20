@@ -12,12 +12,14 @@ import {
   extractExportBindings,
   extractFenceCalls,
   extractFenceImports,
+  extractFenceMembers,
 } from './fences';
 import {
   attachHeading,
   collectHeadings,
   FENCE,
   HEADING,
+  headingAncestorNames,
   headingLocator,
   locateOnLine,
   locateSpan,
@@ -206,7 +208,7 @@ function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
   const claims: Claim[] = [];
 
   for (const block of parsed.codeBlocks) {
-    for (const [k, v] of extractExportBindings(block.code, registry.all)) {
+    for (const [k, v] of extractExportBindings(block.code, registry.all, spec, bindings)) {
       bindings.set(k, v);
     }
     for (const hit of detectCallSiteHits(block.code, spec, registry, bindings)) {
@@ -348,12 +350,15 @@ function inlineClaims(
     for (const m of line.matchAll(BACKTICK)) {
       const raw = m[1];
       const name = unwrapApiToken(raw);
-      const enclosing = enclosingTypeName(spec, headings, lineNo);
-      const preferred = preferredParents(existing, registry);
-      if (enclosing) preferred.add(enclosing);
+      const preferred = ancestorPreferred(registry, headings, lineNo);
       let specRef = resolveApiName(spec, registry, name, preferred);
-      if (!specRef && enclosing && listedMembers(spec, enclosing).includes(name)) {
-        specRef = makeSpecRef(spec, registry, enclosing, name);
+      if (!specRef && preferred) {
+        for (const parent of preferred) {
+          if (listedMembers(spec, parent).includes(name)) {
+            specRef = makeSpecRef(spec, registry, parent, name);
+            break;
+          }
+        }
       }
       if (!specRef) continue;
       const already = existing.some(
@@ -409,17 +414,17 @@ function inlineClaims(
   return claims;
 }
 
-function headingClaims(
-  opts: BuildPageDocumentOptions,
-  headings: PageHeading[],
-  existing: Claim[],
-): Claim[] {
+function headingClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): Claim[] {
   const { spec, registry, file } = opts;
-  const preferred = preferredParents(existing, registry);
   const claims: Claim[] = [];
   for (const heading of headings) {
     const name = normalizeApiName(heading.text);
-    const specRef = resolveApiName(spec, registry, name, preferred);
+    const specRef = resolveApiName(
+      spec,
+      registry,
+      name,
+      ancestorPreferred(registry, headings, heading.line),
+    );
     if (!specRef) continue;
     const locator = headingLocator(file, heading);
     pushUnique(claims, {
@@ -434,30 +439,16 @@ function headingClaims(
   return claims;
 }
 
-function enclosingTypeName(
-  spec: BuildPageDocumentOptions['spec'],
+function ancestorPreferred(
+  registry: ExportRegistry,
   headings: PageHeading[],
   line: number,
-): string | undefined {
-  for (let i = headings.length - 1; i >= 0; i--) {
-    const h = headings[i];
-    if (h.line > line) continue;
-    const name = normalizeApiName(h.text);
-    if (listedMembers(spec, name).length > 0) return name;
+): Set<string> | undefined {
+  const preferred = new Set<string>();
+  for (const name of headingAncestorNames(headings, line)) {
+    if (registry.all.has(name) || registry.typeNames.includes(name)) preferred.add(name);
   }
-  return undefined;
-}
-
-function preferredParents(claims: Claim[], registry: ExportRegistry): Set<string> {
-  const parents = new Set<string>();
-  for (const c of claims) {
-    if (c.specRef?.member) parents.add(c.specRef.export);
-    if (c.specRef && !c.specRef.member) {
-      const ret = registry.callableReturnTypes.get(c.specRef.export);
-      if (ret) parents.add(ret);
-    }
-  }
-  return parents;
+  return preferred.size > 0 ? preferred : undefined;
 }
 
 function joinTypes(opts: BuildPageDocumentOptions, claims: Claim[]): Set<string> {
@@ -519,19 +510,27 @@ function mentionedMembers(
 
   const parsed = parseMarkdownFile(opts.content, opts.file);
   const bindings = new Map<string, string>();
+  const members = new Set(listedMembers(opts.spec, typeName));
   for (const block of parsed.codeBlocks) {
-    for (const [k, v] of extractExportBindings(block.code, opts.registry.all)) {
+    for (const [k, v] of extractExportBindings(
+      block.code,
+      opts.registry.all,
+      opts.spec,
+      bindings,
+    )) {
       bindings.set(k, v);
     }
-    for (const call of extractFenceCalls(block.code)) {
-      const bound = bindings.get(call.objectName);
-      if (!bound) continue;
-      const resolved = opts.registry.callableReturnTypes.get(bound) ?? bound;
-      if (resolved === typeName) mentioned.add(call.methodName);
+    const inTypeSection = headingAncestorNames(headings, block.lineStart + 1).includes(typeName);
+    for (const mention of extractFenceMembers(block.code)) {
+      if (members.size > 0 && !members.has(mention.memberName)) continue;
+      const bound = bindings.get(mention.objectName);
+      const resolved = bound ? (opts.registry.callableReturnTypes.get(bound) ?? bound) : undefined;
+      if (resolved === typeName || (inTypeSection && members.has(mention.memberName))) {
+        mentioned.add(mention.memberName);
+      }
     }
   }
 
-  const members = new Set(listedMembers(opts.spec, typeName));
   if (members.size > 0) {
     const lines = opts.content.split('\n');
     for (const th of headings) {
@@ -628,7 +627,7 @@ function gapClaims(
 function proseClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): Claim[] {
   const { spec, registry, file, content } = opts;
   const claims: Claim[] = [];
-  for (const hit of findProseHits(content, spec, registry)) {
+  for (const hit of findProseHits(content, spec, registry, headings)) {
     const locator = attachHeading({ path: file, start: hit.start, end: hit.end }, headings);
     pushUnique(claims, {
       id: claimId(file, 'prose', hit.specRef, hit.text, locator.start.line),
@@ -668,7 +667,7 @@ export function buildPageDocument(options: BuildPageDocumentOptions): PageDocume
   for (const c of callSiteClaims(opts, headings)) pushUnique(claims, c);
   for (const c of tableKeyClaims(opts, headings)) pushUnique(claims, c);
   for (const c of inlineClaims(opts, headings, claims)) pushUnique(claims, c);
-  for (const c of headingClaims(opts, headings, claims)) pushUnique(claims, c);
+  for (const c of headingClaims(opts, headings)) pushUnique(claims, c);
   for (const c of proseClaims(opts, headings)) pushUnique(claims, c);
   for (const c of gapClaims(opts, headings, claims)) pushUnique(claims, c);
 

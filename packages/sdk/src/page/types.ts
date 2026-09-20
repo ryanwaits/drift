@@ -63,8 +63,10 @@ export type RuleHit = {
  * members. Citing `Room` in a fence or backtick is a candidate, never a gap.
  * Private/`_` members and docs-map `internal` keys are never gaps. Instance
  * calls (`const t = new Foo(); t.start()`) count as mentioned, including when
- * the binding is in an earlier fence. Under a heading that names type T, a
- * backticked `member` or `member(...)` counts as `T.member`. The gap locator
+ * the binding is in an earlier fence. A binding from a call whose spec return
+ * type is a spec type (`const room = client.joinRoom()`) counts like `new Room()`.
+ * Under a heading that names type T, a backticked `member` or `member(...)`,
+ * and fence `x.member` / `x.member(`, count as `T.member`. The gap locator
  * is the heading that names the type, not the page title.
  *
  * `kind: 'prose'` is inventory for a judge: a sentence / list item / table
@@ -73,6 +75,10 @@ export type RuleHit = {
  * Fence call-site rules (`prose-unknown-key`, `prose-arity-mismatch`,
  * `prose-missing-required`) fire only when the callee resolves to an export.
  * Unknown receiver = no claim. Type arguments are not arguments.
+ * `prose-unknown-key` matches an object literal to the parameter at that
+ * position and fires only when that parameter's type is a closed object shape.
+ * JSX props are the top-level properties of the component's first parameter
+ * (or the destructured param names); nested JSX elements are each checked.
  */
 export type Claim = {
   /** Stable: `${path}:${kind}:${export}.${member}:${start.line}` */

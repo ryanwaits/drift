@@ -171,6 +171,29 @@ export function nearestHeading(headings: PageHeading[], line: number): PageHeadi
   return best;
 }
 
+/**
+ * Headings that enclose `line`, nearest first: walk up past `#### Methods`
+ * to `## LiveList` to `# Storage`. Sibling sections are not ancestors.
+ */
+export function headingAncestors(headings: PageHeading[], line: number): PageHeading[] {
+  const out: PageHeading[] = [];
+  let maxLevel = Number.POSITIVE_INFINITY;
+  for (let i = headings.length - 1; i >= 0; i--) {
+    const h = headings[i];
+    if (h.line > line) continue;
+    if (h.level < maxLevel) {
+      out.push(h);
+      maxLevel = h.level;
+      if (h.level === 1) break;
+    }
+  }
+  return out;
+}
+
+export function headingAncestorNames(headings: PageHeading[], line: number): string[] {
+  return headingAncestors(headings, line).map((h) => normalizeApiName(h.text));
+}
+
 export function attachHeading(
   locator: Omit<Locator, 'headingId' | 'headingText'>,
   headings: PageHeading[],

@@ -1,7 +1,9 @@
 import type * as TS from 'typescript';
+import type { ApiSpec } from '../analysis/api-spec';
 import type { MarkdownCodeBlock } from '../markdown/types';
 import { ts } from '../ts-module';
 import { isBuiltInIdentifier } from '../utils/builtin-detection';
+import { memberReturnType } from './spec-ref';
 
 export type FenceCall = {
   objectName: string;
@@ -85,18 +87,19 @@ export function extractFenceCalls(code: string): FenceCall[] {
 }
 
 /**
- * Named/default import specifiers with source text.
- */
-/**
  * `const x = new Foo(...)` plus `const x = [await] Foo(...)` when `Foo` is a
- * known export. Later fences reuse earlier bindings.
+ * known export. With `spec`, `const x = obj.method(...)` binds `x` to the
+ * spec return type of that method (e.g. `client.joinRoom()` → `Room`).
+ * Later fences reuse earlier bindings.
  */
 export function extractExportBindings(
   code: string,
   exportNames?: ReadonlySet<string>,
+  spec?: ApiSpec,
+  prior?: ReadonlyMap<string, string>,
 ): Map<string, string> {
-  const names = extractInstanceBindings(code);
-  if (!exportNames || exportNames.size === 0) return names;
+  const names = new Map(prior ?? []);
+  for (const [k, v] of extractInstanceBindings(code)) names.set(k, v);
   try {
     const sourceFile = ts.createSourceFile(
       'temp.ts',
@@ -108,12 +111,24 @@ export function extractExportBindings(
     const bindFromInit = (name: string, initializer: TS.Expression): void => {
       let expr = initializer;
       if (ts.isAwaitExpression(expr)) expr = expr.expression;
-      if (
-        (ts.isCallExpression(expr) || ts.isNewExpression(expr)) &&
-        ts.isIdentifier(expr.expression) &&
-        exportNames.has(expr.expression.text)
-      ) {
-        names.set(name, expr.expression.text);
+      if (ts.isCallExpression(expr) || ts.isNewExpression(expr)) {
+        if (ts.isIdentifier(expr.expression) && exportNames?.has(expr.expression.text)) {
+          names.set(name, expr.expression.text);
+          return;
+        }
+        if (
+          spec &&
+          ts.isCallExpression(expr) &&
+          ts.isPropertyAccessExpression(expr.expression) &&
+          ts.isIdentifier(expr.expression.expression)
+        ) {
+          const obj = expr.expression.expression.text;
+          const member = expr.expression.name.text;
+          const objType = names.get(obj);
+          if (!objType) return;
+          const ret = memberReturnType(spec, objType, member);
+          if (ret) names.set(name, ret);
+        }
       }
     };
     const walk = (node: TS.Node): void => {
@@ -135,6 +150,50 @@ export function extractExportBindings(
     // parse failure
   }
   return names;
+}
+
+/** `obj.member` / `obj.member(...)` in a fence. */
+export function extractFenceMembers(code: string): Array<{
+  objectName: string;
+  memberName: string;
+  line: number;
+  text: string;
+}> {
+  const mentions: Array<{ objectName: string; memberName: string; line: number; text: string }> =
+    [];
+  const seen = new Set<string>();
+  try {
+    const sourceFile = ts.createSourceFile(
+      'temp.ts',
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const visit = (node: TS.Node): void => {
+      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression)) {
+        const objectName = node.expression.text;
+        if (!isBuiltInIdentifier(objectName)) {
+          const pos = sourceFile.getLineAndCharacterOfPosition(node.getStart());
+          const key = `${pos.line}:${objectName}.${node.name.text}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            mentions.push({
+              objectName,
+              memberName: node.name.text,
+              line: pos.line,
+              text: node.getText(sourceFile),
+            });
+          }
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+  } catch {
+    // parse failure
+  }
+  return mentions;
 }
 
 export type CallSiteArg = {
@@ -316,7 +375,7 @@ export function extractCallSites(code: string): CallSite[] {
             hasJsxSpread: hasSpread,
             hasChildren: ts.isJsxElement(node) ? jsxHasChildren(node) : false,
             line: pos.line,
-            text: node.getText(sourceFile),
+            text: open.getText(sourceFile),
           });
         }
       }
