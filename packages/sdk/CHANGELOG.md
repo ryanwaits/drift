@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 1.16.0
+
+### Minor Changes
+
+- 6b6f3cf: Add `PageDocument`: page-level claims with source locators and spec slices for docs hosts. SDK `buildPageDocument`; CLI `drift page --json`. Scan/lint unchanged.
+
 ## 1.15.4
 
 ### Patch Changes
