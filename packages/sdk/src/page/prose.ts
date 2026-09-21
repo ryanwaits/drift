@@ -2,12 +2,15 @@ import type { ApiSpec } from '../analysis/api-spec';
 import type { ExportRegistry } from '../analysis/drift/types';
 import {
   fencedLines,
+  frontmatterTitle,
   HEADING,
   headingAncestorNames,
+  headingAncestors,
   indexToPos,
   isApiToken,
   isBuiltinName,
   isDistinctiveApiName,
+  isExportContext,
   isMemberToken,
   type PageHeading,
   unwrapApiToken,
@@ -146,6 +149,7 @@ function refsInText(
   registry: ExportRegistry,
   preferred?: Set<string>,
   namespaces?: ReadonlySet<string>,
+  section?: { ancestors: readonly PageHeading[]; title?: string },
 ): SpecRef[] {
   const found = new Map<string, SpecRef>();
   const add = (ref: SpecRef | null): void => {
@@ -155,7 +159,12 @@ function refsInText(
   };
 
   for (const m of text.matchAll(BACKTICK)) {
-    if (!isApiToken(m[1])) continue;
+    const after = text.slice((m.index ?? 0) + m[0].length);
+    const ancestors = section?.ancestors ?? [];
+    // A builtin name is never a member by context: the export, or the language's.
+    const isExport =
+      registry.all.has(m[1]) && isExportContext(m[1], { ...section, ancestors, after });
+    if (!isApiToken(m[1]) && !isExport) continue;
     const name = unwrapApiToken(m[1]);
     add(
       isMemberToken(m[1])
@@ -187,6 +196,7 @@ export function findProseHits(
   namespaces?: ReadonlySet<string>,
 ): ProseHit[] {
   const hits: ProseHit[] = [];
+  const title = frontmatterTitle(content);
   for (const unit of extractUnits(content)) {
     if (!unit.text.trim()) continue;
     const start = indexToPos(content, unit.start);
@@ -196,6 +206,7 @@ export function findProseHits(
       registry,
       ancestorPreferred(registry, headings, start.line),
       namespaces,
+      { ancestors: headingAncestors(headings, start.line), title },
     );
     if (refs.length === 0) continue;
     const end = indexToPos(content, Math.max(unit.start, unit.end - 1));

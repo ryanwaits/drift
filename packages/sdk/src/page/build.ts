@@ -29,12 +29,15 @@ import {
   collectHeadings,
   type FenceBlock,
   fencedLines,
+  frontmatterTitle,
   HEADING,
   headingAncestorNames,
+  headingAncestors,
   headingLocator,
   isApiToken,
   isBuiltinName,
   isCallForm,
+  isExportContext,
   isMemberToken,
   locateInFence,
   locateOnLine,
@@ -494,6 +497,7 @@ function inlineClaims(
   const fenced = fencedLines(lines);
   const headingLines = new Set(headings.map((h) => h.line));
   const { namespaces } = pageScope(opts);
+  const title = frontmatterTitle(content);
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -506,7 +510,11 @@ function inlineClaims(
       const raw = m[1];
       const name = unwrapApiToken(raw);
       const preferred = ancestorPreferred(registry, headings, lineNo);
-      if (!isApiToken(raw)) continue;
+      const after = line.slice((m.index ?? 0) + m[0].length);
+      const ancestors = headingAncestors(headings, lineNo);
+      // A builtin name is never a member by context: the export, or the language's.
+      const isExport = registry.all.has(raw) && isExportContext(raw, { ancestors, title, after });
+      if (!isApiToken(raw) && !isExport) continue;
       let specRef = isMemberToken(raw)
         ? resolveMemberName(spec, registry, name, preferred)
         : resolveApiName(spec, registry, name, preferred, namespaces);

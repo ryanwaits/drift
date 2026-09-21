@@ -4719,3 +4719,98 @@ describe('a namespace-qualified call in a fence is an inventory claim', () => {
     expect(inventory(`# API\n\n${fence(code)}`)).toEqual([]);
   });
 });
+
+describe("on an API reference section for an export, its bare builtin name is the export's", () => {
+  function valibotLike(): ApiSpec {
+    const fn = (name: string) => ({ id: name, name, kind: 'function' });
+    return {
+      meta: { name: 'valibot' },
+      exports: ['string', 'number', 'object', 'array', 'pipe'].map(fn),
+    };
+  }
+
+  function refs(content: string) {
+    const spec = valibotLike();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'api/string/index.md',
+      content,
+    })
+      .claims.filter((c) => c.specRef && c.kind !== 'heading')
+      .map((c) => `${c.kind}:${c.specRef?.export}:${c.locator.start.line}`);
+  }
+
+  test('a page whose H1 is exactly the export: `string` is the export, `number` still is not', () => {
+    expect(
+      refs(
+        '# string\n\nCreates a string schema.\n\n## Explanation\n\nWith `string` you validate a `number` of things.\n',
+      ),
+    ).toEqual(['inline:string:7', 'prose:string:7']);
+  });
+
+  test('a frontmatter title that is exactly the export', () => {
+    expect(refs('---\ntitle: string\n---\n\nWith `string` you can validate.\n')).toEqual([
+      'inline:string:5',
+      'prose:string:5',
+    ]);
+    expect(refs('---\ntitle: "string()"\n---\n\nWith `string` you can validate.\n')).toEqual([
+      'inline:string:5',
+      'prose:string:5',
+    ]);
+  });
+
+  test('a code or call-form heading scopes its own section only', () => {
+    expect(
+      refs(
+        '# Schemas\n\n## `string`\n\nUse `string` here.\n\n### Notes\n\nStill `string`.\n\n## object()\n\nAn `object`, not a `string`.\n\n## array\n\nAn `array` of things.\n',
+      ),
+    ).toEqual([
+      'inline:string:5',
+      'inline:string:9',
+      'inline:object:13',
+      'prose:string:5',
+      'prose:string:9',
+      'prose:object:13',
+    ]);
+  });
+
+  test('a builtin name that is only a member is never the export by context', () => {
+    const spec = valibotLike();
+    spec.exports.push({
+      id: 'Store',
+      name: 'Store',
+      kind: 'interface',
+      members: [{ name: 'set', kind: 'method' }],
+    });
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/atoms.md',
+      content: '# Atoms\n\nOverwritten using the `set` function.\n',
+    });
+    expect(doc.claims.filter((c) => c.specRef)).toEqual([]);
+  });
+
+  test('a title that only contains the name is not that export', () => {
+    expect(refs('# string schemas\n\nWith `string` you validate.\n')).toEqual([]);
+    expect(refs('# Strings\n\nA `string` in JavaScript.\n')).toEqual([]);
+  });
+
+  test('anywhere: the word after the code span says it is the API', () => {
+    expect(
+      refs(
+        "# Guide\n\nValibot's own `string` schema, the `pipe` method, the `object` function and the `array` API.\n\nA JavaScript `number` type, a `string` value, the `object` schemas.\n",
+      ),
+    ).toEqual([
+      'inline:string:3',
+      'inline:pipe:3',
+      'inline:object:3',
+      'inline:array:3',
+      'prose:string:3',
+      'prose:pipe:3',
+      'prose:object:3',
+      'prose:array:3',
+    ]);
+  });
+});

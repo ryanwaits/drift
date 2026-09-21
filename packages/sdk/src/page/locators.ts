@@ -116,6 +116,40 @@ export function isApiToken(raw: string): boolean {
   return !isBuiltinName(unwrapApiToken(raw)) || isCallForm(raw);
 }
 
+const BARE_NAME: RegExp = /^[A-Za-z_$][\w$]*$/;
+const API_NOUN: RegExp =
+  /^\s+(?:schema|function|action|method|hook|component|api|export|util|utility|helper)\b/i;
+const FRONTMATTER_TITLE: RegExp =
+  /^---\r?\n(?:.*\r?\n)*?title:[ \t]*(.+?)[ \t]*\r?\n(?:.*\r?\n)*?---/;
+
+/** `title:` of a leading frontmatter block, unquoted. */
+export function frontmatterTitle(content: string): string | undefined {
+  const m = content.match(FRONTMATTER_TITLE);
+  return m ? m[1].replace(/^(['"])(.*)\1$/, '$2').trim() : undefined;
+}
+
+/**
+ * Where a backticked bare builtin name (`string`) is the export after all:
+ * - under a heading that IS that name, as a code span or a call (`` ## `string` ``,
+ *   `### string()`), or the page's H1 / frontmatter title in any form (`# string`):
+ *   an API reference section for that export;
+ * - the word right after the code span says so: "`string` schema", "the `pipe` method".
+ * `raw` is the code span's text, `after` the text that follows it on its line.
+ */
+export function isExportContext(
+  raw: string,
+  context: { ancestors: readonly PageHeading[]; title?: string; after: string },
+): boolean {
+  const name = raw.trim();
+  if (!BARE_NAME.test(name)) return false;
+  if (API_NOUN.test(context.after)) return true;
+  if (context.title !== undefined && normalizeApiName(context.title) === name) return true;
+  return context.ancestors.some(
+    (h) =>
+      normalizeApiName(h.text) === name && (h.level === 1 || h.code === true || isCallForm(h.text)),
+  );
+}
+
 /** `.start()` / `.start`: a leading dot names a member, never a top-level export. */
 export function isMemberToken(text: string): boolean {
   return unwrapHeadingText(text).trim().startsWith('.');
