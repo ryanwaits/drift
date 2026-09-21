@@ -86,14 +86,16 @@ export function unwrapApiToken(text: string): string {
 }
 
 /**
- * Bare-word matchable: camelCase, PascalCase with 2+ humps, or digits/underscores.
- * Dictionary-plain names (`Room`, `atom`) still need backticks.
+ * Bare-word matchable: camelCase with an inner capital (`useSWR`), PascalCase
+ * with 2+ humps (`ZodType`, `SWRConfig`), or snake_case. Dictionary-plain
+ * names (`Room`, `atom`), names that only carry a digit (`base64`, `utf8`,
+ * `h1`) and acronyms (`JSON`, `URL`) are English until backticked.
  */
 export function isDistinctiveApiName(name: string): boolean {
   if (!name) return false;
-  if (/[\d_]/.test(name)) return true;
+  if (/[A-Za-z0-9]_[A-Za-z0-9]/.test(name)) return true;
   if (/[a-z][A-Z]/.test(name)) return true;
-  return /^[A-Z][a-z0-9]*[A-Z]/.test(name);
+  return /^[A-Z]/.test(name) && /[a-z]/.test(name) && /[A-Z].*[A-Z]/.test(name);
 }
 
 export function indexToPos(content: string, index: number): SourcePos {

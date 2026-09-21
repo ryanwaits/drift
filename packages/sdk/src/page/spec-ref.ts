@@ -271,7 +271,8 @@ export function resolveApiName(
     }
   }
 
-  if (IDENT.test(trimmed) && registry.all.has(trimmed)) {
+  // The word `default` is a keyword or a value, never the default export.
+  if (IDENT.test(trimmed) && trimmed !== 'default' && registry.all.has(trimmed)) {
     return makeSpecRef(spec, registry, trimmed);
   }
 

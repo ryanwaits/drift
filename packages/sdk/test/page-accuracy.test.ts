@@ -3597,3 +3597,66 @@ describe('fence inventory claims are located inside their own fence', () => {
     expect(inline(`# G\n\n${F3}ts\nfunction useQuery() {}\nuseQuery()\n${F3}\n`)).toEqual([]);
   });
 });
+
+describe('a bare English word is not an export', () => {
+  function codecSpec(): ApiSpec {
+    const fn = (name: string) => ({ id: name, name, kind: 'function' });
+    return {
+      meta: { name: 'codecs' },
+      exports: [
+        ...['base64', 'base64url', 'utf8', 'sha256', 'md5', 'int32', 'h1', 'JSON', 'URL'].map(fn),
+        ...['base64urlToBytes', 'ZodType', 'SWRConfig', 'unstable_serialize', 'useSWR'].map(fn),
+        { ...fn('default'), signatures: [{ parameters: [] }] },
+      ],
+    };
+  }
+
+  function refs(content: string, kind?: string) {
+    const spec = codecSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/codecs.md',
+      content,
+    })
+      .claims.filter((c) => c.specRef && (!kind || c.kind === kind))
+      .map((c) => `${c.kind}:${c.specRef?.export}`);
+  }
+
+  test('a digit alone does not make a bare word an export', () => {
+    expect(
+      refs(
+        '# Codecs\n\nConverts base64url strings (URL-safe base64) to `Uint8Array` byte arrays.\n\nUse utf8, sha256, md5, int32 or an h1 with JSON over a URL.\n',
+      ),
+    ).toEqual([]);
+  });
+
+  test('camelCase, multi-hump PascalCase and snake_case bare words still match', () => {
+    expect(
+      refs(
+        '# Codecs\n\nThe base64urlToBytes codec returns a ZodType.\n\nWrap it in SWRConfig and call unstable_serialize from useSWR.\n',
+      ),
+    ).toEqual([
+      'prose:base64urlToBytes',
+      'prose:ZodType',
+      'prose:SWRConfig',
+      'prose:unstable_serialize',
+      'prose:useSWR',
+    ]);
+  });
+
+  test('backticked names are unaffected', () => {
+    expect(refs('# Codecs\n\nUse `base64` or `utf8()` here.\n', 'inline')).toEqual([
+      'inline:base64',
+      'inline:utf8',
+    ]);
+  });
+
+  test('the word `default` never names the default export', () => {
+    expect(
+      refs(
+        '# Codecs\n\nThe `default` value is 3, and default is the default.\n\n## default\n\n| Key | Notes |\n| --- | --- |\n| `default` | the `default()` |\n',
+      ),
+    ).toEqual([]);
+  });
+});
