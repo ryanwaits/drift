@@ -4472,3 +4472,94 @@ describe('a name the page declares shadows the export of the same name in later 
     ).toEqual([10]);
   });
 });
+
+describe('an owner outside the public surface does not make a `.member()` ambiguous', () => {
+  function parseSpec(): ApiSpec {
+    const method = (name: string, inheritedFrom?: string) => ({
+      name,
+      kind: 'method',
+      ...(inheritedFrom ? { inheritedFrom } : {}),
+      signatures: [{ parameters: [] }],
+    });
+    const internal = (name: string) => ({
+      id: name,
+      name,
+      kind: 'interface',
+      members: [method('parse'), method('run')],
+    });
+    return {
+      meta: { name: 'schemas' },
+      exports: [
+        { id: 'BaseType', name: 'BaseType', kind: 'class', members: [method('parse')] },
+        {
+          id: 'StringType',
+          name: 'StringType',
+          kind: 'class',
+          members: [method('parse', 'BaseType'), method('encode')],
+        },
+        {
+          id: 'string',
+          name: 'string',
+          kind: 'function',
+          signatures: [{ parameters: [], returns: { schema: { $ref: '#/types/StringType' } } }],
+        },
+        {
+          id: 'codec',
+          name: 'codec',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [{ name: 'options', schema: { $ref: '#/types/CodecOptions' } }],
+              returns: { schema: { anyOf: [{ $ref: '#/types/Codec' }, { type: 'null' }] } },
+            },
+          ],
+        },
+      ],
+      types: [
+        internal('$BaseInternals'),
+        internal('$StringInternals'),
+        internal('_Hidden'),
+        // Not exported, not the declared type of any export: an implementation detail.
+        { id: 'Runner', name: 'Runner', kind: 'interface', members: [method('run')] },
+        { id: 'Worker', name: 'Worker', kind: 'interface', members: [method('run')] },
+        // Reachable as the return / parameter type of the export `codec`.
+        { id: 'Codec', name: 'Codec', kind: 'interface', members: [method('encode')] },
+        {
+          id: 'CodecOptions',
+          name: 'CodecOptions',
+          kind: 'interface',
+          members: [method('strict')],
+        },
+        { id: 'Unreached', name: 'Unreached', kind: 'interface', members: [method('strict')] },
+      ],
+    };
+  }
+
+  function refs(content: string) {
+    const spec = parseSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/x.md',
+      content,
+    })
+      .claims.filter((c) => c.candidate && c.kind === 'inline')
+      .map((c) => `${c.specRef?.export}.${c.specRef?.member ?? ''}`);
+  }
+
+  test('`$`-prefixed and `_`-prefixed internals do not count: `.parse()` is BaseType.parse', () => {
+    expect(refs('# Parsing\n\nCall `.parse()` to validate.\n')).toEqual(['BaseType.parse']);
+  });
+
+  test('a type an export returns or takes is public; one nothing reaches is not', () => {
+    expect(refs('# Options\n\nSet `.strict()` on the options.\n')).toEqual(['CodecOptions.strict']);
+  });
+
+  test('two public owners that share no ancestor stay ambiguous', () => {
+    expect(refs('# Encoding\n\nCall `.encode()`.\n')).toEqual([]);
+  });
+
+  test('no public owner at all: the owners are judged as before', () => {
+    expect(refs('# Running\n\nCall `.run()`.\n')).toEqual([]);
+  });
+});

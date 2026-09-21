@@ -333,11 +333,50 @@ function aliasTarget(spec: ApiSpec, name: string): string | undefined {
   return head && head !== name && IDENT.test(head) && findTypeEntry(spec, head) ? head : undefined;
 }
 
+const publicTypes = new WeakMap<ApiSpec, ReadonlySet<string>>();
+
+function collectRefs(schema: unknown, into: Set<string>): void {
+  if (!schema || typeof schema !== 'object') return;
+  if (Array.isArray(schema)) {
+    for (const item of schema) collectRefs(item, into);
+    return;
+  }
+  for (const [key, value] of Object.entries(schema)) {
+    if (key === '$ref' && typeof value === 'string') into.add(value.split('/').pop() ?? '');
+    else collectRefs(value, into);
+  }
+}
+
+/**
+ * Types a reader of the package can name or hold: every export, and every type
+ * an export's signature declares as a parameter or return type by `$ref`.
+ * A name starting with `$` or `_` is never public.
+ */
+export function publicTypeNames(spec: ApiSpec): ReadonlySet<string> {
+  let names = publicTypes.get(spec);
+  if (!names) {
+    const found = new Set<string>();
+    for (const exp of spec.exports ?? []) {
+      found.add(exp.name);
+      for (const sig of extraSignatures(exp)) {
+        for (const p of sig.parameters ?? []) collectRefs(p.schema, found);
+        collectRefs(sig.returns?.schema, found);
+      }
+    }
+    names = new Set([...found].filter((n) => n && !/^[$_]/.test(n)));
+    publicTypes.set(spec, names);
+  }
+  return names;
+}
+
 /**
  * A dotted name (`.meta()`) is `Type.member` or nothing, never a top-level
  * export: the heading ancestor that has the member, else the one type that has
  * it, else the one ancestor every owner inherits it from (`inheritedFrom`; an
  * alias of that ancestor is the ancestor). Several unrelated owners: null.
+ * With no heading to go by, only owners on the public surface count
+ * (`publicTypeNames`): zod's `$ZodTypeInternals.parse` does not make `.parse()`
+ * ambiguous. `$` / `_` names never count; when no owner is public, the rest do.
  */
 export function resolveMemberName(
   spec: ApiSpec,
@@ -357,14 +396,19 @@ export function resolveMemberName(
   for (const p of preferredParents ?? []) {
     if (parents.has(p)) return makeSpecRef(spec, registry, p, member);
   }
-  if (parents.size === 1) return makeSpecRef(spec, registry, [...parents][0], member);
+  const named = [...parents].filter((p) => !/^[$_]/.test(p));
+  const surface = publicTypeNames(spec);
+  const visible = named.filter((p) => surface.has(p));
+  const owners = new Set(visible.length > 0 ? visible : named);
+  if (owners.size === 0) return null;
+  if (owners.size === 1) return makeSpecRef(spec, registry, [...owners][0], member);
   const origins = new Set<string>();
-  for (const parent of parents) {
-    origins.add(memberOrigin(spec, parents, parent, member, new Set()) ?? parent);
+  for (const parent of owners) {
+    origins.add(memberOrigin(spec, owners, parent, member, new Set()) ?? parent);
     if (origins.size > 1) return null;
   }
   const [origin] = origins;
-  return origin && parents.has(origin) ? makeSpecRef(spec, registry, origin, member) : null;
+  return origin && owners.has(origin) ? makeSpecRef(spec, registry, origin, member) : null;
 }
 
 /**
