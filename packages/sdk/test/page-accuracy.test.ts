@@ -4268,3 +4268,78 @@ describe('one page, several specs of the same package (`alsoSpecs`)', () => {
     expect(doc.claims.filter((c) => c.rule)).toEqual([]);
   });
 });
+
+describe('a type `$ref` resolves by id first, then by an unambiguous name', () => {
+  const F3 = '```';
+
+  function optionsSpec(withPlainId = true): ApiSpec {
+    const options = (id: string, keys: string[]) => ({
+      id,
+      name: 'Options',
+      kind: 'interface',
+      schema: { type: 'object', properties: Object.fromEntries(keys.map((k) => [k, {}])) },
+    });
+    const fn = (name: string, ref: string) => ({
+      id: name,
+      name,
+      kind: 'function',
+      signatures: [
+        { parameters: [{ name: 'options', required: true, schema: { $ref: `#/types/${ref}` } }] },
+      ],
+    });
+    return {
+      meta: { name: 'pkg' },
+      exports: [
+        fn('createStore', 'Options'),
+        fn('useStore', 'react.Options'),
+        fn('open', 'Config'),
+      ],
+      types: [
+        options(withPlainId ? 'Options' : 'vanilla.Options', ['name', 'devtools']),
+        options('react.Options', ['selector', 'suspense']),
+        {
+          id: 'core.Config',
+          name: 'Config',
+          kind: 'interface',
+          schema: { type: 'object', properties: { url: {} } },
+        },
+      ],
+    };
+  }
+
+  function unknownKeys(code: string, withPlainId = true) {
+    const spec = optionsSpec(withPlainId);
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/store.md',
+      content: `# Store\n\n${F3}ts\n${code}\n${F3}\n`,
+    })
+      .claims.filter((c) => c.rule)
+      .map((c) => [c.rule?.type, c.rule?.issue, c.rule?.suggestion]);
+  }
+
+  test('`#/types/Options` is the entry with that id: the other Options keys are unknown', () => {
+    expect(unknownKeys("const s = createStore({ name: 'a', devtools: true })")).toEqual([]);
+    expect(unknownKeys("const s = createStore({ name: 'a', suspense: true })")).toEqual([
+      ['prose-unknown-key', "Unknown key 'suspense' on 'createStore'", 'Allowed: devtools, name'],
+    ]);
+  });
+
+  test('`#/types/react.Options` is checked against that one', () => {
+    expect(unknownKeys('const s = useStore({ selector, suspense: true })')).toEqual([]);
+    expect(unknownKeys("const s = useStore({ selector, name: 'a' })")).toEqual([
+      ['prose-unknown-key', "Unknown key 'name' on 'useStore'", 'Allowed: selector, suspense'],
+    ]);
+  });
+
+  test('a name only one entry has resolves whatever its id', () => {
+    expect(unknownKeys("const c = open({ uri: 'x' })")).toEqual([
+      ['prose-unknown-key', "Unknown key 'uri' on 'open'", 'Allowed: url'],
+    ]);
+  });
+
+  test('several same-named entries and no id match: unresolved, no claim', () => {
+    expect(unknownKeys("const s = createStore({ name: 'a', bogus: true })", false)).toEqual([]);
+  });
+});

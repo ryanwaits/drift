@@ -18,9 +18,25 @@ import type {
 
 type SpecEntry = ApiExport | ApiType;
 
-/** Find a type-like entry by name: exports first, then referenced types. */
-export function findTypeEntry(spec: ApiSpec, name: string): SpecEntry | undefined {
-  return spec.exports?.find((e) => e.name === name) ?? spec.types?.find((t) => t.name === name);
+/**
+ * Entries a `#/types/<target>` ref, a return-type name or a docs-map type
+ * resolves to: exports first, then referenced types. An exact `id` match wins
+ * (OpenPkg gives same-named types distinct ids: `Options`, `react.Options`).
+ * Else the entries with that `name`, when they are one declaration (one id: an
+ * export and its referenced-types variant). Several same-named declarations
+ * and no id match: none. Unresolved reads as an open shape, never a merge.
+ */
+export function resolveTypeEntries(spec: ApiSpec, target: string): SpecEntry[] {
+  const all: SpecEntry[] = [...(spec.exports ?? []), ...(spec.types ?? [])];
+  const byId = all.filter((e) => (e.id ?? e.name) === target);
+  if (byId.length > 0) return byId;
+  const byName = all.filter((e) => e.name === target);
+  return new Set(byName.map((e) => e.id ?? e.name)).size === 1 ? byName : [];
+}
+
+/** First entry `target` resolves to (see `resolveTypeEntries`). */
+export function findTypeEntry(spec: ApiSpec, target: string): SpecEntry | undefined {
+  return resolveTypeEntries(spec, target)[0];
 }
 
 /**
@@ -98,9 +114,7 @@ export function computeKeyCoverage(
   // A spec can carry several entries with the same name (an export plus a
   // referenced-types variant, flattened to different depths). Merge their
   // keys — the fullest view of the type is the truthful one.
-  const entries = [...(spec.exports ?? []), ...(spec.types ?? [])].filter(
-    (e) => e.name === typeName,
-  );
+  const entries = resolveTypeEntries(spec, typeName);
   if (entries.length === 0) return null;
 
   const keyMeta = new Map<string, KeyMeta>();

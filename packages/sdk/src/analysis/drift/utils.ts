@@ -102,7 +102,9 @@ export function typesEquivalent(a: string, b: string): boolean {
     return true;
   }
 
-  return false;
+  // A `$ref` names a type by its spec id, qualified when the package has several
+  // of that name (`react.Options`); the docs write the source name (`Options`).
+  return a.endsWith(`.${b}`) || b.endsWith(`.${a}`);
 }
 
 export function unwrapPromise(type: string): string | undefined {

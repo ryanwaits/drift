@@ -5,6 +5,7 @@ import {
   computeKeyCoverage,
   DEFAULT_SECTION_RE,
   extractDocumentedKeys,
+  resolveTypeEntries,
 } from '../analysis/key-coverage';
 import { parseMarkdownFile } from '../markdown/parser';
 import type { MarkdownDocFile } from '../markdown/types';
@@ -658,8 +659,7 @@ function listedMembers(
   skip: ReadonlySet<string> = new Set(),
 ): string[] {
   const names = new Set<string>();
-  for (const entry of [...(spec.exports ?? []), ...(spec.types ?? [])]) {
-    if (entry.name !== typeName) continue;
+  for (const entry of resolveTypeEntries(spec, typeName)) {
     for (const member of entry.members ?? []) {
       if (!member.name) continue;
       if (isPrivateMember(member.name, member.visibility)) continue;

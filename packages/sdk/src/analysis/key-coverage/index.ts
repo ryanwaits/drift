@@ -9,6 +9,7 @@ export {
   computeKeyCoverage,
   findTypeEntry,
   parseReplacement,
+  resolveTypeEntries,
 } from './diff-keys';
 export { DEFAULT_SECTION_RE, extractDocumentedKeys } from './extract-keys';
 export type {

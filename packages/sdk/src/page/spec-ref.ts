@@ -1,6 +1,11 @@
 import type { ApiExport, ApiMember, ApiSchema, ApiSignature, ApiSpec } from '../analysis/api-spec';
 import type { ExportRegistry } from '../analysis/drift/types';
-import { collectTypeKeys, findTypeEntry, parseReplacement } from '../analysis/key-coverage';
+import {
+  collectTypeKeys,
+  findTypeEntry,
+  parseReplacement,
+  resolveTypeEntries,
+} from '../analysis/key-coverage';
 import type { KeyMeta } from '../analysis/key-coverage/types';
 import type { SpecRef, SpecSlice } from './types';
 
@@ -180,7 +185,7 @@ export function signaturesOf(spec: ApiSpec, exportName: string, member?: string)
 }
 
 function findMember(spec: ApiSpec, parent: string, member: string): ApiMember | undefined {
-  const entries = [...(spec.exports ?? []), ...(spec.types ?? [])].filter((e) => e.name === parent);
+  const entries = resolveTypeEntries(spec, parent);
   for (const entry of entries) {
     const found = entry.members?.find((m) => m.name === member);
     if (found) return found;
@@ -190,9 +195,7 @@ function findMember(spec: ApiSpec, parent: string, member: string): ApiMember | 
 
 export function typeKeyMeta(spec: ApiSpec, typeName: string): Map<string, KeyMeta> {
   const keys = new Map<string, KeyMeta>();
-  const entries = [...(spec.exports ?? []), ...(spec.types ?? [])].filter(
-    (e) => e.name === typeName,
-  );
+  const entries = resolveTypeEntries(spec, typeName);
   for (const entry of entries) {
     for (const [k, meta] of collectTypeKeys(entry)) {
       const existing = keys.get(k) ?? {};
@@ -379,7 +382,7 @@ function memberOrigin(
   seen.add(parent);
   const inherited = findMember(spec, parent, member)?.inheritedFrom;
   if (inherited) return inherited;
-  const entries = [...(spec.exports ?? []), ...(spec.types ?? [])].filter((e) => e.name === parent);
+  const entries = resolveTypeEntries(spec, parent);
   const bases = [aliasTarget(spec, parent), ...entries.flatMap((e) => heritageNames(e.extends))];
   for (const base of bases) {
     const origin = base ? memberOrigin(spec, owners, base, member, seen) : undefined;

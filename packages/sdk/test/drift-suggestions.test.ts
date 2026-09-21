@@ -72,6 +72,31 @@ describe('drift suggestion fields', () => {
     });
   });
 
+  describe('param-type-mismatch: a qualified spec id is the type the docs name', () => {
+    const entry = (documented: string) =>
+      createExport({
+        signatures: [
+          { parameters: [{ name: 'options', schema: { $ref: '#/types/react.Options' } }] },
+        ],
+        tags: [
+          {
+            name: 'param',
+            text: `{${documented}} options`,
+            param: { name: 'options', type: documented },
+          },
+        ],
+      });
+
+    it('`{Options}` matches `#/types/react.Options`', () => {
+      expect(detectParamTypeDrift(entry('Options'))).toEqual([]);
+      expect(detectParamTypeDrift(entry('react.Options'))).toEqual([]);
+    });
+
+    it('another type is still a mismatch', () => {
+      expect(detectParamTypeDrift(entry('Config')).map((d) => d.actual)).toEqual(['react.Options']);
+    });
+  });
+
   describe('optionality-mismatch', () => {
     it('includes expected and actual for optional documented as required', () => {
       const entry = createExport({
