@@ -14,7 +14,6 @@ import { ambiguousExports, fenceEntry } from './entries';
 import {
   blockContaining,
   collectPackageNamespaces,
-  extractBareCallees,
   extractExportBindings,
   extractFenceCalls,
   extractFenceImports,
@@ -45,6 +44,7 @@ import {
   pageTitle,
   unwrapApiToken,
 } from './locators';
+import { extractFenceMentions, type FenceMention } from './mentions';
 import { findParamDocHits } from './param-docs';
 import { findProseHits } from './prose';
 import {
@@ -546,20 +546,49 @@ function inlineClaims(
   // the fence imports from elsewhere, is not.
   const { parsed, shadowed } = pageScope(opts);
   const packageName = opts.packageName ?? spec.meta.name;
+  const bindingsOf = new Map<EntryScope, Map<string, string>>();
   for (const [index, block] of parsed.codeBlocks.entries()) {
     // A fence that imports a secondary entry mentions that entry's exports.
-    const { spec, registry, aliases } = fenceScope(opts, block.code).entry;
+    const { entry, unsure } = fenceScope(opts, block.code);
+    const { spec, registry, aliases, namespaces } = entry;
     const imports = extractFenceImports(block.code);
     const foreign = new Set(
       imports.filter((i) => !isPackageModule(i.from, packageName)).map((i) => i.name),
     );
-    const locals = new Set([...extractLocalNames(block.code), ...shadowed[index]]);
-    const mentions: Array<{ exportName: string; text: string; line: number; col: number }> = [];
-    for (const callee of extractBareCallees(block.code)) {
-      if (locals.has(callee.name) || foreign.has(callee.name)) continue;
-      const exportName = aliases.get(callee.name) ?? callee.name;
-      mentions.push({ exportName, text: callee.name, line: callee.line, col: callee.col });
+    const notOurs = new Set([...extractLocalNames(block.code), ...shadowed[index], ...foreign]);
+    const bindings = extractExportBindings(block.code, {
+      exportNames: registry.all,
+      spec,
+      prior: bindingsOf.get(entry),
+      aliases,
+      registry,
+      namespaces,
+      ambiguous: unsure,
+      shadowed: shadowed[index],
+    });
+    bindingsOf.set(entry, bindings);
+    const own: FenceMention[] = extractFenceMentions(block.code, {
+      spec,
+      registry,
+      namespaces,
+      aliases,
+      bindings,
+      notOurs,
+    });
+    // A fence that names no entry: a chained member is the primary's only when
+    // no other entry types the same chain (`.parse()` is on both string types).
+    const contested = new Set<string>();
+    for (const other of unsure.size > 0 ? pageScope(opts).entries.slice(1) : []) {
+      // The alias is the page's, whichever entry it was inferred from.
+      const theirs = extractFenceMentions(block.code, {
+        ...other,
+        namespaces: new Set([...other.namespaces, ...namespaces]),
+        bindings: new Map(),
+        notOurs,
+      });
+      for (const m of theirs) if (m.member) contested.add(`${m.line}:${m.col}`);
     }
+    const mentions = own.filter((m) => !m.member || !contested.has(`${m.line}:${m.col}`));
     for (const imp of imports) {
       if (imp.kind !== 'named' || foreign.has(imp.name)) continue;
       mentions.push({ exportName: imp.imported, text: imp.text, line: imp.line, col: imp.col });
@@ -567,9 +596,10 @@ function inlineClaims(
 
     const seen = new Set<string>();
     for (const m of mentions) {
-      if (!registry.all.has(m.exportName) || seen.has(m.exportName)) continue;
-      seen.add(m.exportName);
-      const specRef = makeSpecRef(spec, registry, m.exportName);
+      const key = m.member ? `${m.exportName}.${m.member}` : m.exportName;
+      if ((!m.member && !registry.all.has(m.exportName)) || seen.has(key)) continue;
+      seen.add(key);
+      const specRef = makeSpecRef(spec, registry, m.exportName, m.member);
       const already = existing
         .concat(claims)
         .some(

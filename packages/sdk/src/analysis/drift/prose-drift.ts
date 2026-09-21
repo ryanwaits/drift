@@ -604,7 +604,7 @@ function detectUnresolvedMembers(
 }
 
 /** What a fence identifier is known to be, for resolving a reference. */
-type ReferenceScope = {
+export type ReferenceScope = {
   /** Variable → spec type, from a package call / `new` */
   derived: ReadonlyMap<string, string>;
   /** Parameter → annotated package type */
@@ -646,7 +646,7 @@ function calleeExport(
  * explicit type arguments), `x.m()` where the spec says what `T.m` returns
  * (`this` stays `T`). Undefined the moment a link is not certain.
  */
-function expressionType(
+export function expressionType(
   expr: TS.Expression,
   registry: ExportRegistry,
   scope: ReferenceScope,

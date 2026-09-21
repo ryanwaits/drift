@@ -673,39 +673,6 @@ export function extractCallSites(code: string): CallSite[] {
   return sites;
 }
 
-/**
- * Callee identifier of every `name(...)` / `new name(...)`, in source order: a
- * mention of `name`, located on the identifier. A printed signature counts.
- */
-export function extractBareCallees(
-  code: string,
-): Array<{ name: string; line: number; col: number }> {
-  const callees: Array<{ name: string; line: number; col: number }> = [];
-  try {
-    const sourceFile = ts.createSourceFile(
-      'temp.ts',
-      code,
-      ts.ScriptTarget.Latest,
-      true,
-      ts.ScriptKind.TSX,
-    );
-    const visit = (node: TS.Node): void => {
-      if (
-        (ts.isCallExpression(node) || ts.isNewExpression(node)) &&
-        ts.isIdentifier(node.expression)
-      ) {
-        const pos = sourceFile.getLineAndCharacterOfPosition(node.expression.getStart());
-        callees.push({ name: node.expression.text, line: pos.line, col: pos.character });
-      }
-      ts.forEachChild(node, visit);
-    };
-    visit(sourceFile);
-  } catch {
-    // parse failure
-  }
-  return callees;
-}
-
 export function extractFenceImports(code: string): FenceImport[] {
   const imports: FenceImport[] = [];
   try {

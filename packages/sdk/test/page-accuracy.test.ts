@@ -4563,3 +4563,159 @@ describe('an owner outside the public surface does not make a `.member()` ambigu
     expect(refs('# Running\n\nCall `.run()`.\n')).toEqual([]);
   });
 });
+
+describe('a namespace-qualified call in a fence is an inventory claim', () => {
+  const F3 = '```';
+  const ref = (name: string) => ({ $ref: `#/types/${name}` });
+  const param = (name: string, required = true) => ({ name, required, schema: 'unknown' });
+  const fn = (name: string, returns?: string, parameters = [param('params', false)]) => ({
+    id: name,
+    name,
+    kind: 'function',
+    signatures: [{ parameters, ...(returns ? { returns: { schema: ref(returns) } } : {}) }],
+  });
+  const method = (name: string, returns?: Record<string, unknown>) => ({
+    name,
+    kind: 'method',
+    signatures: [{ parameters: [param('arg', false)], ...(returns ? { returns } : {}) }],
+  });
+
+  function zodSpec(): ApiSpec {
+    return {
+      meta: { name: 'zod' },
+      exports: [
+        fn('string', 'ZodString'),
+        fn('object', undefined, [param('shape')]),
+        fn('toJSONSchema', undefined, [param('schema')]),
+        fn('number', 'ZodNumber'),
+        fn('custom'),
+        {
+          id: 'ZodString',
+          name: 'ZodString',
+          kind: 'class',
+          members: [
+            method('email', { schema: { 'x-ts-type': 'this' } }),
+            method('min', { schema: ref('ZodString') }),
+            method('optional', { schema: { 'x-ts-type': 'ZodOptional<this>' } }),
+            method('parse'),
+          ],
+        },
+        { id: 'ZodNumber', name: 'ZodNumber', kind: 'class', members: [method('int')] },
+      ],
+    };
+  }
+
+  function miniSpec(): ApiSpec {
+    return {
+      meta: { name: 'zod' },
+      exports: [
+        fn('string', 'ZodMiniString'),
+        fn('minLength'),
+        {
+          id: 'ZodMiniString',
+          name: 'ZodMiniString',
+          kind: 'class',
+          members: [method('parse'), method('check', { schema: { 'x-ts-type': 'this' } })],
+        },
+      ],
+    };
+  }
+
+  function inventory(content: string, withMini = false) {
+    const spec = zodSpec();
+    const mini = miniSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/api.md',
+      content,
+      ...(withMini
+        ? {
+            alsoSpecs: [
+              { spec: mini, registry: buildExportRegistry(mini), importSpecifier: 'zod/mini' },
+            ],
+          }
+        : {}),
+    })
+      .claims.filter((c) => c.candidate && c.kind === 'inline')
+      .map((c) => [
+        c.text,
+        c.specRef?.member ? `${c.specRef.export}.${c.specRef.member}` : c.specRef?.export,
+        `${c.locator.start.line}:${c.locator.start.col}-${c.locator.end.col}`,
+      ]);
+  }
+
+  const fence = (code: string) => `${F3}ts\n${code}\n${F3}\n`;
+
+  test('`ns.f(...)` through an imported alias: one claim per (fence, export), on the first call', () => {
+    const code =
+      'import * as z from "zod";\n\nconst User = z.object({ name: z.string(), nick: z.string() });\nz.toJSONSchema(User);';
+    expect(inventory(`# API\n\n${fence(code)}`)).toEqual([
+      ['z.object', 'object', '6:14-21'],
+      ['z.string', 'string', '6:31-38'],
+      ['z.toJSONSchema', 'toJSONSchema', '7:1-14'],
+    ]);
+  });
+
+  test("the page's conventional alias, when no import is shown", () => {
+    expect(inventory(`# API\n\n${fence('z.object({ a: z.number() });')}`)).toEqual([
+      ['z.object', 'object', '4:1-8'],
+      ['z.number', 'number', '4:15-22'],
+    ]);
+  });
+
+  test('not an export, a local of that name, or a lone unknown receiver: no claim', () => {
+    expect(inventory(`# API\n\n${fence('import * as z from "zod";\nz.nope();')}`)).toEqual([]);
+    expect(inventory(`# API\n\n${fence('const run = (z) => z.string();')}`)).toEqual([]);
+    expect(inventory(`# API\n\n${fence('y.string();')}`)).toEqual([]);
+  });
+
+  test('a chain resolved through spec return types cites the member, up to the first unknown link', () => {
+    const code = 'import * as z from "zod";\n\nz.string().email().min(5).optional().parse(x);';
+    expect(inventory(`# API\n\n${fence(code)}`)).toEqual([
+      ['z.string', 'string', '6:1-8'],
+      ['email', 'ZodString.email', '6:12-16'],
+      ['min', 'ZodString.min', '6:20-22'],
+      ['optional', 'ZodString.optional', '6:27-34'],
+    ]);
+  });
+
+  test('a member the resolved type lacks, or an untyped head, is no claim', () => {
+    const code = 'import * as z from "zod";\n\nz.number().email();\nz.custom().email();';
+    expect(inventory(`# API\n\n${fence(code)}`)).toEqual([
+      ['z.number', 'number', '6:1-8'],
+      ['z.custom', 'custom', '7:1-8'],
+    ]);
+  });
+
+  test('a `zod/mini` fence is read against that entry', () => {
+    const code = 'import * as z from "zod/mini";\n\nz.string().check(z.minLength(5));';
+    expect(inventory(`# API\n\n${fence(code)}`, true)).toEqual([
+      ['z.string', 'string', '6:1-8'],
+      ['check', 'ZodMiniString.check', '6:12-16'],
+      ['z.minLength', 'minLength', '6:18-28'],
+    ]);
+  });
+
+  test('a fence that names no entry: a member is cited only when one entry alone types it', () => {
+    // `.parse()` is on both `ZodString` and `ZodMiniString`: the fence does not say which.
+    expect(inventory(`# API\n\n${fence('z.string().parse(x);\nz.number();')}`, true)).toEqual([
+      ['z.string', 'string', '4:1-8'],
+      ['z.number', 'number', '5:1-8'],
+    ]);
+    // `.min()` is only on `ZodString`, so the chain is the primary's from there on.
+    expect(
+      inventory(`# API\n\n${fence('z.string().min(5).parse(x);\nz.number();')}`, true),
+    ).toEqual([
+      ['z.string', 'string', '4:1-8'],
+      ['min', 'ZodString.min', '4:12-14'],
+      ['parse', 'ZodString.parse', '4:19-23'],
+      ['z.number', 'number', '5:1-8'],
+    ]);
+  });
+
+  test('a rule hit in the fence on the same export replaces the inventory claim', () => {
+    const code = 'import * as z from "zod";\n\nconst Empty = z.object();';
+    expect(inventory(`# API\n\n${fence(code)}`)).toEqual([]);
+  });
+});
