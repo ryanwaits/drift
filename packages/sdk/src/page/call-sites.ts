@@ -335,6 +335,8 @@ export type CallSiteContext = {
   aliases?: ReadonlyMap<string, string>;
   /** Names the fence declares itself: a bare callee among them is not the export. */
   locals?: ReadonlySet<string>;
+  /** Names an earlier fence of the page declared: shadow the export like `locals`. */
+  shadowed?: ReadonlySet<string>;
   /** Exports another entry of the package types differently, in a fence that names no entry. */
   ambiguous?: ReadonlySet<string>;
   skip?: boolean;
@@ -559,7 +561,10 @@ export function detectCallSiteHits(
 ): CallSiteHit[] {
   if (ctx?.skip) return [];
   const hits: CallSiteHit[] = [];
-  const scoped = { ...ctx, locals: extractLocalNames(code) };
+  const scoped = {
+    ...ctx,
+    locals: new Set([...extractLocalNames(code), ...(ctx?.shadowed ?? [])]),
+  };
   for (const site of extractCallSites(code)) {
     hits.push(...judgeSite(site, spec, registry, bindings, scoped));
   }

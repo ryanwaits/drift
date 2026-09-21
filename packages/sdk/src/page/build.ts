@@ -23,6 +23,7 @@ import {
   fenceImportKind,
   isMigrationFence,
   isPackageModule,
+  pageLocalNames,
 } from './fences';
 import {
   attachHeading,
@@ -92,6 +93,8 @@ type EntryScope = {
 /** The primary entry's bindings, plus every entry when `alsoSpecs` is passed. */
 type PageScope = EntryScope & {
   parsed: MarkdownDocFile;
+  /** Per fence (by index): names an earlier fence declared, which shadow an export */
+  shadowed: Array<ReadonlySet<string>>;
   entries: EntryScope[];
   /** Exports the entries give different signatures */
   ambiguous: ReadonlySet<string>;
@@ -128,6 +131,7 @@ function pageScope(opts: BuildPageDocumentOptions): PageScope {
     scope = {
       ...entries[0],
       parsed,
+      shadowed: pageLocalNames(codes, packageName),
       entries,
       ambiguous: secondaries.length > 0 ? ambiguousExports([opts, ...secondaries]) : NONE,
     };
@@ -310,12 +314,12 @@ function fenceClaims(
 function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): Claim[] {
   const { file, content } = opts;
   const packageName = opts.packageName ?? opts.spec.meta.name;
-  const { parsed } = pageScope(opts);
+  const { parsed, shadowed } = pageScope(opts);
   // Bindings are per entry: a `zod/mini` fence never types a `zod` one.
   const bindingsOf = new Map<EntryScope, Map<string, string>>();
   const claims: Claim[] = [];
 
-  for (const block of parsed.codeBlocks) {
+  for (const [index, block] of parsed.codeBlocks.entries()) {
     const { entry, unsure } = fenceScope(opts, block.code);
     const { spec, registry, namespaces, namedImports, aliases } = entry;
     const bindings = extractExportBindings(block.code, {
@@ -326,6 +330,7 @@ function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
       registry,
       namespaces,
       ambiguous: unsure,
+      shadowed: shadowed[index],
     });
     bindingsOf.set(entry, bindings);
     const skip =
@@ -336,6 +341,7 @@ function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
       namedImports,
       aliases,
       ambiguous: unsure,
+      shadowed: shadowed[index],
       skip,
     })) {
       const loc = fenceLocator(file, content, block, hit, headings);
@@ -536,17 +542,18 @@ function inlineClaims(
 
   // Fence mentions: one per (fence, export), on the referencing token inside
   // that fence. The first call, else the import. A renamed or default import
-  // is its export; a name the fence declares, or imports from elsewhere, is not.
-  const { parsed } = pageScope(opts);
+  // is its export; a name the fence declares, an earlier fence declared, or
+  // the fence imports from elsewhere, is not.
+  const { parsed, shadowed } = pageScope(opts);
   const packageName = opts.packageName ?? spec.meta.name;
-  for (const block of parsed.codeBlocks) {
+  for (const [index, block] of parsed.codeBlocks.entries()) {
     // A fence that imports a secondary entry mentions that entry's exports.
     const { spec, registry, aliases } = fenceScope(opts, block.code).entry;
     const imports = extractFenceImports(block.code);
     const foreign = new Set(
       imports.filter((i) => !isPackageModule(i.from, packageName)).map((i) => i.name),
     );
-    const locals = extractLocalNames(block.code);
+    const locals = new Set([...extractLocalNames(block.code), ...shadowed[index]]);
     const mentions: Array<{ exportName: string; text: string; line: number; col: number }> = [];
     for (const callee of extractBareCallees(block.code)) {
       if (locals.has(callee.name) || foreign.has(callee.name)) continue;

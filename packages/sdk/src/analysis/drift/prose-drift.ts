@@ -12,6 +12,7 @@ import {
   extractFenceCalls,
   fenceImportKind,
   isMigrationFence,
+  pageLocalNames,
 } from '../../page/fences';
 import { collectHeadings, sectionText } from '../../page/locators';
 import {
@@ -195,6 +196,8 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
     const fileNonPackageParams = new Set<string>();
     const flaggedDeprecated = new Set<string>();
     const codes = file.codeBlocks.map((b) => b.code);
+    // Names an earlier fence declared: the reader's objects, not the exports.
+    const shadowed = pageLocalNames(codes, packageName);
     // What the page binds, per entry: a `zod/mini` fence never types a `zod` one.
     const states = entries.map((entry, i) => ({
       entry,
@@ -214,7 +217,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
         : { namespaces: new Set<string>(), aliases: new Map<string, string>() }),
     }));
 
-    for (const block of file.codeBlocks) {
+    for (const [index, block] of file.codeBlocks.entries()) {
       const at = fenceEntry(block.code, importSpecifier ?? packageName, secondaries);
       const state = states[at.index];
       const active = state.entry.registry;
@@ -236,6 +239,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
         state.entry.spec,
         state.namespaces,
         unsure,
+        shadowed[index],
       );
 
       const skipFence =
@@ -422,12 +426,18 @@ function accumulateBlockContext(
   spec?: ApiSpec,
   namespaces?: ReadonlySet<string>,
   ambiguous?: ReadonlySet<string>,
+  shadowed?: ReadonlySet<string>,
 ): void {
   try {
     const imports = extractImportsAST(code);
     for (const imp of imports) {
       if (imp.kind === 'side-effect') continue;
-      if (imp.from === packageName || imp.from.startsWith(`${packageName}/`)) continue;
+      if (imp.from === packageName || imp.from.startsWith(`${packageName}/`)) {
+        // Importing the name from the package rebinds it to the export.
+        externalImports.delete(imp.name);
+        localDeclarations.delete(imp.name);
+        continue;
+      }
       externalImports.add(imp.name);
     }
   } catch {
@@ -446,6 +456,7 @@ function accumulateBlockContext(
       spec,
       namespaces,
       ambiguous,
+      new Set([...(shadowed ?? []), ...externalImports]),
     )) {
       packageDerived.add(name);
       if (returnType) packageDerivedTypes?.set(name, returnType);
@@ -831,6 +842,7 @@ function extractLocalDeclarations(code: string): Set<string> {
  * type (the class itself for `new`). A destructured element holds the closed
  * spec type of its own property or tuple position, never the return type;
  * `undefined` when there is none, which also shadows an earlier binding.
+ * A callee in `notOurs` (declared on the page, imported from elsewhere) is no export.
  */
 function extractPackageDerivedNames(
   code: string,
@@ -838,6 +850,7 @@ function extractPackageDerivedNames(
   spec?: ApiSpec,
   namespaces: ReadonlySet<string> = new Set(),
   ambiguous: ReadonlySet<string> = new Set(),
+  notOurs: ReadonlySet<string> = new Set(),
 ): Map<string, string | undefined> {
   const names = new Map<string, string | undefined>();
 
@@ -859,7 +872,9 @@ function extractPackageDerivedNames(
         const calleeName = !fn
           ? undefined
           : ts.isIdentifier(fn)
-            ? fn.text
+            ? notOurs.has(fn.text)
+              ? undefined
+              : fn.text
             : ts.isPropertyAccessExpression(fn) &&
                 ts.isIdentifier(fn.expression) &&
                 namespaces.has(fn.expression.text)

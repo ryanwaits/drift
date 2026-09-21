@@ -75,6 +75,64 @@ export function extractLocalNames(code: string): Set<string> {
   return names;
 }
 
+/**
+ * Per fence, the names the page has made its own by then: a top-level
+ * `const|let|var|function|class` (destructured too) in an EARLIER fence. Such a
+ * name is the reader's object in later fences, never the export it shares a
+ * name with, whatever its initializer (`const useStore = create(...)`). A fence
+ * that imports the name from the package rebinds it to the export, from that
+ * fence on. Declarations nested in a function body are not page scope; a
+ * printed signature (`function f(a: T): R` with no body, `declare ...`) is the
+ * export's own declaration, not a shadow.
+ */
+export function pageLocalNames(
+  codes: readonly string[],
+  packageName: string,
+): Array<ReadonlySet<string>> {
+  const declared = new Set<string>();
+  return codes.map((code) => {
+    for (const imp of extractFenceImports(code)) {
+      if (isPackageModule(imp.from, packageName)) declared.delete(imp.name);
+    }
+    const visible = new Set(declared);
+    for (const name of topLevelNames(code)) declared.add(name);
+    return visible;
+  });
+}
+
+function topLevelNames(code: string): Set<string> {
+  const names = new Set<string>();
+  try {
+    const sourceFile = ts.createSourceFile(
+      'temp.ts',
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const bind = (name: TS.BindingName): void => {
+      if (ts.isIdentifier(name)) names.add(name.text);
+      else for (const el of name.elements) if (ts.isBindingElement(el)) bind(el.name);
+    };
+    for (const statement of sourceFile.statements) {
+      const ambient =
+        ts.canHaveModifiers(statement) &&
+        ts.getModifiers(statement)?.some((m) => m.kind === ts.SyntaxKind.DeclareKeyword);
+      if (ambient) continue;
+      if (ts.isVariableStatement(statement)) {
+        for (const decl of statement.declarationList.declarations) bind(decl.name);
+      } else if (ts.isFunctionDeclaration(statement)) {
+        if (statement.name && statement.body) names.add(statement.name.text);
+      } else if (ts.isClassDeclaration(statement) && statement.name) {
+        names.add(statement.name.text);
+      }
+    }
+  } catch {
+    // parse failure
+  }
+  return names;
+}
+
 export type FenceImport = {
   /** Local binding (`b` in `import { a as b }`) */
   name: string;
@@ -172,7 +230,7 @@ export function declaredBindings(name: TS.BindingName): {
  * or tuple position (needs `spec` and `registry`), never to the return type;
  * otherwise it is unbound, and shadows an earlier binding of that name.
  * `ns.create()` through a namespace alias binds like `create()`. A callee in
- * `ambiguous` binds nothing. Later fences reuse earlier bindings.
+ * `ambiguous` or `shadowed` binds nothing. Later fences reuse earlier bindings.
  */
 export function extractExportBindings(
   code: string,
@@ -187,9 +245,11 @@ export function extractExportBindings(
     namespaces?: ReadonlySet<string>;
     /** Exports that bind nothing here: another entry of the package types them differently */
     ambiguous?: ReadonlySet<string>;
+    /** Names the page declared in an earlier fence: a bare callee among them is no export */
+    shadowed?: ReadonlySet<string>;
   } = {},
 ): Map<string, string> {
-  const { exportNames, spec, prior, aliases, registry, namespaces, ambiguous } = scope;
+  const { exportNames, spec, prior, aliases, registry, namespaces, ambiguous, shadowed } = scope;
   const names = new Map(prior ?? []);
   for (const [k, v] of extractInstanceBindings(code)) names.set(k, v);
   try {
@@ -207,6 +267,7 @@ export function extractExportBindings(
       if (ts.isAwaitExpression(expr)) expr = expr.expression;
       if (!ts.isCallExpression(expr) && !ts.isNewExpression(expr)) return undefined;
       if (ts.isIdentifier(expr.expression)) {
+        if (shadowed?.has(expr.expression.text)) return undefined;
         const callee = aliases?.get(expr.expression.text) ?? expr.expression.text;
         if (!exportNames?.has(callee)) return undefined;
         return { exportName: callee, isNew: ts.isNewExpression(expr) };

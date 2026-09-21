@@ -4343,3 +4343,132 @@ describe('a type `$ref` resolves by id first, then by an unambiguous name', () =
     expect(unknownKeys("const s = createStore({ name: 'a', bogus: true })", false)).toEqual([]);
   });
 });
+
+describe('a name the page declares shadows the export of the same name in later fences', () => {
+  const F3 = '```';
+
+  function storeSpec(): ApiSpec {
+    const param = (name: string) => ({ name, required: true, schema: { 'x-ts-type': 'unknown' } });
+    return {
+      meta: { name: 'zustand' },
+      exports: [
+        {
+          id: 'useStore',
+          name: 'useStore',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [param('api'), param('selector')],
+              returns: { schema: { $ref: '#/types/StoreApi' } },
+            },
+          ],
+        },
+        {
+          id: 'create',
+          name: 'create',
+          kind: 'function',
+          signatures: [{ parameters: [param('initializer')] }],
+        },
+        {
+          id: 'StoreApi',
+          name: 'StoreApi',
+          kind: 'interface',
+          members: [{ name: 'getState', kind: 'method' }],
+        },
+      ],
+    };
+  }
+
+  function storePage(...fences: string[]) {
+    const spec = storeSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/use-shallow.md',
+      content: `# useShallow\n\n${fences.map((f) => `${F3}tsx\n${f}\n${F3}\n`).join('\nThen:\n\n')}`,
+    });
+  }
+
+  function useStoreClaims(...fences: string[]) {
+    return storePage(...fences)
+      .claims.filter((c) => c.specRef?.export === 'useStore')
+      .map((c) => [c.rule?.type ?? 'candidate', c.text, c.locator.start.line]);
+  }
+
+  const BOUND = 'const useStore = create<State>((set) => ({}))';
+  const CALL = 'const searchValue = useStore((state) => state.searchValue)';
+
+  test("the reader's own bound hook is not the export: no rule, no inventory claim", () => {
+    expect(useStoreClaims(BOUND, CALL)).toEqual([]);
+  });
+
+  test('function, class, let and destructured declarations shadow too', () => {
+    expect(useStoreClaims('function useStore(sel) {}', CALL)).toEqual([]);
+    expect(useStoreClaims('let useStore', CALL)).toEqual([]);
+    expect(useStoreClaims('const { useStore } = createContext()', CALL)).toEqual([]);
+    expect(useStoreClaims('const [useStore] = createHooks()', CALL)).toEqual([]);
+    expect(useStoreClaims('export const useStore = create(fn)', CALL)).toEqual([]);
+  });
+
+  test('a later fence that re-imports the name rebinds it to the export, from that fence on', () => {
+    expect(
+      useStoreClaims(BOUND, CALL, `import { useStore } from 'zustand'\n\n${CALL}`, CALL),
+    ).toEqual([
+      ['prose-missing-required', 'useStore((state) => state.searchValue)', 18],
+      ['prose-missing-required', 'useStore((state) => state.searchValue)', 24],
+    ]);
+  });
+
+  test('a declaration nested in a function body is not page scope', () => {
+    expect(useStoreClaims('function App() {\n  const useStore = make()\n}', CALL)).toEqual([
+      ['prose-missing-required', 'useStore((state) => state.searchValue)', 12],
+    ]);
+  });
+
+  test('a printed signature of the export is not a shadow', () => {
+    const hit = [['prose-missing-required', 'useStore((state) => state.searchValue)', 11]];
+    const signature = 'function useStore<S, U>(\n  api: S,\n  selector: (state: S) => U\n): U';
+    expect(useStoreClaims(signature, CALL).slice(-1)).toEqual([
+      ['prose-missing-required', 'useStore((state) => state.searchValue)', 13],
+    ]);
+    expect(
+      useStoreClaims('declare const useStore: Hook\ndeclare function create(): void', CALL),
+    ).toEqual(hit);
+  });
+
+  test('a fence before the declaration is still the export', () => {
+    expect(useStoreClaims(CALL, BOUND)).toEqual([
+      ['prose-missing-required', 'useStore((state) => state.searchValue)', 4],
+    ]);
+  });
+
+  test('a variable bound to the shadowed callee is not typed by the export', () => {
+    const doc = storePage(BOUND, 'const api = useStore(sel)\napi.bogus()');
+    expect(doc.claims.filter((c) => c.rule).map((c) => c.rule?.type)).toEqual([]);
+  });
+
+  test('the deprecated check follows the same scope: shadowed, then re-imported', () => {
+    const spec = storeSpec();
+    spec.exports.push({
+      id: 'createContext',
+      name: 'createContext',
+      kind: 'function',
+      deprecated: true,
+      signatures: [{ parameters: [] }],
+    });
+    const deprecated = (...fences: string[]) =>
+      buildPageDocument({
+        spec,
+        registry: buildExportRegistry(spec),
+        file: 'docs/context.md',
+        content: `# Context\n\n${fences.map((f) => `${F3}ts\n${f}\n${F3}\n`).join('\nThen:\n\n')}`,
+      })
+        .claims.filter((c) => c.rule?.type === 'prose-deprecated-reference')
+        .map((c) => c.locator.start.line);
+    const own = 'const createContext = () => ({})';
+    expect(deprecated(own, 'const ctx = createContext()')).toEqual([]);
+    expect(
+      deprecated(own, "import { createContext } from 'zustand'\n\nconst ctx = createContext()"),
+    ).toEqual([10]);
+  });
+});
