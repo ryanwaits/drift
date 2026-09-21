@@ -11,6 +11,8 @@ import {
   fenceImportKind,
   isMigrationFence,
 } from '../../page/fences';
+import { collectHeadings, sectionText } from '../../page/locators';
+import { parseDeprecationReplacement } from '../../page/spec-ref';
 import { ts } from '../../ts-module';
 import type { ExportRegistry, SpecDocDrift } from './types';
 import { findClosestMatch } from './utils';
@@ -518,6 +520,9 @@ function detectUnresolvedMembers(
  * - imports of deprecated exports from the package
  * - member calls whose name is deprecated on every type that declares it
  * - suppressed when "deprecat…" appears within ±5 lines of the block
+ * - suppressed when the block's section (nearest heading's section, intros of
+ *   the headings above it, frontmatter; whole page under the H1) says
+ *   deprecated / no longer maintained / legacy, or names the replacement
  * - one finding per name per file
  */
 function detectDeprecatedReferences(
@@ -531,9 +536,15 @@ function detectDeprecatedReferences(
   packageDerivedTypes: Map<string, string>,
 ): void {
   if (hasDeprecationContext(file, block.lineStart, block.lineEnd)) return;
+  const section = file.content
+    ? sectionText(file.content, collectHeadings(file.content), block.lineStart)
+    : '';
+  if (DEPRECATION_NOTE.test(section)) return;
 
   const push = (name: string, note: string, line: number) => {
     if (flaggedDeprecated.has(name)) return;
+    const replacement = parseDeprecationReplacement(note);
+    if (replacement && wordRe(replacement).test(section)) return;
     flaggedDeprecated.add(name);
     issues.push({
       type: 'prose-deprecated-reference',
@@ -581,6 +592,13 @@ function detectDeprecatedReferences(
     if (declaredOn && [...declaredOn].some((parent) => !dep.parents.has(parent))) continue;
     push(call.methodName, dep.note, block.lineStart + call.line);
   }
+}
+
+/** Wording a section uses to own up to a deprecation. */
+const DEPRECATION_NOTE: RegExp = /deprecat|no longer (?:maintained|supported)|\blegacy\b/i;
+
+function wordRe(word: string): RegExp {
+  return new RegExp(`(?<![\\w$])${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w$])`);
 }
 
 /** True when the prose around a code block already mentions deprecation. */

@@ -174,7 +174,11 @@ function fenceClaims(
         if (imp) {
           text = imp.text;
           specRef = resolveApiName(spec, registry, imp.imported);
-          loc = locatorForSpan(file, content, text, hintLine, headings, block.lineStart + 1);
+          // `lineStart` is the fence line; code line 0 is the line after it.
+          const found = locateOnLine(content, block.lineStart + 1 + imp.line, text);
+          loc = found
+            ? attachHeading({ path: file, ...found }, headings)
+            : locatorForSpan(file, content, text, hintLine, headings, block.lineStart + 1);
         }
       }
     }

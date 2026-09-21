@@ -2237,3 +2237,74 @@ describe('aliased imports are checked by their imported name', () => {
     ]);
   });
 });
+
+describe('prose-deprecated-reference reads the deprecation note of the enclosing section', () => {
+  function watchSpec(): ApiSpec {
+    return {
+      meta: { name: 'valtio' },
+      exports: [
+        {
+          id: 'watch',
+          name: 'watch',
+          kind: 'function',
+          deprecated: true,
+          deprecationReason: 'Use `effect` instead.',
+        },
+        { id: 'effect', name: 'effect', kind: 'function' },
+        { id: 'proxy', name: 'proxy', kind: 'function' },
+      ],
+    };
+  }
+
+  const FILLER = 'One.\n\nTwo.\n\nThree.\n\nFour.\n\nFive.\n\nSix.\n';
+  const FENCE_WATCH =
+    "```js\nimport { proxy } from 'valtio'\nimport { watch } from 'valtio'\n```\n";
+
+  function deprecated(content: string) {
+    const spec = watchSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/api/utils/watch.mdx',
+      content,
+    }).claims.filter((c) => c.rule?.type === 'prose-deprecated-reference');
+  }
+
+  test('note under the H1 covers a fence in a later subsection (valtio watch.mdx)', () => {
+    const content = `---\ntitle: 'watch'\n---\n\n# \`watch\`\n\n> **⚠️ Deprecated**\n>\n> Please migrate.\n\n## Subscription via a getter\n\n${FILLER}\n${FENCE_WATCH}`;
+    expect(deprecated(content)).toEqual([]);
+  });
+
+  test('"no longer maintained", "legacy", and the replacement name each count', () => {
+    for (const note of [
+      'This util is NO LONGER MAINTAINED.',
+      'A Legacy helper.',
+      'Prefer `effect` for new code.',
+    ]) {
+      const content = `# Utils\n\n## watch\n\n${note}\n\n${FILLER}\n${FENCE_WATCH}`;
+      expect(deprecated(content)).toEqual([]);
+    }
+  });
+
+  test('frontmatter counts for the whole page', () => {
+    const content = `---\ntitle: watch\ndeprecated: true\n---\n\n# watch\n\n## Usage\n\n${FILLER}\n${FENCE_WATCH}`;
+    expect(deprecated(content)).toEqual([]);
+  });
+
+  test('a note in a sibling section does not cover the mention', () => {
+    const content = `# Utils\n\n## old\n\nThis one is deprecated.\n\n${FILLER}\n## watch\n\n${FILLER}\n${FENCE_WATCH}`;
+    const hits = deprecated(content);
+    expect(hits.map((c) => c.rule?.issue)).toEqual([
+      "Docs reference deprecated API 'watch' without noting the deprecation",
+    ]);
+    expect(hits[0]?.locator.headingText).toBe('watch');
+    expect(hits[0]?.text).toBe('watch');
+  });
+
+  test('no note anywhere still fires, located on the import, not the frontmatter title', () => {
+    const content = `---\ntitle: 'watch'\n---\n\n# \`watch\`\n\n## Usage\n\n${FILLER}\n${FENCE_WATCH}`;
+    const hits = deprecated(content);
+    expect(hits.length).toBe(1);
+    expect(hits[0]?.locator.start).toEqual({ line: 23, col: 10 });
+  });
+});

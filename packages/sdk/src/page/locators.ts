@@ -195,6 +195,26 @@ export function headingAncestorNames(headings: PageHeading[], line: number): str
   return headingAncestors(headings, line).map((h) => normalizeApiName(h.text));
 }
 
+/**
+ * Text a mention on `line` answers to: its nearest heading's whole section
+ * (subsections included), the intro under each enclosing heading, and the
+ * preamble/frontmatter. A mention in the preamble or directly under the H1
+ * takes the whole page. Sibling sections are never included.
+ */
+export function sectionText(content: string, headings: PageHeading[], line: number): string {
+  const nearest = nearestHeading(headings, line);
+  if (!nearest || nearest.level === 1) return content;
+  const lines = content.split('\n');
+  const nextLine = (from: PageHeading, maxLevel: number): number =>
+    headings.find((h) => h.line > from.line && h.level <= maxLevel)?.line ?? lines.length + 1;
+  const parts = [lines.slice(0, (headings[0]?.line ?? 1) - 1)];
+  for (const h of headingAncestors(headings, line)) {
+    const end = h === nearest ? nextLine(h, h.level) : nextLine(h, 6);
+    parts.push(lines.slice(h.line - 1, end - 1));
+  }
+  return parts.map((p) => p.join('\n')).join('\n');
+}
+
 export function attachHeading(
   locator: Omit<Locator, 'headingId' | 'headingText'>,
   headings: PageHeading[],
