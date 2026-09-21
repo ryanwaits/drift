@@ -60,19 +60,20 @@ function extraSignatures(entry: {
 export function namedReturnType(schema: ApiSchema | undefined): string | undefined {
   if (!schema || typeof schema !== 'object') return undefined;
   const s = schema as Record<string, unknown>;
-  const ref = typeof s.$ref === 'string' ? s.$ref.split('/').pop() : undefined;
-  if (ref === 'Promise') {
-    const args = s['x-ts-type-arguments'] ?? s.typeArguments;
-    if (Array.isArray(args) && args.length > 0) return namedReturnType(args[0] as ApiSchema);
-    return undefined;
-  }
-  return ref;
+  const awaited = unwrapPromise(schema);
+  if (awaited !== schema) return namedReturnType(awaited);
+  return typeof s.$ref === 'string' ? s.$ref.split('/').pop() : undefined;
 }
 
 function unwrapPromise(schema: ApiSchema | undefined): ApiSchema | undefined {
   if (!schema || typeof schema !== 'object') return schema;
   const s = schema as Record<string, unknown>;
-  if (typeof s.$ref !== 'string' || s.$ref.split('/').pop() !== 'Promise') return schema;
+  // OpenPkg emits `Promise<T>` as `x-ts-type: 'Promise'`; hand-written specs as a `$ref`.
+  const isPromise =
+    typeof s.$ref === 'string'
+      ? s.$ref.split('/').pop() === 'Promise'
+      : s['x-ts-type'] === 'Promise';
+  if (!isPromise) return schema;
   const args = s['x-ts-type-arguments'] ?? s.typeArguments;
   return Array.isArray(args) && args.length > 0 ? unwrapPromise(args[0] as ApiSchema) : undefined;
 }

@@ -151,6 +151,12 @@ function fenceClaims(
   const { spec, registry, file, content } = opts;
   const parsed = parseMarkdownFile(content, file);
   const claims: Claim[] = [];
+  const { namespaces } = collectPackageNamespaces(
+    parsed.codeBlocks.map((b) => b.code),
+    registry.all,
+    opts.packageName ?? spec.meta.name,
+    opts.importSpecifier,
+  );
 
   for (const issue of issues) {
     if (issue.filePath && posixPath(issue.filePath) !== posixPath(file)) continue;
@@ -186,7 +192,12 @@ function fenceClaims(
     let loc: Locator | null = null;
     if (call && !(aboutImport && imp)) {
       text = call.text;
-      specRef = resolveCall(spec, registry, call.objectName, call.methodName);
+      // `ns.member` is the export `member`, or nothing: never `ns`'s own member.
+      specRef = namespaces.has(call.objectName)
+        ? registry.all.has(call.methodName)
+          ? makeSpecRef(spec, registry, call.methodName)
+          : null
+        : resolveCall(spec, registry, call.objectName, call.methodName, issue.owner);
       loc = fenceLocator(file, content, block, call, headings);
     } else if (imp) {
       text = pair?.invalidPair?.text ?? imp.text;
@@ -197,7 +208,11 @@ function fenceClaims(
       loc = fenceLocator(file, content, block, { text, line: codeLine, col: 0 }, headings);
     }
     if (!loc) continue;
-    if (!specRef) specRef = resolveApiName(spec, registry, target);
+    // A member is cited on the type the receiver resolved to, never looked up
+    // by bare name. One that type lacks has no spec record: a ghost.
+    if (issue.type === 'prose-unresolved-member') specRef = null;
+    else if (issue.owner) specRef = makeSpecRef(spec, registry, issue.owner, target);
+    else if (!specRef && !target.includes('.')) specRef = resolveApiName(spec, registry, target);
 
     pushUnique(claims, {
       id: claimId(file, 'fence', specRef, text, loc.start.line),

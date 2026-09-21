@@ -204,6 +204,51 @@ simnet.runSnippet('(+ 1 2)');
     expect(dep[0].suggestion).toContain('simnet.execute');
   });
 
+  test('`Promise<T>` as OpenPkg emits it (`x-ts-type`) binds the awaited value', () => {
+    const extracted: ApiSpec = {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'initSimnet',
+          name: 'initSimnet',
+          kind: 'function',
+          signatures: [
+            {
+              returns: {
+                schema: {
+                  type: 'object',
+                  'x-ts-type': 'Promise',
+                  'x-ts-type-arguments': [{ $ref: '#/types/Simnet' }],
+                },
+              },
+            },
+          ],
+        },
+        {
+          id: 'Simnet',
+          name: 'Simnet',
+          kind: 'class',
+          members: [{ name: 'runSnippet', kind: 'method', deprecated: true }],
+        },
+      ],
+    };
+    const registry = buildExportRegistry(extracted);
+    expect(registry.callableReturnTypes.get('initSimnet')).toBe('Simnet');
+    const file = parseMarkdownFile(
+      '# Guide\n\n```ts\nconst simnet = await initSimnet();\nsimnet.runSnippet();\n```\n',
+      'docs/guide.md',
+    );
+    const dep = detectProseDrift({ packageName: PKG, markdownFiles: [file], registry }).filter(
+      (i) => i.type === 'prose-deprecated-reference',
+    );
+    expect(dep.map((i) => [i.target, i.owner])).toEqual([['runSnippet', 'Simnet']]);
+  });
+
+  test('an unbound receiver is silent, even when only one type has the member', () => {
+    const issues = drift('# Guide\n\n```ts\nsession.legacyRun();\n```\n');
+    expect(issues.filter((i) => i.type === 'prose-deprecated-reference')).toHaveLength(0);
+  });
+
   test('imports from other packages are ignored', () => {
     const issues = drift(`# Guide
 

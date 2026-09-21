@@ -182,7 +182,8 @@ export function buildExportRegistry(spec: ApiSpec): ExportRegistry {
     if (!schema || typeof schema !== 'object') return undefined;
     const s = schema as Record<string, unknown>;
     const ref = typeof s.$ref === 'string' ? s.$ref.split('/').pop() : undefined;
-    if (ref === 'Promise') {
+    // OpenPkg emits `Promise<T>` as `x-ts-type: 'Promise'`; hand-written specs as a `$ref`.
+    if (ref === 'Promise' || (!ref && s['x-ts-type'] === 'Promise')) {
       const args = s['x-ts-type-arguments'] ?? s.typeArguments;
       if (Array.isArray(args) && args.length > 0) return schemaRefName(args[0]);
       return undefined;

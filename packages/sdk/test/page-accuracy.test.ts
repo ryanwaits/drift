@@ -3897,3 +3897,112 @@ describe('a backticked `.name()` is a member, or nothing', () => {
     ]);
   });
 });
+
+describe('prose-deprecated-reference judges the resolved reference, never a bare name', () => {
+  const F3 = '```';
+
+  function zodLike(): ApiSpec {
+    const ref = (name: string) => ({ $ref: `#/types/${name}` });
+    const note = [{ name: 'deprecated', text: 'Use `z.url()` instead.' }];
+    return {
+      meta: { name: 'zod' },
+      exports: [
+        {
+          id: 'url',
+          name: 'url',
+          kind: 'function',
+          signatures: [{ returns: { schema: ref('ZodURL') } }],
+        },
+        {
+          id: 'string',
+          name: 'string',
+          kind: 'function',
+          signatures: [{ returns: { schema: ref('ZodString') } }],
+        },
+        {
+          id: 'oldString',
+          name: 'oldString',
+          kind: 'function',
+          deprecated: true,
+          tags: [{ name: 'deprecated', text: 'Use `z.string()` instead.' }],
+        },
+        {
+          id: 'ZodString',
+          name: 'ZodString',
+          kind: 'class',
+          members: [
+            { name: 'url', kind: 'method', deprecated: true, tags: note },
+            {
+              name: 'min',
+              kind: 'method',
+              signatures: [{ returns: { schema: { 'x-ts-type': 'this' } } }],
+            },
+            { name: 'unwrap', kind: 'method', signatures: [{ returns: { schema: 'unknown' } }] },
+          ],
+        },
+        { id: 'ZodURL', name: 'ZodURL', kind: 'class', members: [{ name: 'min', kind: 'method' }] },
+      ],
+    };
+  }
+
+  function deprecated(code: string, imp = "import * as z from 'zod'") {
+    const spec = zodLike();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/api.md',
+      content: `# API\n\n${F3}ts\n${imp}\n${code}\n${F3}\n`,
+    })
+      .claims.filter((c) => c.rule?.type === 'prose-deprecated-reference')
+      .map((c) => [c.specRef?.export, c.specRef?.member, c.locator.start.line, c.text]);
+  }
+
+  test('`ns.name()` is the top-level export, deprecated only if that export is', () => {
+    expect(deprecated('const a = z.url()\nz.url().min(1)')).toEqual([]);
+    expect(deprecated('const a = url()', "import { url } from 'zod'")).toEqual([]);
+    expect(deprecated('const a = url()', '')).toEqual([]);
+    expect(deprecated('const a = z.oldString()')).toEqual([
+      ['oldString', undefined, 5, 'z.oldString()'],
+    ]);
+  });
+
+  test('a member through a real binding is a hit, on the owning type', () => {
+    expect(deprecated('const s = z.string()\ns.url()')).toEqual([
+      ['ZodString', 'url', 6, 's.url()'],
+    ]);
+    expect(deprecated('function f(s: ZodString) {\n  return s.url()\n}')).toEqual([
+      ['ZodString', 'url', 6, 's.url()'],
+    ]);
+  });
+
+  test('a chain resolved through spec return types is a hit', () => {
+    expect(deprecated('const a = z.string().url()')).toEqual([['ZodString', 'url', 5, 'url']]);
+    expect(deprecated('const a = z.string().min(5).url()')).toEqual([
+      ['ZodString', 'url', 5, 'url'],
+    ]);
+    expect(deprecated('const a = string().url()', "import { string } from 'zod'")).toEqual([
+      ['ZodString', 'url', 5, 'url'],
+    ]);
+  });
+
+  test("a member the receiver's type lacks is never cited on another type that has it", () => {
+    const spec = zodLike();
+    const hit = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/api.md',
+      content: `# API\n\n${F3}ts\nimport * as z from 'zod'\nconst u = z.url()\nu.unwrap()\n${F3}\n`,
+    }).claims.find((c) => c.rule?.type === 'prose-unresolved-member');
+    expect(hit?.specRef).toBeNull();
+    expect(hit?.rule?.issue).toBe("Method 'unwrap' called on 'u' does not exist on 'ZodURL'");
+    expect(hit?.rule?.suggestion).toBe("'unwrap' is not a member of 'ZodURL'");
+  });
+
+  test('an unresolved receiver or chain is silent', () => {
+    expect(deprecated('schema.url()')).toEqual([]);
+    expect(deprecated('const a = z.string().unwrap().url()')).toEqual([]);
+    expect(deprecated('const a = z.string<T>().url()')).toEqual([]);
+    expect(deprecated('const a = other().url()')).toEqual([]);
+    expect(deprecated('const string = () => x\nconst a = string().url()', '')).toEqual([]);
+  });
+});

@@ -41,6 +41,8 @@ export type SpecDocDrift = {
   filePath?: string;
   /** Source line number (for prose drift) */
   line?: number;
+  /** Type that owns `target` when the finding is about a member (`ZodString` for `url`) */
+  owner?: string;
 };
 
 /**

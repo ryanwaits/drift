@@ -13,7 +13,12 @@ import {
   isMigrationFence,
 } from '../../page/fences';
 import { collectHeadings, sectionText } from '../../page/locators';
-import { destructuredTypeName, parseDeprecationReplacement } from '../../page/spec-ref';
+import {
+  destructuredTypeName,
+  namedReturnType,
+  parseDeprecationReplacement,
+  signaturesOf,
+} from '../../page/spec-ref';
 import { ts } from '../../ts-module';
 import type { ApiSpec } from '../api-spec';
 import type { ExportRegistry, SpecDocDrift } from './types';
@@ -179,11 +184,12 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
     const fileNonPackageParams = new Set<string>();
     const filePackageParamTypes = new Map<string, string>();
     const flaggedDeprecated = new Set<string>();
-    const { namespaces } = collectPackageNamespaces(
+    const { namespaces, aliases } = collectPackageNamespaces(
       file.codeBlocks.map((b) => b.code),
       registry.all,
       packageName,
       importSpecifier,
+      registry.localNames,
     );
 
     for (const block of file.codeBlocks) {
@@ -200,6 +206,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
         fileNonPackageParams,
         filePackageParamTypes,
         spec,
+        namespaces,
       );
 
       const skipFence =
@@ -251,9 +258,15 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
           packageName,
           registry,
           issues,
-          fileExternalImports,
           flaggedDeprecated,
-          filePackageDerivedTypes,
+          {
+            derived: filePackageDerivedTypes,
+            params: filePackageParamTypes,
+            namespaces,
+            aliases,
+            notOurs: new Set([...fileExternalImports, ...fileLocalDeclarations]),
+          },
+          spec,
         );
       }
     }
@@ -369,6 +382,7 @@ function accumulateBlockContext(
   nonPackageParams?: Set<string>,
   packageParamTypes?: Map<string, string>,
   spec?: ApiSpec,
+  namespaces?: ReadonlySet<string>,
 ): void {
   try {
     const imports = extractImportsAST(code);
@@ -387,7 +401,7 @@ function accumulateBlockContext(
 
   // Track variables derived from package export calls (e.g. `const simnet = await initSimnet()`)
   if (packageDerived && registry) {
-    for (const [name, returnType] of extractPackageDerivedNames(code, registry, spec)) {
+    for (const [name, returnType] of extractPackageDerivedNames(code, registry, spec, namespaces)) {
       packageDerived.add(name);
       if (returnType) packageDerivedTypes?.set(name, returnType);
       else packageDerivedTypes?.delete(name);
@@ -514,15 +528,11 @@ function detectUnresolvedMembers(
     if (!registry.closedReceivers.has(typeName)) continue;
     if (registry.typeMembers.get(call.methodName)?.has(typeName)) continue;
 
-    const match = findClosestMatch(call.methodName, registry.allMemberNames);
-    const parentHint = match
-      ? (() => {
-          const matchParents = registry.typeMembers.get(match.value);
-          return matchParents ? ` on ${Array.from(matchParents).join(', ')}` : '';
-        })()
-      : '';
+    // Only members of the receiver's own type: another type's member is no fix.
+    const own = registry.allMemberNames.filter((m) => registry.typeMembers.get(m)?.has(typeName));
+    const match = findClosestMatch(call.methodName, own);
     const suggestion = match
-      ? `Did you mean '${match.value}'${parentHint}?`
+      ? `Did you mean '${match.value}' on ${typeName}?`
       : `'${call.methodName}' is not a member of '${typeName}'`;
 
     issues.push({
@@ -532,17 +542,88 @@ function detectUnresolvedMembers(
       suggestion,
       filePath,
       line: lineStart + call.line,
+      owner: typeName,
     });
   }
+}
+
+/** What a fence identifier is known to be, for resolving a reference. */
+type ReferenceScope = {
+  /** Variable → spec type, from a package call / `new` */
+  derived: ReadonlyMap<string, string>;
+  /** Parameter → annotated package type */
+  params: ReadonlyMap<string, string>;
+  /** `import * as ns` aliases of the package */
+  namespaces: ReadonlySet<string>;
+  /** Renamed / default imports: local → export */
+  aliases: ReadonlyMap<string, string>;
+  /** Imported from elsewhere or declared on the page: never the export of that name */
+  notOurs: ReadonlySet<string>;
+};
+
+/** Export a callee names: `f(...)` or `ns.f(...)`. Undefined for anything else. */
+function calleeExport(
+  callee: TS.Expression,
+  registry: ExportRegistry,
+  scope: ReferenceScope,
+): string | undefined {
+  if (ts.isIdentifier(callee)) {
+    if (scope.notOurs.has(callee.text)) return undefined;
+    const name = scope.aliases.get(callee.text) ?? callee.text;
+    return registry.all.has(name) ? name : undefined;
+  }
+  if (
+    ts.isPropertyAccessExpression(callee) &&
+    ts.isIdentifier(callee.expression) &&
+    scope.namespaces.has(callee.expression.text)
+  ) {
+    return registry.all.has(callee.name.text) ? callee.name.text : undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Spec type of an expression, through visible bindings and spec return types
+ * only: a bound variable, `new T()`, `f()` / `ns.f()` (first overload, no
+ * explicit type arguments), `x.m()` where the spec says what `T.m` returns
+ * (`this` stays `T`). Undefined the moment a link is not certain.
+ */
+function expressionType(
+  expr: TS.Expression,
+  registry: ExportRegistry,
+  scope: ReferenceScope,
+  spec?: ApiSpec,
+): string | undefined {
+  let e = expr;
+  while (ts.isParenthesizedExpression(e) || ts.isNonNullExpression(e) || ts.isAwaitExpression(e)) {
+    e = e.expression;
+  }
+  if (ts.isIdentifier(e)) return scope.derived.get(e.text) ?? scope.params.get(e.text);
+  if (ts.isNewExpression(e)) {
+    const name = calleeExport(e.expression, registry, scope);
+    return name && registry.closedReceivers.has(name) ? name : undefined;
+  }
+  if (!ts.isCallExpression(e) || e.typeArguments?.length) return undefined;
+  const exportName = calleeExport(e.expression, registry, scope);
+  if (exportName) return registry.callableReturnTypes.get(exportName);
+  if (!spec || !ts.isPropertyAccessExpression(e.expression)) return undefined;
+  const owner = expressionType(e.expression.expression, registry, scope, spec);
+  if (!owner) return undefined;
+  const returns = signaturesOf(spec, owner, e.expression.name.text)[0]?.returns?.schema;
+  if (returns && typeof returns === 'object' && returns['x-ts-type'] === 'this') return owner;
+  return namedReturnType(returns);
 }
 
 /**
  * Detect references to deprecated exports/members in code blocks whose
  * surrounding prose never acknowledges the deprecation.
  *
- * Deterministic and conservative:
+ * The check is on the resolved reference, never on a bare name:
  * - imports of deprecated exports from the package
- * - member calls whose name is deprecated on every type that declares it
+ * - `f(...)` / `ns.f(...)` is the export `f`: deprecated only if that export is.
+ *   `z.url()` is never the deprecated method `ZodString.url`
+ * - `x.m(...)` is `T.m` only when `x` is `T` through a binding or a chain of
+ *   spec return types (`z.string().url()`); an unknown receiver is silent
  * - suppressed when "deprecat…" appears within ±5 lines of the block
  * - suppressed when the block's section (nearest heading's section, intros of
  *   the headings above it, frontmatter; whole page under the H1) says
@@ -555,9 +636,9 @@ function detectDeprecatedReferences(
   packageName: string,
   registry: ExportRegistry,
   issues: SpecDocDrift[],
-  fileExternalImports: Set<string>,
   flaggedDeprecated: Set<string>,
-  packageDerivedTypes: Map<string, string>,
+  scope: ReferenceScope,
+  spec?: ApiSpec,
 ): void {
   if (hasDeprecationContext(file, block.lineStart, block.lineEnd)) return;
   const section = file.content
@@ -565,20 +646,22 @@ function detectDeprecatedReferences(
     : '';
   if (DEPRECATION_NOTE.test(section)) return;
 
-  const push = (name: string, note: string, line: number) => {
-    if (flaggedDeprecated.has(name)) return;
+  const push = (name: string, note: string, line: number, owner?: string) => {
+    const key = owner ? `${owner}.${name}` : name;
+    if (flaggedDeprecated.has(key)) return;
     const replacement = parseDeprecationReplacement(note);
     if (replacement && wordRe(replacement).test(section)) return;
-    flaggedDeprecated.add(name);
+    flaggedDeprecated.add(key);
     issues.push({
       type: 'prose-deprecated-reference',
       target: name,
-      issue: `Docs reference deprecated API '${name}' without noting the deprecation`,
+      issue: `Docs reference deprecated API '${key}' without noting the deprecation`,
       suggestion: note
         ? `Deprecation note: ${note}`
         : 'Add a deprecation note or update the docs to the replacement API',
       filePath: file.path,
       line,
+      ...(owner ? { owner } : {}),
     });
   };
 
@@ -594,27 +677,39 @@ function detectDeprecatedReferences(
     // parse failure — skip imports check
   }
 
-  // Member calls on deprecated members. When the object's type is known
-  // (derived from a package call, e.g. `const simnet = await initSimnet()` →
-  // Simnet), judge against that type directly. Otherwise only flag when
-  // unambiguous: every type declaring this member marks it deprecated.
-  for (const call of extractMethodCallsAST(block.code)) {
-    if (JS_BUILTIN_METHODS.has(call.methodName)) continue;
-    if (fileExternalImports.has(call.objectName)) continue;
-    const dep = registry.deprecatedMembers.get(call.methodName);
-    if (!dep) continue;
-
-    const knownType = packageDerivedTypes.get(call.objectName);
-    if (knownType) {
-      if (dep.parents.has(knownType)) {
-        push(call.methodName, dep.note, block.lineStart + call.line);
+  try {
+    const sourceFile = ts.createSourceFile(
+      'temp.ts',
+      block.code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const visit = (node: TS.Node): void => {
+      if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
+        const line =
+          block.lineStart + sourceFile.getLineAndCharacterOfPosition(node.getStart()).line;
+        const exportName = calleeExport(node.expression, registry, scope);
+        const note = exportName ? registry.deprecated.get(exportName) : undefined;
+        if (exportName && note !== undefined) {
+          push(exportName, note, line);
+        } else if (!exportName && ts.isPropertyAccessExpression(node.expression)) {
+          const member = node.expression.name.text;
+          const dep = registry.deprecatedMembers.get(member);
+          const receiver = node.expression.expression;
+          const isNamespace = ts.isIdentifier(receiver) && scope.namespaces.has(receiver.text);
+          const owner =
+            dep && !isNamespace && !JS_BUILTIN_METHODS.has(member)
+              ? expressionType(receiver, registry, scope, spec)
+              : undefined;
+          if (dep && owner && dep.parents.has(owner)) push(member, dep.note, line, owner);
+        }
       }
-      continue;
-    }
-
-    const declaredOn = registry.typeMembers.get(call.methodName);
-    if (declaredOn && [...declaredOn].some((parent) => !dep.parents.has(parent))) continue;
-    push(call.methodName, dep.note, block.lineStart + call.line);
+      ts.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+  } catch {
+    // parse failure — skip call checks
   }
 }
 
@@ -689,6 +784,7 @@ function extractPackageDerivedNames(
   code: string,
   registry: ExportRegistry,
   spec?: ApiSpec,
+  namespaces: ReadonlySet<string> = new Set(),
 ): Map<string, string | undefined> {
   const names = new Map<string, string | undefined>();
 
@@ -705,11 +801,20 @@ function extractPackageDerivedNames(
       if (ts.isVariableDeclaration(node) && node.initializer) {
         let expr: TS.Expression = node.initializer;
         if (ts.isAwaitExpression(expr)) expr = expr.expression;
+        // `f(...)`, `new F(...)`, or the same through a namespace alias: `z.string()`.
+        const fn = ts.isCallExpression(expr) || ts.isNewExpression(expr) ? expr.expression : null;
+        const calleeName = !fn
+          ? undefined
+          : ts.isIdentifier(fn)
+            ? fn.text
+            : ts.isPropertyAccessExpression(fn) &&
+                ts.isIdentifier(fn.expression) &&
+                namespaces.has(fn.expression.text)
+              ? fn.name.text
+              : undefined;
         const callee =
-          (ts.isCallExpression(expr) || ts.isNewExpression(expr)) &&
-          ts.isIdentifier(expr.expression) &&
-          registry.all.has(expr.expression.text)
-            ? { exportName: expr.expression.text, isNew: ts.isNewExpression(expr) }
+          calleeName && registry.all.has(calleeName)
+            ? { exportName: calleeName, isNew: ts.isNewExpression(expr) }
             : undefined;
         const { bound, unbound } = declaredBindings(node.name);
         const destructured = bound.some((b) => b.key !== undefined) || unbound.length > 0;

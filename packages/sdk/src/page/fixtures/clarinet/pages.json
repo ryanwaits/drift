@@ -5,17 +5,17 @@
     "title": "Browser SDK reference",
     "claims": [
       {
-        "id": "docs/browser-sdk-reference.md:fence:Simnet.runSnippet:6",
+        "id": "docs/browser-sdk-reference.md:fence:Simnet.runSnippet:7",
         "kind": "fence",
         "text": "simnet.runSnippet(\"(+ 1 2)\")",
         "locator": {
           "path": "docs/browser-sdk-reference.md",
           "start": {
-            "line": 6,
+            "line": 7,
             "col": 1
           },
           "end": {
-            "line": 6,
+            "line": 7,
             "col": 28
           },
           "headingId": "empty-session",
@@ -31,10 +31,33 @@
         },
         "rule": {
           "type": "prose-deprecated-reference",
-          "issue": "Docs reference deprecated API 'runSnippet' without noting the deprecation",
+          "issue": "Docs reference deprecated API 'Simnet.runSnippet' without noting the deprecation",
           "suggestion": "Deprecation note: use simnet.execute(command) instead"
         },
         "candidate": false
+      },
+      {
+        "id": "docs/browser-sdk-reference.md:inline:initSimnet:6",
+        "kind": "inline",
+        "text": "initSimnet",
+        "locator": {
+          "path": "docs/browser-sdk-reference.md",
+          "start": {
+            "line": 6,
+            "col": 22
+          },
+          "end": {
+            "line": 6,
+            "col": 31
+          },
+          "headingId": "empty-session",
+          "headingText": "Empty session"
+        },
+        "specRef": {
+          "export": "initSimnet",
+          "signature": "initSimnet(): Promise"
+        },
+        "candidate": true
       },
       {
         "id": "docs/browser-sdk-reference.md:gap:Simnet.execute:3",
@@ -67,6 +90,11 @@
       }
     ],
     "slices": [
+      {
+        "export": "initSimnet",
+        "signature": "initSimnet(): Promise",
+        "body": "initSimnet(): Promise"
+      },
       {
         "export": "Simnet",
         "member": "execute",
