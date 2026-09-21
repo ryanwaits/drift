@@ -3506,3 +3506,94 @@ describe('a destructured element is bound to its own property type, not the retu
     ).toEqual([]);
   });
 });
+
+describe('fence inventory claims are located inside their own fence', () => {
+  const F3 = '```';
+
+  function hookSpec(): ApiSpec {
+    return {
+      meta: { name: 'q' },
+      exports: [
+        { id: 'useQuery', name: 'useQuery', kind: 'function' },
+        { id: 'Client', name: 'Client', kind: 'class' },
+      ],
+    };
+  }
+
+  function inline(content: string, name = 'useQuery') {
+    const spec = hookSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/guide.md',
+      content,
+    })
+      .claims.filter((c) => c.kind === 'inline' && c.specRef?.export === name)
+      .map((c) => [c.text, c.candidate, c.locator.start.line, c.locator.start.col]);
+  }
+
+  test('not on an earlier prose mention; one claim per fence', () => {
+    const content = [
+      '# Guide',
+      '',
+      'Intro mentions useQuery here.',
+      '',
+      `${F3}ts`,
+      'const q = useQuery()',
+      F3,
+      '',
+      '## Later',
+      '',
+      `${F3}ts`,
+      "import { useQuery } from 'q'",
+      F3,
+      '',
+      `${F3}tsx`,
+      'function Demo() {',
+      '  const a = useQuery()',
+      '  return useQuery()',
+      '}',
+      F3,
+      '',
+    ].join('\n');
+    expect(inline(content)).toEqual([
+      ['useQuery', true, 6, 11],
+      ['useQuery', true, 12, 10],
+      ['useQuery', true, 17, 13],
+    ]);
+    const spec = hookSpec();
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/guide.md',
+      content,
+    });
+    expect(doc.claims.find((c) => c.locator.start.line === 12)?.locator.headingText).toBe('Later');
+    expect(doc.claims.filter((c) => c.kind === 'prose').map((c) => c.locator.start.line)).toEqual([
+      3,
+    ]);
+  });
+
+  test('the call is preferred to the import; `new` and a printed signature count', () => {
+    expect(
+      inline(`# G\n\n${F3}ts\nimport { useQuery } from 'q'\nconst q = useQuery()\n${F3}\n`),
+    ).toEqual([['useQuery', true, 5, 11]]);
+    expect(inline(`# G\n\n${F3}ts\nconst c = new Client()\n${F3}\n`, 'Client')).toEqual([
+      ['Client', true, 4, 15],
+    ]);
+    expect(inline(`# G\n\n${F3}ts\nuseQuery(key: string): Result\n${F3}\n`)).toEqual([
+      ['useQuery', true, 4, 1],
+    ]);
+  });
+
+  test('an indented fence in a list keeps its columns', () => {
+    expect(inline(`# G\n\n- step\n\n  ${F3}ts\n  const q = useQuery()\n  ${F3}\n`)).toEqual([
+      ['useQuery', true, 6, 13],
+    ]);
+  });
+
+  test("another library's import, or a name the fence declares, is not the export", () => {
+    expect(inline(`# G\n\n${F3}ts\nimport { useQuery } from 'other-lib'\n${F3}\n`)).toEqual([]);
+    expect(inline(`# G\n\n${F3}ts\nfunction useQuery() {}\nuseQuery()\n${F3}\n`)).toEqual([]);
+  });
+});

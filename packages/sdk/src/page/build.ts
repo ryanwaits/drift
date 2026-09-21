@@ -5,18 +5,20 @@ import {
   DEFAULT_SECTION_RE,
   extractDocumentedKeys,
 } from '../analysis/key-coverage';
-import { findExportReferences, parseMarkdownFile } from '../markdown/parser';
+import { parseMarkdownFile } from '../markdown/parser';
 import { detectCallSiteHits } from './call-sites';
 import {
   blockContaining,
   collectPackageNamespaces,
-  extractCallSites,
+  extractBareCallees,
   extractExportBindings,
   extractFenceCalls,
   extractFenceImports,
   extractFenceMembers,
+  extractLocalNames,
   fenceImportKind,
   isMigrationFence,
+  isPackageModule,
 } from './fences';
 import {
   attachHeading,
@@ -28,7 +30,6 @@ import {
   headingLocator,
   locateInFence,
   locateOnLine,
-  locateSpan,
   nearestHeading,
   normalizeApiName,
   type PageHeading,
@@ -418,37 +419,10 @@ function inlineClaims(
     }
   }
 
+  // Fence mentions: one per (fence, export), on the referencing token inside
+  // that fence. The first call, else the import. A renamed or default import
+  // is its export; a name the fence declares, or imports from elsewhere, is not.
   const parsed = parseMarkdownFile(content, file);
-  const exportNames = [...registry.all];
-  for (const ref of findExportReferences([parsed], exportNames)) {
-    if (posixPath(ref.file) !== posixPath(file)) continue;
-    const specRef = resolveApiName(spec, registry, ref.exportName);
-    if (!specRef) continue;
-    const already = existing
-      .concat(claims)
-      .some(
-        (c) =>
-          specRefKey(c.specRef) === specRefKey(specRef) &&
-          (c.kind === 'fence' || c.locator.start.line === ref.line),
-      );
-    if (already) continue;
-    const found =
-      locateOnLine(content, ref.line, ref.exportName) ??
-      locateSpan(content, ref.exportName, ref.line);
-    if (!found) continue;
-    const locator = attachHeading({ path: file, start: found.start, end: found.end }, headings);
-    pushUnique(claims, {
-      id: claimId(file, 'inline', specRef, ref.exportName, locator.start.line),
-      kind: 'inline',
-      text: ref.exportName,
-      locator,
-      specRef,
-      candidate: true,
-    });
-  }
-
-  // A call through a renamed or default import names no export, so the pass
-  // above misses it. One mention per fence, on the first call.
   const packageName = opts.packageName ?? spec.meta.name;
   const { aliases } = collectPackageNamespaces(
     parsed.codeBlocks.map((b) => b.code),
@@ -456,32 +430,43 @@ function inlineClaims(
     packageName,
     opts.importSpecifier,
   );
-  for (const block of aliases.size > 0 ? parsed.codeBlocks : []) {
+  for (const block of parsed.codeBlocks) {
+    const imports = extractFenceImports(block.code);
+    const foreign = new Set(
+      imports.filter((i) => !isPackageModule(i.from, packageName)).map((i) => i.name),
+    );
+    const locals = extractLocalNames(block.code);
+    const mentions: Array<{ exportName: string; text: string; line: number; col: number }> = [];
+    for (const callee of extractBareCallees(block.code)) {
+      if (locals.has(callee.name) || foreign.has(callee.name)) continue;
+      const exportName = aliases.get(callee.name) ?? callee.name;
+      mentions.push({ exportName, text: callee.name, line: callee.line, col: callee.col });
+    }
+    for (const imp of imports) {
+      if (imp.kind !== 'named' || foreign.has(imp.name)) continue;
+      mentions.push({ exportName: imp.imported, text: imp.text, line: imp.line, col: imp.col });
+    }
+
     const seen = new Set<string>();
-    for (const site of extractCallSites(block.code)) {
-      const exportName = site.objectName ? undefined : aliases.get(site.name);
-      if (!exportName || !registry.all.has(exportName) || seen.has(exportName)) continue;
-      seen.add(exportName);
-      const specRef = makeSpecRef(spec, registry, exportName);
-      const span = {
-        text: site.name,
-        line: site.line,
-        col: site.col + site.text.indexOf(site.name),
-      };
-      const locator = fenceLocator(file, content, block, span, headings);
-      if (!locator) continue;
+    for (const m of mentions) {
+      if (!registry.all.has(m.exportName) || seen.has(m.exportName)) continue;
+      seen.add(m.exportName);
+      const specRef = makeSpecRef(spec, registry, m.exportName);
       const already = existing
         .concat(claims)
         .some(
           (c) =>
             specRefKey(c.specRef) === specRefKey(specRef) &&
-            c.locator.start.line === locator.start.line,
+            c.locator.start.line > block.lineStart &&
+            c.locator.start.line <= block.lineEnd,
         );
       if (already) continue;
+      const locator = fenceLocator(file, content, block, m, headings);
+      if (!locator) continue;
       pushUnique(claims, {
-        id: claimId(file, 'inline', specRef, site.name, locator.start.line),
+        id: claimId(file, 'inline', specRef, m.text, locator.start.line),
         kind: 'inline',
-        text: site.name,
+        text: m.text,
         locator,
         specRef,
         candidate: true,
