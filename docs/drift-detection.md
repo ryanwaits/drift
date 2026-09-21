@@ -122,9 +122,9 @@ Exit 1 when issues are found. See [CLI Reference](./cli-reference.md).
 
 ## Prose Drift Detection
 
-Prose drift scans your markdown files for code blocks that import from your package. If an imported name doesn't exist in the package's exports, it's flagged as `prose-broken-reference`. Method calls in those code blocks are also checked: if a called method doesn't exist on any exported type, it's flagged as `prose-unresolved-member`. References to APIs the spec marks deprecated are flagged as `prose-deprecated-reference` — unless the surrounding prose (±5 lines) already acknowledges the deprecation.
+Prose drift scans your markdown files for code blocks that import from your package. If an imported name doesn't exist in the package's exports, it's flagged as `prose-broken-reference`. Method calls in those code blocks are also checked: if a called method doesn't exist on any exported type, it's flagged as `prose-unresolved-member`. References to APIs the spec marks deprecated are flagged as `prose-deprecated-reference` — unless the surrounding prose (±5 lines) already acknowledges the deprecation. The check is on the resolved reference, never a bare name: `z.url()` is the export `url`, not the deprecated method `ZodString.url`; a member counts only when its receiver is bound to the type (`const s = z.string(); s.url()`, or the chain `z.string().url()`).
 
-Drift includes fuzzy matching -- if you import `formatJSON` but the actual export is `formatJson`, the suggestion will say "Did you mean 'formatJson'?". Same for member calls, with a hint naming the type that has the closest match.
+Drift includes fuzzy matching -- if you import `formatJSON` but the actual export is `formatJson`, the suggestion will say "Did you mean 'formatJson'?". Same for member calls, among the members of the receiver's own type.
 
 ### Configuring Markdown Discovery
 
