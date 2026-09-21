@@ -277,6 +277,17 @@ function detectBrokenImports(
 
   for (const imp of packageImports) {
     if (imp.kind !== 'named') continue;
+    if (imp.invalidPair) {
+      const alias = `${imp.imported} as ${imp.name}`;
+      issues.push({
+        type: 'prose-broken-reference',
+        target: imp.invalidPair,
+        issue: `\`${imp.invalidPair}\` is not valid import syntax; did you mean \`${alias}\`?`,
+        suggestion: alias,
+        filePath,
+        line: lineStart,
+      });
+    }
     // `import { a as b }` is a claim about `a`. A default import (either
     // spelling) names no export.
     const name = imp.imported;

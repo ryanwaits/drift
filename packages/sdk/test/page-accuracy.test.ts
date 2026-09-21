@@ -3103,3 +3103,87 @@ describe('a zero-argument call as a bare statement is a mention, not a call', ()
     expect(missing('<z.Box />;', 'tsx')).toEqual(['<z.Box />']);
   });
 });
+
+describe('invalid import syntax is not blamed on an export', () => {
+  function zustandSpec(): ApiSpec {
+    return {
+      meta: { name: 'zustand' },
+      exports: [
+        {
+          id: 'create',
+          name: 'create',
+          kind: 'function',
+          signatures: [
+            { parameters: [{ name: 'initializer', required: true, schema: { type: 'object' } }] },
+          ],
+        },
+        { id: 'createStore', name: 'createStore', kind: 'function' },
+      ],
+    };
+  }
+
+  function importRules(code: string) {
+    const spec = zustandSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/guides/how-to-reset-state.md',
+      content: `# Reset\n\n\`\`\`ts\n${code}\n\`\`\`\n`,
+    }).claims.filter((c) => c.rule);
+  }
+
+  test('`name: alias` in import braces: the claim says what is true, on that specifier', () => {
+    const hits = importRules(
+      "import type { StateCreator } from 'other'\nimport { create: actualCreate } from 'zustand'",
+    );
+    expect(hits.map((c) => [c.rule?.type, c.rule?.issue, c.rule?.suggestion])).toEqual([
+      [
+        'prose-broken-reference',
+        '`create: actualCreate` is not valid import syntax; did you mean `create as actualCreate`?',
+        'create as actualCreate',
+      ],
+    ]);
+    expect(hits[0]?.text).toBe('create: actualCreate');
+    expect(hits[0]?.specRef?.export).toBe('create');
+    expect(hits[0]?.candidate).toBe(false);
+    expect(hits[0]?.locator.start).toEqual({ line: 5, col: 10 });
+    expect(hits[0]?.locator.end).toEqual({ line: 5, col: 29 });
+  });
+
+  test('among valid specifiers, and with loose spacing', () => {
+    const hits = importRules("import { createStore, create  :actualCreate } from 'zustand'");
+    expect(hits.map((c) => c.rule?.issue)).toEqual([
+      '`create: actualCreate` is not valid import syntax; did you mean `create as actualCreate`?',
+    ]);
+    expect(hits[0]?.text).toBe('create  :actualCreate');
+    expect(hits[0]?.locator.start).toEqual({ line: 4, col: 23 });
+  });
+
+  test('the intended alias still binds: calls through it are checked against the export', () => {
+    const hits = importRules(
+      "import { create: actualCreate } from 'zustand'\nconst store = actualCreate(a, b)",
+    );
+    expect(hits.map((c) => c.rule?.type)).toEqual([
+      'prose-broken-reference',
+      'prose-arity-mismatch',
+    ]);
+    expect(hits[1]?.specRef?.export).toBe('create');
+  });
+
+  test('a missing export in an invalid pair is reported under the name it imports', () => {
+    expect(importRules("import { nope: x } from 'zustand'").map((c) => c.rule?.issue)).toEqual([
+      '`nope: x` is not valid import syntax; did you mean `nope as x`?',
+      "Import 'nope' from 'zustand' does not exist in package exports",
+    ]);
+  });
+
+  test('another package, a valid alias, and import attributes are silent', () => {
+    expect(importRules("import { create: actualCreate } from 'redux'")).toEqual([]);
+    expect(importRules("import { create as actualCreate } from 'zustand'")).toEqual([]);
+    expect(
+      importRules(
+        "import { create } from 'zustand'\nimport data from './d.json' with { type: 'json' }",
+      ),
+    ).toEqual([]);
+  });
+});

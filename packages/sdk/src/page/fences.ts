@@ -1,5 +1,6 @@
 import type * as TS from 'typescript';
 import type { ApiSpec } from '../analysis/api-spec';
+import { namedImportElements } from '../markdown/ast-extractor';
 import type { MarkdownCodeBlock } from '../markdown/types';
 import { ts } from '../ts-module';
 import { isBuiltInIdentifier } from '../utils/builtin-detection';
@@ -55,6 +56,8 @@ export type FenceImport = {
   col: number;
   text: string;
   kind: 'named' | 'default' | 'namespace';
+  /** `a: b` written for `a as b`: `pair` normalised, `text` as written, starting where `imported` does */
+  invalidPair?: { pair: string; text: string };
 };
 
 /**
@@ -553,16 +556,16 @@ export function extractFenceImports(code: string): FenceImport[] {
         });
       }
       if (named && ts.isNamedImports(named)) {
-        for (const el of named.elements) {
+        for (const el of namedImportElements(named, sourceFile)) {
           // The claim is about the exported name, so that is the span.
-          const source = el.propertyName ?? el.name;
           imports.push({
-            name: el.name.text,
-            imported: source.text,
+            name: el.local.text,
+            imported: el.source.text,
             from,
-            ...posOf(source),
-            text: source.getText(sourceFile),
+            ...posOf(el.source),
+            text: el.source.getText(sourceFile),
             kind: 'named',
+            ...(el.invalid ? { invalidPair: el.invalid } : {}),
           });
         }
       }

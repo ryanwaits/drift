@@ -166,7 +166,9 @@ function fenceClaims(
         c.objectName === target,
     );
     const call = named.find((c) => c.line === codeLine) ?? named[0];
-    const imp = extractFenceImports(block.code).find((i) => i.imported === target);
+    const imports = extractFenceImports(block.code);
+    const pair = imports.find((i) => i.invalidPair?.pair === target);
+    const imp = pair ?? imports.find((i) => i.imported === target);
     const aboutImport = issue.type === 'prose-broken-reference' && !target.includes('.');
 
     let text = target;
@@ -177,9 +179,9 @@ function fenceClaims(
       specRef = resolveCall(spec, registry, call.objectName, call.methodName);
       loc = fenceLocator(file, content, block, call, headings);
     } else if (imp) {
-      text = imp.text;
+      text = pair?.invalidPair?.text ?? imp.text;
       specRef = resolveApiName(spec, registry, imp.imported);
-      loc = fenceLocator(file, content, block, imp, headings);
+      loc = fenceLocator(file, content, block, { ...imp, text }, headings);
     } else {
       text = target.includes('.') ? (target.split('.').pop() ?? target) : target;
       loc = fenceLocator(file, content, block, { text, line: codeLine, col: 0 }, headings);

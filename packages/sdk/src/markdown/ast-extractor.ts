@@ -22,6 +22,52 @@ export interface ImportInfo {
   isTypeOnly: boolean;
   /** Import kind: 'named', 'default', 'namespace', 'side-effect' */
   kind: 'named' | 'default' | 'namespace' | 'side-effect';
+  /** `create: actualCreate` written for `create as actualCreate`; read as that alias */
+  invalidPair?: string;
+}
+
+/** One `{ ... }` import specifier as the author meant it. */
+export interface NamedImportElement {
+  /** Local binding node */
+  local: TS.Identifier;
+  /** Node naming the module's export (`import { "a-b" as x }` is a string literal) */
+  source: TS.Identifier | TS.StringLiteral;
+  isTypeOnly: boolean;
+  /** Set for a `name: alias` pair: `pair` is `name: alias`, `text` the source from `name` to `alias` */
+  invalid?: { pair: string; text: string };
+}
+
+/**
+ * Specifiers of a named import. `{ a: b }` is not import syntax; the parser
+ * recovers it as two specifiers with only a colon between them. That pair is
+ * returned as the one alias it stands for (`a as b`), marked `invalid`.
+ */
+export function namedImportElements(
+  named: TS.NamedImports,
+  sourceFile: TS.SourceFile,
+): NamedImportElement[] {
+  const out: NamedImportElement[] = [];
+  const els = named.elements;
+  for (let i = 0; i < els.length; i++) {
+    const el = els[i];
+    const next = els[i + 1];
+    const between = next ? sourceFile.text.slice(el.getEnd(), next.getStart(sourceFile)) : '';
+    if (next && !el.propertyName && !next.propertyName && /^\s*:\s*$/.test(between)) {
+      out.push({
+        local: next.name,
+        source: el.name,
+        isTypeOnly: el.isTypeOnly,
+        invalid: {
+          pair: `${el.name.text}: ${next.name.text}`,
+          text: sourceFile.text.slice(el.name.getStart(sourceFile), next.name.getEnd()),
+        },
+      });
+      i++;
+      continue;
+    }
+    out.push({ local: el.name, source: el.propertyName ?? el.name, isTypeOnly: el.isTypeOnly });
+  }
+  return out;
 }
 
 export interface CallInfo {
@@ -111,15 +157,14 @@ export function extractImportsAST(code: string): ImportInfo[] {
             });
           } else if (ts.isNamedImports(namedBindings)) {
             // Named imports: import { X, Y, Z } from 'pkg'
-            for (const element of namedBindings.elements) {
-              const localName = element.name.text;
-              const isElementTypeOnly = element.isTypeOnly ?? isTypeOnly;
+            for (const element of namedImportElements(namedBindings, sourceFile)) {
               imports.push({
-                name: localName,
-                imported: (element.propertyName ?? element.name).text,
+                name: element.local.text,
+                imported: element.source.text,
                 from,
-                isTypeOnly: isElementTypeOnly,
+                isTypeOnly: element.isTypeOnly || isTypeOnly,
                 kind: 'named',
+                ...(element.invalid ? { invalidPair: element.invalid.pair } : {}),
               });
             }
           }
