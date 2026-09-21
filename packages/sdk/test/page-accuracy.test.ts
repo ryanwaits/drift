@@ -2949,3 +2949,84 @@ describe('fence claims are located inside their own fence', () => {
     expect(locRules(twice)[0]?.locator.start).toEqual({ line: 4, col: 10 });
   });
 });
+
+describe('a rest parameter is never required', () => {
+  type Param = NonNullable<
+    NonNullable<NonNullable<ApiSpec['exports']>[number]['signatures']>[number]['parameters']
+  >[number];
+
+  function restRules(parameters: Param[], code: string) {
+    const spec: ApiSpec = {
+      meta: { name: 'zod' },
+      exports: [
+        { id: 'stringbool', name: 'stringbool', kind: 'function', signatures: [{ parameters }] },
+      ],
+      types: [
+        {
+          id: 'Options',
+          name: 'Options',
+          kind: 'interface',
+          schema: { type: 'object', properties: { truthy: { type: 'array' } } },
+        },
+      ],
+    };
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/api.md',
+      content: `# API\n\n\`\`\`ts\n${code}\n\`\`\`\n`,
+    })
+      .claims.filter((c) => c.rule)
+      .map((c) => c.rule?.issue);
+  }
+
+  const CALLS = 'const a = stringbool()\nconst b = stringbool(1, 2, 3, 4)';
+
+  test('rest: true, even when the spec also says required', () => {
+    expect(
+      restRules([{ name: 'args', required: true, rest: true, schema: { type: 'array' } }], CALLS),
+    ).toEqual([]);
+  });
+
+  test("a parameter emitted as '...args'", () => {
+    expect(
+      restRules([{ name: '...args', required: true, schema: { type: 'array' } }], CALLS),
+    ).toEqual([]);
+  });
+
+  test("an untyped trailing 'args' is what (...args) => extracts to", () => {
+    expect(
+      restRules([{ name: 'args', required: true, schema: { 'x-ts-type': 'unknown' } }], CALLS),
+    ).toEqual([]);
+  });
+
+  test('parameters before the rest parameter are still required', () => {
+    expect(
+      restRules(
+        [
+          { name: 'first', required: true, schema: { type: 'string' } },
+          { name: 'more', required: true, rest: true, schema: { type: 'array' } },
+        ],
+        CALLS,
+      ),
+    ).toEqual(["Call 'stringbool' is missing required argument 'first'"]);
+  });
+
+  test("a trailing 'args' typed as a named object is an ordinary parameter", () => {
+    expect(
+      restRules([{ name: 'args', required: true, schema: { $ref: '#/types/Options' } }], CALLS),
+    ).toEqual([
+      "Call 'stringbool' is missing required argument 'args'",
+      "Call 'stringbool' has 4 arguments; spec allows at most 1",
+    ]);
+    expect(
+      restRules(
+        [
+          { name: 'args', required: true, schema: { 'x-ts-type': 'unknown' } },
+          { name: 'last', required: true, schema: { type: 'string' } },
+        ],
+        'const a = stringbool()',
+      ),
+    ).toEqual(["Call 'stringbool' is missing required argument 'args', 'last'"]);
+  });
+});

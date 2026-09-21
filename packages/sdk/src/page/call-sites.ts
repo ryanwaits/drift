@@ -245,17 +245,35 @@ function entryShape(spec: ApiSpec, entry: SpecEntry, seen: Set<string>): ShapeHi
   return mergeClosed(shapes, 'all');
 }
 
-function paramShape(p: ApiSignatureParameter): ParamShape {
+const REST_NAMES = new Set(['args', 'rest']);
+
+/**
+ * `rest: true`, a name emitted as `...args`, or a trailing `args` / `rest`
+ * that is not typed as a named or inline object: what an extractor that drops
+ * the rest marker leaves of `(...args) =>`. Whatever `required` says.
+ */
+function isRestParam(p: ApiSignatureParameter, last: boolean): boolean {
+  if (p.rest === true || p.name.startsWith('...')) return true;
+  if (!last || !REST_NAMES.has(p.name)) return false;
+  if (p.schema === undefined || p.schema === null) return true;
+  if (typeof p.schema !== 'object') return p.schema === 'unknown' || p.schema === 'any';
+  const s = p.schema as Record<string, unknown>;
+  return typeof s.$ref !== 'string' && s.properties === undefined;
+}
+
+function paramShape(p: ApiSignatureParameter, last: boolean): ParamShape {
+  const rest = isRestParam(p, last);
   return {
-    name: p.name,
-    required: p.required !== false && p.default === undefined && !p.rest,
-    rest: !!p.rest,
+    name: p.name.replace(/^\.\.\./, ''),
+    required: p.required !== false && p.default === undefined && !rest,
+    rest,
     schema: p.schema,
   };
 }
 
 function overloadShape(sig: ApiSignature): OverloadShape {
-  const params = (sig.parameters ?? []).map(paramShape);
+  const list = sig.parameters ?? [];
+  const params = list.map((p, i) => paramShape(p, i === list.length - 1));
   const rest = params.some((p) => p.rest);
   return { params, maxPositional: rest ? Number.POSITIVE_INFINITY : params.length };
 }
