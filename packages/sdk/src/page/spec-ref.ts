@@ -276,6 +276,9 @@ export function resolveApiName(
     return makeSpecRef(spec, registry, trimmed);
   }
 
+  const local = IDENT.test(trimmed) ? registry.localNames?.get(trimmed) : undefined;
+  if (local) return makeSpecRef(spec, registry, local);
+
   const parents = registry.typeMembers.get(trimmed);
   if (!parents || parents.size === 0) return null;
 

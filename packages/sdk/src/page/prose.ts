@@ -156,7 +156,7 @@ function refsInText(
   for (const m of text.matchAll(QUALIFIED_G)) {
     add(resolveApiName(spec, registry, `${m[1]}.${m[2]}`));
   }
-  for (const name of registry.all) {
+  for (const name of [...registry.all, ...(registry.localNames?.keys() ?? [])]) {
     if (!IDENT.test(name) || !isDistinctiveApiName(name)) continue;
     const re = new RegExp(`(?<![A-Za-z0-9_$])${escapeRe(name)}(?![A-Za-z0-9_$])`);
     if (re.test(text)) add(resolveApiName(spec, registry, name));

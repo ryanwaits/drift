@@ -303,9 +303,12 @@ function detectBrokenImports(
     if (name === 'default' || registry.all.has(name)) continue;
 
     const match = findClosestMatch(name, registry.allNames);
-    const suggestion = match
-      ? `Did you mean '${match.value}'?`
-      : `'${name}' is not exported from '${imp.from}'`;
+    const suggestion =
+      registry.localNames?.get(name) === 'default'
+        ? `'${name}' is the default export: import ${name} from '${imp.from}'`
+        : match
+          ? `Did you mean '${match.value}'?`
+          : `'${name}' is not exported from '${imp.from}'`;
 
     issues.push({
       type: 'prose-broken-reference',

@@ -737,18 +737,23 @@ export function fenceImportKind(
  * for two or more distinct package exports when the page never shows the import.
  * `aliases` maps a renamed local to its export (`import { a as b }` → b → a;
  * `import x` → x → `default`, which resolves only when the spec has that export).
+ * With `localNames`, the default export's source name (`useSWR`) is an alias of
+ * `default` on a page that imports that name from nowhere.
  */
 export function collectPackageNamespaces(
   codes: readonly string[],
   exportNames: ReadonlySet<string>,
   packageName: string,
   importSpecifier?: string,
+  localNames?: ReadonlyMap<string, string>,
 ): { namespaces: Set<string>; namedImports: Set<string>; aliases: Map<string, string> } {
   const namespaces = new Set<string>();
   const namedImports = new Set<string>();
   const aliases = new Map<string, string>();
+  const imported = new Set<string>();
   for (const code of codes) {
     for (const imp of extractFenceImports(code)) {
+      imported.add(imp.name);
       if (!isPackageSpecifier(imp.from, packageName, importSpecifier)) continue;
       if (imp.kind === 'namespace') namespaces.add(imp.name);
       else namedImports.add(imp.name);
@@ -758,6 +763,10 @@ export function collectPackageNamespaces(
         aliases.set(imp.name, imp.imported);
       }
     }
+  }
+  // The default export's source name, on a page that never imports that name.
+  for (const [local, exportName] of localNames ?? []) {
+    if (!imported.has(local) && !exportNames.has(local)) aliases.set(local, exportName);
   }
   if (namespaces.size === 0) {
     const hits = new Map<string, Set<string>>();

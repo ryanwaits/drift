@@ -234,6 +234,11 @@ export function buildExportRegistry(spec: ApiSpec): ExportRegistry {
     if (!genericWrappers.has(name)) closedReceivers.add(name);
   }
 
+  const localNames = new Map<string, string>();
+  for (const entry of spec.exports ?? []) {
+    if (entry.localName && !all.has(entry.localName)) localNames.set(entry.localName, entry.name);
+  }
+
   return {
     exports,
     types,
@@ -248,6 +253,7 @@ export function buildExportRegistry(spec: ApiSpec): ExportRegistry {
     deprecatedMembers,
     callableReturnTypes,
     closedReceivers,
+    localNames,
   };
 }
 

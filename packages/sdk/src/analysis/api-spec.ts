@@ -19,6 +19,12 @@ export type ApiSpec = {
 export type ApiExport = {
   id: string;
   name: string;
+  /**
+   * Identifier a default export goes by in source (`useSWR` for
+   * `export default useSWR`; `name` stays `"default"`). Absent on named
+   * exports and anonymous defaults.
+   */
+  localName?: string;
   kind: string;
   description?: string;
   tags?: ApiTag[];

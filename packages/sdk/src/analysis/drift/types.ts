@@ -157,6 +157,12 @@ export interface ExportRegistry {
   callableReturnTypes: Map<string, string>;
   /** Class/interface names with a closed member list. Generic type aliases are not. */
   closedReceivers: Set<string>;
+  /**
+   * Source name of the default export → its export name (`useSWR` → `default`).
+   * Never in `all`: `import { useSWR }` is still a missing export. A named
+   * export of the same name wins and is not listed here.
+   */
+  localNames?: Map<string, string>;
 }
 
 /**

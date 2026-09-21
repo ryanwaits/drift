@@ -3660,3 +3660,125 @@ describe('a bare English word is not an export', () => {
     ).toEqual([]);
   });
 });
+
+describe('the default export answers to its source name (`localName`)', () => {
+  const F3 = '```';
+  const any = { 'x-ts-type': 'unknown' };
+
+  function swrSpec(localName: string | undefined = 'useSWR'): ApiSpec {
+    return {
+      meta: { name: 'swr' },
+      exports: [
+        {
+          id: 'default',
+          name: 'default',
+          ...(localName ? { localName } : {}),
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'key', required: true, schema: any },
+                { name: 'fetcher', required: false, schema: any },
+              ],
+            },
+          ],
+        },
+        { id: 'mutate', name: 'mutate', kind: 'function' },
+      ],
+    };
+  }
+
+  function swrDoc(content: string, localName?: string) {
+    const spec = swrSpec(localName);
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/api.md',
+      content,
+    });
+  }
+
+  function bound(content: string, localName?: string) {
+    return swrDoc(content, localName)
+      .claims.filter((c) => c.specRef?.export === 'default')
+      .map((c) => [c.kind, c.rule?.type ?? null, c.locator.start.line, c.locator.start.col]);
+  }
+
+  test('the registry exposes it without making it an export name', () => {
+    const registry = buildExportRegistry(swrSpec());
+    expect(registry.localNames?.get('useSWR')).toBe('default');
+    expect(registry.all.has('useSWR')).toBe(false);
+    expect(buildExportRegistry(swrSpec('')).localNames?.size).toBe(0);
+  });
+
+  test('backticked prose, bare-word prose, headings and table keys resolve to `default`', () => {
+    const content = [
+      '# API',
+      '',
+      '## useSWR',
+      '',
+      'Call `useSWR(key, fetcher)` in a component.',
+      '',
+      'Every useSWR call shares a cache.',
+      '',
+      '## Options',
+      '',
+      '| Name | Notes |',
+      '| --- | --- |',
+      '| `useSWR` | the hook |',
+      '',
+    ].join('\n');
+    expect(bound(content)).toEqual([
+      ['table-key', null, 13, 3],
+      ['inline', null, 5, 6],
+      ['heading', null, 3, 4],
+      ['prose', null, 5, 1],
+      ['prose', null, 7, 1],
+      ['prose', null, 13, 3],
+    ]);
+    expect(swrDoc(content).slices.map((s) => s.export)).toEqual(['default']);
+  });
+
+  test('a fence call with no visible import is the default export: inventory and rules', () => {
+    const content = `# API\n\n${F3}tsx\nconst { data } = useSWR('/api/user', fetcher)\n${F3}\n\n${F3}tsx\nconst a = useSWR()\nconst b = useSWR(k, f, {}, extra)\n${F3}\n`;
+    expect(bound(content)).toEqual([
+      ['fence', 'prose-missing-required', 8, 11],
+      ['fence', 'prose-arity-mismatch', 9, 11],
+      ['inline', null, 4, 18],
+    ]);
+    expect(swrDoc(content).claims.find((c) => c.rule)?.rule?.issue).toBe(
+      "Call 'useSWR' is missing required argument 'key'",
+    );
+  });
+
+  test('a default import under another local name still binds that local', () => {
+    const content = `# API\n\n${F3}tsx\nimport swr from 'swr'\nconst a = swr()\n${F3}\n`;
+    expect(bound(content)).toEqual([['fence', 'prose-missing-required', 5, 11]]);
+  });
+
+  test('the name imported from anywhere else, or declared in the fence, is not the default export', () => {
+    expect(
+      bound(`# API\n\n${F3}tsx\nimport useSWR from 'swr/immutable'\nconst a = useSWR()\n${F3}\n`),
+    ).toEqual([]);
+    expect(
+      bound(`# API\n\n${F3}tsx\nimport { useSWR } from './hooks'\nconst a = useSWR()\n${F3}\n`),
+    ).toEqual([]);
+    expect(bound(`# API\n\n${F3}tsx\nconst useSWR = wrap()\nconst a = useSWR()\n${F3}\n`)).toEqual(
+      [],
+    );
+  });
+
+  test('`import { useSWR }` is still a broken reference, and says why', () => {
+    const hit = swrDoc(`# API\n\n${F3}tsx\nimport { useSWR } from 'swr'\n${F3}\n`).claims.find(
+      (c) => c.rule,
+    );
+    expect(hit?.rule?.type).toBe('prose-broken-reference');
+    expect(hit?.rule?.suggestion).toBe("'useSWR' is the default export: import useSWR from 'swr'");
+  });
+
+  test('no localName in the spec: nothing resolves by that name', () => {
+    expect(
+      bound(`# API\n\nCall \`useSWR()\`.\n\n${F3}tsx\nconst a = useSWR()\n${F3}\n`, ''),
+    ).toEqual([]);
+  });
+});

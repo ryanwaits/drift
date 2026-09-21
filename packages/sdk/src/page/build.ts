@@ -216,6 +216,7 @@ function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
     registry.all,
     packageName,
     opts.importSpecifier,
+    registry.localNames,
   );
 
   for (const block of parsed.codeBlocks) {
@@ -429,6 +430,7 @@ function inlineClaims(
     registry.all,
     packageName,
     opts.importSpecifier,
+    registry.localNames,
   );
   for (const block of parsed.codeBlocks) {
     const imports = extractFenceImports(block.code);
