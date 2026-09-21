@@ -1,11 +1,12 @@
 import type * as TS from 'typescript';
 import type { ApiSpec } from '../analysis/api-spec';
+import type { ExportRegistry } from '../analysis/drift/types';
 import { namedImportElements } from '../markdown/ast-extractor';
 import type { MarkdownCodeBlock } from '../markdown/types';
 import { ts } from '../ts-module';
 import { isBuiltInIdentifier } from '../utils/builtin-detection';
 import { collectHeadings, nearestHeading } from './locators';
-import { memberReturnType } from './spec-ref';
+import { destructuredTypeName, memberReturnType } from './spec-ref';
 
 export type FenceCall = {
   objectName: string;
@@ -128,10 +129,48 @@ export function extractFenceCalls(code: string): FenceCall[] {
   return calls;
 }
 
+/** A name a variable declaration introduces, and the part of the initializer it takes. */
+export type DeclaredBinding = {
+  name: string;
+  /** Property name, or tuple position: absent when the name takes the whole value. */
+  key?: string | number;
+};
+
+/**
+ * `x` takes the whole value; `{ a }`, `{ a: b }`, `{ a = 1 }` take property
+ * `a`; `[a, b]` take positions 0 and 1. Rest elements, nested patterns and
+ * computed keys bind nothing, reported as `unbound`.
+ */
+export function declaredBindings(name: TS.BindingName): {
+  bound: DeclaredBinding[];
+  unbound: string[];
+} {
+  if (ts.isIdentifier(name)) return { bound: [{ name: name.text }], unbound: [] };
+  const bound: DeclaredBinding[] = [];
+  const unbound: string[] = [];
+  const drop = (n: TS.BindingName): void => {
+    if (ts.isIdentifier(n)) unbound.push(n.text);
+    else for (const el of n.elements) if (ts.isBindingElement(el)) drop(el.name);
+  };
+  name.elements.forEach((el, index) => {
+    if (!ts.isBindingElement(el)) return;
+    const prop = el.propertyName ?? el.name;
+    if (el.dotDotDotToken || !ts.isIdentifier(el.name)) drop(el.name);
+    else if (ts.isArrayBindingPattern(name)) bound.push({ name: el.name.text, key: index });
+    else if (ts.isIdentifier(prop) || ts.isStringLiteral(prop)) {
+      bound.push({ name: el.name.text, key: prop.text });
+    } else drop(el.name);
+  });
+  return { bound, unbound };
+}
+
 /**
  * `const x = new Foo(...)` plus `const x = [await] Foo(...)` when `Foo` is a
  * known export. With `spec`, `const x = obj.method(...)` binds `x` to the
  * spec return type of that method (e.g. `client.joinRoom()` → `Room`).
+ * A destructured element is bound to the closed spec type of its own property
+ * or tuple position (needs `spec` and `registry`), never to the return type;
+ * otherwise it is unbound, and shadows an earlier binding of that name.
  * Later fences reuse earlier bindings.
  */
 export function extractExportBindings(
@@ -140,6 +179,7 @@ export function extractExportBindings(
   spec?: ApiSpec,
   prior?: ReadonlyMap<string, string>,
   aliases?: ReadonlyMap<string, string>,
+  registry?: ExportRegistry,
 ): Map<string, string> {
   const names = new Map(prior ?? []);
   for (const [k, v] of extractInstanceBindings(code)) names.set(k, v);
@@ -151,41 +191,47 @@ export function extractExportBindings(
       true,
       ts.ScriptKind.TSX,
     );
-    const bindFromInit = (name: string, initializer: TS.Expression): void => {
+    const calleeOf = (
+      initializer: TS.Expression,
+    ): { exportName: string; member?: string; isNew?: boolean } | undefined => {
       let expr = initializer;
       if (ts.isAwaitExpression(expr)) expr = expr.expression;
-      if (ts.isCallExpression(expr) || ts.isNewExpression(expr)) {
-        if (ts.isIdentifier(expr.expression)) {
-          const callee = aliases?.get(expr.expression.text) ?? expr.expression.text;
-          if (exportNames?.has(callee)) {
-            names.set(name, callee);
-            return;
-          }
-        }
-        if (
-          spec &&
-          ts.isCallExpression(expr) &&
-          ts.isPropertyAccessExpression(expr.expression) &&
-          ts.isIdentifier(expr.expression.expression)
-        ) {
-          const obj = expr.expression.expression.text;
-          const member = expr.expression.name.text;
-          const objType = names.get(obj);
-          if (!objType) return;
-          const ret = memberReturnType(spec, objType, member);
-          if (ret) names.set(name, ret);
-        }
+      if (!ts.isCallExpression(expr) && !ts.isNewExpression(expr)) return undefined;
+      if (ts.isIdentifier(expr.expression)) {
+        const callee = aliases?.get(expr.expression.text) ?? expr.expression.text;
+        if (!exportNames?.has(callee)) return undefined;
+        return { exportName: callee, isNew: ts.isNewExpression(expr) };
       }
+      if (
+        ts.isCallExpression(expr) &&
+        ts.isPropertyAccessExpression(expr.expression) &&
+        ts.isIdentifier(expr.expression.expression)
+      ) {
+        const bound = names.get(expr.expression.expression.text);
+        if (!bound) return undefined;
+        const objType = registry?.callableReturnTypes.get(bound) ?? bound;
+        return { exportName: objType, member: expr.expression.name.text };
+      }
+      return undefined;
     };
     const walk = (node: TS.Node): void => {
       if (ts.isVariableDeclaration(node) && node.initializer) {
-        if (ts.isIdentifier(node.name)) {
-          bindFromInit(node.name.text, node.initializer);
-        } else if (ts.isObjectBindingPattern(node.name) || ts.isArrayBindingPattern(node.name)) {
-          for (const el of node.name.elements) {
-            if (ts.isBindingElement(el) && ts.isIdentifier(el.name)) {
-              bindFromInit(el.name.text, node.initializer);
-            }
+        const callee = calleeOf(node.initializer);
+        const { bound, unbound } = declaredBindings(node.name);
+        for (const name of unbound) names.delete(name);
+        for (const { name, key } of bound) {
+          if (key !== undefined) {
+            const type =
+              callee && spec && registry
+                ? destructuredTypeName(spec, registry, key, callee)
+                : undefined;
+            if (type) names.set(name, type);
+            else names.delete(name);
+          } else if (callee && !callee.member) {
+            names.set(name, callee.exportName);
+          } else if (callee?.member && spec) {
+            const ret = memberReturnType(spec, callee.exportName, callee.member);
+            if (ret) names.set(name, ret);
           }
         }
       }

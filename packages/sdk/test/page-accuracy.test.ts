@@ -151,15 +151,14 @@ await drift.analyzeFolder('src');
     expect(unresolved(md)).toEqual(['drift.analyzeFolder']);
   });
 
-  test('destructure of an exported call is flagged', () => {
-    const md = `# SDK
-
-\`\`\`ts
-const { client } = createClient();
-client.analyzeFolder('src');
-\`\`\`
-`;
-    expect(unresolved(md)).toEqual(['client.analyzeFolder']);
+  test('the value of an exported call is flagged; a destructured element is not that type', () => {
+    const fence = (code: string) => `# SDK\n\n\`\`\`ts\n${code}\n\`\`\`\n`;
+    expect(
+      unresolved(fence("const client = createClient();\nclient.analyzeFolder('src');")),
+    ).toEqual(['client.analyzeFolder']);
+    expect(
+      unresolved(fence("const { client } = createClient();\nclient.analyzeFolder('src');")),
+    ).toEqual([]);
   });
 });
 
@@ -3368,5 +3367,142 @@ describe('a callee declared in the fence shadows the export of the same name', (
 
   test('the imported export still fires', () => {
     expect(storeRules('const state = useStore()')).toEqual(['useStore()']);
+  });
+});
+
+describe('a destructured element is bound to its own property type, not the return type', () => {
+  const F3 = '```';
+
+  function querySpec(): ApiSpec {
+    const ref = (name: string) => ({ $ref: `#/types/${name}` });
+    return {
+      meta: { name: 'q' },
+      exports: [
+        {
+          id: 'useQuery',
+          name: 'useQuery',
+          kind: 'function',
+          signatures: [{ returns: { schema: ref('Result') } }],
+        },
+        {
+          id: 'usePair',
+          name: 'usePair',
+          kind: 'function',
+          signatures: [
+            {
+              returns: {
+                schema: {
+                  type: 'array',
+                  prefixItems: [{ type: 'string' }, { anyOf: [{ type: 'null' }, ref('Client')] }],
+                },
+              },
+            },
+          ],
+        },
+        {
+          id: 'loadResult',
+          name: 'loadResult',
+          kind: 'function',
+          signatures: [
+            {
+              returns: {
+                schema: { $ref: '#/types/Promise', 'x-ts-type-arguments': [ref('Result')] },
+              },
+            },
+          ],
+        },
+      ],
+      types: [
+        {
+          id: 'Result',
+          name: 'Result',
+          kind: 'interface',
+          members: [
+            { name: 'data', kind: 'property', schema: { 'x-ts-type': 'T' } },
+            { name: 'client', kind: 'property', schema: ref('Client') },
+            { name: 'meta', kind: 'property', schema: ref('Meta') },
+            { name: 'refetch', kind: 'method', signatures: [{ parameters: [] }] },
+          ],
+        },
+        {
+          id: 'Client',
+          name: 'Client',
+          kind: 'class',
+          members: [{ name: 'close', kind: 'method', signatures: [{ parameters: [] }] }],
+        },
+        // Generic alias: members are known, the list is not closed.
+        {
+          id: 'Meta',
+          name: 'Meta',
+          kind: 'type',
+          typeParameters: [{ name: 'T' }],
+          schema: { type: 'object', properties: { tag: { type: 'string' } } },
+        },
+      ],
+    };
+  }
+
+  function queryRules(code: string) {
+    const spec = querySpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/query.md',
+      content: `# Query\n\n${F3}ts\nimport { useQuery, usePair, loadResult } from 'q'\n${code}\n${F3}\n`,
+    })
+      .claims.filter((c) => c.rule && c.rule.type !== 'spec-not-in-claims')
+      .map((c) => [c.rule?.type, c.specRef?.export, c.specRef?.member, c.text]);
+  }
+
+  test('the whole value is the return type', () => {
+    expect(queryRules('const result = useQuery()\nresult.refetch(1, 2)\nresult.nope()')).toEqual([
+      ['prose-arity-mismatch', 'Result', 'refetch', 'result.refetch(1, 2)'],
+      ['prose-unresolved-member', undefined, undefined, 'result.nope()'],
+    ]);
+  });
+
+  test('an element whose property type is not a closed spec type is unbound', () => {
+    expect(queryRules('const { data } = useQuery()\ndata.refetch(1, 2)\ndata.nope()')).toEqual([]);
+    expect(queryRules('const { refetch } = useQuery()\nrefetch.nope()')).toEqual([]);
+    expect(queryRules('const { meta } = useQuery()\nmeta.nope()')).toEqual([]);
+    expect(queryRules('const { missing } = useQuery()\nmissing.refetch(1, 2)')).toEqual([]);
+    expect(queryRules('const [name] = usePair()\nname.close(1)\nname.nope()')).toEqual([]);
+    expect(queryRules('const [a] = useQuery()\na.refetch(1, 2)\na.nope()')).toEqual([]);
+  });
+
+  test('an element is bound to the closed spec type of its property', () => {
+    expect(queryRules('const { client } = useQuery()\nclient.close(1)\nclient.nope()')).toEqual([
+      ['prose-arity-mismatch', 'Client', 'close', 'client.close(1)'],
+      ['prose-unresolved-member', undefined, undefined, 'client.nope()'],
+    ]);
+    expect(queryRules('const { client } = await loadResult()\nclient.close(1)')).toEqual([
+      ['prose-arity-mismatch', 'Client', 'close', 'client.close(1)'],
+    ]);
+  });
+
+  test('renames and defaults bind the local name to the property type', () => {
+    expect(queryRules('const { client: c } = useQuery()\nc.close(1)\nclient.close(1)')).toEqual([
+      ['prose-arity-mismatch', 'Client', 'close', 'c.close(1)'],
+    ]);
+    expect(queryRules('const { client = fallback } = useQuery()\nclient.close(1)')).toEqual([
+      ['prose-arity-mismatch', 'Client', 'close', 'client.close(1)'],
+    ]);
+  });
+
+  test('a tuple element is bound by position; rest elements never', () => {
+    expect(queryRules('const [name, client] = usePair()\nclient.close(1)\nname.close(1)')).toEqual([
+      ['prose-arity-mismatch', 'Client', 'close', 'client.close(1)'],
+    ]);
+    expect(queryRules('const [, c] = usePair()\nc.close(1)')).toEqual([
+      ['prose-arity-mismatch', 'Client', 'close', 'c.close(1)'],
+    ]);
+    expect(queryRules('const [name, ...rest] = usePair()\nrest.close(1)')).toEqual([]);
+    expect(queryRules('const { data, ...rest } = useQuery()\nrest.refetch(1, 2)')).toEqual([]);
+  });
+
+  test('a redeclared name drops the earlier binding', () => {
+    expect(
+      queryRules('const data = useQuery()\n{\n  const { data } = useQuery()\n  data.nope()\n}'),
+    ).toEqual([]);
   });
 });

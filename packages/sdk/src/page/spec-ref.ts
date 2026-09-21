@@ -69,6 +69,95 @@ export function namedReturnType(schema: ApiSchema | undefined): string | undefin
   return ref;
 }
 
+function unwrapPromise(schema: ApiSchema | undefined): ApiSchema | undefined {
+  if (!schema || typeof schema !== 'object') return schema;
+  const s = schema as Record<string, unknown>;
+  if (typeof s.$ref !== 'string' || s.$ref.split('/').pop() !== 'Promise') return schema;
+  const args = s['x-ts-type-arguments'] ?? s.typeArguments;
+  return Array.isArray(args) && args.length > 0 ? unwrapPromise(args[0] as ApiSchema) : undefined;
+}
+
+/** `T`, or `T | null | undefined`: the one spec type a value of this schema can be. */
+function soleRefName(schema: ApiSchema | undefined): string | undefined {
+  if (!schema || typeof schema !== 'object') return undefined;
+  const s = schema as Record<string, unknown>;
+  if (typeof s.$ref === 'string') return s.$ref.split('/').pop();
+  const arms = Array.isArray(s.anyOf) ? s.anyOf : Array.isArray(s.oneOf) ? s.oneOf : null;
+  if (!arms) return undefined;
+  const rest = (arms as Array<Record<string, unknown>>).filter(
+    (a) => a?.type !== 'null' && a?.type !== 'undefined' && a?.['x-ts-type'] !== 'undefined',
+  );
+  return rest.length === 1 ? soleRefName(rest[0] as ApiSchema) : undefined;
+}
+
+function heritageNames(raw: unknown): string[] {
+  if (typeof raw !== 'string') return [];
+  return raw
+    .split(/[,&]/)
+    .map((p) => p.replace(/<[\s\S]*$/, '').trim())
+    .filter(Boolean);
+}
+
+/** Schema of property `key` (string) or tuple position `key` (number) of `schema`. */
+function elementSchema(
+  spec: ApiSpec,
+  schema: ApiSchema | undefined,
+  key: string | number,
+  seen: Set<string>,
+): ApiSchema | undefined {
+  if (!schema || typeof schema !== 'object') return undefined;
+  const s = schema as Record<string, unknown>;
+  if (typeof s.$ref === 'string') {
+    const name = s.$ref.split('/').pop() ?? '';
+    if (!name || seen.has(name)) return undefined;
+    seen.add(name);
+    const entry = findTypeEntry(spec, name);
+    if (!entry) return undefined;
+    if (typeof key === 'string') {
+      const member = entry.members?.find((m) => m.name === key);
+      if (member) return member.kind === 'method' ? undefined : member.schema;
+    }
+    const own = elementSchema(spec, entry.schema, key, seen);
+    if (own) return own;
+    for (const base of heritageNames(entry.extends)) {
+      const inherited = elementSchema(spec, { $ref: `#/types/${base}` }, key, seen);
+      if (inherited) return inherited;
+    }
+    return undefined;
+  }
+  if (typeof key === 'number') {
+    return Array.isArray(s.prefixItems) ? (s.prefixItems[key] as ApiSchema | undefined) : undefined;
+  }
+  const props = s.properties;
+  if (typeof props !== 'object' || props === null) return undefined;
+  return (props as Record<string, ApiSchema>)[key];
+}
+
+/**
+ * Spec type a destructured element takes: property `key` (tuple position when
+ * a number) of what `exportName(...)` / `Type.member(...)` returns, or of the
+ * instance for `new`. Only a class / interface with a closed member list, and
+ * only when every overload agrees. Promise is unwrapped.
+ */
+export function destructuredTypeName(
+  spec: ApiSpec,
+  registry: ExportRegistry,
+  key: string | number,
+  callee: { exportName: string; member?: string; isNew?: boolean },
+): string | undefined {
+  const returns: Array<ApiSchema | undefined> = callee.isNew
+    ? [{ $ref: `#/types/${callee.exportName}` }]
+    : signaturesOf(spec, callee.exportName, callee.member).map((sig) => sig.returns?.schema);
+  if (returns.length === 0) return undefined;
+  let name: string | undefined;
+  for (const schema of returns) {
+    const found = soleRefName(elementSchema(spec, unwrapPromise(schema), key, new Set()));
+    if (!found || (name && found !== name)) return undefined;
+    name = found;
+  }
+  return name && registry.closedReceivers.has(name) ? name : undefined;
+}
+
 /** Spec type returned by `Type.member(...)`, if the spec names one. */
 export function memberReturnType(
   spec: ApiSpec,

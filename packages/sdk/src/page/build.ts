@@ -208,7 +208,7 @@ function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
   const { spec, registry, file, content } = opts;
   const packageName = opts.packageName ?? spec.meta.name;
   const parsed = parseMarkdownFile(content, file);
-  const bindings = new Map<string, string>();
+  let bindings = new Map<string, string>();
   const claims: Claim[] = [];
   const { namespaces, namedImports, aliases } = collectPackageNamespaces(
     parsed.codeBlocks.map((b) => b.code),
@@ -218,9 +218,7 @@ function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
   );
 
   for (const block of parsed.codeBlocks) {
-    for (const [k, v] of extractExportBindings(block.code, registry.all, spec, bindings, aliases)) {
-      bindings.set(k, v);
-    }
+    bindings = extractExportBindings(block.code, registry.all, spec, bindings, aliases, registry);
     const skip =
       isMigrationFence(content, block.lineStart, block.code) ||
       fenceImportKind(block.code, packageName, opts.importSpecifier) === 'foreign';
@@ -589,17 +587,17 @@ function mentionedMembers(
   for (const m of opts.content.matchAll(qualified)) mentioned.add(m[1]);
 
   const parsed = parseMarkdownFile(opts.content, opts.file);
-  const bindings = new Map<string, string>();
+  let bindings = new Map<string, string>();
   const members = new Set(listedMembers(opts.spec, typeName));
   for (const block of parsed.codeBlocks) {
-    for (const [k, v] of extractExportBindings(
+    bindings = extractExportBindings(
       block.code,
       opts.registry.all,
       opts.spec,
       bindings,
-    )) {
-      bindings.set(k, v);
-    }
+      undefined,
+      opts.registry,
+    );
     const inTypeSection = headingAncestorNames(headings, block.lineStart + 1).includes(typeName);
     for (const mention of extractFenceMembers(block.code)) {
       if (members.size > 0 && !members.has(mention.memberName)) continue;
@@ -736,6 +734,7 @@ export function buildPageDocument(options: BuildPageDocumentOptions): PageDocume
     packageName,
     markdownFiles: [parsed],
     registry: opts.registry,
+    spec: opts.spec,
     ...(opts.importSpecifier ? { importSpecifier: opts.importSpecifier } : {}),
   });
 

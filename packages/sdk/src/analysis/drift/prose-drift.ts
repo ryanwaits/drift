@@ -7,13 +7,15 @@ import {
 import type { MarkdownDocFile } from '../../markdown/types';
 import {
   collectPackageNamespaces,
+  declaredBindings,
   extractFenceCalls,
   fenceImportKind,
   isMigrationFence,
 } from '../../page/fences';
 import { collectHeadings, sectionText } from '../../page/locators';
-import { parseDeprecationReplacement } from '../../page/spec-ref';
+import { destructuredTypeName, parseDeprecationReplacement } from '../../page/spec-ref';
 import { ts } from '../../ts-module';
+import type { ApiSpec } from '../api-spec';
 import type { ExportRegistry, SpecDocDrift } from './types';
 import { findClosestMatch } from './utils';
 
@@ -144,6 +146,12 @@ export interface ProseDriftOptions {
    * `package.json` `exports` path so `import { atom } from 'jotai'` is silent.
    */
   importSpecifier?: string;
+  /**
+   * The spec behind `registry`. With it, a destructured element
+   * (`const { room } = useRoom()`) is typed as its own property; without it,
+   * destructured names are never receivers.
+   */
+  spec?: ApiSpec;
 }
 
 /**
@@ -157,7 +165,7 @@ export interface ProseDriftOptions {
  *    generic wrappers (`Snapshot<T>`, `ExtractState<S>`) are not flagged.
  */
 export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
-  const { packageName, markdownFiles, registry, importSpecifier } = options;
+  const { packageName, markdownFiles, registry, importSpecifier, spec } = options;
   const issues: SpecDocDrift[] = [];
 
   for (const file of markdownFiles) {
@@ -191,6 +199,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
         fileExternalDerived,
         fileNonPackageParams,
         filePackageParamTypes,
+        spec,
       );
 
       const skipFence =
@@ -356,6 +365,7 @@ function accumulateBlockContext(
   externalDerived?: Set<string>,
   nonPackageParams?: Set<string>,
   packageParamTypes?: Map<string, string>,
+  spec?: ApiSpec,
 ): void {
   try {
     const imports = extractImportsAST(code);
@@ -374,10 +384,10 @@ function accumulateBlockContext(
 
   // Track variables derived from package export calls (e.g. `const simnet = await initSimnet()`)
   if (packageDerived && registry) {
-    for (const [name, exportName] of extractPackageDerivedNames(code, registry)) {
+    for (const [name, returnType] of extractPackageDerivedNames(code, registry, spec)) {
       packageDerived.add(name);
-      const returnType = registry.callableReturnTypes.get(exportName);
-      if (packageDerivedTypes && returnType) packageDerivedTypes.set(name, returnType);
+      if (returnType) packageDerivedTypes?.set(name, returnType);
+      else packageDerivedTypes?.delete(name);
     }
   }
 
@@ -666,13 +676,18 @@ function extractLocalDeclarations(code: string): Set<string> {
 }
 
 /**
- * Find variables that are assigned from a call to a known package export.
- * e.g. `const simnet = await initSimnet()` — `initSimnet` is in registry.
- * These objects ARE the package API. Method calls on them are judged against
- * the export's return type (or the class itself for `new`).
+ * Variables assigned from a call to a known package export, with the spec type
+ * they hold. `const simnet = await initSimnet()` holds the export's return
+ * type (the class itself for `new`). A destructured element holds the closed
+ * spec type of its own property or tuple position, never the return type;
+ * `undefined` when there is none, which also shadows an earlier binding.
  */
-function extractPackageDerivedNames(code: string, registry: ExportRegistry): Map<string, string> {
-  const names = new Map<string, string>();
+function extractPackageDerivedNames(
+  code: string,
+  registry: ExportRegistry,
+  spec?: ApiSpec,
+): Map<string, string | undefined> {
+  const names = new Map<string, string | undefined>();
 
   try {
     const sourceFile = ts.createSourceFile(
@@ -683,26 +698,28 @@ function extractPackageDerivedNames(code: string, registry: ExportRegistry): Map
       ts.ScriptKind.TSX,
     );
 
-    const bindFromInit = (name: string, initializer: TS.Expression): void => {
-      let expr: TS.Expression = initializer;
-      if (ts.isAwaitExpression(expr)) expr = expr.expression;
-      if (
-        (ts.isCallExpression(expr) || ts.isNewExpression(expr)) &&
-        ts.isIdentifier(expr.expression) &&
-        registry.all.has(expr.expression.text)
-      ) {
-        names.set(name, expr.expression.text);
-      }
-    };
-
     const walk = (node: TS.Node) => {
       if (ts.isVariableDeclaration(node) && node.initializer) {
-        if (ts.isIdentifier(node.name)) {
-          bindFromInit(node.name.text, node.initializer);
-        } else if (ts.isObjectBindingPattern(node.name) || ts.isArrayBindingPattern(node.name)) {
-          for (const el of node.name.elements) {
-            if (ts.isBindingElement(el) && ts.isIdentifier(el.name)) {
-              bindFromInit(el.name.text, node.initializer);
+        let expr: TS.Expression = node.initializer;
+        if (ts.isAwaitExpression(expr)) expr = expr.expression;
+        const callee =
+          (ts.isCallExpression(expr) || ts.isNewExpression(expr)) &&
+          ts.isIdentifier(expr.expression) &&
+          registry.all.has(expr.expression.text)
+            ? { exportName: expr.expression.text, isNew: ts.isNewExpression(expr) }
+            : undefined;
+        const { bound, unbound } = declaredBindings(node.name);
+        const destructured = bound.some((b) => b.key !== undefined) || unbound.length > 0;
+        if (callee || destructured) {
+          for (const name of unbound) names.set(name, undefined);
+          for (const { name, key } of bound) {
+            if (key === undefined) {
+              if (callee) names.set(name, registry.callableReturnTypes.get(callee.exportName));
+            } else {
+              names.set(
+                name,
+                callee && spec ? destructuredTypeName(spec, registry, key, callee) : undefined,
+              );
             }
           }
         }
@@ -715,7 +732,7 @@ function extractPackageDerivedNames(code: string, registry: ExportRegistry): Map
     const pattern = /(?:const|let|var)\s+(\w+)\s*=\s*(?:await\s+)?(?:new\s+)?(\w+)\s*\(/g;
     for (const match of code.matchAll(pattern)) {
       if (registry.all.has(match[2])) {
-        names.set(match[1], match[2]);
+        names.set(match[1], registry.callableReturnTypes.get(match[2]));
       }
     }
   }

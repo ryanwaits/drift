@@ -208,6 +208,7 @@ export function registerScanCommand(program: Command): void {
                       packageName: pkgName,
                       markdownFiles,
                       registry,
+                      spec,
                     }).length;
                   }
                 } catch (err) {
@@ -342,6 +343,7 @@ export function registerScanCommand(program: Command): void {
                   packageName: pkgName,
                   markdownFiles,
                   registry,
+                  spec: apiSpec,
                 });
                 for (const drift of proseDrifts) {
                   issues.push({
