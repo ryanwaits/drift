@@ -4077,3 +4077,194 @@ describe("a builtin type name is the language's type, not the export of the same
     ).toEqual(['inline:number', 'inline:string']);
   });
 });
+
+describe('one page, several specs of the same package (`alsoSpecs`)', () => {
+  const F3 = '```';
+  const ref = (name: string) => ({ $ref: `#/types/${name}` });
+  const param = (name: string, required = true) => ({ name, required, schema: 'unknown' });
+  const method = (name: string, parameters: ReturnType<typeof param>[]) => ({
+    name,
+    kind: 'method',
+    signatures: [{ parameters }],
+  });
+  const parse = {
+    id: 'parse',
+    name: 'parse',
+    kind: 'function',
+    signatures: [{ parameters: [param('schema'), param('data')] }],
+  };
+
+  function zodSpec(): ApiSpec {
+    return {
+      meta: { name: 'zod' },
+      exports: [
+        {
+          id: 'string',
+          name: 'string',
+          kind: 'function',
+          signatures: [
+            { parameters: [param('params', false)], returns: { schema: ref('ZodString') } },
+          ],
+        },
+        {
+          id: 'object',
+          name: 'object',
+          kind: 'function',
+          signatures: [{ parameters: [param('shape')] }],
+        },
+        parse,
+        {
+          id: 'ZodString',
+          name: 'ZodString',
+          kind: 'class',
+          members: [method('min', [param('n')])],
+        },
+      ],
+    };
+  }
+
+  function miniSpec(): ApiSpec {
+    return {
+      meta: { name: 'zod' },
+      exports: [
+        {
+          id: 'string',
+          name: 'string',
+          kind: 'function',
+          signatures: [
+            { parameters: [param('params', false)], returns: { schema: ref('ZodMiniString') } },
+          ],
+        },
+        {
+          id: 'minimum',
+          name: 'minimum',
+          kind: 'function',
+          signatures: [{ parameters: [param('value'), param('params', false)] }],
+        },
+        parse,
+        {
+          id: 'ZodMiniString',
+          name: 'ZodMiniString',
+          kind: 'class',
+          members: [method('check', [param('check')])],
+        },
+      ],
+    };
+  }
+
+  function hits(content: string, withMini = true) {
+    const spec = zodSpec();
+    const mini = miniSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/api.md',
+      content,
+      ...(withMini
+        ? {
+            alsoSpecs: [
+              { spec: mini, registry: buildExportRegistry(mini), importSpecifier: 'zod/mini' },
+            ],
+          }
+        : {}),
+    })
+      .claims.filter((c) => c.rule)
+      .map((c) => [c.rule?.type, c.specRef?.export ?? null, c.specRef?.member ?? null, c.text]);
+  }
+
+  const zodImport = `${F3}ts\nimport * as z from 'zod'\n${F3}\n`;
+  const fence = (code: string) => `${F3}ts\n${code}\n${F3}\n`;
+
+  test('a name only a secondary spec has is not a broken reference', () => {
+    const content = `# API\n\n${zodImport}\n${fence('z.string().check(z.minimum(5))')}\n${fence("import { minimum, nope } from 'zod'")}\n${fence('z.nope()')}`;
+    expect(hits(content, false)).toEqual([
+      ['prose-broken-reference', null, null, 'z.minimum(5)'],
+      ['prose-broken-reference', null, null, 'minimum'],
+      ['prose-broken-reference', null, null, 'nope'],
+      ['prose-broken-reference', null, null, 'z.nope()'],
+    ]);
+    expect(hits(content)).toEqual([
+      ['prose-broken-reference', null, null, 'nope'],
+      ['prose-broken-reference', null, null, 'z.nope()'],
+    ]);
+  });
+
+  test("a fence that imports a secondary's specifier is checked against that spec", () => {
+    const code = [
+      "import * as z from 'zod/mini'",
+      'const a = z.minimum()',
+      'const s = z.string()',
+      'const c = s.check()',
+      's.min(5)',
+      'z.object({})',
+      'z.nope()',
+    ].join('\n');
+    expect(hits(`# API\n\n${fence(code)}`)).toEqual([
+      ['prose-missing-required', 'minimum', null, 'z.minimum()'],
+      ['prose-missing-required', 'ZodMiniString', 'check', 's.check()'],
+      ['prose-unresolved-member', null, null, 's.min(5)'],
+      ['prose-broken-reference', null, null, 'z.nope()'],
+    ]);
+    // Without the secondary spec the fence is another module's: nothing is checked.
+    expect(hits(`# API\n\n${fence(code)}`, false)).toEqual([]);
+  });
+
+  test('a named import from the secondary specifier is checked against it', () => {
+    expect(
+      hits(
+        `# API\n\n${fence("import { minimum, object, nope } from 'zod/mini'\nconst m = minimum()")}`,
+      ),
+    ).toEqual([
+      ['prose-broken-reference', null, null, 'nope'],
+      ['prose-missing-required', 'minimum', null, 'minimum()'],
+    ]);
+  });
+
+  test('no import and a name whose signature differs between the specs: silent', () => {
+    const content = `# API\n\n${zodImport}\n${fence('const s = z.string(1, 2)\nconst m = s.min()\ns.nope()\nconst p = z.parse()')}`;
+    expect(hits(content, false)).toEqual([
+      ['prose-arity-mismatch', 'string', null, 'z.string(1, 2)'],
+      ['prose-missing-required', 'ZodString', 'min', 's.min()'],
+      ['prose-unresolved-member', null, null, 's.nope()'],
+      ['prose-missing-required', 'parse', null, 'z.parse()'],
+    ]);
+    // `parse` is the same in both specs; `string` is not.
+    expect(hits(content)).toEqual([['prose-missing-required', 'parse', null, 'z.parse()']]);
+  });
+
+  test("a fence that imports the primary is the primary's, whatever the secondary has", () => {
+    const code = "import * as z from 'zod'\nconst s = z.string(1, 2)\nconst m = s.min()";
+    expect(hits(`# API\n\n${fence(code)}`)).toEqual([
+      ['prose-arity-mismatch', 'string', null, 'z.string(1, 2)'],
+      ['prose-missing-required', 'ZodString', 'min', 's.min()'],
+    ]);
+  });
+
+  test("a secondary fence's mentions are that entry's exports", () => {
+    const spec = zodSpec();
+    const mini = miniSpec();
+    const doc = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/api.md',
+      content: `# API\n\n${fence("import { minimum } from 'zod/mini'\nconst m = minimum(5)")}`,
+      alsoSpecs: [{ spec: mini, registry: buildExportRegistry(mini), importSpecifier: 'zod/mini' }],
+    });
+    expect(doc.claims.map((c) => [c.kind, c.specRef?.signature, c.locator.start.line])).toEqual([
+      ['inline', 'minimum(value: unknown, params?: unknown)', 5],
+    ]);
+    expect(doc.slices.map((sl) => sl.export)).toEqual(['minimum']);
+  });
+
+  test('buildPageDocuments forwards it', () => {
+    const spec = zodSpec();
+    const mini = miniSpec();
+    const [doc] = buildPageDocuments({
+      spec,
+      registry: buildExportRegistry(spec),
+      alsoSpecs: [{ spec: mini, registry: buildExportRegistry(mini), importSpecifier: 'zod/mini' }],
+      files: [{ file: 'docs/api.md', content: `# API\n\n${zodImport}\n${fence('z.minimum(5)')}` }],
+    });
+    expect(doc.claims.filter((c) => c.rule)).toEqual([]);
+  });
+});

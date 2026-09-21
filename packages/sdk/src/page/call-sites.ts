@@ -335,6 +335,8 @@ export type CallSiteContext = {
   aliases?: ReadonlyMap<string, string>;
   /** Names the fence declares itself: a bare callee among them is not the export. */
   locals?: ReadonlySet<string>;
+  /** Exports another entry of the package types differently, in a fence that names no entry. */
+  ambiguous?: ReadonlySet<string>;
   skip?: boolean;
 };
 
@@ -361,7 +363,9 @@ function resolveCallee(
   if (ctx?.skip) return null;
   if (site.objectName) {
     if (ctx?.namespaces?.has(site.objectName)) {
-      if (registry.all.has(site.name)) return { exportName: site.name };
+      if (registry.all.has(site.name) && !ctx.ambiguous?.has(site.name)) {
+        return { exportName: site.name };
+      }
       return null;
     }
     const bound = bindings.get(site.objectName);
@@ -373,7 +377,7 @@ function resolveCallee(
   if (ctx?.locals?.has(site.name)) return null;
   if (!bareCalleeAllowed(site.name, ctx)) return null;
   const exportName = ctx?.aliases?.get(site.name) ?? site.name;
-  if (registry.all.has(exportName)) return { exportName };
+  if (registry.all.has(exportName) && !ctx?.ambiguous?.has(exportName)) return { exportName };
   return null;
 }
 

@@ -5,6 +5,7 @@ import {
   type ImportInfo,
 } from '../../markdown/ast-extractor';
 import type { MarkdownDocFile } from '../../markdown/types';
+import { ambiguousExports, fenceEntry, type SpecEntry } from '../../page/entries';
 import {
   collectPackageNamespaces,
   declaredBindings,
@@ -157,6 +158,14 @@ export interface ProseDriftOptions {
    * destructured names are never receivers.
    */
   spec?: ApiSpec;
+  /**
+   * Secondary entries of the same package (`zod/mini` beside `zod`). A name
+   * the primary lacks but one of these has is not a broken reference; a fence
+   * that imports a secondary's `importSpecifier` is checked against it; a fence
+   * that imports none is not judged through a name whose signature differs
+   * between entries. None passed = one spec, as before.
+   */
+  alsoSpecs?: SpecEntry[];
 }
 
 /**
@@ -172,101 +181,125 @@ export interface ProseDriftOptions {
 export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
   const { packageName, markdownFiles, registry, importSpecifier, spec } = options;
   const issues: SpecDocDrift[] = [];
+  const secondaries = options.alsoSpecs ?? [];
+  const entries: SpecEntry[] = [{ spec, registry, importSpecifier }, ...secondaries];
+  const ambiguous = secondaries.length > 0 ? ambiguousExports(entries) : new Set<string>();
+  const none: ReadonlySet<string> = new Set();
 
   for (const file of markdownFiles) {
     // File-level context: imports and declarations accumulate across blocks
     // (docs are sequential narratives — earlier blocks establish context)
     const fileExternalImports = new Set<string>();
     const fileLocalDeclarations = new Set<string>();
-    const filePackageDerived = new Set<string>();
-    const filePackageDerivedTypes = new Map<string, string>();
     const fileExternalDerived = new Set<string>();
     const fileNonPackageParams = new Set<string>();
-    const filePackageParamTypes = new Map<string, string>();
     const flaggedDeprecated = new Set<string>();
-    const { namespaces, aliases } = collectPackageNamespaces(
-      file.codeBlocks.map((b) => b.code),
-      registry.all,
-      packageName,
-      importSpecifier,
-      registry.localNames,
-    );
+    const codes = file.codeBlocks.map((b) => b.code);
+    // What the page binds, per entry: a `zod/mini` fence never types a `zod` one.
+    const states = entries.map((entry, i) => ({
+      entry,
+      specifier: i === 0 ? (importSpecifier ?? packageName) : entry.importSpecifier,
+      derived: new Set<string>(),
+      derivedTypes: new Map<string, string>(),
+      paramTypes: new Map<string, string>(),
+      // A secondary without a specifier is never a fence's entry: it binds nothing.
+      ...(i === 0 || entry.importSpecifier
+        ? collectPackageNamespaces(
+            codes,
+            entry.registry.all,
+            packageName,
+            i === 0 ? importSpecifier : entry.importSpecifier,
+            entry.registry.localNames,
+          )
+        : { namespaces: new Set<string>(), aliases: new Map<string, string>() }),
+    }));
 
     for (const block of file.codeBlocks) {
+      const at = fenceEntry(block.code, importSpecifier ?? packageName, secondaries);
+      const state = states[at.index];
+      const active = state.entry.registry;
+      const others = entries.filter((_, i) => i !== at.index).map((e) => e.registry);
+      const unsure = at.imported ? none : ambiguous;
+
       // Accumulate imports and declarations from this block
       accumulateBlockContext(
         block.code,
         packageName,
         fileExternalImports,
         fileLocalDeclarations,
-        filePackageDerived,
-        registry,
-        filePackageDerivedTypes,
+        state.derived,
+        active,
+        state.derivedTypes,
         fileExternalDerived,
         fileNonPackageParams,
-        filePackageParamTypes,
-        spec,
-        namespaces,
+        state.paramTypes,
+        state.entry.spec,
+        state.namespaces,
+        unsure,
       );
 
       const skipFence =
         isMigrationFence(file.content, block.lineStart, block.code) ||
-        fenceImportKind(block.code, packageName, importSpecifier) === 'foreign';
+        fenceImportKind(block.code, packageName, state.specifier) === 'foreign';
 
       // 1. Check imports (existing behavior)
       detectBrokenImports(
         block.code,
         packageName,
-        registry,
+        active,
         file.path,
         block.lineStart,
         issues,
-        importSpecifier,
+        state.specifier,
+        others,
       );
 
       if (!skipFence) {
         detectNamespaceExportRefs(
           block.code,
-          namespaces,
-          registry,
+          state.namespaces,
+          active,
           file.path,
           block.lineStart,
           issues,
-          importSpecifier ?? packageName,
+          state.specifier ?? packageName,
+          others,
         );
       }
 
       // 2. Check method/property access against type members
-      if (!skipFence && registry.typeMembers.size > 0) {
+      if (!skipFence && active.typeMembers.size > 0) {
         detectUnresolvedMembers(
           block.code,
-          registry,
+          active,
           file.path,
           block.lineStart,
           issues,
-          filePackageDerivedTypes,
-          filePackageParamTypes,
-          namespaces,
+          state.derivedTypes,
+          state.paramTypes,
+          state.namespaces,
         );
       }
 
       // 3. Check references to deprecated exports/members without a deprecation note
-      if (registry.deprecated.size > 0 || registry.deprecatedMembers.size > 0) {
+      if (active.deprecated.size > 0 || active.deprecatedMembers.size > 0) {
         detectDeprecatedReferences(
           block,
           file,
           packageName,
-          registry,
+          active,
           issues,
           flaggedDeprecated,
           {
-            derived: filePackageDerivedTypes,
-            params: filePackageParamTypes,
-            namespaces,
-            aliases,
+            derived: state.derivedTypes,
+            params: state.paramTypes,
+            namespaces: state.namespaces,
+            aliases: state.aliases,
             notOurs: new Set([...fileExternalImports, ...fileLocalDeclarations]),
+            // A fence that names no entry: deprecated only if every entry agrees.
+            undecided: at.imported ? [] : others,
           },
-          spec,
+          state.entry.spec,
         );
       }
     }
@@ -286,6 +319,7 @@ function detectBrokenImports(
   lineStart: number,
   issues: SpecDocDrift[],
   importSpecifier?: string,
+  others: readonly ExportRegistry[] = [],
 ): void {
   let imports: ImportInfo[];
   try {
@@ -314,6 +348,8 @@ function detectBrokenImports(
     // spelling) names no export.
     const name = imp.imported;
     if (name === 'default' || registry.all.has(name)) continue;
+    // Another entry of the package has it: the page may mean that one.
+    if (others.some((r) => r.all.has(name))) continue;
 
     const match = findClosestMatch(name, registry.allNames);
     const suggestion =
@@ -346,12 +382,14 @@ function detectNamespaceExportRefs(
   lineStart: number,
   issues: SpecDocDrift[],
   specifier: string,
+  others: readonly ExportRegistry[] = [],
 ): void {
   if (namespaces.size === 0) return;
   for (const call of extractFenceCalls(code)) {
     if (!namespaces.has(call.objectName)) continue;
     if (JS_BUILTIN_METHODS.has(call.methodName)) continue;
     if (registry.all.has(call.methodName)) continue;
+    if (others.some((r) => r.all.has(call.methodName))) continue;
     const match = findClosestMatch(call.methodName, registry.allNames);
     issues.push({
       type: 'prose-broken-reference',
@@ -383,6 +421,7 @@ function accumulateBlockContext(
   packageParamTypes?: Map<string, string>,
   spec?: ApiSpec,
   namespaces?: ReadonlySet<string>,
+  ambiguous?: ReadonlySet<string>,
 ): void {
   try {
     const imports = extractImportsAST(code);
@@ -401,7 +440,13 @@ function accumulateBlockContext(
 
   // Track variables derived from package export calls (e.g. `const simnet = await initSimnet()`)
   if (packageDerived && registry) {
-    for (const [name, returnType] of extractPackageDerivedNames(code, registry, spec, namespaces)) {
+    for (const [name, returnType] of extractPackageDerivedNames(
+      code,
+      registry,
+      spec,
+      namespaces,
+      ambiguous,
+    )) {
       packageDerived.add(name);
       if (returnType) packageDerivedTypes?.set(name, returnType);
       else packageDerivedTypes?.delete(name);
@@ -559,6 +604,8 @@ type ReferenceScope = {
   aliases: ReadonlyMap<string, string>;
   /** Imported from elsewhere or declared on the page: never the export of that name */
   notOurs: ReadonlySet<string>;
+  /** Other entries the fence may mean: an export is deprecated only if each that has it agrees */
+  undecided?: readonly ExportRegistry[];
 };
 
 /** Export a callee names: `f(...)` or `ns.f(...)`. Undefined for anything else. */
@@ -690,7 +737,12 @@ function detectDeprecatedReferences(
         const line =
           block.lineStart + sourceFile.getLineAndCharacterOfPosition(node.getStart()).line;
         const exportName = calleeExport(node.expression, registry, scope);
-        const note = exportName ? registry.deprecated.get(exportName) : undefined;
+        const agreed =
+          exportName !== undefined &&
+          (scope.undecided ?? []).every(
+            (r) => !r.all.has(exportName) || r.deprecated.has(exportName),
+          );
+        const note = exportName && agreed ? registry.deprecated.get(exportName) : undefined;
         if (exportName && note !== undefined) {
           push(exportName, note, line);
         } else if (!exportName && ts.isPropertyAccessExpression(node.expression)) {
@@ -785,6 +837,7 @@ function extractPackageDerivedNames(
   registry: ExportRegistry,
   spec?: ApiSpec,
   namespaces: ReadonlySet<string> = new Set(),
+  ambiguous: ReadonlySet<string> = new Set(),
 ): Map<string, string | undefined> {
   const names = new Map<string, string | undefined>();
 
@@ -812,10 +865,15 @@ function extractPackageDerivedNames(
                 namespaces.has(fn.expression.text)
               ? fn.name.text
               : undefined;
+        // An export another entry of the package types differently binds nothing.
         const callee =
-          calleeName && registry.all.has(calleeName)
+          calleeName && registry.all.has(calleeName) && !ambiguous.has(calleeName)
             ? { exportName: calleeName, isNew: ts.isNewExpression(expr) }
             : undefined;
+        if (calleeName && ambiguous.has(calleeName)) {
+          const declared = declaredBindings(node.name);
+          for (const b of declared.bound) names.set(b.name, undefined);
+        }
         const { bound, unbound } = declaredBindings(node.name);
         const destructured = bound.some((b) => b.key !== undefined) || unbound.length > 0;
         if (callee || destructured) {

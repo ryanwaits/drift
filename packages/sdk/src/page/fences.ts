@@ -171,16 +171,25 @@ export function declaredBindings(name: TS.BindingName): {
  * A destructured element is bound to the closed spec type of its own property
  * or tuple position (needs `spec` and `registry`), never to the return type;
  * otherwise it is unbound, and shadows an earlier binding of that name.
- * Later fences reuse earlier bindings.
+ * `ns.create()` through a namespace alias binds like `create()`. A callee in
+ * `ambiguous` binds nothing. Later fences reuse earlier bindings.
  */
 export function extractExportBindings(
   code: string,
-  exportNames?: ReadonlySet<string>,
-  spec?: ApiSpec,
-  prior?: ReadonlyMap<string, string>,
-  aliases?: ReadonlyMap<string, string>,
-  registry?: ExportRegistry,
+  scope: {
+    exportNames?: ReadonlySet<string>;
+    spec?: ApiSpec;
+    prior?: ReadonlyMap<string, string>;
+    /** Renamed / default imports: local → export */
+    aliases?: ReadonlyMap<string, string>;
+    registry?: ExportRegistry;
+    /** `import * as ns` aliases: `ns.create()` is the export `create` */
+    namespaces?: ReadonlySet<string>;
+    /** Exports that bind nothing here: another entry of the package types them differently */
+    ambiguous?: ReadonlySet<string>;
+  } = {},
 ): Map<string, string> {
+  const { exportNames, spec, prior, aliases, registry, namespaces, ambiguous } = scope;
   const names = new Map(prior ?? []);
   for (const [k, v] of extractInstanceBindings(code)) names.set(k, v);
   try {
@@ -203,6 +212,15 @@ export function extractExportBindings(
         return { exportName: callee, isNew: ts.isNewExpression(expr) };
       }
       if (
+        ts.isPropertyAccessExpression(expr.expression) &&
+        ts.isIdentifier(expr.expression.expression) &&
+        namespaces?.has(expr.expression.expression.text)
+      ) {
+        const callee = expr.expression.name.text;
+        if (!exportNames?.has(callee)) return undefined;
+        return { exportName: callee, isNew: ts.isNewExpression(expr) };
+      }
+      if (
         ts.isCallExpression(expr) &&
         ts.isPropertyAccessExpression(expr.expression) &&
         ts.isIdentifier(expr.expression.expression)
@@ -216,11 +234,15 @@ export function extractExportBindings(
     };
     const walk = (node: TS.Node): void => {
       if (ts.isVariableDeclaration(node) && node.initializer) {
-        const callee = calleeOf(node.initializer);
+        const found = calleeOf(node.initializer);
+        const unsure = found !== undefined && !found.member && ambiguous?.has(found.exportName);
+        const callee = unsure ? undefined : found;
         const { bound, unbound } = declaredBindings(node.name);
         for (const name of unbound) names.delete(name);
         for (const { name, key } of bound) {
-          if (key !== undefined) {
+          if (unsure) {
+            names.delete(name);
+          } else if (key !== undefined) {
             const type =
               callee && spec && registry
                 ? destructuredTypeName(spec, registry, key, callee)

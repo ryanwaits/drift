@@ -168,6 +168,29 @@ export type BuildPageDocumentOptions = {
    * so imports from the package root and other subpaths are silent.
    */
   importSpecifier?: string;
+  /**
+   * Secondary entries of the same package, for a page that documents several
+   * (`zod` and `zod/mini` tabs; SWR client and react-server). Precision-first:
+   * - a reference (`ns.member`, a named import) the primary spec lacks but a
+   *   secondary has is not a `prose-broken-reference`;
+   * - a fence that imports a secondary's `importSpecifier` and not the
+   *   primary's is checked against that spec for every rule. Claims keep their
+   *   shape: a `specRef` does not say which spec it was resolved in;
+   * - a fence that imports neither does not say which entry it means: nothing
+   *   is judged through a name the entries give different signatures
+   *   (parameters, return type or members), and a deprecated export is flagged
+   *   only if every entry that has it deprecates it.
+   * Omitted or empty = one spec, exactly as before.
+   */
+  alsoSpecs?: SecondarySpec[];
+};
+
+/** A secondary entry of the package a page documents, beside the primary `spec`. */
+export type SecondarySpec = {
+  spec: ApiSpec;
+  registry: ExportRegistry;
+  /** Module specifier of this entry (`zod/mini`). Without it no fence selects the entry. */
+  importSpecifier?: string;
 };
 
 /** Inputs for `buildPageDocuments`. */
