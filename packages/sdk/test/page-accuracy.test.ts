@@ -2776,7 +2776,10 @@ describe('a # line inside a fenced code block is not a heading', () => {
       'a',
       'b',
     ]);
-    expect(texts(`# a\n\n${F3}md\n~~~\n# no\n~~~\n# nor this\n${F3}\n\n## b\n`)).toEqual(['a', 'b']);
+    expect(texts(`# a\n\n${F3}md\n~~~\n# no\n~~~\n# nor this\n${F3}\n\n## b\n`)).toEqual([
+      'a',
+      'b',
+    ]);
     // A closing fence carries no info string.
     expect(texts(`# a\n\n${F3}md\n${F3}ts\n# no\n${F3}\n\n## b\n`)).toEqual(['a', 'b']);
   });
