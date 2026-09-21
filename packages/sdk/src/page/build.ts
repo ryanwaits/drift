@@ -20,10 +20,12 @@ import {
 import {
   attachHeading,
   collectHeadings,
+  type FenceBlock,
   fencedLines,
   HEADING,
   headingAncestorNames,
   headingLocator,
+  locateInFence,
   locateOnLine,
   locateSpan,
   nearestHeading,
@@ -120,17 +122,15 @@ function pushUnique(claims: Claim[], claim: Claim): void {
   claims.push(claim);
 }
 
-function locatorForSpan(
+function fenceLocator(
   path: string,
   content: string,
-  span: string,
-  hintLine: number,
+  block: FenceBlock,
+  span: { text: string; line: number; col: number },
   headings: PageHeading[],
-  fallbackLine?: number,
 ): Locator | null {
-  const found = locateSpan(content, span, hintLine) ?? locateSpan(content, span, fallbackLine);
-  if (!found) return null;
-  return attachHeading({ path, start: found.start, end: found.end }, headings);
+  const found = locateInFence(content, block, span.text, span.line, span.col);
+  return found ? attachHeading({ path, ...found }, headings) : null;
 }
 
 function fenceClaims(
@@ -152,45 +152,37 @@ function fenceClaims(
       continue;
     }
     const target = issue.target ?? '';
+    // Prose drift reports `block.lineStart + <0-indexed code line>`: the fence
+    // line itself for an import, one line above the call for a member.
     const hintLine = issue.line ?? 1;
     const block = blockContaining(parsed.codeBlocks, hintLine);
+    if (!block) continue;
+    const codeLine = hintLine - block.lineStart;
+
+    const named = extractFenceCalls(block.code).filter(
+      (c) =>
+        c.methodName === target ||
+        `${c.objectName}.${c.methodName}` === target ||
+        c.objectName === target,
+    );
+    const call = named.find((c) => c.line === codeLine) ?? named[0];
+    const imp = extractFenceImports(block.code).find((i) => i.imported === target);
+    const aboutImport = issue.type === 'prose-broken-reference' && !target.includes('.');
+
     let text = target;
     let specRef: SpecRef | null = null;
     let loc: Locator | null = null;
-
-    if (block) {
-      const calls = extractFenceCalls(block.code);
-      const matchCall = calls.find(
-        (c) =>
-          c.methodName === target ||
-          `${c.objectName}.${c.methodName}` === target ||
-          c.objectName === target,
-      );
-      if (matchCall) {
-        text = matchCall.text;
-        specRef = resolveCall(spec, registry, matchCall.objectName, matchCall.methodName);
-        loc = locatorForSpan(file, content, text, hintLine, headings, block.lineStart + 1);
-      } else {
-        const imp = extractFenceImports(block.code).find((i) => i.imported === target);
-        if (imp) {
-          text = imp.text;
-          specRef = resolveApiName(spec, registry, imp.imported);
-          // `lineStart` is the fence line; code line 0 is the line after it.
-          const found = locateOnLine(content, block.lineStart + 1 + imp.line, text);
-          loc = found
-            ? attachHeading({ path: file, ...found }, headings)
-            : locatorForSpan(file, content, text, hintLine, headings, block.lineStart + 1);
-        }
-      }
-    }
-
-    if (!loc) {
-      loc = locatorForSpan(file, content, text, hintLine, headings);
-    }
-    if (!loc) {
-      const token = target.includes('.') ? (target.split('.').pop() ?? target) : target;
-      const found = locateOnLine(content, hintLine, token) ?? locateSpan(content, token, hintLine);
-      if (found) loc = attachHeading({ path: file, ...found }, headings);
+    if (call && !(aboutImport && imp)) {
+      text = call.text;
+      specRef = resolveCall(spec, registry, call.objectName, call.methodName);
+      loc = fenceLocator(file, content, block, call, headings);
+    } else if (imp) {
+      text = imp.text;
+      specRef = resolveApiName(spec, registry, imp.imported);
+      loc = fenceLocator(file, content, block, imp, headings);
+    } else {
+      text = target.includes('.') ? (target.split('.').pop() ?? target) : target;
+      loc = fenceLocator(file, content, block, { text, line: codeLine, col: 0 }, headings);
     }
     if (!loc) continue;
     if (!specRef) specRef = resolveApiName(spec, registry, target);
@@ -235,10 +227,7 @@ function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
       aliases,
       skip,
     })) {
-      const hintLine = block.lineStart + hit.line;
-      const loc =
-        locatorForSpan(file, content, hit.text, hintLine, headings, block.lineStart + 1) ??
-        locatorForSpan(file, content, hit.text.split('\n')[0] ?? hit.text, hintLine, headings);
+      const loc = fenceLocator(file, content, block, hit, headings);
       if (!loc) continue;
       const specRef = makeSpecRef(spec, registry, hit.exportName, hit.member);
       pushUnique(claims, {

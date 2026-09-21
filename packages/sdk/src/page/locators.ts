@@ -166,6 +166,77 @@ export function locateOnLine(
   };
 }
 
+/** A fenced code block: `lineStart` is the opening fence line (1-indexed), `code` its dedented value. */
+export type FenceBlock = { code: string; lineStart: number; lineEnd: number };
+
+/**
+ * Column where fence code line `codeText` starts on its markdown line `row`.
+ * The parser strips list / blockquote indentation from the code value.
+ */
+function fenceIndent(row: string, codeText: string): number | null {
+  if (row.endsWith(codeText)) return row.length - codeText.length;
+  const trimmed = codeText.trim();
+  const at = trimmed ? row.indexOf(trimmed) : -1;
+  return at === -1 ? null : at - (codeText.length - codeText.trimStart().length);
+}
+
+/**
+ * Source position of `span`, which starts at 0-indexed `codeLine`:`codeCol` of
+ * `block.code`. Code line 0 is the line after the opening fence. When that
+ * position does not hold the span, the nearest occurrence inside the fence;
+ * never a position outside it.
+ */
+export function locateInFence(
+  content: string,
+  block: FenceBlock,
+  span: string,
+  codeLine: number,
+  codeCol: number,
+): { start: SourcePos; end: SourcePos } | null {
+  const spanLines = span.split('\n');
+  const first = spanLines[0];
+  if (!first) return null;
+  const codeLines = block.code.split('\n');
+  const firstCode = block.lineStart + 1;
+  const indentAt = (line: number): number | null => {
+    const row = lineRange(content, line);
+    const code = codeLines[line - firstCode];
+    return row && code !== undefined ? fenceIndent(row.text, code) : null;
+  };
+
+  let start: SourcePos | null = null;
+  const hinted = firstCode + codeLine;
+  const indent = indentAt(hinted);
+  if (indent !== null) {
+    const col = indent + codeCol;
+    if (col >= 0 && lineRange(content, hinted)?.text.startsWith(first, col)) {
+      start = { line: hinted, col: col + 1 };
+    }
+  }
+  if (!start) {
+    const lines: number[] = [];
+    for (let line = firstCode; line <= block.lineEnd; line++) lines.push(line);
+    lines.sort((a, b) => Math.abs(a - hinted) - Math.abs(b - hinted));
+    for (const line of lines) {
+      const found = locateOnLine(content, line, first);
+      if (found) {
+        start = found.start;
+        break;
+      }
+    }
+  }
+  if (!start) return null;
+
+  const firstEnd = { line: start.line, col: start.col + first.length - 1 };
+  if (spanLines.length === 1) return { start, end: firstEnd };
+  // Later span lines are whole code lines from their first column.
+  const endLine = start.line + spanLines.length - 1;
+  const endIndent = indentAt(endLine);
+  const last = spanLines[spanLines.length - 1];
+  if (endIndent === null || endLine > block.lineEnd) return { start, end: firstEnd };
+  return { start, end: { line: endLine, col: Math.max(1, endIndent + last.length) } };
+}
+
 export function collectHeadings(content: string): PageHeading[] {
   const slugger = new PageSlugger();
   const headings: PageHeading[] = [];

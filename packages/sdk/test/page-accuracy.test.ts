@@ -2805,3 +2805,147 @@ describe('a # line inside a fenced code block is not a heading', () => {
     expect(rules(doc).map((c) => c.rule?.type)).toEqual(['prose-unresolved-member']);
   });
 });
+
+describe('fence claims are located inside their own fence', () => {
+  const F3 = '```';
+
+  function locSpec(): ApiSpec {
+    return {
+      meta: { name: 'netlib' },
+      exports: [
+        {
+          id: 'connect',
+          name: 'connect',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [{ name: 'url', required: true, schema: { type: 'string' } }],
+              returns: { schema: { $ref: '#/types/Socket' } },
+            },
+          ],
+        },
+        {
+          id: 'Panel',
+          name: 'Panel',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                {
+                  name: 'props',
+                  required: true,
+                  schema: {
+                    type: 'object',
+                    properties: { title: { type: 'string' } },
+                    required: ['title'],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'Socket',
+          name: 'Socket',
+          kind: 'class',
+          members: [{ name: 'send', kind: 'method' }],
+        },
+      ],
+    };
+  }
+
+  function locRules(content: string) {
+    const spec = locSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/connect.md',
+      content,
+    }).claims.filter((c) => c.rule);
+  }
+
+  function textAt(content: string, c: { locator: { start: { line: number; col: number } } }) {
+    return (content.split('\n')[c.locator.start.line - 1] ?? '').slice(c.locator.start.col - 1);
+  }
+
+  test('call on the first code line; the same text earlier in prose', () => {
+    const content = `# connect\n\nInline \`connect(a, b)\` is wrong.\n\nSee:\n${F3}ts\nconnect(a, b)\n${F3}\n`;
+    const hits = locRules(content);
+    expect(hits.map((c) => c.rule?.type)).toEqual(['prose-arity-mismatch']);
+    expect(hits[0]?.locator.start).toEqual({ line: 7, col: 1 });
+    expect(hits[0]?.locator.end).toEqual({ line: 7, col: 13 });
+  });
+
+  test('call on a later, indented code line', () => {
+    const content = `# connect\n\nInline \`connect(a, b)\`.\n\n${F3}ts\nfunction go() {\n  const x = 1\n  return connect(a, b)\n}\n${F3}\n`;
+    const hits = locRules(content);
+    expect(hits.map((c) => c.locator.start)).toEqual([{ line: 8, col: 10 }]);
+    expect(textAt(content, hits[0])).toStartWith('connect(a, b)');
+  });
+
+  test('the same call twice in one fence: two claims, two locators', () => {
+    const content = `# connect\n\n${F3}ts\nconnect(a, b)\nlog()\nconnect(a, b)\n${F3}\n`;
+    const hits = locRules(content);
+    expect(hits.map((c) => c.locator.start)).toEqual([
+      { line: 4, col: 1 },
+      { line: 6, col: 1 },
+    ]);
+    expect(new Set(hits.map((c) => c.id)).size).toBe(2);
+  });
+
+  test('the same call in two fences: each claim in its own fence', () => {
+    const content = `# connect\n\n${F3}ts\nconnect(a, b)\n${F3}\n\nAgain:\n\n${F3}ts\nsetup()\nconnect(a, b)\n${F3}\n`;
+    expect(locRules(content).map((c) => c.locator.start)).toEqual([
+      { line: 4, col: 1 },
+      { line: 11, col: 1 },
+    ]);
+  });
+
+  test('fence inside a list item (indented fence)', () => {
+    const content = `# connect\n\n1. Call \`connect(a, b)\`:\n\n   ${F3}ts\n   setup()\n   connect(a, b)\n   ${F3}\n`;
+    const hits = locRules(content);
+    expect(hits.map((c) => c.locator.start)).toEqual([{ line: 7, col: 4 }]);
+    expect(hits[0]?.locator.end).toEqual({ line: 7, col: 16 });
+    expect(textAt(content, hits[0])).toStartWith('connect(a, b)');
+  });
+
+  test('multi-line call: start at the callee, end on the closing paren', () => {
+    const content = `# connect\n\n- step\n\n  ${F3}ts\n  connect(\n    a,\n    b,\n  )\n  ${F3}\n`;
+    const hits = locRules(content);
+    expect(hits[0]?.locator.start).toEqual({ line: 6, col: 3 });
+    expect(hits[0]?.locator.end).toEqual({ line: 9, col: 3 });
+  });
+
+  test('JSX: missing-required and unknown-key sit on the element, not on earlier prose', () => {
+    const content = `# Panel\n\nRender \`<Panel heading="x" />\` anywhere.\n\n${F3}tsx\nconst a = 1\nconst el = <Panel heading="x" />\n${F3}\n`;
+    const hits = locRules(content);
+    expect(hits.map((c) => c.rule?.type).sort()).toEqual([
+      'prose-missing-required',
+      'prose-unknown-key',
+    ]);
+    for (const c of hits) expect(c.locator.start).toEqual({ line: 7, col: 12 });
+  });
+
+  test('unresolved member: the call on its own line, not the first occurrence', () => {
+    const content = `# connect\n\nNever call \`socket.emit("x")\`.\n\n${F3}ts\nconst socket = connect(url)\n\nsocket.emit("x")\n${F3}\n`;
+    const hits = locRules(content);
+    expect(hits.map((c) => c.rule?.type)).toEqual(['prose-unresolved-member']);
+    expect(hits[0]?.locator.start).toEqual({ line: 8, col: 1 });
+  });
+
+  test('broken import: the specifier inside an indented fence', () => {
+    const content = `# connect\n\nThere is no \`nope\` export.\n\n- step\n\n  ${F3}ts\n  import { connect, nope } from 'netlib'\n  ${F3}\n`;
+    const hits = locRules(content);
+    expect(hits.map((c) => c.rule?.type)).toEqual(['prose-broken-reference']);
+    expect(hits[0]?.locator.start).toEqual({ line: 8, col: 21 });
+    expect(hits[0]?.locator.end).toEqual({ line: 8, col: 24 });
+  });
+
+  test('broken import: the specifier, not the same word earlier on the line', () => {
+    const content = `# connect\n\n${F3}ts\nimport { port as p, connect } from 'netlib' /* port */\n${F3}\n`;
+    const hits = locRules(content);
+    expect(hits[0]?.locator.start).toEqual({ line: 4, col: 10 });
+    const twice = `# connect\n\n${F3}ts\nimport { im } from 'netlib'\n${F3}\n`;
+    expect(locRules(twice)[0]?.locator.start).toEqual({ line: 4, col: 10 });
+  });
+});

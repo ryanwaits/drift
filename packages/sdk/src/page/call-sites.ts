@@ -18,7 +18,9 @@ export type CallSiteHit = {
   exportName: string;
   member?: string;
   text: string;
+  /** 0-indexed line / column of `text` within the fence code */
   line: number;
+  col: number;
 };
 
 type ParamShape = {
@@ -463,6 +465,7 @@ function judgeSite(
     member: callee.member,
     text: site.text,
     line: site.line,
+    col: site.col,
   };
 
   if (site.kind !== 'jsx' && !site.hasSpreadArg) {

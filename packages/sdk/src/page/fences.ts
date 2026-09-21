@@ -11,6 +11,8 @@ export type FenceCall = {
   methodName: string;
   /** 0-indexed line within the code block value */
   line: number;
+  /** 0-indexed column on that line */
+  col: number;
   text: string;
 };
 
@@ -48,7 +50,9 @@ export type FenceImport = {
   /** Name the module exports (`a`); `default` / `*` for those import kinds */
   imported: string;
   from: string;
+  /** 0-indexed line / column of `text` within the code block value */
   line: number;
+  col: number;
   text: string;
   kind: 'named' | 'default' | 'namespace';
 };
@@ -78,6 +82,7 @@ export function extractFenceCalls(code: string): FenceCall[] {
             objectName,
             methodName,
             line: pos.line,
+            col: pos.character,
             text: node.getText(sourceFile),
           });
         }
@@ -223,7 +228,9 @@ export type CallSite = {
   hasChildren: boolean;
   /** Argument list is only a comment, `...`, or a block-comment placeholder. */
   elided: boolean;
+  /** 0-indexed line / column of `text` within the code block value */
   line: number;
+  col: number;
   text: string;
 };
 
@@ -409,6 +416,7 @@ export function extractCallSites(code: string): CallSite[] {
             hasChildren: false,
             elided: isElidedArgList(node, sourceFile),
             line: pos.line,
+            col: pos.character,
             text: node.getText(sourceFile),
           });
         } else if (ts.isPropertyAccessExpression(expr) && ts.isIdentifier(expr.expression)) {
@@ -424,6 +432,7 @@ export function extractCallSites(code: string): CallSite[] {
             hasChildren: false,
             elided: isElidedArgList(node, sourceFile),
             line: pos.line,
+            col: pos.character,
             text: node.getText(sourceFile),
           });
         }
@@ -442,6 +451,7 @@ export function extractCallSites(code: string): CallSite[] {
           hasChildren: false,
           elided: isElidedArgList(node, sourceFile),
           line: pos.line,
+          col: pos.character,
           text: node.getText(sourceFile),
         });
       }
@@ -463,6 +473,7 @@ export function extractCallSites(code: string): CallSite[] {
             hasChildren: ts.isJsxElement(node) ? jsxHasChildren(node) : false,
             elided: false,
             line: pos.line,
+            col: pos.character,
             text: open.getText(sourceFile),
           });
         }
@@ -491,14 +502,16 @@ export function extractFenceImports(code: string): FenceImport[] {
       const from = node.moduleSpecifier.text;
       const clause = node.importClause;
       if (!clause) return;
-      const lineOf = (n: TS.Node): number =>
-        sourceFile.getLineAndCharacterOfPosition(n.getStart()).line;
+      const posOf = (n: TS.Node): { line: number; col: number } => {
+        const pos = sourceFile.getLineAndCharacterOfPosition(n.getStart());
+        return { line: pos.line, col: pos.character };
+      };
       if (clause.name) {
         imports.push({
           name: clause.name.text,
           imported: 'default',
           from,
-          line: lineOf(clause.name),
+          ...posOf(clause.name),
           text: clause.name.getText(sourceFile),
           kind: 'default',
         });
@@ -509,7 +522,7 @@ export function extractFenceImports(code: string): FenceImport[] {
           name: named.name.text,
           imported: '*',
           from,
-          line: lineOf(named.name),
+          ...posOf(named.name),
           text: named.name.getText(sourceFile),
           kind: 'namespace',
         });
@@ -522,7 +535,7 @@ export function extractFenceImports(code: string): FenceImport[] {
             name: el.name.text,
             imported: source.text,
             from,
-            line: lineOf(source),
+            ...posOf(source),
             text: source.getText(sourceFile),
             kind: 'named',
           });
