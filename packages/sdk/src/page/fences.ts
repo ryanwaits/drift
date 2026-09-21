@@ -3,6 +3,7 @@ import type { ApiSpec } from '../analysis/api-spec';
 import type { MarkdownCodeBlock } from '../markdown/types';
 import { ts } from '../ts-module';
 import { isBuiltInIdentifier } from '../utils/builtin-detection';
+import { collectHeadings, nearestHeading } from './locators';
 import { memberReturnType } from './spec-ref';
 
 export type FenceCall = {
@@ -557,13 +558,7 @@ export function isMigrationFence(
 ): boolean {
   if (/^\s*(\/\/|\/\*)\s*(change this|before|previous)\b/im.test(code)) return true;
   if (!markdown) return false;
-  const lines = markdown.split('\n');
-  let heading = '';
-  const end = Math.min(lines.length, Math.max(0, blockLineStart - 1));
-  for (let i = 0; i < end; i++) {
-    const m = lines[i].match(/^(#{1,6})\s+(.*)$/);
-    if (m) heading = m[2].replace(/`([^`]+)`/g, '$1').trim();
-  }
+  const heading = nearestHeading(collectHeadings(markdown), blockLineStart)?.text ?? '';
   return /^(change this|before|previous)(\s+api)?$/i.test(heading);
 }
 

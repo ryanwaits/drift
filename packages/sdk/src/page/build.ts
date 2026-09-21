@@ -20,7 +20,7 @@ import {
 import {
   attachHeading,
   collectHeadings,
-  FENCE,
+  fencedLines,
   HEADING,
   headingAncestorNames,
   headingLocator,
@@ -383,16 +383,12 @@ function inlineClaims(
   const { spec, registry, file, content } = opts;
   const claims: Claim[] = [];
   const lines = content.split('\n');
-  let inFence = false;
+  const fenced = fencedLines(lines);
   const headingLines = new Set(headings.map((h) => h.line));
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (FENCE.test(line)) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
+    if (fenced[i]) continue;
     if (HEADING.test(line)) continue;
     const lineNo = i + 1;
     if (headingLines.has(lineNo)) continue;
@@ -583,21 +579,17 @@ function mentionedMembers(
 
   if (members.size > 0) {
     const lines = opts.content.split('\n');
+    const fenced = fencedLines(lines);
     for (const th of headings) {
       if (normalizeApiName(th.text) !== typeName) continue;
       const sectionEnd =
         headings.find((h) => h.line > th.line && h.level <= th.level)?.line ??
         Number.POSITIVE_INFINITY;
-      let inFence = false;
       for (let i = th.line; i < lines.length; i++) {
         const lineNo = i + 1;
         if (lineNo >= sectionEnd) break;
+        if (fenced[i]) continue;
         const line = lines[i];
-        if (FENCE.test(line)) {
-          inFence = !inFence;
-          continue;
-        }
-        if (inFence) continue;
         for (const m of line.matchAll(BACKTICK)) {
           const token = unwrapApiToken(m[1]);
           if (members.has(token)) mentioned.add(token);

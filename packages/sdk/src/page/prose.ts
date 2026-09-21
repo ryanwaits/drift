@@ -1,7 +1,7 @@
 import type { ApiSpec } from '../analysis/api-spec';
 import type { ExportRegistry } from '../analysis/drift/types';
 import {
-  FENCE,
+  fencedLines,
   HEADING,
   headingAncestorNames,
   indexToPos,
@@ -67,8 +67,8 @@ function isTableSep(cell: string): boolean {
 function extractUnits(content: string): Span[] {
   const units: Span[] = [];
   const lines = content.split('\n');
+  const fenced = fencedLines(lines);
   let offset = 0;
-  let inFence = false;
   let para: { start: number; end: number } | null = null;
 
   const flushPara = (): void => {
@@ -83,12 +83,10 @@ function extractUnits(content: string): Span[] {
     const lineEnd = offset + line.length;
     offset = lineEnd + (li < lines.length - 1 ? 1 : 0);
 
-    if (FENCE.test(line)) {
+    if (fenced[li]) {
       flushPara();
-      inFence = !inFence;
       continue;
     }
-    if (inFence) continue;
     if (HEADING.test(line) || IMPORT_LINE.test(line)) {
       flushPara();
       continue;

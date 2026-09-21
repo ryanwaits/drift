@@ -2,7 +2,14 @@ import type { ApiSchema, ApiSignature, ApiSpec } from '../analysis/api-spec';
 import type { ExportRegistry } from '../analysis/drift/types';
 import { closedObjectShape } from './call-sites';
 import { splitTopLevel } from './fences';
-import { FENCE, HEADING, headingAncestors, nearestHeading, type PageHeading } from './locators';
+import {
+  FENCE,
+  fencedLines,
+  HEADING,
+  headingAncestors,
+  nearestHeading,
+  type PageHeading,
+} from './locators';
 import { signaturesOf } from './spec-ref';
 
 export type ParamDocHit = {
@@ -134,14 +141,10 @@ function headerMode(cell: string): Pick<Block, 'mode' | 'noun'> | null {
 function collectBlocks(content: string, headings: PageHeading[]): Block[] {
   const blocks: Block[] = [];
   const lines = content.split('\n');
-  let inFence = false;
+  const fenced = fencedLines(lines);
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (FENCE.test(line)) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
+    if (fenced[i]) continue;
 
     if (/^\s*\|/.test(line) && isSeparatorRow(lines[i + 1] ?? '')) {
       const header = splitCells(line);

@@ -5,6 +5,31 @@ const SLUG_PUNCT: RegExp = /[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,./:;<=>?@[\
 
 export const HEADING: RegExp = /^(#{1,6})\s+(.*)$/;
 export const FENCE: RegExp = /^\s*(```|~~~)/;
+const FENCE_OPEN: RegExp = /^\s*(?:>\s*)*(`{3,}|~{3,})(.*)$/;
+
+/**
+ * Per line: true for a fence marker line and for every line inside a fenced
+ * code block. A fence closes only on its own marker character, at least as
+ * long as the opener, with no info string; an unclosed fence runs to the end.
+ * Every line-by-line markdown scan goes through this.
+ */
+export function fencedLines(lines: readonly string[]): boolean[] {
+  const fenced: boolean[] = new Array(lines.length).fill(false);
+  let open: { char: string; length: number } | null = null;
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(FENCE_OPEN);
+    if (open) {
+      fenced[i] = true;
+      if (m && m[1][0] === open.char && m[1].length >= open.length && !m[2].trim()) open = null;
+      continue;
+    }
+    // A backtick fence's info string has no backtick: that is an inline code span.
+    if (!m || (m[1][0] === '`' && m[2].includes('`'))) continue;
+    open = { char: m[1][0], length: m[1].length };
+    fenced[i] = true;
+  }
+  return fenced;
+}
 
 export type PageHeading = {
   line: number;
@@ -145,7 +170,9 @@ export function collectHeadings(content: string): PageHeading[] {
   const slugger = new PageSlugger();
   const headings: PageHeading[] = [];
   const lines = content.split('\n');
+  const fenced = fencedLines(lines);
   for (let i = 0; i < lines.length; i++) {
+    if (fenced[i]) continue;
     const m = lines[i].match(HEADING);
     if (!m) continue;
     const raw = m[2].trim();

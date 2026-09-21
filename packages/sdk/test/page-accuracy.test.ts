@@ -2746,3 +2746,59 @@ describe('prose-param-mismatch: parameter tables and lists', () => {
     expect(onRow.map((c) => c.rule?.type)).toEqual(['prose-param-mismatch']);
   });
 });
+
+describe('a # line inside a fenced code block is not a heading', () => {
+  const F3 = '```';
+  const F4 = '````';
+
+  test('bash comment: claims after the fence keep the real heading', () => {
+    const doc = page(
+      'docs/api/room.md',
+      `# Room\n\n${F3}bash\n# install\nnpm i lively\n${F3}\n\nSee \`Room\`.\n`,
+    );
+    const mention = doc.claims.find((c) => c.kind === 'inline' && c.text === 'Room');
+    expect(mention?.locator.start.line).toBe(8);
+    expect(mention?.locator.headingText).toBe('Room');
+    expect(mention?.locator.headingId).toBe('room');
+    expect(doc.claims.filter((c) => c.kind === 'heading').map((c) => c.text)).toEqual(['Room']);
+  });
+
+  test('tilde, info string, indented and unclosed fences', () => {
+    const texts = (md: string) => collectHeadings(md).map((h) => h.text);
+    expect(texts('# a\n\n~~~sh title="x"\n# no\n~~~\n\n## b\n')).toEqual(['a', 'b']);
+    expect(texts('# a\n\n- step\n\n  ```sh\n  # no\n  ```\n\n## b\n')).toEqual(['a', 'b']);
+    expect(texts('# a\n\n```sh\n# no\n## still no\n')).toEqual(['a']);
+  });
+
+  test('a fence closes only on its own marker, at least as long', () => {
+    const texts = (md: string) => collectHeadings(md).map((h) => h.text);
+    expect(texts(`# a\n\n${F4}md\n${F3}sh\n# no\n${F3}\n# nor this\n${F4}\n\n## b\n`)).toEqual([
+      'a',
+      'b',
+    ]);
+    expect(texts(`# a\n\n${F3}md\n~~~\n# no\n~~~\n# nor this\n${F3}\n\n## b\n`)).toEqual(['a', 'b']);
+    // A closing fence carries no info string.
+    expect(texts(`# a\n\n${F3}md\n${F3}ts\n# no\n${F3}\n\n## b\n`)).toEqual(['a', 'b']);
+  });
+
+  test('slugs count real headings only', () => {
+    const headings = collectHeadings(`# Setup\n\n${F3}sh\n# Setup\n${F3}\n\n## Setup\n`);
+    expect(headings.map((h) => h.id)).toEqual(['setup', 'setup-1']);
+  });
+
+  test('prose and inline scanners: text inside a longer outer fence stays code', () => {
+    const doc = page(
+      'docs/guide.md',
+      `# Guide\n\n${F4}md\n${F3}ts\nUse \`Room\` and call useStorage here.\n${F3}\n${F4}\n`,
+    );
+    expect(doc.claims.filter((c) => c.kind === 'inline' || c.kind === 'prose')).toEqual([]);
+  });
+
+  test('migration heading lookup ignores a # line in an earlier fence', () => {
+    const doc = page(
+      'docs/guide.md',
+      `# Guide\n\n${F3}sh\n# Before\n${F3}\n\n${F3}ts\nconst room = useStorage();\nroom.nope();\n${F3}\n`,
+    );
+    expect(rules(doc).map((c) => c.rule?.type)).toEqual(['prose-unresolved-member']);
+  });
+});

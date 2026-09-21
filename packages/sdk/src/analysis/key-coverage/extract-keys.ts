@@ -8,11 +8,11 @@
  * inside a section whose heading matches sectionRe.
  */
 
+import { fencedLines } from '../../page/locators';
 import type { DocsKeyCorpus, DocumentedKeyLocation } from './types';
 
 const IDENT = /^[A-Za-z_$][\w$]*$/;
 const HEADING = /^(#{1,6})\s+(.*)/;
-const FENCE = /^\s*(```|~~~)/;
 const BACKTICK_TOKEN = /`([^`\n]+)`/g;
 
 /** Default heading regex for option-table sections (`option` or `config`). */
@@ -43,20 +43,16 @@ export function extractDocumentedKeys(
     let inSection = false;
     let sectionLevel = 0;
     let sectionName = '';
-    let inFence = false;
 
     const lines = file.content.split('\n');
+    const fenced = fencedLines(lines);
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
-      // Fenced code toggles; fence contents are invisible to heading/table
-      // tracking (a bash `# comment` must not end a section) but still count
-      // toward mentions via the raw corpus text.
-      if (FENCE.test(line)) {
-        inFence = !inFence;
-        continue;
-      }
-      if (inFence) continue;
+      // Fence contents are invisible to heading/table tracking (a bash
+      // `# comment` must not end a section) but still count toward mentions
+      // via the raw corpus text.
+      if (fenced[i]) continue;
 
       // Inline mentions: every backticked identifier outside fences
       for (const m of line.matchAll(BACKTICK_TOKEN)) {
