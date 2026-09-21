@@ -47,7 +47,8 @@ export type RuleHit = {
     | 'spec-not-in-claims'
     | 'prose-unknown-key'
     | 'prose-arity-mismatch'
-    | 'prose-missing-required';
+    | 'prose-missing-required'
+    | 'prose-param-mismatch';
   issue: string;
   suggestion?: string;
 };
@@ -90,6 +91,17 @@ export type RuleHit = {
  * any external/unresolved/generic arm opens the shape). JSX props are the
  * top-level properties of the component's first parameter (or the
  * destructured param names); nested JSX elements are each checked.
+ *
+ * `prose-param-mismatch` (`kind: 'table-key'`, locator = the key cell) checks
+ * a parameter table (first header cell Param / Parameter / Argument / Arg /
+ * Name / Prop / Property / Option) or a `## Parameters` bullet list against
+ * the signatures of the one callable export its section heading names. A row
+ * key that is no parameter in any overload (or, for Prop / Option tables and
+ * `options.x` rows, no property of a closed parameter type) is a claim; so is
+ * a `string | number | boolean` Type cell that contradicts a primitive spec
+ * type. Silent on generic / open / unresolved parameter types, `...rest` or
+ * prose rows, tables of exports, a heading that names several exports or
+ * none, and names the page itself uses in the export's signature.
  */
 export type Claim = {
   /** Stable: `${path}:${kind}:${export}.${member}:${start.line}` */

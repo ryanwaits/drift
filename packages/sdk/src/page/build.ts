@@ -32,6 +32,7 @@ import {
   pageTitle,
   unwrapApiToken,
 } from './locators';
+import { findParamDocHits } from './param-docs';
 import { findProseHits } from './prose';
 import { makeSpecRef, resolveApiName, resolveCall, specRefKey, uniqueSlices } from './spec-ref';
 import type {
@@ -344,6 +345,33 @@ function tableKeyClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
     }
   }
 
+  return claims;
+}
+
+/** Parameter tables / `## Parameters` lists against the heading export's signatures. */
+function paramDocClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): Claim[] {
+  const { spec, registry, file, content } = opts;
+  const claims: Claim[] = [];
+  for (const hit of findParamDocHits(content, spec, registry, headings)) {
+    const found = locateOnLine(content, hit.line, hit.span);
+    if (!found) continue;
+    const [exportName, member] = hit.exportName.split('.');
+    const specRef = makeSpecRef(spec, registry, exportName, member);
+    const locator = attachHeading({ path: file, ...found }, headings);
+    pushUnique(claims, {
+      id: claimId(file, 'table-key', specRef, hit.text, locator.start.line, hit.type),
+      kind: 'table-key',
+      text: hit.text,
+      locator,
+      specRef,
+      rule: {
+        type: hit.type,
+        issue: hit.issue,
+        ...(hit.suggestion ? { suggestion: hit.suggestion } : {}),
+      },
+      candidate: false,
+    });
+  }
   return claims;
 }
 
@@ -688,7 +716,14 @@ export function buildPageDocument(options: BuildPageDocumentOptions): PageDocume
   const claims: Claim[] = [];
   for (const c of fenceClaims(opts, headings, issues)) pushUnique(claims, c);
   for (const c of callSiteClaims(opts, headings)) pushUnique(claims, c);
-  for (const c of tableKeyClaims(opts, headings)) pushUnique(claims, c);
+  const paramDocs = paramDocClaims(opts, headings);
+  for (const c of paramDocs) pushUnique(claims, c);
+  // A rule hit on a key cell replaces the rule-less inventory claim for that cell.
+  const judged = new Set(paramDocs.map((c) => `${c.locator.start.line}:${c.locator.start.col}`));
+  for (const c of tableKeyClaims(opts, headings)) {
+    if (!c.rule && judged.has(`${c.locator.start.line}:${c.locator.start.col}`)) continue;
+    pushUnique(claims, c);
+  }
   for (const c of inlineClaims(opts, headings, claims)) pushUnique(claims, c);
   for (const c of headingClaims(opts, headings)) pushUnique(claims, c);
   for (const c of proseClaims(opts, headings)) pushUnique(claims, c);

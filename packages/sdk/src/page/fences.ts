@@ -229,7 +229,7 @@ export type CallSite = {
 const TYPED_PARAM: RegExp = /^\s*(?:\.\.\.)?[A-Za-z_$][\w$]*\s*\??\s*:/;
 
 /** Split on top-level commas, respecting `<> [] {} ()` and strings. */
-function splitTopLevel(src: string): string[] {
+export function splitTopLevel(src: string): string[] {
   const parts: string[] = [];
   let start = 0;
   let angle = 0;

@@ -33,7 +33,7 @@ type OverloadShape = {
   maxPositional: number;
 };
 
-type ClosedShape = {
+export type ClosedShape = {
   keys: Set<string>;
   required: Set<string>;
 };
@@ -108,10 +108,10 @@ function mergeClosed(shapes: ClosedShape[], mode: 'union' | 'all'): ClosedShape 
  * of every arm; interface keys include `extends`. Any open arm opens the shape.
  * Top-level properties only — never members of nested property types.
  */
-function closedObjectShape(
+export function closedObjectShape(
   spec: ApiSpec,
   schema: ApiSchema | undefined,
-  seen: Set<string>,
+  seen: Set<string> = new Set(),
 ): ClosedShape | null {
   const hit = schemaShape(spec, schema, seen);
   return hit === 'open' || hit === null ? null : hit;

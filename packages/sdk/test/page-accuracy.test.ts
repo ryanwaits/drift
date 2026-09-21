@@ -2346,3 +2346,403 @@ describe('closed object shape terminates', () => {
     expect(d.claims.filter((c) => c.rule)).toEqual([]);
   });
 });
+
+describe('prose-param-mismatch: parameter tables and lists', () => {
+  function paramSpec(): ApiSpec {
+    return {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'useLiveStateData',
+          name: 'useLiveStateData',
+          kind: 'function',
+          signatures: [
+            {
+              typeParameters: [{ name: 'T' }],
+              parameters: [{ name: 'key', required: true, schema: { type: 'string' } }],
+            },
+          ],
+        },
+        {
+          id: 'useLiveState',
+          name: 'useLiveState',
+          kind: 'function',
+          signatures: [
+            {
+              typeParameters: [{ name: 'T' }],
+              parameters: [
+                { name: 'key', required: true, schema: { type: 'string' } },
+                { name: 'initialValue', required: true, schema: { 'x-ts-type': 'T' } },
+                {
+                  name: 'opts',
+                  required: false,
+                  schema: { type: 'object', properties: { syncDuration: { type: 'number' } } },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'useFollowUser',
+          name: 'useFollowUser',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'opts', required: false, schema: { $ref: '#/types/FollowOptions' } },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'configure',
+          name: 'configure',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'name', required: true, schema: { type: 'string' } },
+                {
+                  name: 'settings',
+                  required: false,
+                  schema: { type: 'object', properties: { syncDuration: { type: 'number' } } },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'connect',
+          name: 'connect',
+          kind: 'function',
+          signatures: [
+            { parameters: [{ name: 'url', required: true, schema: { type: 'string' } }] },
+            {
+              parameters: [
+                { name: 'url', required: true, schema: { type: 'string' } },
+                { name: 'retries', required: false, schema: { type: 'number' } },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'merge',
+          name: 'merge',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'target', required: true, schema: { type: 'string' } },
+                { name: 'options', required: false, schema: { $ref: '#/types/ExternalOptions' } },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'LivelyClient',
+          name: 'LivelyClient',
+          kind: 'class',
+          signatures: [
+            {
+              parameters: [
+                { name: 'serverUrl', required: true, schema: { type: 'string' } },
+                { name: 'reconnect', required: false, schema: { type: 'boolean' } },
+              ],
+            },
+          ],
+          members: [{ name: 'joinRoom', kind: 'method' }],
+        },
+        {
+          id: 'RoomProvider',
+          name: 'RoomProvider',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'roomId', required: true, schema: { type: 'string' } },
+                { name: 'userId', required: true, schema: { type: 'string' } },
+                { name: 'children', required: true, schema: { $ref: '#/types/ReactNode' } },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'Avatar',
+          name: 'Avatar',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'props', required: true, schema: { $ref: '#/types/AvatarProps' } },
+              ],
+            },
+          ],
+        },
+      ],
+      types: [
+        {
+          id: 'FollowOptions',
+          name: 'FollowOptions',
+          kind: 'interface',
+          members: [
+            { name: 'lerpFactor', kind: 'property' },
+            { name: 'exitOnInteraction', kind: 'property' },
+          ],
+        },
+        {
+          id: 'AvatarProps',
+          name: 'AvatarProps',
+          kind: 'interface',
+          members: [
+            { name: 'src', kind: 'property' },
+            { name: 'size', kind: 'property' },
+          ],
+        },
+      ],
+    };
+  }
+
+  function paramHits(content: string) {
+    const spec = paramSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/hooks/use-live-state.md',
+      content,
+    }).claims.filter((c) => c.rule?.type === 'prose-param-mismatch');
+  }
+
+  const HEAD3 = '| Param | Type | Description |\n|-------|------|-------------|\n';
+
+  test('row key that is not a parameter of the heading export', () => {
+    const hits = paramHits(
+      `# Hooks\n\n### \`useLiveStateData<T>(key)\`\n\n${HEAD3}| \`keyKey\` | \`string\` | The state key |\n`,
+    );
+    expect(hits.length).toBe(1);
+    expect(hits[0]?.kind).toBe('table-key');
+    expect(hits[0]?.text).toBe('keyKey');
+    expect(hits[0]?.locator.start).toEqual({ line: 7, col: 3 });
+    expect(hits[0]?.locator.end).toEqual({ line: 7, col: 10 });
+    expect(hits[0]?.specRef?.export).toBe('useLiveStateData');
+    expect(hits[0]?.rule?.issue).toBe(
+      "Parameter 'keyKey' is not a parameter of 'useLiveStateData'",
+    );
+    expect(hits[0]?.rule?.suggestion).toBe('Parameters: key');
+    expect(hits[0]?.candidate).toBe(false);
+  });
+
+  test('correct table is silent; trailing ? and a generic param type do not matter', () => {
+    expect(
+      paramHits(
+        `# useLiveState\n\n${HEAD3}| \`key\` | \`string\` | k |\n| \`initialValue\` | \`T\` | v |\n| \`opts?\` | \`object\` | o |\n`,
+      ),
+    ).toEqual([]);
+  });
+
+  test('walks up past a Parameters heading; a renamed row next to real ones fires', () => {
+    const hits = paramHits(
+      `# Hooks\n\n## useLiveState\n\n#### Parameters\n\n${HEAD3}| \`key\` | \`string\` | k |\n| \`initial\` | \`T\` | v |\n`,
+    );
+    expect(hits.map((c) => c.rule?.issue)).toEqual([
+      "Parameter 'initial' is not a parameter of 'useLiveState'",
+    ]);
+    expect(hits[0]?.rule?.suggestion).toBe('Parameters: key, initialValue, opts');
+  });
+
+  test('a name from any overload is a parameter', () => {
+    expect(
+      paramHits(
+        `# connect\n\n${HEAD3}| \`url\` | \`string\` | u |\n| \`retries\` | \`number\` | r |\n`,
+      ),
+    ).toEqual([]);
+  });
+
+  test('class constructor parameters', () => {
+    const hits = paramHits(
+      `# \`new LivelyClient(serverUrl, reconnect)\`\n\n| Argument | Description |\n|---|---|\n| \`serverUrl\` | u |\n| \`autoReconnect\` | r |\n`,
+    );
+    expect(hits.map((c) => c.rule?.issue)).toEqual([
+      "Parameter 'autoReconnect' is not a parameter of 'LivelyClient'",
+    ]);
+  });
+
+  test('options.key is checked against the closed options type', () => {
+    const hits = paramHits(
+      `# configure\n\n${HEAD3}| \`name\` | \`string\` | n |\n| \`settings.syncDuration\` | \`number\` | ok |\n| \`settings.syncMode\` | \`string\` | bad |\n| \`options.mode\` | \`string\` | bad |\n`,
+    );
+    expect(hits.map((c) => c.rule?.issue)).toEqual([
+      "Parameter 'settings.syncMode' is not a parameter of 'configure'",
+      "Parameter 'options.mode' is not a parameter of 'configure'",
+    ]);
+    expect(hits[0]?.text).toBe('settings.syncMode');
+    expect(hits[0]?.rule?.suggestion).toBe('Properties: syncDuration');
+  });
+
+  test('Option table on a function whose single parameter is a closed object type', () => {
+    const hits = paramHits(
+      `# useFollowUser\n\n### Options\n\n| Option | Type | Default | Description |\n|---|---|---|---|\n| \`lerpFactor\` | \`number\` | \`0.25\` | l |\n| \`exitOnClick\` | \`boolean\` | \`true\` | e |\n`,
+    );
+    expect(hits.map((c) => c.rule?.issue)).toEqual([
+      "Option 'exitOnClick' is not an option of 'useFollowUser'",
+    ]);
+    expect(hits[0]?.rule?.suggestion).toBe('Options: exitOnInteraction, lerpFactor');
+  });
+
+  test('Prop table on a component: destructured props and a single closed props type', () => {
+    const flat = paramHits(
+      `# \`<RoomProvider>\`\n\n| Prop | Type | Description |\n|---|---|---|\n| \`roomId\` | \`string\` | r |\n| \`user\` | \`string\` | u |\n| \`children\` | \`ReactNode\` | c |\n`,
+    );
+    expect(flat.map((c) => c.rule?.issue)).toEqual(["Prop 'user' is not a prop of 'RoomProvider'"]);
+    const typed = paramHits(
+      `# Avatar\n\n## Props\n\n| Prop | Type |\n|---|---|\n| \`src\` | \`string\` |\n| \`radius\` | \`number\` |\n`,
+    );
+    expect(typed.map((c) => c.rule?.issue)).toEqual(["Prop 'radius' is not a prop of 'Avatar'"]);
+  });
+
+  test('primitive Type cell that contradicts a primitive spec type', () => {
+    const hits = paramHits(
+      `# connect\n\n${HEAD3}| \`url\` | \`number\` | u |\n| \`retries\` | \`number\` | r |\n`,
+    );
+    expect(hits.map((c) => c.rule?.issue)).toEqual([
+      "Parameter 'url' is documented as 'number', spec says 'string'",
+    ]);
+    expect(hits[0]?.text).toBe('url');
+  });
+
+  test('non-primitive Type cells and non-primitive spec types are never compared', () => {
+    expect(
+      paramHits(
+        `# useLiveState\n\n${HEAD3}| \`key\` | \`string \\| number\` | k |\n| \`initialValue\` | \`number\` | generic |\n| \`opts\` | [\`Options\`](#options) | o |\n`,
+      ),
+    ).toEqual([]);
+  });
+
+  test('bullet list under a Parameters heading; nested option bullets are not rows', () => {
+    const hits = paramHits(
+      `# useLiveState\n\n## Parameters\n\n- \`key\` <Property {...properties.key} />\n- **optional** \`initial\`: the value\n  - \`nested\`: not a row\n- \`opts\`: options\n\n## Returns\n\n- \`Value\` the value\n`,
+    );
+    expect(hits.map((c) => c.rule?.issue)).toEqual([
+      "Parameter 'initial' is not a parameter of 'useLiveState'",
+    ]);
+    expect(hits[0]?.locator.start).toEqual({ line: 6, col: 16 });
+  });
+
+  describe('silent', () => {
+    const BAD_ROW = '| `keyKey` | `string` | The state key |\n';
+
+    test('heading names more than one export, or none', () => {
+      expect(paramHits(`# useLiveStateData / useLiveState\n\n${HEAD3}${BAD_ROW}`)).toEqual([]);
+      expect(paramHits(`# useLiveStateData and friends\n\n${HEAD3}${BAD_ROW}`)).toEqual([]);
+      expect(paramHits(`# Getting started\n\n${HEAD3}${BAD_ROW}`)).toEqual([]);
+      expect(paramHits(`${HEAD3}${BAD_ROW}`)).toEqual([]);
+    });
+
+    test('a section that is not about parameters between the table and the export', () => {
+      expect(
+        paramHits(
+          `# useFollowUser\n\n### Returns\n\n| Property | Type | Description |\n|---|---|---|\n| \`followers\` | \`string[]\` | f |\n`,
+        ),
+      ).toEqual([]);
+      expect(
+        paramHits(`# useLiveStateData\n\n## Exponential backoff\n\n${HEAD3}${BAD_ROW}`),
+      ).toEqual([]);
+    });
+
+    test('Property table of return values directly under the export heading', () => {
+      expect(
+        paramHits(
+          `# useFollowUser\n\n| Property | Type | Description |\n|---|---|---|\n| \`followers\` | \`string[]\` | f |\n| \`stopFollowing\` | \`() => void\` | s |\n`,
+        ),
+      ).toEqual([]);
+    });
+
+    test('open, generic, or unresolved parameter type for an Option table', () => {
+      expect(
+        paramHits(
+          `# merge\n\n## Options\n\n| Option | Type |\n|---|---|\n| \`target\` | \`string\` |\n| \`deep\` | \`boolean\` |\n`,
+        ),
+      ).toEqual([]);
+      expect(
+        paramHits(
+          `# useLiveState\n\n## Options\n\n| Option | Type |\n|---|---|\n| \`syncDuration\` | \`number\` |\n| \`deep\` | \`boolean\` |\n`,
+        ),
+      ).toEqual([]);
+      expect(
+        paramHits(
+          `# merge\n\n${HEAD3}| \`target\` | \`string\` | t |\n| \`options.deep\` | \`boolean\` | d |\n`,
+        ),
+      ).toEqual([]);
+    });
+
+    test('a ...rest row silences the table', () => {
+      expect(
+        paramHits(
+          `# connect\n\n${HEAD3}| \`uri\` | \`string\` | u |\n| \`...args\` | \`any[]\` | a |\n`,
+        ),
+      ).toEqual([]);
+    });
+
+    test('empty or prose row keys', () => {
+      expect(
+        paramHits(
+          `# connect\n\n| Parameter | Value | Side |\n|---|---|---|\n| Client ping interval | 30s | client |\n| Server timeout | 45s | server |\n`,
+        ),
+      ).toEqual([]);
+      expect(
+        paramHits(`# connect\n\n${HEAD3}| \`url\` | \`string\` | u |\n| | | continued |\n`),
+      ).toEqual([]);
+    });
+
+    test('a table of hooks/exports is a different table', () => {
+      expect(
+        paramHits(
+          `# useLiveState\n\n| Hook | Signature |\n|---|---|\n| \`useLiveStateData\` | \`(key)\` |\n`,
+        ),
+      ).toEqual([]);
+      expect(
+        paramHits(
+          `# useLiveState\n\n| Name | Description |\n|---|---|\n| \`key\` | k |\n| \`useLiveStateData\` | read only |\n| \`connect\` | c |\n`,
+        ),
+      ).toEqual([]);
+    });
+
+    test('two or more rows and none is a parameter: the table is about something else', () => {
+      expect(
+        paramHits(
+          `# useLiveState\n\n${HEAD3}| \`alpha\` | \`string\` | a |\n| \`beta\` | \`string\` | b |\n`,
+        ),
+      ).toEqual([]);
+    });
+
+    test("names the page itself uses in the export's signature are display names", () => {
+      expect(
+        paramHits(
+          `# useStore\n\n### \`connect(serverUrl, retryCount)\`\n\n#### Parameters\n\n- \`serverUrl\`: the url\n- \`retries\`: count\n`,
+        ),
+      ).toEqual([]);
+      expect(
+        paramHits(
+          `# useLiveStateData\n\n\`\`\`ts\nconst v = useLiveStateData<T>(stateKey)\n\`\`\`\n\n## Parameters\n\n- \`stateKey\`: the key\n`,
+        ),
+      ).toEqual([]);
+    });
+
+    test('a table inside a fence, and a list under a heading that is not Parameters', () => {
+      expect(paramHits(`# useLiveStateData\n\n\`\`\`md\n${HEAD3}${BAD_ROW}\`\`\`\n`)).toEqual([]);
+      expect(paramHits('# useLiveStateData\n\n## Notes\n\n- `keyKey`: something\n')).toEqual([]);
+    });
+  });
+
+  test('a rule hit replaces the rule-less table-key inventory claim on the same cell', () => {
+    const spec = paramSpec();
+    const d = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/hooks/use-follow-user.md',
+      content:
+        '# useFollowUser\n\n### Options\n\n| Option | Type |\n|---|---|\n| `lerpFactor` | `number` |\n| `exitOnClick` | `boolean` |\n',
+    });
+    const onRow = d.claims.filter((c) => c.kind === 'table-key' && c.locator.start.line === 8);
+    expect(onRow.map((c) => c.rule?.type)).toEqual(['prose-param-mismatch']);
+  });
+});

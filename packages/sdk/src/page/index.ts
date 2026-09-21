@@ -4,8 +4,9 @@
  * `@driftdev/sdk` stays a primitive: claims + rules + spec slices. A separate
  * review product paints and judges. Jev is not in this package. `kind: 'prose'`
  * candidates are sentence spans for a judge; fence call-site rules
- * (`prose-unknown-key`, `prose-arity-mismatch`, `prose-missing-required`) are
- * deterministic. Scan/CI do not consume this document.
+ * (`prose-unknown-key`, `prose-arity-mismatch`, `prose-missing-required`) and
+ * the parameter-table rule (`prose-param-mismatch`) are deterministic. Scan/CI
+ * do not consume this document.
  *
  * @example
  * ```ts
