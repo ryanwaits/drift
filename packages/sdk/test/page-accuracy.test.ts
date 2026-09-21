@@ -2158,3 +2158,82 @@ describe('buildPageDocuments forwards every option', () => {
     expect(plural.claims.filter((c) => c.rule).length).toBe(1);
   });
 });
+
+describe('aliased imports are checked by their imported name', () => {
+  function valtioSpec(): ApiSpec {
+    return {
+      meta: { name: 'valtio' },
+      exports: [
+        { id: 'snapshot', name: 'snapshot', kind: 'function' },
+        {
+          id: 'useSnapshot',
+          name: 'useSnapshot',
+          kind: 'function',
+          signatures: [
+            { parameters: [{ name: 'proxyObject', required: true, schema: { type: 'object' } }] },
+          ],
+        },
+      ],
+    };
+  }
+
+  function valtioRules(code: string) {
+    const spec = valtioSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/guide.md',
+      content: `# Guide\n\n\`\`\`ts\n${code}\n\`\`\`\n`,
+    }).claims.filter((c) => c.rule);
+  }
+
+  test('alias of a real export is not a broken reference', () => {
+    expect(
+      valtioRules("import { snapshot, useSnapshot as useSnapshotOrig } from 'valtio'"),
+    ).toEqual([]);
+  });
+
+  test('alias of a missing export is reported under the imported name', () => {
+    const hits = valtioRules("import { useSnap as useSnapshotOrig } from 'valtio'");
+    expect(hits.map((c) => c.rule?.issue)).toEqual([
+      "Import 'useSnap' from 'valtio' does not exist in package exports",
+    ]);
+    expect(hits[0]?.text).toBe('useSnap');
+    expect(hits[0]?.locator.start).toEqual({ line: 4, col: 10 });
+  });
+
+  test('call through the alias is checked against the aliased export', () => {
+    const hits = valtioRules(
+      "import { useSnapshot as useSnapshotOrig } from 'valtio'\nuseSnapshotOrig(state, extra, more)",
+    );
+    expect(hits.map((c) => c.rule?.type)).toEqual(['prose-arity-mismatch']);
+    expect(hits[0]?.specRef?.export).toBe('useSnapshot');
+    expect(hits[0]?.rule?.issue).toContain("'useSnapshot'");
+  });
+
+  test('alias in an earlier fence still binds a later call', () => {
+    const spec = valtioSpec();
+    const d = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/guide.md',
+      content:
+        "# Guide\n\n```ts\nimport { useSnapshot as useSnap } from 'valtio'\n```\n\nLater:\n\n```ts\nuseSnap()\n```\n",
+    });
+    expect(d.claims.filter((c) => c.rule).map((c) => c.rule?.type)).toEqual([
+      'prose-missing-required',
+    ]);
+  });
+
+  test('default imports never misfire', () => {
+    expect(valtioRules("import { default as x } from 'valtio'")).toEqual([]);
+    expect(valtioRules("import x, { snapshot as z } from 'valtio'")).toEqual([]);
+    expect(valtioRules("import x from 'valtio'")).toEqual([]);
+  });
+
+  test('default import next to a missing named import still reports the named one', () => {
+    expect(valtioRules("import x, { nope as z } from 'valtio'").map((c) => c.rule?.issue)).toEqual([
+      "Import 'nope' from 'valtio' does not exist in package exports",
+    ]);
+  });
+});

@@ -308,6 +308,8 @@ function jsxPropShape(spec: ApiSpec, overloads: OverloadShape[]): ClosedShape | 
 export type CallSiteContext = {
   namespaces?: ReadonlySet<string>;
   namedImports?: ReadonlySet<string>;
+  /** Renamed named imports: local → export (`import { a as b }` → b → a). */
+  aliases?: ReadonlyMap<string, string>;
   skip?: boolean;
 };
 
@@ -344,7 +346,8 @@ function resolveCallee(
     return { exportName: resolved, member: site.name };
   }
   if (!bareCalleeAllowed(site.name, ctx)) return null;
-  if (registry.all.has(site.name)) return { exportName: site.name };
+  const exportName = ctx?.aliases?.get(site.name) ?? site.name;
+  if (registry.all.has(exportName)) return { exportName };
   return null;
 }
 

@@ -42,7 +42,10 @@ export function extractInstanceBindings(code: string): Map<string, string> {
 }
 
 export type FenceImport = {
+  /** Local binding (`b` in `import { a as b }`) */
   name: string;
+  /** Name the module exports (`a`); `default` / `*` for those import kinds */
+  imported: string;
   from: string;
   line: number;
   text: string;
@@ -98,6 +101,7 @@ export function extractExportBindings(
   exportNames?: ReadonlySet<string>,
   spec?: ApiSpec,
   prior?: ReadonlyMap<string, string>,
+  aliases?: ReadonlyMap<string, string>,
 ): Map<string, string> {
   const names = new Map(prior ?? []);
   for (const [k, v] of extractInstanceBindings(code)) names.set(k, v);
@@ -113,9 +117,12 @@ export function extractExportBindings(
       let expr = initializer;
       if (ts.isAwaitExpression(expr)) expr = expr.expression;
       if (ts.isCallExpression(expr) || ts.isNewExpression(expr)) {
-        if (ts.isIdentifier(expr.expression) && exportNames?.has(expr.expression.text)) {
-          names.set(name, expr.expression.text);
-          return;
+        if (ts.isIdentifier(expr.expression)) {
+          const callee = aliases?.get(expr.expression.text) ?? expr.expression.text;
+          if (exportNames?.has(callee)) {
+            names.set(name, callee);
+            return;
+          }
         }
         if (
           spec &&
@@ -488,6 +495,7 @@ export function extractFenceImports(code: string): FenceImport[] {
       if (clause.name) {
         imports.push({
           name: clause.name.text,
+          imported: 'default',
           from,
           line: lineOf(clause.name),
           text: clause.name.getText(sourceFile),
@@ -498,6 +506,7 @@ export function extractFenceImports(code: string): FenceImport[] {
       if (named && ts.isNamespaceImport(named)) {
         imports.push({
           name: named.name.text,
+          imported: '*',
           from,
           line: lineOf(named.name),
           text: named.name.getText(sourceFile),
@@ -506,11 +515,14 @@ export function extractFenceImports(code: string): FenceImport[] {
       }
       if (named && ts.isNamedImports(named)) {
         for (const el of named.elements) {
+          // The claim is about the exported name, so that is the span.
+          const source = el.propertyName ?? el.name;
           imports.push({
             name: el.name.text,
+            imported: source.text,
             from,
-            line: lineOf(el.name),
-            text: el.name.getText(sourceFile),
+            line: lineOf(source),
+            text: source.getText(sourceFile),
             kind: 'named',
           });
         }
@@ -574,20 +586,25 @@ export function fenceImportKind(
 /**
  * `import * as ns from '<pkg>'`, plus a short ident used as `x.<export>(`
  * for two or more distinct package exports when the page never shows the import.
+ * `aliases` maps a renamed local to its export (`import { a as b }` → b → a).
  */
 export function collectPackageNamespaces(
   codes: readonly string[],
   exportNames: ReadonlySet<string>,
   packageName: string,
   importSpecifier?: string,
-): { namespaces: Set<string>; namedImports: Set<string> } {
+): { namespaces: Set<string>; namedImports: Set<string>; aliases: Map<string, string> } {
   const namespaces = new Set<string>();
   const namedImports = new Set<string>();
+  const aliases = new Map<string, string>();
   for (const code of codes) {
     for (const imp of extractFenceImports(code)) {
       if (!isPackageSpecifier(imp.from, packageName, importSpecifier)) continue;
       if (imp.kind === 'namespace') namespaces.add(imp.name);
       else namedImports.add(imp.name);
+      if (imp.kind === 'named' && imp.imported !== imp.name && imp.imported !== 'default') {
+        aliases.set(imp.name, imp.imported);
+      }
     }
   }
   if (namespaces.size === 0) {
@@ -607,5 +624,5 @@ export function collectPackageNamespaces(
     }
     for (const [ident, names] of hits) if (names.size >= 2) namespaces.add(ident);
   }
-  return { namespaces, namedImports };
+  return { namespaces, namedImports, aliases };
 }

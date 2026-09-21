@@ -274,18 +274,21 @@ function detectBrokenImports(
   const packageImports = imports.filter((imp) => imp.from === from);
 
   for (const imp of packageImports) {
-    if (imp.kind === 'side-effect' || imp.kind === 'namespace') continue;
-    if (registry.all.has(imp.name)) continue;
+    if (imp.kind !== 'named') continue;
+    // `import { a as b }` is a claim about `a`. A default import (either
+    // spelling) names no export.
+    const name = imp.imported;
+    if (name === 'default' || registry.all.has(name)) continue;
 
-    const match = findClosestMatch(imp.name, registry.allNames);
+    const match = findClosestMatch(name, registry.allNames);
     const suggestion = match
       ? `Did you mean '${match.value}'?`
-      : `'${imp.name}' is not exported from '${imp.from}'`;
+      : `'${name}' is not exported from '${imp.from}'`;
 
     issues.push({
       type: 'prose-broken-reference',
-      target: imp.name,
-      issue: `Import '${imp.name}' from '${imp.from}' does not exist in package exports`,
+      target: name,
+      issue: `Import '${name}' from '${imp.from}' does not exist in package exports`,
       suggestion,
       filePath,
       line: lineStart,
@@ -549,8 +552,8 @@ function detectDeprecatedReferences(
     for (const imp of extractImportsAST(block.code)) {
       if (imp.kind === 'side-effect') continue;
       if (imp.from !== packageName && !imp.from.startsWith(`${packageName}/`)) continue;
-      const note = registry.deprecated.get(imp.name);
-      if (note !== undefined) push(imp.name, note, block.lineStart);
+      const note = registry.deprecated.get(imp.imported);
+      if (note !== undefined) push(imp.imported, note, block.lineStart);
     }
   } catch {
     // parse failure — skip imports check

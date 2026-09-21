@@ -170,10 +170,10 @@ function fenceClaims(
         specRef = resolveCall(spec, registry, matchCall.objectName, matchCall.methodName);
         loc = locatorForSpan(file, content, text, hintLine, headings, block.lineStart + 1);
       } else {
-        const imp = extractFenceImports(block.code).find((i) => i.name === target);
+        const imp = extractFenceImports(block.code).find((i) => i.imported === target);
         if (imp) {
           text = imp.text;
-          specRef = resolveApiName(spec, registry, imp.name);
+          specRef = resolveApiName(spec, registry, imp.imported);
           loc = locatorForSpan(file, content, text, hintLine, headings, block.lineStart + 1);
         }
       }
@@ -210,7 +210,7 @@ function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
   const parsed = parseMarkdownFile(content, file);
   const bindings = new Map<string, string>();
   const claims: Claim[] = [];
-  const { namespaces, namedImports } = collectPackageNamespaces(
+  const { namespaces, namedImports, aliases } = collectPackageNamespaces(
     parsed.codeBlocks.map((b) => b.code),
     registry.all,
     packageName,
@@ -218,7 +218,7 @@ function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
   );
 
   for (const block of parsed.codeBlocks) {
-    for (const [k, v] of extractExportBindings(block.code, registry.all, spec, bindings)) {
+    for (const [k, v] of extractExportBindings(block.code, registry.all, spec, bindings, aliases)) {
       bindings.set(k, v);
     }
     const skip =
@@ -227,6 +227,7 @@ function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
     for (const hit of detectCallSiteHits(block.code, spec, registry, bindings, {
       namespaces,
       namedImports,
+      aliases,
       skip,
     })) {
       const hintLine = block.lineStart + hit.line;

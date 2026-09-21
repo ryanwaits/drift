@@ -12,8 +12,10 @@ import { ts } from '../ts-module';
 import { isBuiltInIdentifier } from '../utils/builtin-detection';
 
 export interface ImportInfo {
-  /** The imported name (local binding) */
+  /** Local binding (`b` in `import { a as b }`) */
   name: string;
+  /** Name the module exports (`a` in `import { a as b }`); `default` / `*` / '' otherwise */
+  imported: string;
   /** The module specifier */
   from: string;
   /** Whether this is a type-only import */
@@ -78,7 +80,7 @@ export function extractImportsAST(code: string): ImportInfo[] {
 
         // Side-effect import: import 'pkg'
         if (!importClause) {
-          imports.push({ name: '', from, isTypeOnly: false, kind: 'side-effect' });
+          imports.push({ name: '', imported: '', from, isTypeOnly: false, kind: 'side-effect' });
           return;
         }
 
@@ -88,6 +90,7 @@ export function extractImportsAST(code: string): ImportInfo[] {
         if (importClause.name) {
           imports.push({
             name: importClause.name.text,
+            imported: 'default',
             from,
             isTypeOnly,
             kind: 'default',
@@ -101,6 +104,7 @@ export function extractImportsAST(code: string): ImportInfo[] {
             // Namespace import: import * as X from 'pkg'
             imports.push({
               name: namedBindings.name.text,
+              imported: '*',
               from,
               isTypeOnly,
               kind: 'namespace',
@@ -112,6 +116,7 @@ export function extractImportsAST(code: string): ImportInfo[] {
               const isElementTypeOnly = element.isTypeOnly ?? isTypeOnly;
               imports.push({
                 name: localName,
+                imported: (element.propertyName ?? element.name).text,
                 from,
                 isTypeOnly: isElementTypeOnly,
                 kind: 'named',
