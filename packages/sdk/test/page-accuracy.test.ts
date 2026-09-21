@@ -7,7 +7,7 @@ import type { ApiSpec } from '../src/analysis/api-spec';
 import { buildExportRegistry } from '../src/analysis/drift/compute';
 import { detectProseDrift } from '../src/analysis/drift/prose-drift';
 import { parseMarkdownFile } from '../src/markdown/parser';
-import { buildPageDocument } from '../src/page';
+import { buildPageDocument, buildPageDocuments } from '../src/page';
 import { collectHeadings } from '../src/page/locators';
 
 const PKG = '@waits/lively-react';
@@ -2120,5 +2120,41 @@ Schema.decode(input);
     expect(
       d.claims.filter((c) => c.rule?.type === 'prose-unresolved-member').map((c) => c.rule?.issue),
     ).toEqual(["Method 'decode' called on 'Schema' does not exist on 'Schema'"]);
+  });
+});
+
+describe('buildPageDocuments forwards every option', () => {
+  test('importSpecifier reaches each page (root import is silent on a subpath spec)', () => {
+    const spec: ApiSpec = {
+      meta: { name: 'pkg' },
+      exports: [{ id: 'atomFamily', name: 'atomFamily', kind: 'function' }],
+    };
+    const content = '# x\n\n```ts\nimport { atom } from "pkg"\nconst a = atom(0)\n```\n';
+    const [d] = buildPageDocuments({
+      spec,
+      registry: buildExportRegistry(spec),
+      files: [{ file: 'docs/x.md', content }],
+      importSpecifier: 'pkg/sub',
+    });
+    expect(d.claims.filter((c) => c.rule)).toEqual([]);
+  });
+
+  test('plural output equals singular output for the same options', () => {
+    const spec: ApiSpec = {
+      meta: { name: 'pkg' },
+      exports: [{ id: 'atomFamily', name: 'atomFamily', kind: 'function' }],
+    };
+    const shared = {
+      spec,
+      registry: buildExportRegistry(spec),
+      packageName: 'other',
+      importSpecifier: 'other/sub',
+      docsMap: { pages: [] },
+    };
+    const file = 'docs/x.md';
+    const content = '# x\n\n```ts\nimport { atom } from "other/sub"\n```\n';
+    const [plural] = buildPageDocuments({ ...shared, files: [{ file, content }] });
+    expect(plural).toEqual(buildPageDocument({ ...shared, file, content }));
+    expect(plural.claims.filter((c) => c.rule).length).toBe(1);
   });
 });

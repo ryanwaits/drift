@@ -708,14 +708,6 @@ export function buildPageDocument(options: BuildPageDocumentOptions): PageDocume
  * @returns One document per file, in input order
  */
 export function buildPageDocuments(options: BuildPageDocumentsOptions): PageDocument[] {
-  return options.files.map((f) =>
-    buildPageDocument({
-      spec: options.spec,
-      registry: options.registry,
-      file: f.file,
-      content: f.content,
-      docsMap: options.docsMap,
-      packageName: options.packageName,
-    }),
-  );
+  const { files, ...shared } = options;
+  return files.map((f) => buildPageDocument({ ...shared, file: f.file, content: f.content }));
 }
