@@ -5,6 +5,8 @@ import {
   HEADING,
   headingAncestorNames,
   indexToPos,
+  isApiToken,
+  isBuiltinName,
   isDistinctiveApiName,
   isMemberToken,
   type PageHeading,
@@ -143,6 +145,7 @@ function refsInText(
   spec: ApiSpec,
   registry: ExportRegistry,
   preferred?: Set<string>,
+  namespaces?: ReadonlySet<string>,
 ): SpecRef[] {
   const found = new Map<string, SpecRef>();
   const add = (ref: SpecRef | null): void => {
@@ -152,18 +155,19 @@ function refsInText(
   };
 
   for (const m of text.matchAll(BACKTICK)) {
+    if (!isApiToken(m[1])) continue;
     const name = unwrapApiToken(m[1]);
     add(
       isMemberToken(m[1])
         ? resolveMemberName(spec, registry, name, preferred)
-        : resolveApiName(spec, registry, name, preferred),
+        : resolveApiName(spec, registry, name, preferred, namespaces),
     );
   }
   for (const m of text.matchAll(QUALIFIED_G)) {
-    add(resolveApiName(spec, registry, `${m[1]}.${m[2]}`));
+    add(resolveApiName(spec, registry, `${m[1]}.${m[2]}`, undefined, namespaces));
   }
   for (const name of [...registry.all, ...(registry.localNames?.keys() ?? [])]) {
-    if (!IDENT.test(name) || !isDistinctiveApiName(name)) continue;
+    if (!IDENT.test(name) || !isDistinctiveApiName(name) || isBuiltinName(name)) continue;
     // `x.safeParse` is a member of `x`, never the top-level export `safeParse`.
     const re = new RegExp(`(?<![A-Za-z0-9_$.])${escapeRe(name)}(?![A-Za-z0-9_$])`);
     if (re.test(text)) add(resolveApiName(spec, registry, name));
@@ -180,6 +184,7 @@ export function findProseHits(
   spec: ApiSpec,
   registry: ExportRegistry,
   headings: PageHeading[] = [],
+  namespaces?: ReadonlySet<string>,
 ): ProseHit[] {
   const hits: ProseHit[] = [];
   for (const unit of extractUnits(content)) {
@@ -190,6 +195,7 @@ export function findProseHits(
       spec,
       registry,
       ancestorPreferred(registry, headings, start.line),
+      namespaces,
     );
     if (refs.length === 0) continue;
     const end = indexToPos(content, Math.max(unit.start, unit.end - 1));

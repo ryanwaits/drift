@@ -39,6 +39,8 @@ export type PageHeading = {
   /** Column of the first heading-text character (1-indexed) */
   textCol: number;
   endCol: number;
+  /** The whole heading is one code span: `` ## `number` `` */
+  code?: boolean;
 };
 
 /** GitHub/Fumadocs heading slug, occurrence-aware per page. */
@@ -83,6 +85,35 @@ export function unwrapApiToken(text: string): string {
     s = next;
   }
   return s.replace(/^\./, '');
+}
+
+/**
+ * JS/TS builtin type and global names. A package may export `number` or `Map`;
+ * the plain word in a sentence is still the language's.
+ */
+const BUILTIN_NAMES: ReadonlySet<string> = new Set([
+  ...['number', 'string', 'boolean', 'bigint', 'symbol', 'object', 'null', 'undefined'],
+  ...['void', 'never', 'any', 'unknown', 'function', 'array', 'map', 'set', 'date'],
+  ...['promise', 'record', 'tuple', 'enum', 'json', 'error', 'regexp'],
+  ...['Number', 'String', 'Boolean', 'Object', 'Array', 'Map', 'Set', 'Date', 'Promise'],
+  ...['Error', 'RegExp', 'Symbol', 'BigInt', 'JSON', 'Function'],
+]);
+
+export function isBuiltinName(name: string): boolean {
+  return BUILTIN_NAMES.has(name);
+}
+
+/** `number()` / `string({ min: 1 })` / `parse<T>(x)`: written as a call. */
+export function isCallForm(text: string): boolean {
+  return /^[A-Za-z_$][\w$]*\s*(?:<[^<>]*>)?\s*\(/.test(unwrapHeadingText(text).trim());
+}
+
+/**
+ * A token that may be read as an API name. A builtin name (`number`, `Map`) is
+ * one only in call form; qualified (`z.number`) it is not the bare builtin.
+ */
+export function isApiToken(raw: string): boolean {
+  return !isBuiltinName(unwrapApiToken(raw)) || isCallForm(raw);
 }
 
 /** `.start()` / `.start`: a leading dot names a member, never a top-level export. */
@@ -263,6 +294,7 @@ export function collectHeadings(content: string): PageHeading[] {
       id: slugger.slug(text),
       textCol: prefix + 1,
       endCol: prefix + raw.length,
+      ...(/^`[^`]+`$/.test(raw) ? { code: true } : {}),
     });
   }
   return headings;

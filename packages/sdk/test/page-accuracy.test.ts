@@ -4006,3 +4006,74 @@ describe('prose-deprecated-reference judges the resolved reference, never a bare
     expect(deprecated('const string = () => x\nconst a = string().url()', '')).toEqual([]);
   });
 });
+
+describe("a builtin type name is the language's type, not the export of the same name", () => {
+  const F3 = '```';
+
+  function zodLike(): ApiSpec {
+    const fn = (name: string) => ({ id: name, name, kind: 'function' });
+    return {
+      meta: { name: 'zod' },
+      exports: [
+        ...['number', 'string', 'date', 'map', 'json', 'BigInt', 'RegExp', 'Error'].map(fn),
+        fn('strictObject'),
+        { id: 'z', name: 'z', kind: 'namespace' },
+      ],
+    };
+  }
+
+  function refs(content: string) {
+    const spec = zodLike();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/codecs.md',
+      content,
+    })
+      .claims.filter((c) => c.specRef)
+      .map(
+        (c) => `${c.kind}:${c.specRef?.export}${c.specRef?.member ? `.${c.specRef.member}` : ''}`,
+      );
+  }
+
+  const imp = `${F3}ts\nimport * as z from 'zod'\n${F3}\n`;
+
+  test('a plain backticked or bare builtin name is no claim', () => {
+    expect(
+      refs(
+        `# Codecs\n\n${imp}\nConverts string representations of integers to JavaScript \`number\` type using \`parseInt()\`.\n\nA \`Date\`, a \`date\`, a \`map\` of \`string\` to \`json\`, a BigInt or a RegExp, or an \`Error\`.\n\n## number\n\n## Options\n\n| Key | Notes |\n| --- | --- |\n| \`string\` | the \`number\` |\n`,
+      ),
+    ).toEqual([]);
+  });
+
+  test('call form, a namespace or package qualifier, and a code heading name the export', () => {
+    expect(refs(`# Codecs\n\n${imp}\nUse \`number()\` or \`string({ min: 1 })\` here.\n`)).toEqual([
+      'inline:number',
+      'inline:string',
+      'prose:number',
+      'prose:string',
+    ]);
+    expect(
+      refs(`# Codecs\n\n${imp}\nUse \`z.number\` or \`z.date()\`, or zod.map in prose.\n`),
+    ).toEqual(['inline:number', 'inline:date', 'prose:number', 'prose:date', 'prose:map']);
+    expect(refs(`# Codecs\n\n${imp}\n## \`number\`\n\n## \`string()\`\n\n## z.date\n`)).toEqual([
+      'heading:number',
+      'heading:string',
+      'heading:date',
+    ]);
+  });
+
+  test('a namespace-qualified name is that export, never a member of the namespace', () => {
+    expect(
+      refs(`# Codecs\n\n${imp}\n## z.strictObject\n\nUse \`z.strictObject()\` and \`z.nope()\`.\n`),
+    ).toEqual(['inline:strictObject', 'heading:strictObject', 'prose:strictObject']);
+  });
+
+  test('fence call sites and imports are unaffected', () => {
+    expect(
+      refs(
+        `# Codecs\n\n${F3}ts\nimport { number } from 'zod'\nconst n = number()\nconst s = string()\n${F3}\n`,
+      ),
+    ).toEqual(['inline:number', 'inline:string']);
+  });
+});

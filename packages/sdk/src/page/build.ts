@@ -6,6 +6,7 @@ import {
   extractDocumentedKeys,
 } from '../analysis/key-coverage';
 import { parseMarkdownFile } from '../markdown/parser';
+import type { MarkdownDocFile } from '../markdown/types';
 import { detectCallSiteHits } from './call-sites';
 import {
   blockContaining,
@@ -28,6 +29,9 @@ import {
   HEADING,
   headingAncestorNames,
   headingLocator,
+  isApiToken,
+  isBuiltinName,
+  isCallForm,
   isMemberToken,
   locateInFence,
   locateOnLine,
@@ -68,6 +72,37 @@ const KIND_ORDER: Record<ClaimKind, number> = {
   prose: 4,
   gap: 5,
 };
+
+type PageScope = {
+  parsed: MarkdownDocFile;
+  /** `import * as z` aliases of the package on this page */
+  namespaces: Set<string>;
+  namedImports: Set<string>;
+  /** Renamed / default imports, and the default export's source name: local → export */
+  aliases: Map<string, string>;
+};
+
+const scopes = new WeakMap<BuildPageDocumentOptions, PageScope>();
+
+/** Parsed fences and what the page's imports bind, once per page. */
+function pageScope(opts: BuildPageDocumentOptions): PageScope {
+  let scope = scopes.get(opts);
+  if (!scope) {
+    const parsed = parseMarkdownFile(opts.content, opts.file);
+    scope = {
+      parsed,
+      ...collectPackageNamespaces(
+        parsed.codeBlocks.map((b) => b.code),
+        opts.registry.all,
+        opts.packageName ?? opts.spec.meta.name,
+        opts.importSpecifier,
+        opts.registry.localNames,
+      ),
+    };
+    scopes.set(opts, scope);
+  }
+  return scope;
+}
 
 function posixPath(file: string): string {
   return file.replace(/\\/g, '/').replace(/^\.\//, '');
@@ -149,14 +184,8 @@ function fenceClaims(
   issues: SpecDocDrift[],
 ): Claim[] {
   const { spec, registry, file, content } = opts;
-  const parsed = parseMarkdownFile(content, file);
+  const { parsed, namespaces } = pageScope(opts);
   const claims: Claim[] = [];
-  const { namespaces } = collectPackageNamespaces(
-    parsed.codeBlocks.map((b) => b.code),
-    registry.all,
-    opts.packageName ?? spec.meta.name,
-    opts.importSpecifier,
-  );
 
   for (const issue of issues) {
     if (issue.filePath && posixPath(issue.filePath) !== posixPath(file)) continue;
@@ -231,16 +260,9 @@ function fenceClaims(
 function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): Claim[] {
   const { spec, registry, file, content } = opts;
   const packageName = opts.packageName ?? spec.meta.name;
-  const parsed = parseMarkdownFile(content, file);
+  const { parsed, namespaces, namedImports, aliases } = pageScope(opts);
   let bindings = new Map<string, string>();
   const claims: Claim[] = [];
-  const { namespaces, namedImports, aliases } = collectPackageNamespaces(
-    parsed.codeBlocks.map((b) => b.code),
-    registry.all,
-    packageName,
-    opts.importSpecifier,
-    registry.localNames,
-  );
 
   for (const block of parsed.codeBlocks) {
     bindings = extractExportBindings(block.code, registry.all, spec, bindings, aliases, registry);
@@ -304,7 +326,9 @@ function tableKeyClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
         ? null
         : parentType
           ? makeSpecRef(spec, registry, parentType, key)
-          : resolveApiName(spec, registry, key);
+          : isApiToken(span)
+            ? resolveApiName(spec, registry, key, undefined, pageScope(opts).namespaces)
+            : null;
       let rule: RuleHit | undefined;
       if (ghost) {
         rule = {
@@ -400,6 +424,7 @@ function inlineClaims(
   const lines = content.split('\n');
   const fenced = fencedLines(lines);
   const headingLines = new Set(headings.map((h) => h.line));
+  const { namespaces } = pageScope(opts);
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -412,9 +437,10 @@ function inlineClaims(
       const raw = m[1];
       const name = unwrapApiToken(raw);
       const preferred = ancestorPreferred(registry, headings, lineNo);
+      if (!isApiToken(raw)) continue;
       let specRef = isMemberToken(raw)
         ? resolveMemberName(spec, registry, name, preferred)
-        : resolveApiName(spec, registry, name, preferred);
+        : resolveApiName(spec, registry, name, preferred, namespaces);
       if (!specRef && preferred) {
         for (const parent of preferred) {
           if (listedMembers(spec, parent).includes(name)) {
@@ -448,15 +474,8 @@ function inlineClaims(
   // Fence mentions: one per (fence, export), on the referencing token inside
   // that fence. The first call, else the import. A renamed or default import
   // is its export; a name the fence declares, or imports from elsewhere, is not.
-  const parsed = parseMarkdownFile(content, file);
+  const { parsed, aliases } = pageScope(opts);
   const packageName = opts.packageName ?? spec.meta.name;
-  const { aliases } = collectPackageNamespaces(
-    parsed.codeBlocks.map((b) => b.code),
-    registry.all,
-    packageName,
-    opts.importSpecifier,
-    registry.localNames,
-  );
   for (const block of parsed.codeBlocks) {
     const imports = extractFenceImports(block.code);
     const foreign = new Set(
@@ -509,11 +528,14 @@ function headingClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]):
   const claims: Claim[] = [];
   for (const heading of headings) {
     const name = normalizeApiName(heading.text);
+    // `## number` is a word; `` ## `number` `` and `## number()` are the API.
+    if (isBuiltinName(name) && !heading.code && !isCallForm(heading.text)) continue;
     const specRef = resolveApiName(
       spec,
       registry,
       name,
       ancestorPreferred(registry, headings, heading.line),
+      pageScope(opts).namespaces,
     );
     if (!specRef) continue;
     const locator = headingLocator(file, heading);
@@ -598,7 +620,7 @@ function mentionedMembers(
   const qualified = new RegExp(`${escaped}\\.([A-Za-z_$][\\w$]*)`, 'g');
   for (const m of opts.content.matchAll(qualified)) mentioned.add(m[1]);
 
-  const parsed = parseMarkdownFile(opts.content, opts.file);
+  const { parsed } = pageScope(opts);
   let bindings = new Map<string, string>();
   const members = new Set(listedMembers(opts.spec, typeName));
   for (const block of parsed.codeBlocks) {
@@ -713,7 +735,7 @@ function gapClaims(
 function proseClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): Claim[] {
   const { spec, registry, file, content } = opts;
   const claims: Claim[] = [];
-  for (const hit of findProseHits(content, spec, registry, headings)) {
+  for (const hit of findProseHits(content, spec, registry, headings, pageScope(opts).namespaces)) {
     const locator = attachHeading({ path: file, start: hit.start, end: hit.end }, headings);
     pushUnique(claims, {
       id: claimId(file, 'prose', hit.specRef, hit.text, locator.start.line),
@@ -741,7 +763,7 @@ export function buildPageDocument(options: BuildPageDocumentOptions): PageDocume
   const opts: BuildPageDocumentOptions = { ...options, file };
   const packageName = opts.packageName ?? opts.spec.meta.name;
   const headings = collectHeadings(opts.content);
-  const parsed = parseMarkdownFile(opts.content, file);
+  const { parsed } = pageScope(opts);
   const issues = detectProseDrift({
     packageName,
     markdownFiles: [parsed],

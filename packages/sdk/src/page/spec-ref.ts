@@ -250,11 +250,17 @@ export function makeSpecRef(
   return ref;
 }
 
+/**
+ * `namespaces`: the page's aliases of the package (`z`). `z.number`, like
+ * `<package>.number` and a member of a `namespace` export, is the export
+ * `number` or nothing: never a member of `z`.
+ */
 export function resolveApiName(
   spec: ApiSpec,
   registry: ExportRegistry,
   name: string,
   preferredParents?: Set<string>,
+  namespaces?: ReadonlySet<string>,
 ): SpecRef | null {
   const trimmed = name.trim();
   if (!trimmed) return null;
@@ -263,6 +269,15 @@ export function resolveApiName(
   if (qualified) {
     const [, parent, member] = qualified;
     const parents = registry.typeMembers.get(member);
+    const isNamespace =
+      namespaces?.has(parent) ||
+      parent === spec.meta.name ||
+      (registry.exports.get(parent)?.kind === 'namespace' && !parents?.has(parent));
+    if (isNamespace) {
+      return member !== 'default' && registry.all.has(member)
+        ? makeSpecRef(spec, registry, member)
+        : null;
+    }
     if (registry.all.has(parent) && parents?.has(parent)) {
       return makeSpecRef(spec, registry, parent, member);
     }
