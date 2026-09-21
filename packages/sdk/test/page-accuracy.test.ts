@@ -5002,3 +5002,62 @@ describe('prose-literal-type-mismatch: a literal of the wrong primitive type', (
     expect(mismatches('import { useLabel } from "other";\nuseLabel(5)')).toEqual([]);
   });
 });
+
+describe('prose-unknown-key across overloads', () => {
+  const F3 = '```';
+  const closed = (keys: string[]) => ({
+    type: 'object',
+    properties: Object.fromEntries(keys.map((k) => [k, {}])),
+  });
+
+  function hits(second: unknown, code: string) {
+    const spec = {
+      meta: { name: 'pkg' },
+      exports: [
+        {
+          id: 'toJSONSchema',
+          name: 'toJSONSchema',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'schema', required: true, schema: { 'x-ts-type': 'T' } },
+                { name: 'params', required: false, schema: closed(['target', 'io']) },
+              ],
+            },
+            {
+              parameters: [
+                { name: 'registry', required: true, schema: { 'x-ts-type': 'Registry' } },
+                { name: 'params', required: false, schema: second },
+              ],
+            },
+          ],
+        },
+      ],
+      types: [],
+    } as unknown as ApiSpec;
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/json.md',
+      content: `# JSON\n\n${F3}ts\nimport { toJSONSchema } from 'pkg'\n${code}\n${F3}\n`,
+    })
+      .claims.filter((c) => c.rule?.type === 'prose-unknown-key')
+      .map((c) => c.rule?.issue);
+  }
+
+  test('a key any overload declares is known', () => {
+    const code = 'toJSONSchema(registry, { uri: (id) => id })';
+    expect(hits(closed(['target', 'io', 'uri']), code)).toEqual([]);
+  });
+
+  test('an overload whose object shape cannot be seen silences the rule', () => {
+    const code = 'toJSONSchema(registry, { uri: (id) => id })';
+    expect(hits({ $ref: '#/types/Unresolved' }, code)).toEqual([]);
+  });
+
+  test('an overload that takes a primitive there does not', () => {
+    const code = 'toJSONSchema(schema, { uri: (id) => id })';
+    expect(hits({ type: 'string' }, code)).toEqual(["Unknown key 'uri' on 'toJSONSchema'"]);
+  });
+});

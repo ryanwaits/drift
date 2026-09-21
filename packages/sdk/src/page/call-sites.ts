@@ -287,6 +287,16 @@ function paramAt(ov: OverloadShape, index: number): ParamShape | undefined {
   return ov.params.find((p) => p.rest);
 }
 
+/** A parameter an object literal can never be passed for: a primitive or a function. */
+function takesNoObject(schema: ApiSchema | undefined): boolean {
+  if (!schema || typeof schema !== 'object') return false;
+  const s = schema as Record<string, unknown>;
+  if (s['x-ts-function'] === true) return true;
+  const primitive = (t: unknown): boolean =>
+    t === 'string' || t === 'number' || t === 'integer' || t === 'boolean' || t === 'null';
+  return Array.isArray(s.type) ? s.type.every(primitive) : primitive(s.type);
+}
+
 function closedAt(spec: ApiSpec, ov: OverloadShape, index: number): ClosedShape | null {
   const p = paramAt(ov, index);
   if (!p) return null;
@@ -404,8 +414,13 @@ function unknownLiteralKeys(
     if (!arg.keys || arg.keys.length === 0) return;
     const shapes: ClosedShape[] = [];
     for (const ov of overloads) {
-      const sh = closedAt(spec, ov, i);
+      const p = paramAt(ov, i);
+      if (!p) continue;
+      const sh = closedObjectShape(spec, p.schema, new Set());
       if (sh) shapes.push(sh);
+      // An overload that takes an object here whose keys cannot be seen may be the one the
+      // docs mean: `toJSONSchema(registry, { uri })` fits the second overload, not the first.
+      else if (!takesNoObject(p.schema)) return;
     }
     if (shapes.length === 0) return;
     anyClosed = true;
