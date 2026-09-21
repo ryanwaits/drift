@@ -102,6 +102,7 @@ export type {
   PageDocsMapPage,
   PageDocument,
   RuleHit,
+  SecondarySpec,
   SourcePos,
   SpecRef,
   SpecSlice,
