@@ -1804,7 +1804,7 @@ useMutation(...)
   test('empty parens still missing-required; one real arg still missing deps', () => {
     const empty = guidePage(
       'docs/guides/mutations.md',
-      '# Mutations\n\n```ts\nuseMutation()\n```\n',
+      '# Mutations\n\n```ts\nconst run = useMutation()\n```\n',
     );
     expect(
       empty.claims.find((c) => c.rule?.type === 'prose-missing-required')?.rule?.issue,
@@ -2218,7 +2218,7 @@ describe('aliased imports are checked by their imported name', () => {
       registry: buildExportRegistry(spec),
       file: 'docs/guide.md',
       content:
-        "# Guide\n\n```ts\nimport { useSnapshot as useSnap } from 'valtio'\n```\n\nLater:\n\n```ts\nuseSnap()\n```\n",
+        "# Guide\n\n```ts\nimport { useSnapshot as useSnap } from 'valtio'\n```\n\nLater:\n\n```ts\nconst snap = useSnap()\n```\n",
     });
     expect(d.claims.filter((c) => c.rule).map((c) => c.rule?.type)).toEqual([
       'prose-missing-required',
@@ -3028,5 +3028,78 @@ describe('a rest parameter is never required', () => {
         'const a = stringbool()',
       ),
     ).toEqual(["Call 'stringbool' is missing required argument 'args', 'last'"]);
+  });
+});
+
+describe('a zero-argument call as a bare statement is a mention, not a call', () => {
+  function zSpec(): ApiSpec {
+    const schema = { 'x-ts-type': 'unknown' };
+    return {
+      meta: { name: 'zod' },
+      exports: [
+        {
+          id: 'map',
+          name: 'map',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'keyType', required: true, schema },
+                { name: 'valueType', required: true, schema },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'Box',
+          name: 'Box',
+          kind: 'function',
+          signatures: [{ parameters: [{ name: 'size', required: true, schema }] }],
+        },
+      ],
+    };
+  }
+
+  function missing(code: string, lang = 'ts') {
+    const spec = zSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/json-schema.md',
+      content: `# JSON Schema\n\n\`\`\`${lang}\nimport * as z from 'zod'\n${code}\n\`\`\`\n`,
+    })
+      .claims.filter((c) => c.rule?.type === 'prose-missing-required')
+      .map((c) => c.text);
+  }
+
+  test('the unrepresentable-types list names APIs', () => {
+    expect(missing('z.bigint(); // ❌\nz.map(); // ❌\nz.set(); // ❌')).toEqual([]);
+    expect(missing('z.map()')).toEqual([]);
+    expect(missing("import { map } from 'zod'\nmap();")).toEqual([]);
+  });
+
+  test('a chained bare statement is still a bare statement', () => {
+    expect(missing('z.map().optional();')).toEqual([]);
+    expect(missing('z.map()!.optional().nullable();')).toEqual([]);
+    expect(missing('(z.map());')).toEqual([]);
+  });
+
+  test('a used result still fires', () => {
+    expect(missing('const m = z.map()')).toEqual(['z.map()']);
+    expect(missing('const m = z.map().optional()')).toEqual(['z.map()']);
+    expect(missing('foo(z.map())')).toEqual(['z.map()']);
+    expect(missing('function f() {\n  return z.map()\n}')).toEqual(['z.map()']);
+    expect(missing('const f = () => z.map()')).toEqual(['z.map()']);
+    expect(missing('await z.map();')).toEqual(['z.map()']);
+    expect(missing('const el = <div>{z.map()}</div>', 'tsx')).toEqual(['z.map()']);
+    expect(missing('const s = { m: z.map() }')).toEqual(['z.map()']);
+  });
+
+  test('a bare statement with arguments still fires', () => {
+    expect(missing('z.map(z.string());')).toEqual(['z.map(z.string())']);
+  });
+
+  test('JSX and new are not bare calls', () => {
+    expect(missing('<z.Box />;', 'tsx')).toEqual(['<z.Box />']);
   });
 });

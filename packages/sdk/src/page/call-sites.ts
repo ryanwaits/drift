@@ -409,6 +409,8 @@ function unknownLiteralKeys(
 
 function missingRequired(spec: ApiSpec, overloads: OverloadShape[], site: CallSite): string[] {
   if (site.hasSpreadArg || site.hasJsxSpread) return [];
+  // `z.map();` on a line of its own names the API, like a backticked `useSelf()`.
+  if (site.bareStatement && site.argCount === 0) return [];
 
   if (site.kind === 'jsx') {
     const shape = jsxPropShape(spec, overloads);

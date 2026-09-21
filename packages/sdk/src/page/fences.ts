@@ -228,6 +228,8 @@ export type CallSite = {
   hasChildren: boolean;
   /** Argument list is only a comment, `...`, or a block-comment placeholder. */
   elided: boolean;
+  /** The call (or a chain hanging off it) is a whole expression statement: `z.map();`. */
+  bareStatement: boolean;
   /** 0-indexed line / column of `text` within the code block value */
   line: number;
   col: number;
@@ -291,6 +293,25 @@ function isBareSignature(node: TS.CallExpression, sourceFile: TS.SourceFile): bo
   if (/^\s*:/.test(sourceFile.text.slice(node.getEnd()))) return true;
   const parts = splitTopLevel(parenInner(node, sourceFile));
   return parts.length > 0 && parts.every((p) => TYPED_PARAM.test(p));
+}
+
+/** `f();`, `f().g();`, `(f())!.g;`: nothing reads the value. `await f();` runs it. */
+function isBareStatement(node: TS.CallExpression): boolean {
+  let cur: TS.Node = node;
+  for (;;) {
+    const parent = cur.parent;
+    if (!parent) return false;
+    if (ts.isExpressionStatement(parent)) return true;
+    const chained =
+      ts.isParenthesizedExpression(parent) ||
+      ts.isNonNullExpression(parent) ||
+      ((ts.isPropertyAccessExpression(parent) ||
+        ts.isElementAccessExpression(parent) ||
+        ts.isCallExpression(parent)) &&
+        parent.expression === cur);
+    if (!chained) return false;
+    cur = parent;
+  }
 }
 
 function isElidedArgList(
@@ -415,6 +436,7 @@ export function extractCallSites(code: string): CallSite[] {
             hasJsxSpread: false,
             hasChildren: false,
             elided: isElidedArgList(node, sourceFile),
+            bareStatement: isBareStatement(node),
             line: pos.line,
             col: pos.character,
             text: node.getText(sourceFile),
@@ -431,6 +453,7 @@ export function extractCallSites(code: string): CallSite[] {
             hasJsxSpread: false,
             hasChildren: false,
             elided: isElidedArgList(node, sourceFile),
+            bareStatement: isBareStatement(node),
             line: pos.line,
             col: pos.character,
             text: node.getText(sourceFile),
@@ -450,6 +473,7 @@ export function extractCallSites(code: string): CallSite[] {
           hasJsxSpread: false,
           hasChildren: false,
           elided: isElidedArgList(node, sourceFile),
+          bareStatement: false,
           line: pos.line,
           col: pos.character,
           text: node.getText(sourceFile),
@@ -472,6 +496,7 @@ export function extractCallSites(code: string): CallSite[] {
             hasJsxSpread: hasSpread,
             hasChildren: ts.isJsxElement(node) ? jsxHasChildren(node) : false,
             elided: false,
+            bareStatement: false,
             line: pos.line,
             col: pos.character,
             text: open.getText(sourceFile),
