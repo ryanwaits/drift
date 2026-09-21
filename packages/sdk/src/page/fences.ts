@@ -45,6 +45,35 @@ export function extractInstanceBindings(code: string): Map<string, string> {
   return names;
 }
 
+/** Names the fence itself declares: variables (destructured too), functions, classes, parameters. */
+export function extractLocalNames(code: string): Set<string> {
+  const names = new Set<string>();
+  try {
+    const sourceFile = ts.createSourceFile(
+      'temp.ts',
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const bind = (name: TS.BindingName): void => {
+      if (ts.isIdentifier(name)) names.add(name.text);
+      else for (const el of name.elements) if (ts.isBindingElement(el)) bind(el.name);
+    };
+    const walk = (node: TS.Node): void => {
+      if (ts.isVariableDeclaration(node) || ts.isParameter(node)) bind(node.name);
+      if ((ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node)) && node.name) {
+        names.add(node.name.text);
+      }
+      ts.forEachChild(node, walk);
+    };
+    walk(sourceFile);
+  } catch {
+    // parse failure
+  }
+  return names;
+}
+
 export type FenceImport = {
   /** Local binding (`b` in `import { a as b }`) */
   name: string;

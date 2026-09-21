@@ -3319,3 +3319,54 @@ describe("a default import binds to the package's default export", () => {
     expect(doc.claims.filter((c) => c.specRef?.export === 'default')).toEqual([]);
   });
 });
+
+describe('a callee declared in the fence shadows the export of the same name', () => {
+  function storeSpec(): ApiSpec {
+    const param = { name: 'api', required: true, schema: { 'x-ts-type': 'unknown' } };
+    return {
+      meta: { name: 'zustand' },
+      exports: [
+        {
+          id: 'useStore',
+          name: 'useStore',
+          kind: 'function',
+          signatures: [{ parameters: [param] }],
+        },
+        {
+          id: 'Provider',
+          name: 'Provider',
+          kind: 'function',
+          signatures: [{ parameters: [param] }],
+        },
+      ],
+    };
+  }
+
+  function storeRules(code: string) {
+    const spec = storeSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/context.md',
+      content: `# Context\n\n\`\`\`tsx\n${code}\n\`\`\`\n\nLater:\n\n\`\`\`ts\nimport { useStore } from 'zustand'\n\`\`\`\n`,
+    })
+      .claims.filter((c) => c.rule)
+      .map((c) => c.text);
+  }
+
+  test('destructured, const, function and parameter declarations', () => {
+    expect(
+      storeRules('const { Provider, useStore } = createContext()\nconst state = useStore()'),
+    ).toEqual([]);
+    expect(storeRules('const useStore = create(fn)\nconst state = useStore()')).toEqual([]);
+    expect(storeRules('function useStore() {}\nconst state = useStore()')).toEqual([]);
+    expect(storeRules('const run = (useStore) => {\n  const s = useStore()\n}')).toEqual([]);
+    expect(
+      storeRules('const { Provider } = createContext()\nconst el = <Provider>{kids}</Provider>'),
+    ).toEqual([]);
+  });
+
+  test('the imported export still fires', () => {
+    expect(storeRules('const state = useStore()')).toEqual(['useStore()']);
+  });
+});

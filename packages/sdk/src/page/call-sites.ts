@@ -3,7 +3,7 @@ import { isExternalExport } from '../analysis/documented';
 import type { ExportRegistry } from '../analysis/drift/types';
 import { findTypeEntry } from '../analysis/key-coverage';
 import type { CallSite } from './fences';
-import { extractCallSites } from './fences';
+import { extractCallSites, extractLocalNames } from './fences';
 import { signaturesOf } from './spec-ref';
 
 export type CallSiteRuleType =
@@ -333,6 +333,8 @@ export type CallSiteContext = {
   namedImports?: ReadonlySet<string>;
   /** Renamed imports: local → export (`import { a as b }` → b → a; `import x` → x → default). */
   aliases?: ReadonlyMap<string, string>;
+  /** Names the fence declares itself: a bare callee among them is not the export. */
+  locals?: ReadonlySet<string>;
   skip?: boolean;
 };
 
@@ -368,6 +370,7 @@ function resolveCallee(
     if (!registry.all.has(resolved) && !registry.typeNames.includes(resolved)) return null;
     return { exportName: resolved, member: site.name };
   }
+  if (ctx?.locals?.has(site.name)) return null;
   if (!bareCalleeAllowed(site.name, ctx)) return null;
   const exportName = ctx?.aliases?.get(site.name) ?? site.name;
   if (registry.all.has(exportName)) return { exportName };
@@ -552,8 +555,9 @@ export function detectCallSiteHits(
 ): CallSiteHit[] {
   if (ctx?.skip) return [];
   const hits: CallSiteHit[] = [];
+  const scoped = { ...ctx, locals: extractLocalNames(code) };
   for (const site of extractCallSites(code)) {
-    hits.push(...judgeSite(site, spec, registry, bindings, ctx));
+    hits.push(...judgeSite(site, spec, registry, bindings, scoped));
   }
   return hits;
 }
