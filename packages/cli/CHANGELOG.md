@@ -1,5 +1,13 @@
 # @doccov/cli
 
+## 1.16.10
+
+### Patch Changes
+
+- efafea4: PageDocument claim coverage and attribution. A name an earlier fence of the page declares at its top level (`const useStore = create(...)`, function, class, destructured) shadows the export of the same name in later fences for call-site rules, bindings, the deprecated check and inventory claims, until a fence imports it from the package again; a printed signature or `declare` is not a shadow. `ns.f(...)` through a namespace alias (imported, or the page's conventional alias) is an inventory claim per (fence, export) with `text` as written (`z.string`), routed to the fence's `alsoSpecs` entry; a chained member that resolves through spec return types alone is one too (`z.string().email()` cites `ZodString.email` on the `email` token), and in a fence that names no entry only when no other entry types the same chain. A backticked `.member()` ignores owners outside the public surface (`$` / `_` names; types neither exported nor declared as an export's parameter / return type): `.parse()` on zod is `ZodType.parse`. A backticked bare builtin name is the export on its own API reference section (a code or call-form heading ancestor, or the H1 / frontmatter title, that is exactly that name) and before schema / function / action / method / hook / component / API / export / util / utility / helper. New rule `prose-literal-type-mismatch`: a string / number / boolean literal argument, object-literal property value (closed parameter shape) or JSX attribute where every applicable overload declares exactly another primitive; locator is the literal.
+- Updated dependencies [efafea4]
+  - @driftdev/sdk@1.16.10
+
 ## 1.16.9
 
 ### Patch Changes
