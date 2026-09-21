@@ -1,5 +1,12 @@
 # @doccov/sdk
 
+## 1.16.7
+
+### Patch Changes
+
+- 3d3cde7: Bump `@openpkg-ts/sdk` to ^0.54.7. A tsconfig that sets `module` without `moduleResolution` no longer breaks relative imports during extraction, so exports typed through them stop coming out as `any` (immer's bound methods such as `setAutoFreeze` now have signatures). Spec stays ^0.54.4.
+- d7e792c: PageDocument: new `prose-param-mismatch` rule checks parameter tables and `## Parameters` lists against the signatures of the export their heading names (exact or silent). Fixes: `buildPageDocuments` forwards `importSpecifier`; an aliased import is checked (and bound at call sites) by its imported name, default imports are never a missing export; `prose-deprecated-reference` is silent when the enclosing section notes the deprecation or names the replacement, and is located on the import; a self-named external type no longer overflows the closed-shape walk.
+
 ## 1.16.6
 
 ### Patch Changes
