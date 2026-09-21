@@ -48,6 +48,7 @@ export type RuleHit = {
     | 'prose-unknown-key'
     | 'prose-arity-mismatch'
     | 'prose-missing-required'
+    | 'prose-literal-type-mismatch'
     | 'prose-param-mismatch';
   issue: string;
   suggestion?: string;
@@ -75,7 +76,8 @@ export type RuleHit = {
  * cell that names an export or `Type.member`. No rule. Scan/CI ignore it.
  *
  * Fence call-site rules (`prose-unknown-key`, `prose-arity-mismatch`,
- * `prose-missing-required`) fire only when the callee resolves to an export.
+ * `prose-missing-required`, `prose-literal-type-mismatch`) fire only when the
+ * callee resolves to an export.
  * Unknown receiver = no claim. Type arguments are not arguments. A fence that
  * prints a signature (`name: Type` params, `): ReturnType`) is not a call.
  * An argument list that is only a comment or `...` is an elision: no arity
@@ -91,6 +93,14 @@ export type RuleHit = {
  * any external/unresolved/generic arm opens the shape). JSX props are the
  * top-level properties of the component's first parameter (or the
  * destructured param names); nested JSX elements are each checked.
+ *
+ * `prose-literal-type-mismatch` (locator = the literal) is a string / number /
+ * boolean literal (a template without substitutions is a string) passed where
+ * every overload that takes that many arguments declares exactly another
+ * primitive, `| undefined` / `| null` aside. Also a literal property value of
+ * an object literal against a closed parameter shape, and a JSX attribute
+ * (`count="5"` against `count: number`). A union, a literal union, a generic,
+ * `any` / `unknown`, a brand, a format, an unresolved type: no claim.
  *
  * `prose-param-mismatch` (`kind: 'table-key'`, locator = the key cell) checks
  * a parameter table (first header cell Param / Parameter / Argument / Arg /

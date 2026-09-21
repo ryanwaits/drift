@@ -3003,7 +3003,7 @@ describe('a rest parameter is never required', () => {
     expect(
       restRules(
         [
-          { name: 'first', required: true, schema: { type: 'string' } },
+          { name: 'first', required: true, schema: { 'x-ts-type': 'unknown' } },
           { name: 'more', required: true, rest: true, schema: { type: 'array' } },
         ],
         CALLS,
@@ -4812,5 +4812,193 @@ describe("on an API reference section for an export, its bare builtin name is th
       'prose:object:3',
       'prose:array:3',
     ]);
+  });
+});
+
+describe('prose-literal-type-mismatch: a literal of the wrong primitive type', () => {
+  const F3 = '```';
+  const STR = { type: 'string' };
+  const NUM = { type: 'number' };
+  const BOOL = { type: 'boolean' };
+  const UNDEF = { type: 'undefined' };
+  const param = (name: string, schema: unknown, required = true) => ({ name, required, schema });
+  const fn = (name: string, ...overloads: ReturnType<typeof param>[][]) => ({
+    id: name,
+    name,
+    kind: 'function',
+    signatures: overloads.map((parameters) => ({ parameters })),
+  });
+
+  function hooksSpec(): ApiSpec {
+    return {
+      meta: { name: PKG },
+      exports: [
+        fn('useOthersOnLocation', [param('locationId', NUM)]),
+        fn('useLabel', [param('label', STR)]),
+        fn('useFlag', [param('enabled', BOOL)]),
+        fn('useDelay', [param('ms', { anyOf: [NUM, UNDEF] }, false)]),
+        fn('useEither', [param('id', { anyOf: [STR, NUM] })]),
+        fn('useEvent', [param('event', { type: 'string', enum: ['open', 'close'] })]),
+        fn('useGeneric', [param('value', { 'x-ts-type': 'T' })]),
+        fn('useAny', [param('value', { 'x-ts-type': 'any' })]),
+        fn('useUnknown', [param('value', 'unknown')]),
+        fn('useBranded', [param('id', { allOf: [STR, { type: 'object', properties: {} }] })]),
+        fn('useExternal', [param('id', { $ref: '#/types/Missing' })]),
+        fn('useFormat', [param('id', { type: 'string', format: 'uuid' })]),
+        fn('useOverloaded', [param('key', NUM)], [param('key', STR), param('ttl', NUM)]),
+        fn('useStrict', [param('key', NUM)], [param('key', BOOL)]),
+        fn('useRest', [param('first', NUM), { ...param('rest', NUM), rest: true }]),
+        fn('useOptions', [param('options', { $ref: '#/types/Options' })]),
+        fn('useOpen', [param('options', { $ref: '#/types/OpenOptions' })]),
+        fn('Counter', [param('props', { $ref: '#/types/CounterProps' })]),
+      ],
+      types: [
+        {
+          id: 'Options',
+          name: 'Options',
+          kind: 'interface',
+          schema: {
+            type: 'object',
+            properties: { count: NUM, label: STR, mode: { anyOf: [STR, NUM] } },
+            required: ['count'],
+          },
+        },
+        {
+          id: 'OpenOptions',
+          name: 'OpenOptions',
+          kind: 'interface',
+          schema: { type: 'object', properties: { count: NUM }, additionalProperties: true },
+        },
+        {
+          id: 'CounterProps',
+          name: 'CounterProps',
+          kind: 'interface',
+          schema: { type: 'object', properties: { count: NUM, label: STR, live: BOOL } },
+        },
+      ],
+    };
+  }
+
+  function mismatches(code: string, lang = 'tsx') {
+    const spec = hooksSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/hooks.md',
+      content: `# Hooks\n\n${F3}${lang}\n${code}\n${F3}\n`,
+    })
+      .claims.filter((c) => c.rule?.type === 'prose-literal-type-mismatch')
+      .map((c) => [
+        c.text,
+        `${c.locator.start.line}:${c.locator.start.col}-${c.locator.end.col}`,
+        c.specRef?.export,
+        c.rule?.issue,
+      ]);
+  }
+
+  test('a string literal where the spec declares `number`: the locator is the literal', () => {
+    expect(mismatches('const others = useOthersOnLocation("/dashboard");')).toEqual([
+      [
+        '"/dashboard"',
+        '4:36-47',
+        'useOthersOnLocation',
+        "Argument 1 of 'useOthersOnLocation' is a string literal; the spec declares 'locationId: number'",
+      ],
+    ]);
+    expect(mismatches('const others = useOthersOnLocation(42);')).toEqual([]);
+    expect(mismatches('const others = useOthersOnLocation(id);')).toEqual([]);
+  });
+
+  test('every literal kind against every other primitive', () => {
+    const issue = (code: string) => mismatches(code).map((m) => m[3]);
+    expect(issue('useFlag(`on`)')).toEqual([
+      "Argument 1 of 'useFlag' is a string literal; the spec declares 'enabled: boolean'",
+    ]);
+    expect(issue('useLabel(5)')).toEqual([
+      "Argument 1 of 'useLabel' is a number literal; the spec declares 'label: string'",
+    ]);
+    expect(issue('useFlag(-1)')).toEqual([
+      "Argument 1 of 'useFlag' is a number literal; the spec declares 'enabled: boolean'",
+    ]);
+    expect(issue('useLabel(true)')).toEqual([
+      "Argument 1 of 'useLabel' is a boolean literal; the spec declares 'label: string'",
+    ]);
+    expect(issue('useOthersOnLocation(false)')).toEqual([
+      "Argument 1 of 'useOthersOnLocation' is a boolean literal; the spec declares 'locationId: number'",
+    ]);
+    // A template with a substitution is not a literal.
+    expect(issue('useFlag(`on-${id}`)')).toEqual([]);
+  });
+
+  test('`| undefined` / optional is unwrapped', () => {
+    expect(mismatches('useDelay(200)')).toEqual([]);
+    expect(mismatches('useDelay("200")').map((m) => m[3])).toEqual([
+      "Argument 1 of 'useDelay' is a string literal; the spec declares 'ms: number'",
+    ]);
+  });
+
+  test('silent: unions, literal unions, generics, any/unknown, branded, unresolved, formats', () => {
+    for (const code of [
+      'useEither(5)',
+      'useEither(true)',
+      'useEvent(5)',
+      'useGeneric(5)',
+      'useAny(5)',
+      'useUnknown(5)',
+      'useBranded(5)',
+      'useExternal(5)',
+      'useFormat(5)',
+      'useRest(1, "two")',
+      'useOthersOnLocation(...args, "x")',
+      'notAnExport("x")',
+    ]) {
+      expect(mismatches(code)).toEqual([]);
+    }
+  });
+
+  test('overloads: fires only when the literal fits none that take that many arguments', () => {
+    expect(mismatches('useOverloaded("k")')).toEqual([]);
+    expect(mismatches('useOverloaded(true)').map((m) => m[3])).toEqual([
+      "Argument 1 of 'useOverloaded' is a boolean literal; the spec declares 'key: number'",
+    ]);
+    expect(mismatches('useOverloaded("k", "soon")').map((m) => m[3])).toEqual([
+      "Argument 2 of 'useOverloaded' is a string literal; the spec declares 'ttl: number'",
+    ]);
+    expect(mismatches('useStrict("k")').map((m) => m[3])).toEqual([
+      "Argument 1 of 'useStrict' is a string literal; the spec declares 'key: number'",
+    ]);
+  });
+
+  test('object-literal property values against a closed parameter shape', () => {
+    expect(mismatches('useOptions({ count: "5", label: "ok", mode: true })')).toEqual([
+      [
+        '"5"',
+        '4:21-23',
+        'useOptions',
+        "Property 'count' of argument 1 of 'useOptions' is a string literal; the spec declares 'count: number'",
+      ],
+    ]);
+    expect(mismatches('useOpen({ count: "5" })')).toEqual([]);
+    expect(mismatches('useOptions({ count, label })')).toEqual([]);
+  });
+
+  test('JSX: a string attribute against `count: number` fires; an expression of the right type does not', () => {
+    expect(mismatches('const el = <Counter count="5" label="hits" />')).toEqual([
+      [
+        '"5"',
+        '4:27-29',
+        'Counter',
+        "Prop 'count' of '<Counter>' is a string literal; the spec declares 'count: number'",
+      ],
+    ]);
+    expect(mismatches('const el = <Counter count={5} label={"hits"} live />')).toEqual([]);
+    expect(mismatches('const el = <Counter label={5} />').map((m) => m[3])).toEqual([
+      "Prop 'label' of '<Counter>' is a number literal; the spec declares 'label: string'",
+    ]);
+  });
+
+  test('same resolution as the other call-site rules: a shadowed or foreign callee is silent', () => {
+    expect(mismatches('const useLabel = (n) => n;\nuseLabel(5)')).toEqual([]);
+    expect(mismatches('import { useLabel } from "other";\nuseLabel(5)')).toEqual([]);
   });
 });

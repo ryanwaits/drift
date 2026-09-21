@@ -105,7 +105,7 @@ function heritageNames(raw: unknown): string[] {
 }
 
 /** Schema of property `key` (string) or tuple position `key` (number) of `schema`. */
-function elementSchema(
+export function elementSchema(
   spec: ApiSpec,
   schema: ApiSchema | undefined,
   key: string | number,

@@ -2,14 +2,15 @@ import type { ApiSchema, ApiSignature, ApiSignatureParameter, ApiSpec } from '..
 import { isExternalExport } from '../analysis/documented';
 import type { ExportRegistry } from '../analysis/drift/types';
 import { findTypeEntry } from '../analysis/key-coverage';
-import type { CallSite } from './fences';
+import type { CallSite, LiteralValue } from './fences';
 import { extractCallSites, extractLocalNames } from './fences';
-import { signaturesOf } from './spec-ref';
+import { elementSchema, signaturesOf } from './spec-ref';
 
 export type CallSiteRuleType =
   | 'prose-unknown-key'
   | 'prose-arity-mismatch'
-  | 'prose-missing-required';
+  | 'prose-missing-required'
+  | 'prose-literal-type-mismatch';
 
 export type CallSiteHit = {
   type: CallSiteRuleType;
@@ -475,6 +476,108 @@ function missingRequired(spec: ApiSpec, overloads: OverloadShape[], site: CallSi
   return missing;
 }
 
+const PRIMITIVES = new Set(['string', 'number', 'boolean']);
+const ANNOTATIONS = new Set(['type', 'description']);
+
+/**
+ * `string` / `number` / `boolean` when the schema is exactly that primitive,
+ * after dropping `| undefined` / `| null`. A union of anything else, a literal
+ * union (`enum` / `const`), a format, a brand (`allOf`), a generic, `any` /
+ * `unknown` or a `$ref`: undefined.
+ */
+function exactPrimitive(schema: ApiSchema | undefined): string | undefined {
+  if (typeof schema === 'string') return PRIMITIVES.has(schema) ? schema : undefined;
+  if (!schema || typeof schema !== 'object') return undefined;
+  const s = schema as Record<string, unknown>;
+  const arms = Array.isArray(s.anyOf) ? s.anyOf : Array.isArray(s.oneOf) ? s.oneOf : null;
+  if (arms) {
+    const rest = (arms as Array<Record<string, unknown>>).filter(
+      (a) => a?.type !== 'null' && a?.type !== 'undefined' && a?.['x-ts-type'] !== 'undefined',
+    );
+    return rest.length === 1 ? exactPrimitive(rest[0] as ApiSchema) : undefined;
+  }
+  if (typeof s.type !== 'string' || !PRIMITIVES.has(s.type)) return undefined;
+  return Object.keys(s).every((k) => ANNOTATIONS.has(k)) ? s.type : undefined;
+}
+
+type Declared = { name: string; primitive: string };
+
+/**
+ * The primitive every candidate declares, when the literal fits none of them.
+ * A candidate that is not exactly a primitive, or is the literal's own type,
+ * may accept the literal: null.
+ */
+function mismatched(
+  literal: LiteralValue,
+  candidates: Array<{ name: string; schema: ApiSchema | undefined } | null>,
+): Declared | null {
+  let first: Declared | null = null;
+  for (const candidate of candidates) {
+    const primitive = candidate ? exactPrimitive(candidate.schema) : undefined;
+    if (!candidate || !primitive || primitive === literal.type) return null;
+    first ??= { name: candidate.name, primitive };
+  }
+  return first;
+}
+
+/** A literal argument, object-literal property or JSX attribute of the wrong primitive type. */
+function literalMismatches(
+  spec: ApiSpec,
+  overloads: OverloadShape[],
+  site: CallSite,
+): Array<{ literal: LiteralValue; subject: string; declared: Declared }> {
+  const found: Array<{ literal: LiteralValue; subject: string; declared: Declared }> = [];
+  const property = (ov: OverloadShape, p: ParamShape | undefined, key: string) => {
+    if (!p || p.rest || !closedObjectShape(spec, p.schema, new Set())?.keys.has(key)) return null;
+    return { name: key, schema: elementSchema(spec, p.schema, key, new Set()) };
+  };
+
+  if (site.kind === 'jsx') {
+    if (site.hasJsxSpread) return found;
+    for (const { key, literal } of site.jsxLiterals ?? []) {
+      if (JSX_RESERVED.has(key)) continue;
+      const declared = mismatched(
+        literal,
+        overloads.map((ov) => {
+          if (ov.params.length === 1) return property(ov, ov.params[0], key);
+          const named = ov.params.find((p) => p.name === key && !p.rest);
+          return named ? { name: key, schema: named.schema } : null;
+        }),
+      );
+      if (declared) found.push({ literal, subject: `Prop '${key}'`, declared });
+    }
+    return found;
+  }
+
+  if (site.hasSpreadArg) return found;
+  site.args.forEach((arg, i) => {
+    // An overload with fewer parameters cannot be the one this call means.
+    const taking = overloads.filter((ov) => i < ov.maxPositional);
+    if (taking.length === 0) return;
+    if (arg.literal) {
+      const declared = mismatched(
+        arg.literal,
+        taking.map((ov) => {
+          const p = paramAt(ov, i);
+          return p && !p.rest ? { name: p.name, schema: p.schema } : null;
+        }),
+      );
+      if (declared) found.push({ literal: arg.literal, subject: `Argument ${i + 1}`, declared });
+    }
+    if (arg.hasSpread) return;
+    for (const { key, literal } of arg.props ?? []) {
+      const declared = mismatched(
+        literal,
+        taking.map((ov) => property(ov, paramAt(ov, i), key)),
+      );
+      if (declared) {
+        found.push({ literal, subject: `Property '${key}' of argument ${i + 1}`, declared });
+      }
+    }
+  });
+  return found;
+}
+
 function judgeSite(
   site: CallSite,
   spec: ApiSpec,
@@ -533,6 +636,17 @@ function judgeSite(
         suggestion: `Allowed: ${found.allowed.join(', ') || '(none)'}`,
       });
     }
+  }
+
+  for (const { literal, subject, declared } of literalMismatches(spec, overloads, site)) {
+    hits.push({
+      ...base,
+      text: literal.text,
+      line: literal.line,
+      col: literal.col,
+      type: 'prose-literal-type-mismatch',
+      issue: `${subject} of '${label}' is a ${literal.type} literal; the spec declares '${declared.name}: ${declared.primitive}'`,
+    });
   }
 
   const missing = missingRequired(spec, overloads, site);

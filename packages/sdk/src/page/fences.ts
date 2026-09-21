@@ -371,9 +371,23 @@ export function extractFenceMembers(code: string): Array<{
   return mentions;
 }
 
+/** A literal written in a fence: `"a"`, `` `a` `` (no substitutions), `5`, `-5`, `true`. */
+export type LiteralValue = {
+  type: 'string' | 'number' | 'boolean';
+  /** As written, quotes included */
+  text: string;
+  /** 0-indexed line / column of `text` within the fence code */
+  line: number;
+  col: number;
+};
+
 export type CallSiteArg = {
   keys?: string[];
   hasSpread?: boolean;
+  /** The argument is a literal */
+  literal?: LiteralValue;
+  /** Literal property values of an object-literal argument */
+  props?: Array<{ key: string; literal: LiteralValue }>;
 };
 
 /** Call, `new`, or JSX site in a fence — value args only, never type args. */
@@ -385,6 +399,8 @@ export type CallSite = {
   hasSpreadArg: boolean;
   args: CallSiteArg[];
   jsxKeys: string[];
+  /** JSX attributes whose value is a literal: `count="5"`, `count={5}` */
+  jsxLiterals?: Array<{ key: string; literal: LiteralValue }>;
   hasJsxSpread: boolean;
   hasChildren: boolean;
   /** Argument list is only a comment, `...`, or a block-comment placeholder. */
@@ -488,14 +504,36 @@ function isElidedArgList(
   return stripped === '' && /\/\*|\/\//.test(inner);
 }
 
+function literalValue(expr: TS.Expression, sourceFile: TS.SourceFile): LiteralValue | undefined {
+  let inner: TS.Expression = expr;
+  while (ts.isParenthesizedExpression(inner)) inner = inner.expression;
+  const negative =
+    ts.isPrefixUnaryExpression(inner) &&
+    (inner.operator === ts.SyntaxKind.MinusToken || inner.operator === ts.SyntaxKind.PlusToken) &&
+    ts.isNumericLiteral(inner.operand);
+  const type =
+    ts.isStringLiteral(inner) || ts.isNoSubstitutionTemplateLiteral(inner)
+      ? 'string'
+      : ts.isNumericLiteral(inner) || negative
+        ? 'number'
+        : inner.kind === ts.SyntaxKind.TrueKeyword || inner.kind === ts.SyntaxKind.FalseKeyword
+          ? 'boolean'
+          : undefined;
+  if (!type) return undefined;
+  const pos = sourceFile.getLineAndCharacterOfPosition(inner.getStart(sourceFile));
+  return { type, text: inner.getText(sourceFile), line: pos.line, col: pos.character };
+}
+
 function objectLiteralKeys(
   expr: TS.Expression,
-): { keys: string[]; hasSpread: boolean } | undefined {
+  sourceFile: TS.SourceFile,
+): { keys: string[]; hasSpread: boolean; props: NonNullable<CallSiteArg['props']> } | undefined {
   let inner: TS.Expression = expr;
   if (ts.isParenthesizedExpression(inner)) inner = inner.expression;
   if (ts.isAsExpression(inner)) inner = inner.expression;
   if (!ts.isObjectLiteralExpression(inner)) return undefined;
   const keys: string[] = [];
+  const props: NonNullable<CallSiteArg['props']> = [];
   let hasSpread = false;
   for (const prop of inner.properties) {
     if (ts.isSpreadAssignment(prop)) {
@@ -508,14 +546,20 @@ function objectLiteralKeys(
       ts.isMethodDeclaration(prop)
         ? prop.name
         : undefined;
-    if (!n) continue;
-    if (ts.isIdentifier(n)) keys.push(n.text);
-    else if (ts.isStringLiteral(n)) keys.push(n.text);
+    if (!n || (!ts.isIdentifier(n) && !ts.isStringLiteral(n))) continue;
+    keys.push(n.text);
+    const literal = ts.isPropertyAssignment(prop)
+      ? literalValue(prop.initializer, sourceFile)
+      : undefined;
+    if (literal) props.push({ key: n.text, literal });
   }
-  return { keys, hasSpread };
+  return { keys, hasSpread, props };
 }
 
-function valueArgs(node: TS.CallExpression | TS.NewExpression): {
+function valueArgs(
+  node: TS.CallExpression | TS.NewExpression,
+  sourceFile: TS.SourceFile,
+): {
   argCount: number;
   hasSpreadArg: boolean;
   args: CallSiteArg[];
@@ -529,8 +573,19 @@ function valueArgs(node: TS.CallExpression | TS.NewExpression): {
       args.push({ hasSpread: true });
       continue;
     }
-    const obj = objectLiteralKeys(a);
-    args.push(obj ? { keys: obj.keys, hasSpread: obj.hasSpread } : {});
+    const obj = objectLiteralKeys(a, sourceFile);
+    const literal = obj ? undefined : literalValue(a, sourceFile);
+    args.push(
+      obj
+        ? {
+            keys: obj.keys,
+            hasSpread: obj.hasSpread,
+            ...(obj.props.length ? { props: obj.props } : {}),
+          }
+        : literal
+          ? { literal }
+          : {},
+    );
   }
   return { argCount: list.length, hasSpreadArg, args };
 }
@@ -543,8 +598,12 @@ function jsxTag(tag: TS.JsxTagNameExpression): { name: string; objectName?: stri
   return null;
 }
 
-function jsxAttrs(attrs: TS.JsxAttributes): { keys: string[]; hasSpread: boolean } {
+function jsxAttrs(
+  attrs: TS.JsxAttributes,
+  sourceFile: TS.SourceFile,
+): { keys: string[]; hasSpread: boolean; literals: NonNullable<CallSite['jsxLiterals']> } {
   const keys: string[] = [];
+  const literals: NonNullable<CallSite['jsxLiterals']> = [];
   let hasSpread = false;
   for (const attr of attrs.properties) {
     if (ts.isJsxSpreadAttribute(attr)) {
@@ -553,10 +612,20 @@ function jsxAttrs(attrs: TS.JsxAttributes): { keys: string[]; hasSpread: boolean
     }
     if (ts.isJsxAttribute(attr)) {
       const n = attr.name;
-      if (ts.isIdentifier(n)) keys.push(n.text);
+      if (!ts.isIdentifier(n)) continue;
+      keys.push(n.text);
+      const init = attr.initializer;
+      const value =
+        init && ts.isJsxExpression(init)
+          ? init.expression
+          : init && ts.isStringLiteral(init)
+            ? init
+            : undefined;
+      const literal = value ? literalValue(value, sourceFile) : undefined;
+      if (literal) literals.push({ key: n.text, literal });
     }
   }
-  return { keys, hasSpread };
+  return { keys, hasSpread, literals };
 }
 
 function jsxHasChildren(node: TS.JsxElement): boolean {
@@ -583,7 +652,7 @@ export function extractCallSites(code: string): CallSite[] {
     const visit = (node: TS.Node): void => {
       if (ts.isCallExpression(node)) {
         const pos = sourceFile.getLineAndCharacterOfPosition(node.getStart());
-        const { argCount, hasSpreadArg, args } = valueArgs(node);
+        const { argCount, hasSpreadArg, args } = valueArgs(node, sourceFile);
         const expr = node.expression;
         if (ts.isIdentifier(expr)) {
           if (isBareSignature(node, sourceFile)) return;
@@ -623,7 +692,7 @@ export function extractCallSites(code: string): CallSite[] {
       }
       if (ts.isNewExpression(node) && node.expression && ts.isIdentifier(node.expression)) {
         const pos = sourceFile.getLineAndCharacterOfPosition(node.getStart());
-        const { argCount, hasSpreadArg, args } = valueArgs(node);
+        const { argCount, hasSpreadArg, args } = valueArgs(node, sourceFile);
         sites.push({
           kind: 'new',
           name: node.expression.text,
@@ -645,7 +714,7 @@ export function extractCallSites(code: string): CallSite[] {
         const tag = jsxTag(open.tagName);
         if (tag) {
           const pos = sourceFile.getLineAndCharacterOfPosition(node.getStart());
-          const { keys, hasSpread } = jsxAttrs(open.attributes);
+          const { keys, hasSpread, literals } = jsxAttrs(open.attributes, sourceFile);
           sites.push({
             kind: 'jsx',
             name: tag.name,
@@ -654,6 +723,7 @@ export function extractCallSites(code: string): CallSite[] {
             hasSpreadArg: false,
             args: [],
             jsxKeys: keys,
+            ...(literals.length > 0 ? { jsxLiterals: literals } : {}),
             hasJsxSpread: hasSpread,
             hasChildren: ts.isJsxElement(node) ? jsxHasChildren(node) : false,
             elided: false,
