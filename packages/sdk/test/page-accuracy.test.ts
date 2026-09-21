@@ -2308,3 +2308,41 @@ describe('prose-deprecated-reference reads the deprecation note of the enclosing
     expect(hits[0]?.locator.start).toEqual({ line: 23, col: 10 });
   });
 });
+
+describe('closed object shape terminates', () => {
+  test('an external type entry that names itself is open, not a stack overflow', () => {
+    const spec: ApiSpec = {
+      meta: { name: PKG },
+      exports: [
+        {
+          id: 'Slot',
+          name: 'Slot',
+          kind: 'function',
+          signatures: [
+            {
+              parameters: [
+                { name: 'fallback', required: true, schema: { $ref: '#/types/ReactNode' } },
+              ],
+            },
+          ],
+        },
+      ],
+      types: [
+        {
+          id: 'ReactNode',
+          name: 'ReactNode',
+          kind: 'external',
+          schema: { 'x-ts-type': 'ReactNode', 'x-ts-package': '@types/react' },
+        },
+      ],
+    };
+    const d = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/slot.md',
+      content:
+        '# Slot\n\n| Prop | Type |\n|---|---|\n| `fallback` | `ReactNode` |\n\n```tsx\nSlot({ a: 1 })\n```\n',
+    });
+    expect(d.claims.filter((c) => c.rule)).toEqual([]);
+  });
+});

@@ -197,6 +197,9 @@ function schemaShape(spec: ApiSpec, schema: ApiSchema | undefined, seen: Set<str
     if (OPEN_XTS.has(xts) || INDEXED_OPEN.has(xts)) return 'open';
     if (UTILITY_XTS.has(xts)) return propertiesShape(s) ?? 'open';
     if (!s.properties) {
+      // An external entry's schema names itself (`ReactNode` → `ReactNode`).
+      if (seen.has(xts)) return 'open';
+      seen.add(xts);
       const entry = findTypeEntry(spec, xts);
       if (!entry) return 'open';
       return entryShape(spec, entry, seen);
@@ -208,7 +211,7 @@ function schemaShape(spec: ApiSpec, schema: ApiSchema | undefined, seen: Set<str
 }
 
 function entryShape(spec: ApiSpec, entry: SpecEntry, seen: Set<string>): ShapeHit {
-  if (isExternalExport(entry)) return 'open';
+  if (isExternalExport(entry) || entry.kind === 'external') return 'open';
   const typeParams = entry.typeParameters;
   if (
     (entry.kind === 'type' || entry.kind === 'alias') &&
