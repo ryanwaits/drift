@@ -3187,3 +3187,135 @@ describe('invalid import syntax is not blamed on an export', () => {
     ).toEqual([]);
   });
 });
+
+describe("a default import binds to the package's default export", () => {
+  const F3 = '```';
+  const any = { 'x-ts-type': 'unknown' };
+
+  function swrSpec(withDefault = true): ApiSpec {
+    const overloads = [
+      { parameters: [{ name: 'key', required: true, schema: any }] },
+      {
+        parameters: [
+          { name: 'key', required: true, schema: any },
+          { name: 'fetcher', required: true, schema: any },
+        ],
+      },
+      {
+        parameters: [
+          { name: 'key', required: true, schema: any },
+          { name: 'fetcher', required: true, schema: any },
+          {
+            name: 'config',
+            required: true,
+            schema: { type: 'object', properties: { suspense: { type: 'boolean' } } },
+          },
+        ],
+      },
+    ];
+    return {
+      meta: { name: 'swr' },
+      exports: [
+        ...(withDefault
+          ? [{ id: 'default', name: 'default', kind: 'function', signatures: overloads }]
+          : []),
+        { id: 'useSWR', name: 'useSWR', kind: 'function', signatures: [overloads[0]] },
+        { id: 'mutate', name: 'mutate', kind: 'function' },
+      ],
+    };
+  }
+
+  function swrDoc(content: string, withDefault = true) {
+    const spec = swrSpec(withDefault);
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/getting-started.md',
+      content,
+    });
+  }
+
+  function fence(code: string): string {
+    return `${F3}tsx\n${code}\n${F3}\n`;
+  }
+
+  test('call sites are checked against the default export, every overload', () => {
+    const doc = swrDoc(
+      `# SWR\n\n${fence(
+        "import useSWR from 'swr'\nconst a = useSWR('/api', fetcher, { suspense: true })\nconst b = useSWR('/api', fetcher)\nconst c = useSWR('/api')",
+      )}`,
+    );
+    expect(doc.claims.filter((c) => c.rule)).toEqual([]);
+  });
+
+  test('arity, missing-required and unknown-key fire through the local name', () => {
+    const doc = swrDoc(
+      `# SWR\n\n${fence(
+        "import useSWR from 'swr'\nconst a = useSWR('/api', fetcher, {}, extra)\nconst b = useSWR()\nconst c = useSWR('/api', fetcher, { suspence: true })",
+      )}`,
+    );
+    const hits = doc.claims.filter((c) => c.rule);
+    expect(hits.map((c) => [c.rule?.type, c.specRef?.export, c.locator.start.line])).toEqual([
+      ['prose-arity-mismatch', 'default', 5],
+      ['prose-missing-required', 'default', 6],
+      ['prose-unknown-key', 'default', 7],
+    ]);
+    expect(hits[0]?.rule?.issue).toBe("Call 'useSWR' has 4 arguments; spec allows at most 3");
+    expect(hits[1]?.rule?.issue).toBe("Call 'useSWR' is missing required argument 'key'");
+  });
+
+  test('`{ default as x }` and `x, { y }` bind the same way, across fences', () => {
+    for (const imp of [
+      "import { default as useData } from 'swr'",
+      "import useData, { mutate } from 'swr'",
+    ]) {
+      const doc = swrDoc(
+        `# SWR\n\n${fence(imp)}\nLater:\n\n${fence('const a = useData(k, f, {}, extra)')}`,
+      );
+      const hits = doc.claims.filter((c) => c.rule);
+      expect(hits.map((c) => [c.rule?.type, c.specRef?.export])).toEqual([
+        ['prose-arity-mismatch', 'default'],
+      ]);
+      expect(hits[0]?.locator.start).toEqual({ line: 10, col: 11 });
+    }
+  });
+
+  test('a correct call is an inventory claim a judge can read: specRef default, in its fence', () => {
+    const content = `# SWR\n\nCall \`useSWR('/api/user', fetcher)\`.\n\n${fence(
+      "import useSWR from 'swr'\n\nfunction Profile() {\n  const { data } = useSWR('/api/user', fetcher)\n}",
+    )}\n${fence("const { data } = useSWR('/api/team', fetcher)")}`;
+    const bound = swrDoc(content).claims.filter((c) => c.specRef?.export === 'default');
+    expect(
+      bound.map((c) => [
+        c.kind,
+        c.text,
+        c.candidate,
+        c.rule,
+        c.locator.start.line,
+        c.locator.start.col,
+      ]),
+    ).toEqual([
+      ['inline', 'useSWR', true, undefined, 9, 20],
+      ['inline', 'useSWR', true, undefined, 14, 18],
+    ]);
+    expect(swrDoc(content).slices.map((s) => s.export)).toContain('default');
+  });
+
+  test('no default export in the spec: silent, never matched to an export by name', () => {
+    const doc = swrDoc(
+      `# SWR\n\n${fence("import useSWR from 'swr'\nconst a = useSWR('/api', fetcher, {}, extra)\nconst b = useSWR()")}`,
+      false,
+    );
+    expect(doc.claims.filter((c) => c.rule)).toEqual([]);
+    expect(doc.claims.filter((c) => c.specRef?.export === 'default')).toEqual([]);
+    expect(doc.claims.filter((c) => c.kind === 'fence')).toEqual([]);
+  });
+
+  test("another package's default import binds nothing", () => {
+    const doc = swrDoc(
+      `# SWR\n\n${fence("import useSWR from 'swr/immutable'\nconst a = useSWR('/api', fetcher, {}, extra)")}`,
+    );
+    expect(doc.claims.filter((c) => c.rule)).toEqual([]);
+    expect(doc.claims.filter((c) => c.specRef?.export === 'default')).toEqual([]);
+  });
+});

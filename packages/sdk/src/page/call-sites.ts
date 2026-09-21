@@ -331,7 +331,7 @@ function jsxPropShape(spec: ApiSpec, overloads: OverloadShape[]): ClosedShape | 
 export type CallSiteContext = {
   namespaces?: ReadonlySet<string>;
   namedImports?: ReadonlySet<string>;
-  /** Renamed named imports: local → export (`import { a as b }` → b → a). */
+  /** Renamed imports: local → export (`import { a as b }` → b → a; `import x` → x → default). */
   aliases?: ReadonlyMap<string, string>;
   skip?: boolean;
 };
@@ -378,7 +378,8 @@ function displayName(callee: { exportName: string; member?: string }, site: Call
   if (site.kind === 'jsx')
     return `<${site.objectName ? `${site.objectName}.${site.name}` : site.name}>`;
   if (callee.member) return `${callee.exportName}.${callee.member}`;
-  return callee.exportName;
+  // The default export has no name of its own: the page's local name reads better.
+  return callee.exportName === 'default' ? site.name : callee.exportName;
 }
 
 function unknownLiteralKeys(

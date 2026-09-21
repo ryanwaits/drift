@@ -10,6 +10,7 @@ import { detectCallSiteHits } from './call-sites';
 import {
   blockContaining,
   collectPackageNamespaces,
+  extractCallSites,
   extractExportBindings,
   extractFenceCalls,
   extractFenceImports,
@@ -446,6 +447,48 @@ function inlineClaims(
       specRef,
       candidate: true,
     });
+  }
+
+  // A call through a renamed or default import names no export, so the pass
+  // above misses it. One mention per fence, on the first call.
+  const packageName = opts.packageName ?? spec.meta.name;
+  const { aliases } = collectPackageNamespaces(
+    parsed.codeBlocks.map((b) => b.code),
+    registry.all,
+    packageName,
+    opts.importSpecifier,
+  );
+  for (const block of aliases.size > 0 ? parsed.codeBlocks : []) {
+    const seen = new Set<string>();
+    for (const site of extractCallSites(block.code)) {
+      const exportName = site.objectName ? undefined : aliases.get(site.name);
+      if (!exportName || !registry.all.has(exportName) || seen.has(exportName)) continue;
+      seen.add(exportName);
+      const specRef = makeSpecRef(spec, registry, exportName);
+      const span = {
+        text: site.name,
+        line: site.line,
+        col: site.col + site.text.indexOf(site.name),
+      };
+      const locator = fenceLocator(file, content, block, span, headings);
+      if (!locator) continue;
+      const already = existing
+        .concat(claims)
+        .some(
+          (c) =>
+            specRefKey(c.specRef) === specRefKey(specRef) &&
+            c.locator.start.line === locator.start.line,
+        );
+      if (already) continue;
+      pushUnique(claims, {
+        id: claimId(file, 'inline', specRef, site.name, locator.start.line),
+        kind: 'inline',
+        text: site.name,
+        locator,
+        specRef,
+        candidate: true,
+      });
+    }
   }
 
   return claims;

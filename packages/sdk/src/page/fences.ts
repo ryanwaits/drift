@@ -622,7 +622,8 @@ export function fenceImportKind(
 /**
  * `import * as ns from '<pkg>'`, plus a short ident used as `x.<export>(`
  * for two or more distinct package exports when the page never shows the import.
- * `aliases` maps a renamed local to its export (`import { a as b }` → b → a).
+ * `aliases` maps a renamed local to its export (`import { a as b }` → b → a;
+ * `import x` → x → `default`, which resolves only when the spec has that export).
  */
 export function collectPackageNamespaces(
   codes: readonly string[],
@@ -638,7 +639,9 @@ export function collectPackageNamespaces(
       if (!isPackageSpecifier(imp.from, packageName, importSpecifier)) continue;
       if (imp.kind === 'namespace') namespaces.add(imp.name);
       else namedImports.add(imp.name);
-      if (imp.kind === 'named' && imp.imported !== imp.name && imp.imported !== 'default') {
+      // A default import (either spelling) is the export named `default`, never
+      // the export that happens to share the local name.
+      if (imp.kind !== 'namespace' && imp.imported !== imp.name) {
         aliases.set(imp.name, imp.imported);
       }
     }
