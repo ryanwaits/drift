@@ -28,6 +28,7 @@ import {
   HEADING,
   headingAncestorNames,
   headingLocator,
+  isMemberToken,
   locateInFence,
   locateOnLine,
   nearestHeading,
@@ -38,7 +39,14 @@ import {
 } from './locators';
 import { findParamDocHits } from './param-docs';
 import { findProseHits } from './prose';
-import { makeSpecRef, resolveApiName, resolveCall, specRefKey, uniqueSlices } from './spec-ref';
+import {
+  makeSpecRef,
+  resolveApiName,
+  resolveCall,
+  resolveMemberName,
+  specRefKey,
+  uniqueSlices,
+} from './spec-ref';
 import type {
   BuildPageDocumentOptions,
   BuildPageDocumentsOptions,
@@ -389,7 +397,9 @@ function inlineClaims(
       const raw = m[1];
       const name = unwrapApiToken(raw);
       const preferred = ancestorPreferred(registry, headings, lineNo);
-      let specRef = resolveApiName(spec, registry, name, preferred);
+      let specRef = isMemberToken(raw)
+        ? resolveMemberName(spec, registry, name, preferred)
+        : resolveApiName(spec, registry, name, preferred);
       if (!specRef && preferred) {
         for (const parent of preferred) {
           if (listedMembers(spec, parent).includes(name)) {

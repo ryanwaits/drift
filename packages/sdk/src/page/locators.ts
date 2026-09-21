@@ -85,6 +85,11 @@ export function unwrapApiToken(text: string): string {
   return s.replace(/^\./, '');
 }
 
+/** `.start()` / `.start`: a leading dot names a member, never a top-level export. */
+export function isMemberToken(text: string): boolean {
+  return unwrapHeadingText(text).trim().startsWith('.');
+}
+
 /**
  * Bare-word matchable: camelCase with an inner capital (`useSWR`), PascalCase
  * with 2+ humps (`ZodType`, `SWRConfig`), or snake_case. Dictionary-plain

@@ -297,6 +297,81 @@ export function resolveApiName(
   return null;
 }
 
+/** `type Schema = ZodType<...>`: the entry an alias stands for. */
+function aliasTarget(spec: ApiSpec, name: string): string | undefined {
+  const entry = findTypeEntry(spec, name);
+  if (!entry || (entry.kind !== 'type' && entry.kind !== 'alias')) return undefined;
+  const schema = entry.schema;
+  if (!schema || typeof schema !== 'object') return undefined;
+  const s = schema as Record<string, unknown>;
+  const raw =
+    typeof s.$ref === 'string'
+      ? s.$ref.split('/').pop()
+      : typeof s['x-ts-type'] === 'string'
+        ? s['x-ts-type']
+        : undefined;
+  const head = raw?.replace(/<[\s\S]*$/, '').trim();
+  return head && head !== name && IDENT.test(head) && findTypeEntry(spec, head) ? head : undefined;
+}
+
+/**
+ * A dotted name (`.meta()`) is `Type.member` or nothing, never a top-level
+ * export: the heading ancestor that has the member, else the one type that has
+ * it, else the one ancestor every owner inherits it from (`inheritedFrom`; an
+ * alias of that ancestor is the ancestor). Several unrelated owners: null.
+ */
+export function resolveMemberName(
+  spec: ApiSpec,
+  registry: ExportRegistry,
+  name: string,
+  preferredParents?: Set<string>,
+): SpecRef | null {
+  const member = name.trim();
+  if (!IDENT.test(member)) return null;
+  // `util.extend` is a namespace function, reached by its qualified name only.
+  const parents = new Set(
+    [...(registry.typeMembers.get(member) ?? [])].filter(
+      (p) => findTypeEntry(spec, p)?.kind !== 'namespace',
+    ),
+  );
+  if (parents.size === 0) return null;
+  for (const p of preferredParents ?? []) {
+    if (parents.has(p)) return makeSpecRef(spec, registry, p, member);
+  }
+  if (parents.size === 1) return makeSpecRef(spec, registry, [...parents][0], member);
+  const origins = new Set<string>();
+  for (const parent of parents) {
+    origins.add(memberOrigin(spec, parents, parent, member, new Set()) ?? parent);
+    if (origins.size > 1) return null;
+  }
+  const [origin] = origins;
+  return origin && parents.has(origin) ? makeSpecRef(spec, registry, origin, member) : null;
+}
+
+/**
+ * The type `parent.member` comes from: `inheritedFrom`, else the furthest base
+ * (or alias target) that has it, else `parent` when it has the member itself.
+ */
+function memberOrigin(
+  spec: ApiSpec,
+  owners: ReadonlySet<string>,
+  parent: string,
+  member: string,
+  seen: Set<string>,
+): string | undefined {
+  if (seen.has(parent)) return undefined;
+  seen.add(parent);
+  const inherited = findMember(spec, parent, member)?.inheritedFrom;
+  if (inherited) return inherited;
+  const entries = [...(spec.exports ?? []), ...(spec.types ?? [])].filter((e) => e.name === parent);
+  const bases = [aliasTarget(spec, parent), ...entries.flatMap((e) => heritageNames(e.extends))];
+  for (const base of bases) {
+    const origin = base ? memberOrigin(spec, owners, base, member, seen) : undefined;
+    if (origin) return origin;
+  }
+  return owners.has(parent) ? parent : undefined;
+}
+
 export function resolveCall(
   spec: ApiSpec,
   registry: ExportRegistry,

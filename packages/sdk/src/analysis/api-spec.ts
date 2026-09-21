@@ -104,6 +104,8 @@ export type ApiMember = {
   signatures?: ApiSignature[];
   deprecated?: boolean;
   deprecationReason?: string;
+  /** Class this member was inherited from; absent on a member the type declares itself. */
+  inheritedFrom?: string;
 };
 
 export type ApiExample = {

@@ -3782,3 +3782,118 @@ describe('the default export answers to its source name (`localName`)', () => {
     ).toEqual([]);
   });
 });
+
+describe('a backticked `.name()` is a member, or nothing', () => {
+  function schemaSpec(): ApiSpec {
+    const method = (name: string, inheritedFrom?: string) => ({
+      name,
+      kind: 'method',
+      ...(inheritedFrom ? { inheritedFrom } : {}),
+      signatures: [{ parameters: [] }],
+    });
+    return {
+      meta: { name: 'schemas' },
+      exports: [
+        {
+          id: 'meta',
+          name: 'meta',
+          kind: 'function',
+          signatures: [{ parameters: [{ name: 'metadata', required: true, schema: 'unknown' }] }],
+        },
+        { id: 'BaseType', name: 'BaseType', kind: 'class', members: [method('meta')] },
+        // An alias of the ancestor is the ancestor.
+        {
+          id: 'AnyType',
+          name: 'AnyType',
+          kind: 'type',
+          schema: { 'x-ts-type': 'BaseType<Output, Input>' },
+          members: [method('meta')],
+        },
+        {
+          id: 'StringType',
+          name: 'StringType',
+          kind: 'class',
+          members: [
+            method('meta', 'BaseType'),
+            method('trim'),
+            method('size'),
+            method('safeParse'),
+          ],
+        },
+        {
+          id: 'NumberType',
+          name: 'NumberType',
+          kind: 'class',
+          members: [method('meta', 'BaseType'), method('size'), method('safeParse')],
+        },
+        // Flattened interface: `meta` is a schema property, reached through a base that lists nothing.
+        {
+          id: 'IntType',
+          name: 'IntType',
+          kind: 'interface',
+          extends: 'NumberFormat<T>',
+          schema: { type: 'object', properties: { meta: {} } },
+        },
+        { id: 'NumberFormat', name: 'NumberFormat', kind: 'interface', extends: 'NumberType' },
+        {
+          id: 'util',
+          name: 'util',
+          kind: 'namespace',
+          members: [{ name: 'trim', kind: 'function' }],
+        },
+        { id: 'trim', name: 'trim', kind: 'function' },
+        { id: 'safeParse', name: 'safeParse', kind: 'function' },
+      ],
+    };
+  }
+
+  function refs(content: string) {
+    const spec = schemaSpec();
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/metadata.md',
+      content,
+    })
+      .claims.filter((c) => c.candidate)
+      .map((c) => `${c.kind}:${c.specRef?.export}.${c.specRef?.member ?? ''}`);
+  }
+
+  test('never the top-level export of that name', () => {
+    expect(refs('# Metadata\n\nThe `trim` function and the `meta(data)` function.\n')).toEqual([
+      'inline:trim.',
+      'inline:meta.',
+      'prose:trim.',
+      'prose:meta.',
+    ]);
+    expect(refs('# Metadata\n\nCalling `.trim()` strips whitespace.\n')).toEqual([
+      'inline:StringType.trim',
+      'prose:StringType.trim',
+    ]);
+  });
+
+  test('inherited everywhere from one ancestor: that ancestor', () => {
+    expect(
+      refs('# Metadata\n\nCalling `.meta()` without an argument will *retrieve* the metadata.\n'),
+    ).toEqual(['inline:BaseType.meta', 'prose:BaseType.meta']);
+  });
+
+  test('several unrelated owners and no heading: no claim', () => {
+    expect(refs('# Metadata\n\nUse `.size()` to constrain it, or `.nope()`.\n')).toEqual([]);
+    // A distinctive name is not picked up as a bare word either.
+    expect(refs('# Metadata\n\nUse `.safeParse()` or `schema.safeParse(data)`.\n')).toEqual([]);
+    expect(refs('# Metadata\n\nThe safeParse function never throws.\n')).toEqual([
+      'prose:safeParse.',
+    ]);
+  });
+
+  test('a heading that names a type disambiguates', () => {
+    expect(refs('# Metadata\n\n## NumberType\n\nUse `.size()` and `.meta()` here.\n')).toEqual([
+      'inline:NumberType.size',
+      'inline:NumberType.meta',
+      'heading:NumberType.',
+      'prose:NumberType.size',
+      'prose:NumberType.meta',
+    ]);
+  });
+});
