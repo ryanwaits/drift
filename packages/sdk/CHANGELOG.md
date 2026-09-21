@@ -1,5 +1,12 @@
 # @doccov/sdk
 
+## 1.16.8
+
+### Patch Changes
+
+- 34a5ea7: PageDocument precision and locators. A default import binds to the spec's `default` export (call-site rules on every overload, `candidate` claims with `specRef.export: 'default'`; silent when the spec has none, never matched by name). A rest parameter is never required and lifts the arity bound (`rest: true`, `...args`, or an untyped trailing `args` / `rest`). A zero-argument call that is a whole expression statement (`z.map();`) is a mention, not `prose-missing-required`. `import { a: b }` is reported as invalid import syntax on that specifier instead of a missing export. A bare callee the fence declares itself is not the export of the same name. Fixes: a `#` line inside a fenced code block is never a heading (one shared fence test for every line scanner); every fence claim is located inside its own fence at the exact line and column, never on the first occurrence of the text on the page.
+- 3eda972: Bump `@openpkg-ts/sdk` and `@openpkg-ts/spec` to ^0.54.8. A value and an interface under one name carry the interface's members (zod: 80 of 81 schema classes now have `parse`, `optional`, `email`...), exports bound by destructuring are kept (SWR `mutate`, `unload`), an annotated const function takes its signature from the annotation, rest parameters are `rest: true` and never required, default exports carry `localName`, and a tsconfig that sets `module` alone resolves imports on TypeScript 5 as well as 6.
+
 ## 1.16.7
 
 ### Patch Changes
