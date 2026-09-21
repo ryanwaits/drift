@@ -1,5 +1,13 @@
 # @doccov/cli
 
+## 1.16.12
+
+### Patch Changes
+
+- 0422f62: Bump `@openpkg-ts/sdk` to ^0.54.11. `ArrayLike` and `ArrayBufferLike` are inlined instead of emitted as a `$ref` that is never registered. Spec stays ^0.54.9.
+- Updated dependencies [0422f62]
+  - @driftdev/sdk@1.16.12
+
 ## 1.16.11
 
 ### Patch Changes
