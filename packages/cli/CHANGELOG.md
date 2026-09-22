@@ -1,5 +1,13 @@
 # @doccov/cli
 
+## 1.16.13
+
+### Patch Changes
+
+- ec2314b: A member used inside a code comment counts as mentioned, so it is not reported as missing.
+- Updated dependencies [ec2314b]
+  - @driftdev/sdk@1.16.13
+
 ## 1.16.12
 
 ### Patch Changes
