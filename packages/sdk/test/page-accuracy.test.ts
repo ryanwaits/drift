@@ -6508,14 +6508,15 @@ describe("a section that walks a type's members documents its surface (lively /d
     ]);
   });
 
-  test('two members mentioned is below the bar; a bare heading with no fence evidence never joins', () => {
+  test('two members mentioned is below the bar, with or without fence evidence; three walked members join', () => {
     const two = storage.replace('`delete(key)` — remove a field.', '');
     expect(gapsOf(two).filter((g) => g.startsWith('LiveObject.'))).toEqual([]);
-    const noFence = storage.replace(
-      `${F3}ts\nimport { LiveObject } from "@waits/lively-storage";\nconst obj = new LiveObject({ x: 0 });\n${F3}\n`,
-      '',
-    );
-    expect(gapsOf(noFence).filter((g) => g.startsWith('LiveObject.'))).toEqual([]);
+    const fence = `${F3}ts\nimport { LiveObject } from "@waits/lively-storage";\nconst obj = new LiveObject({ x: 0 });\n${F3}\n`;
+    expect(gapsOf(two.replace(fence, '')).filter((g) => g.startsWith('LiveObject.'))).toEqual([]);
+    expect(gapsOf(storage.replace(fence, '')).filter((g) => g.startsWith('LiveObject.'))).toEqual([
+      'LiveObject.toImmutable',
+      'LiveObject.toObject',
+    ]);
   });
 
   test('one example with an option key stays a guide section: no gaps', () => {
@@ -6527,6 +6528,61 @@ describe("a section that walks a type's members documents its surface (lively /d
       "const result = await agent.generate({ prompt: 'hi' });\nconst s = agent.stream({ prompt: 'hi' });",
     );
     expect(gapsOf(withStream)).toEqual([]);
+  });
+
+  test('members walked on an unbound receiver under the type heading count (lively HistoryManager)', () => {
+    const hm = {
+      id: 'HistoryManager',
+      name: 'HistoryManager',
+      kind: 'class',
+      members: [
+        'undo',
+        'redo',
+        'canUndo',
+        'canRedo',
+        'startBatch',
+        'endBatch',
+        'subscribe',
+        'getHistory',
+        'batch',
+      ].map((name) => ({ name, kind: 'method' })),
+    };
+    const withHm = { ...spec, exports: [...(spec.exports ?? []), hm] } as ApiSpec;
+    const md = [
+      '# Storage',
+      '',
+      '## HistoryManager',
+      '',
+      'Built-in undo/redo. Access from the document:',
+      '',
+      `${F3}ts`,
+      'const history = room.getHistory();',
+      'history.undo();',
+      'history.redo();',
+      'history.canUndo();',
+      F3,
+      '',
+      '`history.undo()` / `redo()` — step the stack. `canRedo()` — check.',
+      '',
+    ].join('\n');
+    const d = buildPageDocument({
+      spec: withHm,
+      registry: buildExportRegistry(withHm),
+      file: 'docs/storage.md',
+      content: md,
+      packageName: '@waits/lively-storage',
+    });
+    expect(
+      d.claims
+        .filter((c) => c.rule?.type === 'spec-not-in-claims')
+        .map((c) => `${c.specRef?.export}.${c.text}`)
+        .sort(),
+    ).toEqual([
+      'HistoryManager.batch',
+      'HistoryManager.endBatch',
+      'HistoryManager.startBatch',
+      'HistoryManager.subscribe',
+    ]);
   });
 
   test('a docs-mapped page dumps gaps regardless', () => {

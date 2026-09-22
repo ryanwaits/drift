@@ -327,7 +327,11 @@ export function extractExportBindings(
   return names;
 }
 
-/** `obj.member` / `obj.member(...)` in a fence. */
+/**
+ * `obj.member` / `obj.member(...)` in a fence. A receiver the fence declares
+ * (`const history = doc.getHistory()`) is the fence's own, not the browser
+ * global of that name.
+ */
 export function extractFenceMembers(code: string): Array<{
   objectName: string;
   memberName: string;
@@ -337,6 +341,7 @@ export function extractFenceMembers(code: string): Array<{
   const mentions: Array<{ objectName: string; memberName: string; line: number; text: string }> =
     [];
   const seen = new Set<string>();
+  const locals = extractLocalNames(code);
   try {
     const sourceFile = ts.createSourceFile(
       'temp.ts',
@@ -348,7 +353,7 @@ export function extractFenceMembers(code: string): Array<{
     const visit = (node: TS.Node): void => {
       if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression)) {
         const objectName = node.expression.text;
-        if (!isBuiltInIdentifier(objectName)) {
+        if (locals.has(objectName) || !isBuiltInIdentifier(objectName)) {
           const pos = sourceFile.getLineAndCharacterOfPosition(node.getStart());
           const key = `${pos.line}:${objectName}.${node.name.text}`;
           if (!seen.has(key)) {

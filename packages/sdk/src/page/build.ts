@@ -841,21 +841,50 @@ function pageNamesType(opts: BuildPageDocumentOptions, headings: PageHeading[], 
 /**
  * A heading that names an export joins the page to that type only with
  * evidence the section is about it: the heading is a code span or call form,
- * the page's H1 / frontmatter title names the type, or a fence in the section
- * imports, constructs, calls or declares it. A bare word that happens to be
- * an export name (`## Output` describing a tool's result shape) joins nothing.
+ * the page's H1 / frontmatter title names the type, a fence in the section
+ * imports, constructs, calls or declares it, or the section walks its members
+ * (`walksMembers`). A bare word that happens to be an export name (`## Output`
+ * describing a tool's result shape) joins nothing.
  */
 function headingJoins(
   opts: BuildPageDocumentOptions,
   headings: PageHeading[],
   heading: PageHeading,
   type: string,
+  claims: Claim[],
 ): boolean {
   if (headingIsReference(opts, headings, heading, type)) return true;
   const packageName = opts.packageName ?? opts.spec.meta.name;
   const { namespaces } = pageScope(opts);
-  return sectionFences(opts, headings, heading).some((b) =>
-    fenceShowsExport(b.code, type, packageName, namespaces),
+  if (
+    sectionFences(opts, headings, heading).some((b) =>
+      fenceShowsExport(b.code, type, packageName, namespaces),
+    )
+  ) {
+    return true;
+  }
+  return walksMembers(opts, headings, type, claims);
+}
+
+/** Distinct public members a reference-style section names before it is on the hook for the rest. */
+const WALKED_MEMBERS = 3;
+
+/**
+ * The section walks the type's members one by one: `WALKED_MEMBERS` distinct
+ * public members named under the type's own heading by code-span labels
+ * (`` `undo()` ``, `` `history.undo()` ``), `x.member(` calls on any receiver,
+ * or `Type.member` text. Option keys do not count. A value of the type
+ * reached through another call (`const history = doc.getHistory()`) is
+ * evidence enough to join.
+ */
+function walksMembers(
+  opts: BuildPageDocumentOptions,
+  headings: PageHeading[],
+  type: string,
+  claims: Claim[],
+): boolean {
+  return (
+    mentionedMembers(opts, type, claims, headings, { optionKeys: false }).size >= WALKED_MEMBERS
   );
 }
 
@@ -869,17 +898,12 @@ function headingIsReference(
   return heading.code === true || isCallForm(heading.text) || pageNamesType(opts, headings, type);
 }
 
-/** Distinct public members a reference-style section names before it is on the hook for the rest. */
-const WALKED_MEMBERS = 3;
-
 /**
  * The section documents the type's surface: it prints a declaration of the
  * type, carries a parameter / option table (or `Parameters` list) whose
  * owner is the type or whose keys are members of it, or walks the type's
- * members one by one (`WALKED_MEMBERS` distinct public members named by
- * code-span labels, `x.member(` calls on a bound receiver or `Type.member`
- * text; option keys do not count). A fence that merely uses the type (one
- * mock example on a testing guide) is not that.
+ * members one by one (`walksMembers`). A fence that merely uses the type
+ * (one mock example on a testing guide) is not that.
  */
 function sectionDocumentsType(
   opts: BuildPageDocumentOptions,
@@ -889,8 +913,7 @@ function sectionDocumentsType(
   claims: Claim[],
 ): boolean {
   const { spec, registry, content } = opts;
-  const walked = mentionedMembers(opts, type, claims, headings, { optionKeys: false });
-  if (walked.size >= WALKED_MEMBERS) return true;
+  if (walksMembers(opts, headings, type, claims)) return true;
   if (
     sectionFences(opts, headings, heading).some((b) =>
       extractFenceDeclarations(b.code).some((d) => d.name === type),
@@ -933,7 +956,7 @@ function joinTypes(
     const type = specRef.export;
     if (types.has(type)) continue;
     if (!specRef.member && listedMembers(opts.spec, type).length === 0) continue;
-    if (!headingJoins(opts, headings, heading, type)) continue;
+    if (!headingJoins(opts, headings, heading, type, claims)) continue;
     if (
       headingIsReference(opts, headings, heading, type) ||
       sectionDocumentsType(opts, headings, heading, type, claims)
@@ -1044,7 +1067,8 @@ function mentionedMembers(
         if (fenced[i]) continue;
         const line = lines[i];
         for (const m of line.matchAll(BACKTICK)) {
-          const token = unwrapApiToken(m[1]);
+          // `member(...)` or `x.member(...)`: the label names the member, whatever the receiver.
+          const token = unwrapApiToken(m[1]).split('.').pop() ?? '';
           if (members.has(token)) mentioned.add(token);
         }
       }
