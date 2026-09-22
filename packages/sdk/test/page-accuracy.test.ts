@@ -3,11 +3,12 @@
  * Rule hits must not cry wolf; candidates are inventory.
  */
 import { describe, expect, test } from 'bun:test';
-import type { ApiSpec } from '../src/analysis/api-spec';
+import type { ApiSchema, ApiSpec } from '../src/analysis/api-spec';
 import { buildExportRegistry } from '../src/analysis/drift/compute';
 import { detectProseDrift } from '../src/analysis/drift/prose-drift';
 import { parseMarkdownFile } from '../src/markdown/parser';
 import { buildPageDocument, buildPageDocuments } from '../src/page';
+import { closedObjectShape } from '../src/page/call-sites';
 import { collectHeadings } from '../src/page/locators';
 
 const PKG = '@waits/lively-react';
@@ -5355,6 +5356,144 @@ describe('an elided object literal is a partial sample: no missing-required, unk
     ]);
     expect(rulesOf('<Button size="lg" />', 'tsx')).toEqual([
       "prose-missing-required: JSX '<Button>' is missing required prop 'label'",
+    ]);
+  });
+});
+
+describe('a call must satisfy one of the alternatives a destructured union requires', () => {
+  const F3 = '```';
+  // OpenPkg 0.55.1: `generateText({ model, prompt | messages })` is one destructured parameter
+  // whose `anyOf` arms carry only the keys required beyond the top-level `required`.
+  const options = {
+    type: 'object',
+    properties: { model: {}, prompt: {}, messages: {}, output: {} },
+    required: ['model'],
+    anyOf: [{ required: ['prompt'] }, { required: ['messages'] }],
+    'x-ts-destructured': true,
+  };
+  const spec = {
+    meta: { name: 'ai' },
+    exports: [
+      {
+        id: 'generateText',
+        name: 'generateText',
+        kind: 'function',
+        signatures: [{ parameters: [{ name: 'options', required: true, schema: options }] }],
+      },
+      {
+        id: 'plain',
+        name: 'plain',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [
+              {
+                name: 'options',
+                required: true,
+                schema: {
+                  type: 'object',
+                  properties: { model: {}, prompt: {}, messages: {} },
+                  required: ['model'],
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'Link',
+        name: 'Link',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [
+              {
+                name: 'props',
+                required: true,
+                schema: {
+                  type: 'object',
+                  properties: { label: {}, href: {}, onClick: {}, children: {} },
+                  required: ['label'],
+                  anyOf: [{ required: ['href'] }, { required: ['onClick'] }],
+                  'x-ts-destructured': true,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  const registry = buildExportRegistry(spec);
+  function rulesOf(code: string, lang = 'ts') {
+    return buildPageDocument({
+      spec,
+      registry,
+      file: 'docs/generating-text.md',
+      content: `# Generating text\n\n${F3}${lang}\nimport { generateText, plain, Link } from 'ai';\n${code}\n${F3}\n`,
+      packageName: 'ai',
+    })
+      .claims.filter((c) => c.rule)
+      .map((c) => `${c.rule?.type}: ${c.rule?.issue}`);
+  }
+
+  test('anyOf of pure required arms keeps the shape closed', () => {
+    const shape = closedObjectShape(spec, options as unknown as ApiSchema);
+    expect(shape).not.toBeNull();
+    expect([...(shape?.keys ?? [])].sort()).toEqual(['messages', 'model', 'output', 'prompt']);
+    expect([...(shape?.required ?? [])]).toEqual(['model']);
+  });
+
+  test('neither prompt nor messages: needs one of', () => {
+    expect(rulesOf('generateText({ model })')).toEqual([
+      "prose-missing-required: Call 'generateText' needs one of 'prompt', 'messages'",
+    ]);
+  });
+
+  test('in addition to, not instead of, the plain missing-required check', () => {
+    // One claim per site (the page dedupes on rule type + line): both findings share it.
+    expect(rulesOf('generateText({ output })')).toEqual([
+      "prose-missing-required: Call 'generateText' is missing required argument 'model' and needs one of 'prompt', 'messages'",
+    ]);
+  });
+
+  test('either arm satisfies', () => {
+    expect(rulesOf("generateText({ model, prompt: 'x' })")).toEqual([]);
+    expect(rulesOf('generateText({ model, messages: [] })')).toEqual([]);
+    expect(rulesOf("generateText({ model, prompt: 'x', messages: [] })")).toEqual([]);
+  });
+
+  test('an elided literal may hold the arm in the part not shown', () => {
+    expect(rulesOf('generateText({\n  model,\n  // ...\n})')).toEqual([]);
+    expect(rulesOf('generateText({ ...options, model })')).toEqual([]);
+    expect(rulesOf('generateText(options)')).toEqual([]);
+  });
+
+  test('every merged property is a known key; an unknown one is reported alongside', () => {
+    expect(rulesOf('generateText({ model, messages: [], output })')).toEqual([]);
+    expect(rulesOf("generateText({ model, promt: 'x' })")).toEqual([
+      "prose-unknown-key: Unknown key 'promt' on 'generateText'",
+      "prose-missing-required: Call 'generateText' needs one of 'prompt', 'messages'",
+    ]);
+  });
+
+  test('a schema without anyOf behaves as before', () => {
+    expect(rulesOf('plain({ model })')).toEqual([]);
+    expect(rulesOf("plain({ prompt: 'x' })")).toEqual([
+      "prose-missing-required: Call 'plain' is missing required argument 'model'",
+    ]);
+  });
+
+  test('JSX props: needs one of', () => {
+    expect(rulesOf('<Link label="Docs" />', 'tsx')).toEqual([
+      "prose-missing-required: JSX '<Link>' needs one of 'href', 'onClick'",
+    ]);
+    expect(rulesOf('<Link label="Docs" href="/docs" />', 'tsx')).toEqual([]);
+    expect(rulesOf('<Link label="Docs" onClick={go}>Go</Link>', 'tsx')).toEqual([]);
+    expect(rulesOf('<Link {...props} label="Docs" />', 'tsx')).toEqual([]);
+    expect(rulesOf('<Link href="/docs" />', 'tsx')).toEqual([
+      "prose-missing-required: JSX '<Link>' is missing required prop 'label'",
     ]);
   });
 });

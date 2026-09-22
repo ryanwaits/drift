@@ -39,6 +39,11 @@ type OverloadShape = {
 export type ClosedShape = {
   keys: Set<string>;
   required: Set<string>;
+  /**
+   * Arms of a destructured union (`{ prompt } | { messages }`): the keys each
+   * arm requires beyond `required`. A literal must supply every key of one arm.
+   */
+  alternatives?: string[][];
 };
 
 const JSX_RESERVED = new Set(['key', 'ref']);
@@ -71,6 +76,23 @@ function hasIndexSignature(s: Record<string, unknown>): boolean {
   return s.additionalProperties !== undefined && s.additionalProperties !== false;
 }
 
+/**
+ * `anyOf` arms that carry nothing but `required`: how a destructured union
+ * parameter (`{ model, prompt | messages }`) is emitted beside the merged
+ * `properties`. Null when any arm says anything else.
+ */
+function requiredArms(s: Record<string, unknown>): string[][] | null {
+  if (!Array.isArray(s.anyOf) || s.anyOf.length === 0) return null;
+  const arms: string[][] = [];
+  for (const arm of s.anyOf) {
+    if (typeof arm !== 'object' || arm === null) return null;
+    const a = arm as Record<string, unknown>;
+    if (!Array.isArray(a.required) || Object.keys(a).some((k) => k !== 'required')) return null;
+    arms.push(a.required.filter((k): k is string => typeof k === 'string'));
+  }
+  return arms;
+}
+
 function propertiesShape(s: Record<string, unknown>): ClosedShape | null {
   if (hasIndexSignature(s)) return null;
   const props = s.properties;
@@ -81,6 +103,9 @@ function propertiesShape(s: Record<string, unknown>): ClosedShape | null {
   if (Array.isArray(s.required)) {
     for (const k of s.required) if (typeof k === 'string' && keys.has(k)) required.add(k);
   }
+  const arms = requiredArms(s)?.map((arm) => arm.filter((k) => keys.has(k) && !required.has(k)));
+  // An arm with nothing left to ask for is satisfied by any literal.
+  if (arms?.every((arm) => arm.length > 0)) return { keys, required, alternatives: arms };
   return { keys, required };
 }
 
@@ -94,13 +119,15 @@ function mergeClosed(shapes: ClosedShape[], mode: 'union' | 'all'): ClosedShape 
         if (shapes.every((s) => s.required.has(k))) required.add(k);
       }
     }
-  } else {
-    for (const s of shapes) {
-      for (const k of s.keys) keys.add(k);
-      for (const k of s.required) required.add(k);
-    }
+    return { keys, required };
   }
-  return { keys, required };
+  for (const s of shapes) {
+    for (const k of s.keys) keys.add(k);
+    for (const k of s.required) required.add(k);
+  }
+  // One set of alternatives per shape: a second union in an intersection is not modeled.
+  const alternatives = shapes.find((s) => s.alternatives)?.alternatives;
+  return alternatives ? { keys, required, alternatives } : { keys, required };
 }
 
 /**
@@ -163,7 +190,10 @@ function schemaShape(spec: ApiSpec, schema: ApiSchema | undefined, seen: Set<str
   const union = (Array.isArray(s.anyOf) ? s.anyOf : Array.isArray(s.oneOf) ? s.oneOf : null) as
     | ApiSchema[]
     | null;
-  if (union && union.length > 0) {
+  // Pure `required` arms beside `properties` name alternatives, not shapes: the
+  // merged properties below carry every key.
+  const alternatives = s.properties !== undefined && requiredArms(s) !== null;
+  if (union && union.length > 0 && !alternatives) {
     const shapes: ClosedShape[] = [];
     for (const arm of union) {
       const sh = schemaShape(spec, arm, seen);
@@ -327,13 +357,14 @@ function jsxPropShape(spec: ApiSpec, overloads: OverloadShape[]): ClosedShape | 
     const next = jsxPropsForOverload(spec, ov);
     if (!next) continue;
     if (!shape) {
-      shape = { keys: new Set(next.keys), required: new Set(next.required) };
+      shape = { ...next, keys: new Set(next.keys), required: new Set(next.required) };
       continue;
     }
     const keys = new Set<string>();
     for (const k of shape.keys) if (next.keys.has(k)) keys.add(k);
     const required = new Set<string>();
     for (const k of shape.required) if (next.required.has(k)) required.add(k);
+    // Alternatives are per overload; across overloads only the intersection is claimed.
     shape = { keys, required };
   }
   return shape;
@@ -490,6 +521,53 @@ function missingRequired(spec: ApiSpec, overloads: OverloadShape[], site: CallSi
     }
   }
   return missing;
+}
+
+function satisfiesOne(arms: string[][], supplied: ReadonlySet<string>): boolean {
+  return arms.some((arm) => arm.every((k) => supplied.has(k)));
+}
+
+/**
+ * The arms of a destructured union that a closed literal satisfies none of:
+ * `generateText({ model })` with `{ prompt } | { messages }`. Null when the
+ * literal is elided, an overload has no alternatives at that slot, or one is met.
+ */
+function unsatisfiedAlternatives(
+  spec: ApiSpec,
+  overloads: OverloadShape[],
+  site: CallSite,
+): string[][] | null {
+  if (site.kind === 'jsx') {
+    if (site.hasJsxSpread) return null;
+    const arms = jsxPropShape(spec, overloads)?.alternatives;
+    if (!arms) return null;
+    const supplied = new Set(site.jsxKeys);
+    if (site.hasChildren) supplied.add('children');
+    return satisfiesOne(arms, supplied) ? null : arms;
+  }
+
+  if (site.hasSpreadArg) return null;
+  for (const [i, arg] of site.args.entries()) {
+    if (!arg.keys || arg.elided) continue;
+    const supplied = new Set(arg.keys);
+    const taking = overloads.filter((ov) => i < ov.maxPositional);
+    let first: string[][] | null = null;
+    let unmet = taking.length > 0;
+    for (const ov of taking) {
+      const arms = closedAt(spec, ov, i)?.alternatives;
+      if (!arms || satisfiesOne(arms, supplied)) {
+        unmet = false;
+        break;
+      }
+      first ??= arms;
+    }
+    if (unmet && first) return first;
+  }
+  return null;
+}
+
+function armLabel(arms: string[][]): string {
+  return arms.map((arm) => arm.map((k) => `'${k}'`).join(' + ')).join(', ');
 }
 
 const PRIMITIVES = new Set(['string', 'number', 'boolean']);
@@ -665,13 +743,18 @@ function judgeSite(
     });
   }
 
+  // One claim per site: what is missing outright and which alternative is unmet share it.
   const missing = missingRequired(spec, overloads, site);
-  if (missing.length > 0) {
+  const arms = unsatisfiedAlternatives(spec, overloads, site);
+  if (missing.length > 0 || arms) {
     const kind = site.kind === 'jsx' ? 'prop' : 'argument';
+    const parts: string[] = [];
+    if (missing.length > 0) parts.push(`is missing required ${kind} '${missing.join("', '")}'`);
+    if (arms) parts.push(`needs one of ${armLabel(arms)}`);
     hits.push({
       ...base,
       type: 'prose-missing-required',
-      issue: `${site.kind === 'jsx' ? 'JSX' : 'Call'} '${label}' is missing required ${kind} '${missing.join("', '")}'`,
+      issue: `${site.kind === 'jsx' ? 'JSX' : 'Call'} '${label}' ${parts.join(' and ')}`,
     });
   }
 
