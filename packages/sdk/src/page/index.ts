@@ -5,8 +5,9 @@
  * review product paints and judges. Jev is not in this package. `kind: 'prose'`
  * candidates are sentence spans for a judge; fence call-site rules
  * (`prose-unknown-key`, `prose-arity-mismatch`, `prose-missing-required`,
- * `prose-literal-type-mismatch`) and
- * the parameter-table rule (`prose-param-mismatch`) are deterministic. Scan/CI
+ * `prose-literal-type-mismatch`), the printed-declaration rule
+ * (`prose-declared-key`) and the parameter-table rule (`prose-param-mismatch`)
+ * are deterministic. Scan/CI
  * do not consume this document.
  *
  * @example

@@ -1,6 +1,7 @@
 import type { ApiSpec } from '../analysis/api-spec';
 import { detectProseDrift } from '../analysis/drift/prose-drift';
 import type { ExportRegistry, SpecDocDrift } from '../analysis/drift/types';
+import { levenshtein } from '../analysis/drift/utils';
 import {
   computeKeyCoverage,
   DEFAULT_SECTION_RE,
@@ -9,7 +10,8 @@ import {
 } from '../analysis/key-coverage';
 import { parseMarkdownFile } from '../markdown/parser';
 import type { MarkdownDocFile } from '../markdown/types';
-import { detectCallSiteHits } from './call-sites';
+import { closedObjectShape, detectCallSiteHits } from './call-sites';
+import { extractFenceDeclarations } from './declarations';
 import { ambiguousExports, fenceEntry } from './entries';
 import {
   blockContaining,
@@ -364,6 +366,77 @@ function callSiteClaims(opts: BuildPageDocumentOptions, headings: PageHeading[])
         },
         candidate: false,
       });
+    }
+  }
+  return claims;
+}
+
+/** Every member name the spec gives a type, private ones included: a printed private key is not wrong. */
+function allMemberNames(spec: ApiSpec, typeName: string): string[] {
+  const names = new Set<string>();
+  for (const entry of resolveTypeEntries(spec, typeName)) {
+    for (const member of entry.members ?? []) if (member.name) names.add(member.name);
+  }
+  return [...names];
+}
+
+const NEAR_MISS_DISTANCE = 2;
+
+/**
+ * `prose-declared-key`: a fence prints `interface X { ... }` / `type X = { ... }`
+ * / `class X { ... }` for a spec type and declares a key that type does not
+ * have. The declaration is the spec's when it is `export`ed, sits under a
+ * heading that names X, or X is the page's docs-map type; a bare local
+ * `interface X` elsewhere is the reader's. Silent when the spec shape is open
+ * (index signature, unresolved base or arm, generic alias) or has no members.
+ */
+function declaredKeyClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): Claim[] {
+  const { file, content } = opts;
+  const packageName = opts.packageName ?? opts.spec.meta.name;
+  const { parsed } = pageScope(opts);
+  const mappedType = mappedPage(opts)?.type;
+  const claims: Claim[] = [];
+
+  for (const block of parsed.codeBlocks) {
+    const { entry, unsure } = fenceScope(opts, block.code);
+    const { spec, registry } = entry;
+    if (
+      isMigrationFence(content, block.lineStart, block.code) ||
+      fenceImportKind(block.code, packageName, entry.specifier) === 'foreign'
+    ) {
+      continue;
+    }
+    const section = headingAncestorNames(headings, block.lineStart + 1);
+    for (const decl of extractFenceDeclarations(block.code)) {
+      const typeName = decl.name;
+      if (unsure.has(typeName) || resolveTypeEntries(spec, typeName).length === 0) continue;
+      if (!decl.exported && !section.includes(typeName) && mappedType !== typeName) continue;
+      const shape = closedObjectShape(spec, typeName);
+      if (!shape) continue;
+      const allowed = [...new Set([...shape.keys, ...allMemberNames(spec, typeName)])];
+      const specRef = makeSpecRef(spec, registry, typeName);
+      for (const key of decl.keys) {
+        if (key.name.startsWith('_') || allowed.includes(key.name)) continue;
+        const loc = fenceLocator(file, content, block, key, headings);
+        if (!loc) continue;
+        const near = allowed
+          .map((name) => ({ name, d: levenshtein(key.name.toLowerCase(), name.toLowerCase()) }))
+          .filter((m) => m.d <= NEAR_MISS_DISTANCE)
+          .sort((a, b) => a.d - b.d)[0];
+        pushUnique(claims, {
+          id: claimId(file, 'fence', specRef, key.text, loc.start.line, 'prose-declared-key'),
+          kind: 'fence',
+          text: key.text,
+          locator: loc,
+          specRef,
+          rule: {
+            type: 'prose-declared-key',
+            issue: `'${key.name}' is not a member of '${typeName}'`,
+            suggestion: near ? `Did you mean '${near.name}'?` : `Allowed: ${allowed.join(', ')}`,
+          },
+          candidate: false,
+        });
+      }
     }
   }
   return claims;
@@ -741,6 +814,11 @@ function mentionedMembers(
       registry: opts.registry,
     });
     const inTypeSection = headingAncestorNames(headings, block.lineStart + 1).includes(typeName);
+    // A printed `interface T { ... }` / `type T = { ... }` / `class T { ... }` documents its keys.
+    for (const decl of extractFenceDeclarations(block.code)) {
+      if (decl.name !== typeName) continue;
+      for (const key of decl.keys) mentioned.add(key.name);
+    }
     // Comments are trivia: `// server.port → 1999` teaches `port` under the same rules.
     const fenceMentions = [
       ...extractFenceMembers(block.code),
@@ -889,6 +967,7 @@ export function buildPageDocument(options: BuildPageDocumentOptions): PageDocume
   const claims: Claim[] = [];
   for (const c of fenceClaims(opts, headings, issues)) pushUnique(claims, c);
   for (const c of callSiteClaims(opts, headings)) pushUnique(claims, c);
+  for (const c of declaredKeyClaims(opts, headings)) pushUnique(claims, c);
   const paramDocs = paramDocClaims(opts, headings);
   for (const c of paramDocs) pushUnique(claims, c);
   // A rule hit on a key cell replaces the rule-less inventory claim for that cell.

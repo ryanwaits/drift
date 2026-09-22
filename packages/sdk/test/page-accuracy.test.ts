@@ -5175,3 +5175,90 @@ describe('a receiver bound by an import from another package is foreign', () => 
     expect(broken(content)).toEqual(["'nope' on 'ai' does not exist in package exports"]);
   });
 });
+
+describe('a printed `interface X { ... }` documents the members it declares', () => {
+  const F3 = '```';
+  const part = (keys: string[], extra: Record<string, unknown> = {}) => ({
+    id: 'ToolCallPart',
+    name: 'ToolCallPart',
+    kind: 'interface',
+    members: keys.map((k) => ({ name: k, kind: 'property' })),
+    schema: { type: 'object', properties: Object.fromEntries(keys.map((k) => [k, {}])), ...extra },
+  });
+  const KEYS = ['type', 'toolCallId', 'toolName', 'input', 'providerOptions', 'providerExecuted'];
+  function doc(content: string, entry: unknown = part(KEYS)) {
+    const spec = { meta: { name: 'ai' }, exports: [entry], types: [] } as unknown as ApiSpec;
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/model-message.md',
+      content,
+      packageName: 'ai',
+    });
+  }
+  const gapsOf = (d: ReturnType<typeof doc>) =>
+    d.claims
+      .filter((c) => c.rule?.type === 'spec-not-in-claims')
+      .map((c) => c.text)
+      .sort();
+  const declared = (d: ReturnType<typeof doc>) =>
+    d.claims.filter((c) => c.rule?.type === 'prose-declared-key');
+  const body = 'type: "tool-call";\n  toolCallId: string;\n  toolName: string;\n  args: unknown;';
+  const page = (decl: string, heading = '### `ToolCallPart`') =>
+    `# Model messages\n\n${heading}\n\n${F3}ts\n${decl}\n${F3}\n`;
+
+  test('interface: declared keys are mentioned; the rest stay gaps', () => {
+    const d = doc(page(`export interface ToolCallPart {\n  ${body}\n}`));
+    expect(gapsOf(d)).toEqual(['input', 'providerExecuted', 'providerOptions']);
+  });
+
+  test('type alias and class bodies count the same', () => {
+    expect(gapsOf(doc(page(`type ToolCallPart = {\n  ${body}\n};`)))).toEqual([
+      'input',
+      'providerExecuted',
+      'providerOptions',
+    ]);
+    expect(
+      gapsOf(doc(page(`class ToolCallPart {\n  ${body}\n  toolName(): string {}\n}`))),
+    ).toEqual(['input', 'providerExecuted', 'providerOptions']);
+  });
+
+  test('a declaration of another type under the heading mentions nothing', () => {
+    const d = doc(page(`interface Other {\n  ${body}\n}`));
+    expect(gapsOf(d)).toEqual([...KEYS].sort());
+  });
+
+  test('prose-declared-key: a declared key the spec type lacks', () => {
+    const d = doc(page(`export interface ToolCallPart {\n  ${body}\n}`));
+    const hits = declared(d);
+    expect(hits.map((c) => c.rule?.issue)).toEqual(["'args' is not a member of 'ToolCallPart'"]);
+    expect(hits[0]?.kind).toBe('fence');
+    expect(hits[0]?.specRef).toMatchObject({ export: 'ToolCallPart' });
+    expect(hits[0]?.specRef?.member).toBeUndefined();
+    expect(hits[0]?.text).toBe('args: unknown;');
+    expect(hits[0]?.locator.start.line).toBe(10);
+    expect(hits[0]?.locator.headingText).toBe('ToolCallPart');
+    expect(hits[0]?.rule?.suggestion).toBe(`Allowed: ${KEYS.join(', ')}`);
+  });
+
+  test('a near miss names the member', () => {
+    const d = doc(page('export interface ToolCallPart {\n  toolNam: string;\n}'));
+    expect(declared(d).map((c) => c.rule?.suggestion)).toEqual(["Did you mean 'toolName'?"]);
+  });
+
+  test('silent: an open spec type, no members, a private key, another type, no anchor', () => {
+    const decl = `export interface ToolCallPart {\n  ${body}\n}`;
+    expect(declared(doc(page(decl), part(KEYS, { additionalProperties: true })))).toEqual([]);
+    expect(declared(doc(page(decl), part(KEYS, { allOf: [{ $ref: '#/types/Nope' }] })))).toEqual(
+      [],
+    );
+    expect(declared(doc(page(decl), part([])))).toEqual([]);
+    expect(declared(doc(page('export interface ToolCallPart {\n  _args: unknown;\n}')))).toEqual(
+      [],
+    );
+    expect(declared(doc(page(`interface Other {\n  ${body}\n}`)))).toEqual([]);
+    // Neither exported nor under a heading that names it: the reader's own type.
+    expect(declared(doc(page(`interface ToolCallPart {\n  ${body}\n}`, '### Usage')))).toEqual([]);
+    expect(declared(doc(page(`interface ToolCallPart {\n  ${body}\n}`)))).toHaveLength(1);
+  });
+});

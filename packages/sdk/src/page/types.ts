@@ -49,7 +49,8 @@ export type RuleHit = {
     | 'prose-arity-mismatch'
     | 'prose-missing-required'
     | 'prose-literal-type-mismatch'
-    | 'prose-param-mismatch';
+    | 'prose-param-mismatch'
+    | 'prose-declared-key';
   issue: string;
   suggestion?: string;
 };
@@ -69,8 +70,15 @@ export type RuleHit = {
  * type is a spec type (`const room = client.joinRoom()`) counts like `new Room()`.
  * Under a heading that names type T, a backticked `member` or `member(...)`
  * or `.member` / `.member()`, and fence `x.member` / `x.member(`, count as
- * `T.member`. The gap locator is the heading that names the type, not the
- * page title.
+ * `T.member`. A fence that prints `interface T { ... }` / `type T = { ... }` /
+ * `class T { ... }` mentions every key its body declares. The gap locator is
+ * the heading that names the type, not the page title.
+ *
+ * `prose-declared-key` (`kind: 'fence'`, locator = the member line) is a key
+ * such a printed body declares that the spec's T does not have, when the
+ * declaration is the spec's (`export`ed, under a heading that names T, or T
+ * is the page's docs-map type). Silent on an open or memberless spec shape
+ * (same closed-shape test as `prose-unknown-key`) and on `_`-prefixed keys.
  *
  * `kind: 'prose'` is inventory for a judge: a sentence / list item / table
  * cell that names an export or `Type.member`. No rule. Scan/CI ignore it.
