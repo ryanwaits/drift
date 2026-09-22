@@ -5,7 +5,7 @@ import { namedImportElements } from '../markdown/ast-extractor';
 import type { MarkdownCodeBlock } from '../markdown/types';
 import { ts } from '../ts-module';
 import { isBuiltInIdentifier } from '../utils/builtin-detection';
-import { collectHeadings, nearestHeading } from './locators';
+import { collectHeadings, FENCE, HEADING, nearestHeading } from './locators';
 import { destructuredTypeName, memberReturnType } from './spec-ref';
 
 export type FenceCall = {
@@ -967,6 +967,27 @@ const NEGATED_API: RegExp =
 
 export function isNegatedApiText(text: string): boolean {
   return NEGATED_API.test(text);
+}
+
+/** The paragraph right above the fence at `blockLineStart` (1-indexed), if any. */
+function introText(lines: readonly string[], blockLineStart: number): string {
+  let i = blockLineStart - 2;
+  while (i >= 0 && !lines[i].trim()) i--;
+  const end = i;
+  while (i >= 0 && lines[i].trim() && !HEADING.test(lines[i]) && !FENCE.test(lines[i])) i--;
+  return lines.slice(i + 1, end + 1).join('\n');
+}
+
+/**
+ * The fence sits under a heading, or right after a sentence, that negates
+ * the API it shows (`Removed`, `has been removed`, `will no longer work`):
+ * history, not a claim about the spec.
+ */
+export function isNegatedFence(markdown: string | undefined, blockLineStart: number): boolean {
+  if (!markdown) return false;
+  const heading = nearestHeading(collectHeadings(markdown), blockLineStart)?.text ?? '';
+  if (isNegatedApiText(heading)) return true;
+  return isNegatedApiText(introText(markdown.split('\n'), blockLineStart));
 }
 
 /** Heading or fence comment that presents another library's "before" code. */

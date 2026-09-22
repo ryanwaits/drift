@@ -13,6 +13,7 @@ import {
   extractFenceCalls,
   fenceImportKind,
   isMigrationFence,
+  isNegatedFence,
   pageLocalNames,
 } from '../../page/fences';
 import { collectHeadings, sectionText } from '../../page/locators';
@@ -251,22 +252,26 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
       const skipFence =
         isMigrationFence(file.content, block.lineStart, block.code) ||
         fenceImportKind(block.code, packageName, state.specifier) === 'foreign';
+      // A fence under `Removed` / after `has been removed` shows what is gone.
+      const negated = isNegatedFence(file.content, block.lineStart);
 
       // 1. Check imports (existing behavior)
-      detectBrokenImports(
-        block.code,
-        packageName,
-        active,
-        file.path,
-        block.lineStart,
-        issues,
-        state.specifier,
-        others,
-      );
+      if (!negated) {
+        detectBrokenImports(
+          block.code,
+          packageName,
+          active,
+          file.path,
+          block.lineStart,
+          issues,
+          state.specifier,
+          others,
+        );
+      }
 
       // Only an imported alias carries a claim: an inferred one is a guess, and
       // a name bound from another package (`import { z } from 'zod'`) is not ours.
-      if (!skipFence) {
+      if (!skipFence && !negated) {
         detectNamespaceExportRefs(
           block.code,
           state.importedNamespaces,

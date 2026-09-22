@@ -6201,3 +6201,46 @@ describe('diff fences: removed lines are not checked, added lines are (vercel/ai
     });
   });
 });
+
+describe('prose-broken-reference is silent under negation (vercel/ai migration guide 6.0)', () => {
+  const F3 = '```';
+  const spec = {
+    meta: { name: 'ai' },
+    exports: [
+      { id: 'convertToModelMessages', name: 'convertToModelMessages', kind: 'function' },
+      { id: 'ModelMessage', name: 'ModelMessage', kind: 'type' },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  const registry = buildExportRegistry(spec);
+  const oldFence = `${F3}ts\nimport { convertToCoreMessages, type CoreMessage } from 'ai';\n\nconst coreMessages = convertToCoreMessages(messages);\n${F3}\n`;
+  function broken(content: string) {
+    return buildPageDocument({ spec, registry, file: 'docs/migration.mdx', content, packageName: 'ai' })
+      .claims.filter((c) => c.rule?.type === 'prose-broken-reference')
+      .map((c) => c.text);
+  }
+
+  test('a neutral heading and intro: the import is broken', () => {
+    expect(broken(`# Guide\n\n### Messages\n\nConvert them:\n\n${oldFence}`)).toEqual([
+      'convertToCoreMessages',
+      'CoreMessage',
+    ]);
+  });
+
+  test('the heading negates the API', () => {
+    expect(broken(`# Guide\n\n### \`CoreMessage\` Removal\n\n${oldFence}`)).toEqual([]);
+    expect(broken(`# Guide\n\n### Removed APIs\n\n${oldFence}`)).toEqual([]);
+    expect(broken(`# Guide\n\n### No longer available\n\n${oldFence}`)).toEqual([]);
+  });
+
+  test('the introducing sentence negates the API', () => {
+    const intro = 'The deprecated `CoreMessage` type and related functions have been removed.';
+    expect(broken(`# Guide\n\n### Messages\n\n${intro}\n\n${oldFence}`)).toEqual([]);
+    expect(broken(`# Guide\n\n### Messages\n\nThis will no longer work:\n${oldFence}`)).toEqual([]);
+  });
+
+  test('negation two paragraphs up does not reach the fence', () => {
+    const md = `# Guide\n\n### Messages\n\n\`Foo\` has been removed.\n\nConvert them like this:\n\n${oldFence}`;
+    expect(broken(md)).toEqual(['convertToCoreMessages', 'CoreMessage']);
+  });
+});
