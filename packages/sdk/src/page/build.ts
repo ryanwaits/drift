@@ -53,7 +53,7 @@ import {
 } from './locators';
 import { extractFenceMentions, type FenceMention } from './mentions';
 import { findParamDocHits, paramDocBlocks } from './param-docs';
-import { findProseHits } from './prose';
+import { findProseHits, findProseOptionHits } from './prose';
 import {
   makeSpecRef,
   preferredParents,
@@ -1110,6 +1110,19 @@ function proseClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): C
       locator,
       specRef: hit.specRef,
       candidate: true,
+    });
+  }
+  for (const hit of findProseOptionHits(content, spec, registry, headings)) {
+    const locator = attachHeading({ path: file, start: hit.start, end: hit.end }, headings);
+    const specRef = makeSpecRef(spec, registry, hit.exportName);
+    pushUnique(claims, {
+      id: claimId(file, 'prose', specRef, hit.text, locator.start.line, hit.type),
+      kind: 'prose',
+      text: hit.text,
+      locator,
+      specRef,
+      rule: { type: hit.type, issue: hit.issue, suggestion: hit.suggestion },
+      candidate: false,
     });
   }
   return claims;

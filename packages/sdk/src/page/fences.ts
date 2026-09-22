@@ -905,6 +905,18 @@ export function isPackageModule(from: string, packageName: string): boolean {
   return from === packageName || from.startsWith(`${packageName}/`);
 }
 
+/**
+ * Prose that negates an API rather than teaching it: `has been removed`,
+ * `no longer available`, `will no longer work`, `Removed`, `renamed from`.
+ * A reference under such wording is history, not a claim about the spec.
+ */
+const NEGATED_API: RegExp =
+  /\b(?:removed|removal|remove[sd]?\b|no longer|dropped|deleted|replaced|renamed|superseded|deprecated)\b/i;
+
+export function isNegatedApiText(text: string): boolean {
+  return NEGATED_API.test(text);
+}
+
 /** Heading or fence comment that presents another library's "before" code. */
 export function isMigrationFence(
   markdown: string | undefined,

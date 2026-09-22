@@ -5796,3 +5796,148 @@ describe('a bare backticked member resolves only within a type in scope (vercel/
     ]);
   });
 });
+
+describe('prose-unknown-key in prose: "the `k` option" of an export whose options are closed', () => {
+  const options = (keys: string[]) => ({
+    type: 'object',
+    properties: Object.fromEntries(keys.map((k) => [k, {}])),
+  });
+  const spec = {
+    meta: { name: '@ai-sdk/react' },
+    exports: [
+      {
+        id: 'useChat',
+        name: 'useChat',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [
+              {
+                name: 'options',
+                required: false,
+                schema: options(['api', 'transport', 'messages', 'providerOptions']),
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'useCompletion',
+        name: 'useCompletion',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [{ name: 'options', required: false, schema: options(['streamProtocol']) }],
+          },
+        ],
+      },
+      {
+        id: 'Chat',
+        name: 'Chat',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [
+              { name: 'props', required: true, schema: options(['messages', 'onSend']) },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'twoArgs',
+        name: 'twoArgs',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [
+              { name: 'id', required: true, schema: { type: 'string' } },
+              { name: 'options', required: false, schema: options(['api']) },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'openOpts',
+        name: 'openOpts',
+        kind: 'function',
+        signatures: [
+          { parameters: [{ name: 'options', required: false, schema: { type: 'object' } }] },
+        ],
+      },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  function hits(sentence: string) {
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/ai-sdk-ui/chatbot.mdx',
+      content: `# Chatbot\n\n## Text streams\n\n${sentence}\n`,
+      packageName: '@ai-sdk/react',
+    }).claims.filter((c) => c.rule?.type === 'prose-unknown-key');
+  }
+
+  test('the vercel/ai chatbot miss: streamProtocol is not a useChat option', () => {
+    const found = hits(
+      '`useChat` can handle plain text streams by setting the `streamProtocol` option to `text`:',
+    );
+    expect(found).toHaveLength(1);
+    const [hit] = found;
+    expect(hit.kind).toBe('prose');
+    expect(hit.text).toBe('streamProtocol');
+    expect(hit.rule?.issue).toBe("'streamProtocol' is not an option of 'useChat'");
+    expect(hit.rule?.suggestion).toBe('Allowed: api, messages, providerOptions, transport');
+    expect(hit.specRef).toEqual(expect.objectContaining({ export: 'useChat' }));
+    expect(hit.locator.start).toEqual({ line: 5, col: 56 });
+    expect(hit.locator.end).toEqual({ line: 5, col: 71 });
+    expect(hit.candidate).toBe(false);
+  });
+
+  test('phrasings: `k` option, option `k`, parameter / setting / prop, owner named after', () => {
+    expect(hits('`useChat` reads the `nope` parameter.')).toHaveLength(1);
+    expect(hits('The `nope` option for `useChat` does it.')).toHaveLength(1);
+    expect(hits('`useChat` reads the `nope` setting.')).toHaveLength(1);
+    expect(hits('Pass `useChat` the option `nope`.')).toHaveLength(1);
+    expect(hits('`<Chat>` takes the `nope` prop.')).toHaveLength(1);
+    expect(hits('`<Chat>` takes the `nope` prop.')[0].rule?.issue).toBe(
+      "'nope' is not an option of 'Chat'",
+    );
+  });
+
+  test('a near miss names the option', () => {
+    expect(hits('`useChat` takes the `transprt` option.')[0].rule?.suggestion).toBe(
+      "Did you mean 'transport'?",
+    );
+  });
+
+  test('silent: a known key, an open or multi-parameter callable, two exports, a nested option', () => {
+    expect(hits('`useChat` accepts the `transport` option.')).toEqual([]);
+    expect(hits('`useCompletion` accepts the `streamProtocol` option.')).toEqual([]);
+    expect(hits('`twoArgs` accepts the `nope` option.')).toEqual([]);
+    expect(hits('`openOpts` accepts the `nope` option.')).toEqual([]);
+    expect(hits('`useChat` or `useCompletion` accept the `nope` option.')).toEqual([]);
+    expect(hits('`useChat` reads the `temperature` option of `providerOptions`.')).toEqual([]);
+    expect(hits('`useChat` reads the `temperature` option inside `providerOptions`.')).toEqual([]);
+    // No export named in the sentence: nothing to compare against.
+    expect(hits('Set the `nope` option to `text`.')).toEqual([]);
+    // A result property is not an option; the export must own the phrase.
+    expect(hits('`useChat` exposes the `nope` property on the result.')).toEqual([]);
+    expect(hits('The `nope` option with `useChat` sends automatically.')).toEqual([]);
+    expect(hits('The `useChat` options and `nope` stay.')).toEqual([]);
+  });
+
+  test('silent under negation: removed, no longer, renamed', () => {
+    expect(hits('The deprecated `nope` option has been removed from `useChat`.')).toEqual([]);
+    expect(hits('`useChat` no longer accepts the `nope` option.')).toEqual([]);
+    const md =
+      '# Chatbot\n\n### Removed `nope` option\n\nThe `nope` option of `useChat` is gone.\n';
+    const d = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/migration.mdx',
+      content: md,
+      packageName: '@ai-sdk/react',
+    });
+    expect(d.claims.filter((c) => c.rule?.type === 'prose-unknown-key')).toEqual([]);
+  });
+});
