@@ -82,7 +82,7 @@
         "@driftdev/openapi-adapter": "^1.0.1",
         "@driftdev/sdk": "^1.18.1",
         "@modelcontextprotocol/sdk": "^1.29.0",
-        "@openpkg-ts/sdk": "^0.55.1",
+        "@openpkg-ts/sdk": "^0.55.2",
         "@openpkg-ts/spec": "^0.55.0",
         "@typesafe-ai/sdk": "^0.6.0",
         "chalk": "^5.4.1",
@@ -99,7 +99,7 @@
       "name": "@driftdev/sdk",
       "version": "1.18.1",
       "dependencies": {
-        "@openpkg-ts/sdk": "^0.55.1",
+        "@openpkg-ts/sdk": "^0.55.2",
         "@openpkg-ts/spec": "^0.55.0",
         "ajv": "^8.17.1",
         "ajv-formats": "^3.0.1",
@@ -326,7 +326,7 @@
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
 
-    "@openpkg-ts/sdk": ["@openpkg-ts/sdk@0.55.1", "", { "dependencies": { "@openpkg-ts/spec": "^0.55.0", "picomatch": "4.0.3", "typescript": "^5.0.0 || ^6.0.0" }, "peerDependencies": { "shiki": "^1.0.0" }, "optionalPeers": ["shiki"] }, "sha512-hqL2jxRkwzzwQKdQ7AzMwUUbkz/e7/hCc5OT/HjVhTK2ogk1TfdFDp0xZ+xmVgJ9NURIs/vO+S/5rGiAqRuitQ=="],
+    "@openpkg-ts/sdk": ["@openpkg-ts/sdk@0.55.2", "", { "dependencies": { "@openpkg-ts/spec": "^0.55.0", "picomatch": "4.0.3", "typescript": "^5.0.0 || ^6.0.0" }, "peerDependencies": { "shiki": "^1.0.0" }, "optionalPeers": ["shiki"] }, "sha512-aySid2VGWPVt64nT/HD5pekivaQoEy3+kK+gp502oaKPGN5PXRFCbXl2050XY3Jw2PikOneT7/EUTLtlwWg/lA=="],
 
     "@openpkg-ts/spec": ["@openpkg-ts/spec@0.55.0", "", { "dependencies": { "ajv": "^8.17.1", "ajv-formats": "^3.0.1" } }, "sha512-mVRsq2wDjxYhRMEw+FL+extuS3Mnu22i8/KEiaCZ/LIuT/AcFDE4D1e5388DvogW30HtZJFmMmUBqgB6ywkMxQ=="],
 
