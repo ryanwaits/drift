@@ -1,7 +1,7 @@
 import type { ApiSchema, ApiSignature, ApiSignatureParameter, ApiSpec } from '../analysis/api-spec';
 import { isExternalExport } from '../analysis/documented';
 import type { ExportRegistry } from '../analysis/drift/types';
-import { findTypeEntry } from '../analysis/key-coverage';
+import { findTypeEntry, resolveTypeEntries } from '../analysis/key-coverage';
 import type { CallSite, LiteralValue } from './fences';
 import { extractCallSites, extractLocalNames } from './fences';
 import { elementSchema, signaturesOf } from './spec-ref';
@@ -243,8 +243,24 @@ function schemaShape(spec: ApiSpec, schema: ApiSchema | undefined, seen: Set<str
   return null;
 }
 
+/**
+ * A type export printed as `{ $ref: '#/types/<its own name>' }`: the full
+ * entry lives in `types`. Returns that entry, or undefined.
+ */
+function selfRefTarget(spec: ApiSpec, entry: SpecEntry): SpecEntry | undefined {
+  const s = entry.schema;
+  if (!s || typeof s !== 'object' || typeof (s as Record<string, unknown>).$ref !== 'string') {
+    return undefined;
+  }
+  const name = ((s as Record<string, unknown>).$ref as string).split('/').pop();
+  if (name !== (entry.id ?? entry.name)) return undefined;
+  return resolveTypeEntries(spec, name).find((e) => e !== entry && !selfRefTarget(spec, e));
+}
+
 function entryShape(spec: ApiSpec, entry: SpecEntry, seen: Set<string>): ShapeHit {
   if (isExternalExport(entry) || entry.kind === 'external') return 'open';
+  const target = selfRefTarget(spec, entry);
+  if (target) return entryShape(spec, target, seen);
   const typeParams = entry.typeParameters;
   if (
     (entry.kind === 'type' || entry.kind === 'alias') &&
@@ -333,12 +349,43 @@ function closedAt(spec: ApiSpec, ov: OverloadShape, index: number): ClosedShape 
   return closedObjectShape(spec, p.schema, new Set());
 }
 
+/** A schema written as an object type: a named or inline object, an intersection or union of them. */
+function isObjectTyped(schema: ApiSchema | undefined): boolean {
+  if (typeof schema === 'string') return !PLAIN_SCHEMA_NAMES.has(schema);
+  if (!schema || typeof schema !== 'object') return false;
+  const s = schema as Record<string, unknown>;
+  if (typeof s.$ref === 'string' || s.type === 'object' || s.properties !== undefined) return true;
+  if (Array.isArray(s.allOf) || Array.isArray(s.anyOf) || Array.isArray(s.oneOf)) return true;
+  return typeof s['x-ts-type'] === 'string' && !OPEN_XTS.has(s['x-ts-type']);
+}
+
+const PLAIN_SCHEMA_NAMES = new Set([
+  'string',
+  'number',
+  'boolean',
+  'bigint',
+  'symbol',
+  'null',
+  'undefined',
+  'any',
+  'unknown',
+  'void',
+  'never',
+]);
+
+/**
+ * Props of one overload: the single closed object parameter's keys; else the
+ * positional parameter names. A single object-typed parameter the spec
+ * cannot close (an unresolved or open props type) yields no shape at all:
+ * its name (`options`, `props`) is never a prop.
+ */
 function jsxPropsForOverload(spec: ApiSpec, ov: OverloadShape): ClosedShape | null {
   const p0 = ov.params[0];
   if (!p0) return { keys: new Set(), required: new Set() };
   if (ov.params.length === 1) {
     const closed = closedObjectShape(spec, p0.schema, new Set());
     if (closed) return closed;
+    if (isObjectTyped(p0.schema)) return null;
   }
   const keys = new Set<string>();
   const required = new Set<string>();

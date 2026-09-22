@@ -6014,3 +6014,90 @@ describe('prose-unresolved-member on a chained receiver (vercel/ai `result.strea
     );
   });
 });
+
+describe('JSX props: one object parameter the spec cannot close claims nothing', () => {
+  const F3 = '```';
+  const spec = {
+    meta: { name: '@ai-sdk/react' },
+    exports: [
+      {
+        id: 'MCPAppRenderer',
+        name: 'MCPAppRenderer',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [
+              { name: 'options', required: true, schema: { $ref: '#/types/Missing' } },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'Labelled',
+        name: 'Labelled',
+        kind: 'function',
+        signatures: [{ parameters: [{ name: 'label', required: true, schema: { type: 'string' } }] }],
+      },
+      {
+        id: 'Panel',
+        name: 'Panel',
+        kind: 'function',
+        signatures: [
+          { parameters: [{ name: 'props', required: true, schema: { $ref: '#/types/PanelProps' } }] },
+        ],
+      },
+      // OpenPkg prints a type export as a self-`$ref` beside the full entry in `types`.
+      {
+        id: 'PanelProps',
+        name: 'PanelProps',
+        kind: 'type',
+        schema: { $ref: '#/types/PanelProps' },
+        members: [
+          { name: 'part', kind: 'property' },
+          { name: 'fallback', kind: 'property' },
+        ],
+      },
+    ],
+    types: [
+      {
+        id: 'PanelProps',
+        name: 'PanelProps',
+        kind: 'type',
+        schema: { type: 'object', properties: { part: {}, fallback: {} }, required: ['part'] },
+      },
+    ],
+  } as unknown as ApiSpec;
+  const registry = buildExportRegistry(spec);
+  function rulesOf(code: string) {
+    return buildPageDocument({
+      spec,
+      registry,
+      file: 'docs/reference/mcp-app-renderer.mdx',
+      content: `# Renderer\n\n${F3}tsx\nimport { MCPAppRenderer, Labelled, Panel } from '@ai-sdk/react';\n${code}\n${F3}\n`,
+      packageName: '@ai-sdk/react',
+    })
+      .claims.filter((c) => c.rule)
+      .map((c) => `${c.rule?.type}: ${c.rule?.issue}${c.rule?.suggestion ? ` (${c.rule.suggestion})` : ''}`);
+  }
+
+  test('an unresolved props type: no synthetic `options` prop, no claim', () => {
+    expect(rulesOf('<MCPAppRenderer part={part} sandbox={sandbox} />')).toEqual([]);
+  });
+
+  test('a single primitive parameter still reads as the prop of that name', () => {
+    expect(rulesOf('<Labelled label="x" />')).toEqual([]);
+    expect(rulesOf('<Labelled />')).toEqual([
+      "prose-missing-required: JSX '<Labelled>' is missing required prop 'label'",
+    ]);
+  });
+
+  test('a self-`$ref` type export resolves to the full entry: props are judged', () => {
+    expect(rulesOf('<Panel part={p} />')).toEqual([]);
+    expect(rulesOf('<Panel part={p} nope />')).toEqual([
+      "prose-unknown-key: Unknown prop 'nope' on '<Panel>' (Allowed: fallback, part)",
+    ]);
+    expect(rulesOf('<Panel fallback={f} />')).toEqual([
+      "prose-missing-required: JSX '<Panel>' is missing required prop 'part'",
+    ]);
+  });
+});
