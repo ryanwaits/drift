@@ -52,7 +52,7 @@ import {
   unwrapApiToken,
 } from './locators';
 import { extractFenceMentions, type FenceMention } from './mentions';
-import { findParamDocHits } from './param-docs';
+import { findParamDocHits, paramDocBlocks } from './param-docs';
 import { findProseHits } from './prose';
 import {
   makeSpecRef,
@@ -832,8 +832,7 @@ function headingJoins(
   heading: PageHeading,
   type: string,
 ): boolean {
-  if (heading.code || isCallForm(heading.text)) return true;
-  if (pageNamesType(opts, headings, type)) return true;
+  if (headingIsReference(opts, headings, heading, type)) return true;
   const packageName = opts.packageName ?? opts.spec.meta.name;
   const { namespaces } = pageScope(opts);
   return sectionFences(opts, headings, heading).some((b) =>
@@ -841,6 +840,55 @@ function headingJoins(
   );
 }
 
+/** The heading is written as the API (`` ## `X` ``, `## X()`), or the page is titled after the type. */
+function headingIsReference(
+  opts: BuildPageDocumentOptions,
+  headings: PageHeading[],
+  heading: PageHeading,
+  type: string,
+): boolean {
+  return heading.code === true || isCallForm(heading.text) || pageNamesType(opts, headings, type);
+}
+
+/**
+ * The section documents the type's surface: it prints a declaration of the
+ * type, or carries a parameter / option table (or `Parameters` list) whose
+ * owner is the type or whose keys are members of it. A fence that merely
+ * uses the type (one mock example on a testing guide) is not that.
+ */
+function sectionDocumentsType(
+  opts: BuildPageDocumentOptions,
+  headings: PageHeading[],
+  heading: PageHeading,
+  type: string,
+): boolean {
+  const { spec, registry, content } = opts;
+  if (
+    sectionFences(opts, headings, heading).some((b) =>
+      extractFenceDeclarations(b.code).some((d) => d.name === type),
+    )
+  ) {
+    return true;
+  }
+  const { start, end } = sectionRange(headings, heading);
+  const members = new Set(allMemberNames(spec, type));
+  return paramDocBlocks(content, spec, registry, headings).some(
+    (b) =>
+      b.line >= start &&
+      b.line < end &&
+      (b.owner === type ||
+        b.owner?.startsWith(`${type}.`) === true ||
+        b.keys.some((k) => members.has(k))),
+  );
+}
+
+/**
+ * Types the page is on the hook for: the docs-mapped type, and every type a
+ * heading joins (`headingJoins`) whose section documents the surface: the
+ * heading is written as the API or the page is titled after the type
+ * (`headingIsReference`), or the section prints a declaration or an option
+ * table for it (`sectionDocumentsType`).
+ */
 function joinTypes(opts: BuildPageDocumentOptions, headings: PageHeading[]): Set<string> {
   const types = new Set<string>();
   const mapped = mappedPage(opts);
@@ -853,7 +901,13 @@ function joinTypes(opts: BuildPageDocumentOptions, headings: PageHeading[]): Set
     const type = specRef.export;
     if (types.has(type)) continue;
     if (!specRef.member && listedMembers(opts.spec, type).length === 0) continue;
-    if (headingJoins(opts, headings, heading, type)) types.add(type);
+    if (!headingJoins(opts, headings, heading, type)) continue;
+    if (
+      headingIsReference(opts, headings, heading, type) ||
+      sectionDocumentsType(opts, headings, heading, type)
+    ) {
+      types.add(type);
+    }
   }
   return types;
 }
@@ -895,7 +949,7 @@ function mentionedMembers(
   const qualified = new RegExp(`${escaped}\\.([A-Za-z_$][\\w$]*)`, 'g');
   for (const m of opts.content.matchAll(qualified)) mentioned.add(m[1]);
 
-  const { parsed } = pageScope(opts);
+  const { parsed, namespaces } = pageScope(opts);
   let bindings = new Map<string, string>();
   const members = new Set(listedMembers(opts.spec, typeName));
   for (const block of parsed.codeBlocks) {
@@ -910,6 +964,17 @@ function mentionedMembers(
     for (const decl of extractFenceDeclarations(block.code)) {
       if (decl.name !== typeName) continue;
       for (const key of decl.keys) mentioned.add(key.name);
+    }
+    // An option key written to the type (`new T({ tools })`, `<T tools />`) names the member of that name.
+    for (const site of extractCallSites(block.code)) {
+      const names = site.objectName
+        ? namespaces.has(site.objectName)
+          ? site.name
+          : undefined
+        : site.name;
+      if (names !== typeName) continue;
+      const keys = site.kind === 'jsx' ? site.jsxKeys : site.args.flatMap((a) => a.keys ?? []);
+      for (const key of keys) if (members.has(key)) mentioned.add(key);
     }
     // Comments are trivia: `// server.port → 1999` teaches `port` under the same rules.
     const fenceMentions = [

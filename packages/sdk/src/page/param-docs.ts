@@ -476,6 +476,32 @@ function article(word: string): string {
   return `${/^[aeiou]/.test(word) ? 'an' : 'a'} ${word}`;
 }
 
+/** A parameter / option table or list on the page: where it starts, its keys, and the export it documents. */
+export type ParamDocBlock = {
+  /** 1-indexed markdown line of the header row / first item */
+  line: number;
+  keys: string[];
+  /** `name` or `Type.member` the enclosing headings name, when they do */
+  owner?: string;
+};
+
+/** Every parameter table and `## Parameters` list, judged or not. */
+export function paramDocBlocks(
+  content: string,
+  spec: ApiSpec,
+  registry: ExportRegistry,
+  headings: PageHeading[],
+): ParamDocBlock[] {
+  return collectBlocks(content, headings).map((block) => {
+    const owner = findOwner(spec, registry, headings, block.line);
+    return {
+      line: block.line,
+      keys: block.rows.map((r) => r.key),
+      ...(owner ? { owner: owner.name } : {}),
+    };
+  });
+}
+
 /**
  * Parameter tables (`| Param | Type | Description |`) and `## Parameters`
  * bullet lists, checked against the signatures of the one export the section

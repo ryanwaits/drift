@@ -297,7 +297,7 @@ describe('member mentions inside fence comments (lively /docs/server)', () => {
   test('bound.member in a line comment counts as mentioned; unshown member still gaps', () => {
     const d = doc(`# Server
 
-## LivelyServer
+## \`LivelyServer\`
 
 \`\`\`ts
 const server = new LivelyServer({ port: 1999 });
@@ -310,7 +310,7 @@ const server = new LivelyServer({ port: 1999 });
   test('bound.member in a block comment counts as mentioned', () => {
     const d = doc(`# Server
 
-## LivelyServer
+## \`LivelyServer\`
 
 \`\`\`ts
 const server = new LivelyServer({ port: 1999 });
@@ -636,7 +636,7 @@ describe('gap accuracy: cross-fence bindings and heading-scoped members', () => 
   test('joinRoom in a later fence counts when client was bound with new LivelyClient earlier', () => {
     const content = `# Client
 
-## LivelyClient
+## \`LivelyClient\`
 
 \`\`\`ts
 const client = new LivelyClient({ server: 'wss://example' });
@@ -1305,7 +1305,7 @@ room.subscribe(() => {});
     const spec = clientRoomSpec();
     const content = `# Client
 
-## LivelyClient
+## \`LivelyClient\`
 
 \`\`\`ts
 const client = new LivelyClient();
@@ -5590,14 +5590,19 @@ describe('a heading joins a type only with evidence (vercel/ai audit)', () => {
   });
 
   test('a fence in the section that imports, constructs, calls or declares the export joins', () => {
-    const imports = `# Guide\n\n## Output\n\n${F3}ts\nimport { Output } from 'ai';\n${F3}\n`;
-    expect(gapsOf(imports)).toEqual(['Output.object', 'Output.text']);
-    const calls = `# Guide\n\n## Output\n\n${F3}ts\nconst out = Output.text();\n${F3}\n`;
-    expect(gapsOf(calls)).toEqual(['Output.object']);
+    // A joined section dumps gaps once it documents the surface: here an option table.
+    const table = '| Option | Type |\n| --- | --- |\n| `text` | `fn` |\n';
+    const imports = `# Guide\n\n## Output\n\n${F3}ts\nimport { Output } from 'ai';\n${F3}\n\n${table}`;
+    expect(gapsOf(imports)).toEqual(['Output.object']);
+    const calls = `# Guide\n\n## Output\n\n${F3}ts\nconst out = Output.object();\n${F3}\n\n${table}`;
+    expect(gapsOf(calls)).toEqual([]);
     const declares = `# Guide\n\n### Schema\n\n${F3}ts\ninterface Schema {\n  validate(): void;\n}\n${F3}\n`;
     expect(gapsOf(declares, 'cookbook/structured.mdx')).toEqual(['Schema.jsonSchema']);
-    const constructs = `# Guide\n\n## HarnessAgent\n\n${F3}ts\nconst agent = new HarnessAgent({});\n${F3}\n\n## Agent\n\nText.\n`;
-    expect(gapsOf(constructs, 'docs/harness/ui.mdx')).toEqual(['HarnessAgent.run']);
+    const runTable = '| Method | Type |\n| --- | --- |\n| `run` | `fn` |\n';
+    const constructs = `# Guide\n\n## HarnessAgent\n\n${F3}ts\nconst agent = new HarnessAgent({});\n${F3}\n\n${runTable}\n## Agent\n\n${runTable}`;
+    expect(gapsOf(constructs, 'docs/harness/ui.mdx')).toEqual([]);
+    const noTable = `# Guide\n\n## HarnessAgent\n\n${F3}ts\nconst agent = new HarnessAgent({});\n${F3}\n`;
+    expect(gapsOf(noTable, 'docs/harness/ui.mdx')).toEqual([]);
   });
 
   test('evidence in a sibling section does not carry over', () => {
@@ -5620,5 +5625,102 @@ describe('a heading joins a type only with evidence (vercel/ai audit)', () => {
         .map((c) => c.text)
         .sort(),
     ).toEqual(['object', 'text']);
+  });
+});
+
+describe('gaps need the section to document the surface (vercel/ai testing guide)', () => {
+  const F3 = '```';
+  const spec = {
+    meta: { name: 'ai' },
+    exports: [
+      {
+        id: 'ToolLoopAgent',
+        name: 'ToolLoopAgent',
+        kind: 'class',
+        signatures: [
+          {
+            parameters: [
+              {
+                name: 'settings',
+                required: true,
+                schema: {
+                  type: 'object',
+                  properties: { model: {}, instructions: {}, tools: {} },
+                  required: ['model'],
+                },
+              },
+            ],
+          },
+        ],
+        members: [
+          { name: 'generate', kind: 'method' },
+          { name: 'stream', kind: 'method' },
+          { name: 'tools', kind: 'property' },
+          { name: 'version', kind: 'property' },
+        ],
+      },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  const gapsOf = (content: string, map?: { page: string; type: string }[]) =>
+    buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/testing.mdx',
+      content,
+      packageName: 'ai',
+      ...(map ? { docsMap: { pages: map } } : {}),
+    })
+      .claims.filter((c) => c.rule?.type === 'spec-not-in-claims')
+      .map((c) => c.text)
+      .sort();
+  const example = `${F3}ts\nimport { ToolLoopAgent } from 'ai';\n\nconst agent = new ToolLoopAgent({\n  model,\n  tools: { weather: tool({}) },\n});\nconst result = await agent.generate({ prompt: 'hi' });\n${F3}\n`;
+
+  test('one mock example under a bare heading: joined, but no gap dump', () => {
+    expect(gapsOf(`# Testing\n\n### ToolLoopAgent\n\nMock an agent:\n\n${example}`)).toEqual([]);
+  });
+
+  test('an option table in the section dumps gaps; an option key in new X({ ... }) mentions the member', () => {
+    const table =
+      '| Option | Type |\n| --- | --- |\n| `model` | `LanguageModel` |\n| `instructions` | `string` |\n';
+    expect(gapsOf(`# Testing\n\n### ToolLoopAgent\n\n${table}\n${example}`)).toEqual([
+      'stream',
+      'version',
+    ]);
+  });
+
+  test('a parameter list in the section counts as an option table', () => {
+    const list = '#### Parameters\n\n- `model` - the model\n- `tools` - the tools\n';
+    expect(gapsOf(`# Testing\n\n### ToolLoopAgent\n\n${example}\n${list}`)).toEqual([
+      'stream',
+      'version',
+    ]);
+  });
+
+  test('a printed declaration in the section dumps gaps', () => {
+    const decl = `${F3}ts\nclass ToolLoopAgent {\n  generate(): void;\n}\n${F3}\n`;
+    expect(gapsOf(`# Testing\n\n### ToolLoopAgent\n\n${decl}`)).toEqual([
+      'stream',
+      'tools',
+      'version',
+    ]);
+  });
+
+  test('a code-span heading, the page title, or the docs map need no table', () => {
+    expect(gapsOf(`# Testing\n\n### \`ToolLoopAgent\`\n\n${example}`)).toEqual([
+      'stream',
+      'version',
+    ]);
+    expect(gapsOf(`# ToolLoopAgent\n\n${example}`)).toEqual(['stream', 'version']);
+    expect(
+      gapsOf(`# Testing\n\n### ToolLoopAgent\n\n${example}`, [
+        { page: 'docs/testing.mdx', type: 'ToolLoopAgent' },
+      ]),
+    ).toEqual(['stream', 'version']);
+  });
+
+  test("a table in a sibling section is not this section's", () => {
+    const table = '## Other\n\n| Option | Type |\n| --- | --- |\n| `model` | `LanguageModel` |\n';
+    expect(gapsOf(`# Testing\n\n### ToolLoopAgent\n\n${example}\n${table}`)).toEqual([]);
   });
 });
