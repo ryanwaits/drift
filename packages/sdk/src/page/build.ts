@@ -16,6 +16,7 @@ import { ambiguousExports, fenceEntry } from './entries';
 import {
   blockContaining,
   collectPackageNamespaces,
+  extractCallSites,
   extractExportBindings,
   extractFenceCalls,
   extractFenceCommentMembers,
@@ -707,20 +708,30 @@ function inlineClaims(
   return claims;
 }
 
+/** The export or `Type.member` a heading names, or null. */
+function headingRef(
+  opts: BuildPageDocumentOptions,
+  headings: PageHeading[],
+  heading: PageHeading,
+): SpecRef | null {
+  const { spec, registry } = opts;
+  const name = normalizeApiName(heading.text);
+  // `## number` is a word; `` ## `number` `` and `## number()` are the API.
+  if (isBuiltinName(name) && !heading.code && !isCallForm(heading.text)) return null;
+  return resolveApiName(
+    spec,
+    registry,
+    name,
+    ancestorPreferred(registry, headings, heading.line),
+    pageScope(opts).namespaces,
+  );
+}
+
 function headingClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): Claim[] {
-  const { spec, registry, file } = opts;
+  const { file } = opts;
   const claims: Claim[] = [];
   for (const heading of headings) {
-    const name = normalizeApiName(heading.text);
-    // `## number` is a word; `` ## `number` `` and `## number()` are the API.
-    if (isBuiltinName(name) && !heading.code && !isCallForm(heading.text)) continue;
-    const specRef = resolveApiName(
-      spec,
-      registry,
-      name,
-      ancestorPreferred(registry, headings, heading.line),
-      pageScope(opts).namespaces,
-    );
+    const specRef = headingRef(opts, headings, heading);
     if (!specRef) continue;
     const locator = headingLocator(file, heading);
     pushUnique(claims, {
@@ -747,21 +758,102 @@ function ancestorPreferred(
   return preferred.size > 0 ? preferred : undefined;
 }
 
-function joinTypes(opts: BuildPageDocumentOptions, claims: Claim[]): Set<string> {
+/** Lines a heading's section spans: the heading to the next one of its level or higher. */
+function sectionRange(
+  headings: PageHeading[],
+  heading: PageHeading,
+): { start: number; end: number } {
+  const next = headings.find((h) => h.line > heading.line && h.level <= heading.level);
+  return { start: heading.line, end: next?.line ?? Number.POSITIVE_INFINITY };
+}
+
+/** Fences that open inside a heading's section. */
+function sectionFences(
+  opts: BuildPageDocumentOptions,
+  headings: PageHeading[],
+  heading: PageHeading,
+): MarkdownDocFile['codeBlocks'] {
+  const { start, end } = sectionRange(headings, heading);
+  return pageScope(opts).parsed.codeBlocks.filter((b) => b.lineStart >= start && b.lineStart < end);
+}
+
+/**
+ * The fence imports `name` from the package, writes `new Name(` / `Name(` /
+ * `Name.m(` / `<Name>`, or prints a declaration of it.
+ */
+function fenceShowsExport(
+  code: string,
+  name: string,
+  packageName: string,
+  namespaces: ReadonlySet<string>,
+): boolean {
+  if (
+    extractFenceImports(code).some(
+      (i) => i.imported === name && isPackageModule(i.from, packageName),
+    )
+  ) {
+    return true;
+  }
+  if (extractFenceDeclarations(code).some((d) => d.name === name)) return true;
+  return extractCallSites(code).some((s) =>
+    s.objectName
+      ? s.objectName === name || (namespaces.has(s.objectName) && s.name === name)
+      : s.name === name,
+  );
+}
+
+/** The page's H1 or frontmatter title resolves to `type` (or one of its members). */
+function pageNamesType(opts: BuildPageDocumentOptions, headings: PageHeading[], type: string) {
+  const { spec, registry } = opts;
+  const titles = [pageTitle(headings), frontmatterTitle(opts.content)];
+  return titles.some((title) => {
+    if (!title) return false;
+    const ref = resolveApiName(
+      spec,
+      registry,
+      normalizeApiName(title),
+      undefined,
+      pageScope(opts).namespaces,
+    );
+    return ref?.export === type;
+  });
+}
+
+/**
+ * A heading that names an export joins the page to that type only with
+ * evidence the section is about it: the heading is a code span or call form,
+ * the page's H1 / frontmatter title names the type, or a fence in the section
+ * imports, constructs, calls or declares it. A bare word that happens to be
+ * an export name (`## Output` describing a tool's result shape) joins nothing.
+ */
+function headingJoins(
+  opts: BuildPageDocumentOptions,
+  headings: PageHeading[],
+  heading: PageHeading,
+  type: string,
+): boolean {
+  if (heading.code || isCallForm(heading.text)) return true;
+  if (pageNamesType(opts, headings, type)) return true;
+  const packageName = opts.packageName ?? opts.spec.meta.name;
+  const { namespaces } = pageScope(opts);
+  return sectionFences(opts, headings, heading).some((b) =>
+    fenceShowsExport(b.code, type, packageName, namespaces),
+  );
+}
+
+function joinTypes(opts: BuildPageDocumentOptions, headings: PageHeading[]): Set<string> {
   const types = new Set<string>();
   const mapped = mappedPage(opts);
   if (mapped) types.add(mapped.type);
-  // Stronger than a mention: the page's own heading names the type or a member.
-  // Inline/fence citations stay inventory (candidate), never join a gap dump.
-  for (const c of claims) {
-    if (c.kind !== 'heading' || !c.specRef) continue;
-    if (c.specRef.member) {
-      types.add(c.specRef.export);
-      continue;
-    }
-    if (listedMembers(opts.spec, c.specRef.export).length > 0) {
-      types.add(c.specRef.export);
-    }
+  // Stronger than a mention: the page's own heading names the type or a member,
+  // with evidence. Inline/fence citations stay inventory (candidate), never join.
+  for (const heading of headings) {
+    const specRef = headingRef(opts, headings, heading);
+    if (!specRef) continue;
+    const type = specRef.export;
+    if (types.has(type)) continue;
+    if (!specRef.member && listedMembers(opts.spec, type).length === 0) continue;
+    if (headingJoins(opts, headings, heading, type)) types.add(type);
   }
   return types;
 }
@@ -882,7 +974,7 @@ function gapClaims(
   existing: Claim[],
 ): Claim[] {
   const { spec, registry, file } = opts;
-  const types = joinTypes(opts, existing);
+  const types = joinTypes(opts, headings);
   if (types.size === 0) return [];
 
   const claims: Claim[] = [];

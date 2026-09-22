@@ -323,7 +323,7 @@ const server = new LivelyServer({ port: 1999 });
   test('unbound.member in a comment outside the type section still gaps', () => {
     const d = doc(`# Server
 
-## LivelyServer
+## \`LivelyServer\`
 
 Serves rooms.
 
@@ -659,7 +659,7 @@ client.joinRoom('room-1', {});
   test('backticked member(...) under a type heading counts as T.member', () => {
     const content = `# Client
 
-## LivelyClient
+## \`LivelyClient\`
 
 Call \`joinRoom(roomId, options)\` to enter.
 `;
@@ -1319,7 +1319,7 @@ room.getStatus();
 room.subscribe(() => {});
 \`\`\`
 
-## Room
+## \`Room\`
 `;
     const doc = buildPageDocument({
       spec,
@@ -1335,11 +1335,11 @@ room.subscribe(() => {});
     ).toEqual(['batch', 'followUser', 'getOthers', 'leaveRoom']);
   });
 
-  test('under ## Room, x.member() counts as Room.member with no binding', () => {
+  test('under ## `Room`, x.member() counts as Room.member with no binding', () => {
     const spec = clientRoomSpec();
     const content = `# Client
 
-## Room
+## \`Room\`
 
 \`\`\`ts
 room.getStatus();
@@ -1916,7 +1916,7 @@ describe('backticked .member() under a type heading counts as T.member', () => {
       file: 'docs/server.md',
       content: `# Server
 
-## LivelyServer
+## \`LivelyServer\`
 
 exposes \`.start()\` / \`.stop()\`
 `,
@@ -5495,5 +5495,130 @@ describe('a call must satisfy one of the alternatives a destructured union requi
     expect(rulesOf('<Link href="/docs" />', 'tsx')).toEqual([
       "prose-missing-required: JSX '<Link>' is missing required prop 'label'",
     ]);
+  });
+});
+
+describe('a heading joins a type only with evidence (vercel/ai audit)', () => {
+  const F3 = '```';
+  const spec = {
+    meta: { name: 'ai' },
+    exports: [
+      {
+        id: 'Output',
+        name: 'Output',
+        kind: 'namespace',
+        members: [
+          { name: 'text', kind: 'function' },
+          { name: 'object', kind: 'function' },
+        ],
+      },
+      {
+        id: 'Schema',
+        name: 'Schema',
+        kind: 'interface',
+        members: [
+          { name: 'validate', kind: 'method' },
+          { name: 'jsonSchema', kind: 'property' },
+        ],
+      },
+      {
+        id: 'Agent',
+        name: 'Agent',
+        kind: 'interface',
+        members: [
+          { name: 'generate', kind: 'method' },
+          { name: 'stream', kind: 'method' },
+        ],
+      },
+      {
+        id: 'HarnessAgent',
+        name: 'HarnessAgent',
+        kind: 'class',
+        members: [{ name: 'run', kind: 'method' }],
+      },
+      { id: 'toolSearch', name: 'toolSearch', kind: 'function', signatures: [{}] },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  function doc(content: string, file = 'docs/reference/tool-search.mdx') {
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file,
+      content,
+      packageName: 'ai',
+    });
+  }
+  const gapsOf = (content: string, file?: string) =>
+    doc(content, file)
+      .claims.filter((c) => c.rule?.type === 'spec-not-in-claims')
+      .map((c) => `${c.specRef?.export}.${c.text}`)
+      .sort();
+
+  test('bare `## Output` over a result-shape fence joins nothing', () => {
+    const md = `---\ntitle: toolSearch\n---\n\nCreates a tool.\n\n## Output\n\n${F3}ts\n{\n  tools: [{ name: 'getForecast' }],\n}\n${F3}\n\nResults contain at most five tools.\n`;
+    expect(gapsOf(md)).toEqual([]);
+  });
+
+  test('bare `### Schema` on a cookbook page with prose only joins nothing', () => {
+    const md = '# Structured data\n\n### Schema\n\nDefine the shape you want back.\n';
+    expect(gapsOf(md, 'cookbook/structured.mdx')).toEqual([]);
+  });
+
+  test('bare `## Agent` over a fence about another export joins nothing', () => {
+    const md = `# Harness UI\n\n## Agent\n\n${F3}ts\nimport { HarnessAgent } from 'ai';\nconst agent = new HarnessAgent({});\n${F3}\n`;
+    expect(gapsOf(md, 'docs/harness/ui.mdx')).toEqual([]);
+  });
+
+  test('a code-span or call-form heading still joins', () => {
+    expect(gapsOf('# Reference\n\n## `Output`\n\nText.\n')).toEqual([
+      'Output.object',
+      'Output.text',
+    ]);
+    expect(gapsOf('# Reference\n\n## Output()\n\nText.\n')).toEqual([
+      'Output.object',
+      'Output.text',
+    ]);
+  });
+
+  test('the H1 or frontmatter title naming the export joins', () => {
+    expect(gapsOf('# Output\n\nText.\n')).toEqual(['Output.object', 'Output.text']);
+    expect(gapsOf('---\ntitle: Output\n---\n\n## Output\n\nText.\n')).toEqual([
+      'Output.object',
+      'Output.text',
+    ]);
+  });
+
+  test('a fence in the section that imports, constructs, calls or declares the export joins', () => {
+    const imports = `# Guide\n\n## Output\n\n${F3}ts\nimport { Output } from 'ai';\n${F3}\n`;
+    expect(gapsOf(imports)).toEqual(['Output.object', 'Output.text']);
+    const calls = `# Guide\n\n## Output\n\n${F3}ts\nconst out = Output.text();\n${F3}\n`;
+    expect(gapsOf(calls)).toEqual(['Output.object']);
+    const declares = `# Guide\n\n### Schema\n\n${F3}ts\ninterface Schema {\n  validate(): void;\n}\n${F3}\n`;
+    expect(gapsOf(declares, 'cookbook/structured.mdx')).toEqual(['Schema.jsonSchema']);
+    const constructs = `# Guide\n\n## HarnessAgent\n\n${F3}ts\nconst agent = new HarnessAgent({});\n${F3}\n\n## Agent\n\nText.\n`;
+    expect(gapsOf(constructs, 'docs/harness/ui.mdx')).toEqual(['HarnessAgent.run']);
+  });
+
+  test('evidence in a sibling section does not carry over', () => {
+    const md = `# Guide\n\n## Setup\n\n${F3}ts\nimport { Output } from 'ai';\n${F3}\n\n## Output\n\nText.\n`;
+    expect(gapsOf(md)).toEqual([]);
+  });
+
+  test('the docs map still joins with no heading evidence', () => {
+    const d = buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/reference/output.mdx',
+      content: '# Reference\n\n## Output\n\nText.\n',
+      packageName: 'ai',
+      docsMap: { pages: [{ page: 'docs/reference/output.mdx', type: 'Output' }] },
+    });
+    expect(
+      d.claims
+        .filter((c) => c.rule?.type === 'spec-not-in-claims')
+        .map((c) => c.text)
+        .sort(),
+    ).toEqual(['object', 'text']);
   });
 });
