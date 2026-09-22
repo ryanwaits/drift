@@ -16,6 +16,7 @@ import {
   collectPackageNamespaces,
   extractExportBindings,
   extractFenceCalls,
+  extractFenceCommentMembers,
   extractFenceImports,
   extractFenceMembers,
   extractLocalNames,
@@ -740,7 +741,12 @@ function mentionedMembers(
       registry: opts.registry,
     });
     const inTypeSection = headingAncestorNames(headings, block.lineStart + 1).includes(typeName);
-    for (const mention of extractFenceMembers(block.code)) {
+    // Comments are trivia: `// server.port → 1999` teaches `port` under the same rules.
+    const fenceMentions = [
+      ...extractFenceMembers(block.code),
+      ...extractFenceCommentMembers(block.code),
+    ];
+    for (const mention of fenceMentions) {
       if (members.size > 0 && !members.has(mention.memberName)) continue;
       const bound = bindings.get(mention.objectName);
       const resolved = bound ? (opts.registry.callableReturnTypes.get(bound) ?? bound) : undefined;

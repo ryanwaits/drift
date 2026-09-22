@@ -371,6 +371,55 @@ export function extractFenceMembers(code: string): Array<{
   return mentions;
 }
 
+export type FenceMember = ReturnType<typeof extractFenceMembers>[number];
+
+const COMMENT_MEMBER: RegExp = /(?<![\w$.])([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)/g;
+
+/**
+ * `obj.member` written inside a line (`//`) or block comment of a fence. Comments
+ * are trivia, not AST nodes, so `extractFenceMembers` never sees them; a page
+ * that shows `// server.port → 1999` still teaches `port`. Same shape as code
+ * mentions; the caller applies the same binding / section rules.
+ */
+export function extractFenceCommentMembers(code: string): FenceMember[] {
+  const mentions: FenceMember[] = [];
+  const seen = new Set<string>();
+  try {
+    const sourceFile = ts.createSourceFile(
+      'temp.ts',
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const ranges = new Map<number, TS.CommentRange>();
+    const collect = (list: TS.CommentRange[] | undefined): void => {
+      for (const r of list ?? []) ranges.set(r.pos, r);
+    };
+    const walk = (node: TS.Node): void => {
+      collect(ts.getLeadingCommentRanges(code, node.pos));
+      collect(ts.getTrailingCommentRanges(code, node.end));
+      for (const child of node.getChildren(sourceFile)) walk(child);
+    };
+    walk(sourceFile);
+    for (const range of ranges.values()) {
+      const body = code.slice(range.pos, range.end);
+      for (const m of body.matchAll(COMMENT_MEMBER)) {
+        const [text, objectName, memberName] = m;
+        if (isBuiltInIdentifier(objectName)) continue;
+        const pos = sourceFile.getLineAndCharacterOfPosition(range.pos + (m.index ?? 0));
+        const key = `${pos.line}:${objectName}.${memberName}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        mentions.push({ objectName, memberName, line: pos.line, text });
+      }
+    }
+  } catch {
+    // parse failure
+  }
+  return mentions;
+}
+
 /** A literal written in a fence: `"a"`, `` `a` `` (no substitutions), `5`, `-5`, `true`. */
 export type LiteralValue = {
   type: 'string' | 'number' | 'boolean';

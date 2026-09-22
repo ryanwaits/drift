@@ -267,6 +267,80 @@ tracker.stop();
   });
 });
 
+describe('member mentions inside fence comments (lively /docs/server)', () => {
+  const spec: ApiSpec = {
+    meta: { name: PKG },
+    exports: [
+      {
+        id: 'LivelyServer',
+        name: 'LivelyServer',
+        kind: 'class',
+        members: [
+          { name: 'port', kind: 'property' },
+          { name: 'start', kind: 'method' },
+        ],
+      },
+    ],
+  };
+
+  function doc(content: string) {
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/server.md',
+      content,
+      packageName: PKG,
+    });
+  }
+
+  test('bound.member in a line comment counts as mentioned; unshown member still gaps', () => {
+    const d = doc(`# Server
+
+## LivelyServer
+
+\`\`\`ts
+const server = new LivelyServer({ port: 1999 });
+// server.port → 1999
+\`\`\`
+`);
+    expect(gaps(d).map((c) => c.text)).toEqual(['start']);
+  });
+
+  test('bound.member in a block comment counts as mentioned', () => {
+    const d = doc(`# Server
+
+## LivelyServer
+
+\`\`\`ts
+const server = new LivelyServer({ port: 1999 });
+/* server.port is 1999 */
+\`\`\`
+`);
+    expect(gaps(d).map((c) => c.text)).toEqual(['start']);
+  });
+
+  test('unbound.member in a comment outside the type section still gaps', () => {
+    const d = doc(`# Server
+
+## LivelyServer
+
+Serves rooms.
+
+## Other
+
+\`\`\`ts
+const other = make();
+// other.port → 1999
+\`\`\`
+`);
+    expect(
+      gaps(d)
+        .map((c) => c.text)
+        .sort(),
+    ).toEqual(['port', 'start']);
+  });
+});
+
 describe('headingText is unwrapped heading text, not the slug', () => {
   test('spaces and case survive; headingId is the slug', () => {
     const headings = collectHeadings(
