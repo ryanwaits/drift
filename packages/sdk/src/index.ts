@@ -75,7 +75,7 @@ export type {
   DriftConfig,
   DriftConfigInput,
 } from './config';
-export { defineConfig, driftConfigSchema, normalizeConfig } from './config';
+export { defineConfig, driftConfigSchema, normalizeConfig, parseDriftConfig } from './config';
 
 // Project resolution
 export type { FileSystem, PackageJson, PackageManager, ProjectInfo } from './detect';

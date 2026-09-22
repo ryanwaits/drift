@@ -154,7 +154,7 @@ const grouped = groupDriftsByCategory(drifts);
 
 ### Configuration
 - `normalizeConfig` — Config normalization
-- `driftConfigSchema` — Zod schema for validation
+- `parseDriftConfig` / `driftConfigSchema.parse` — Config validation (no zod)
 
 ## License
 

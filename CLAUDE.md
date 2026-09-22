@@ -10,5 +10,5 @@ Always use bun.
 - Apps (apps/site): exact pins for framework deps (next, react, lucide-react); bump via explicit change verified by `bun run build:site`.
 - typescript stays on ^5: runtime dep of the extraction pipeline (@openpkg-ts/sdk compiler API); TS 7 needs a dedicated migration.
 - @openpkg-ts/sdk + @openpkg-ts/spec move together, currently ^0.54.11 / ^0.54.9 (sdk 0.54.11 depends on spec ^0.54.9); both track latest minor (0.x caret = locked minor, so upstream releases require an explicit bump + drift release).
-- zod must stay external in packages/sdk/bunup.config.ts and a real dependency — bunup cannot bundle zod v4 (mis-orders circular internals; crashes at import).
+- packages/sdk has no zod dependency; drift.config is validated by a hand-written checker (src/config/schema.ts). Keep it that way — consumers must not load zod to build page documents. (cli still uses zod for MCP tool schemas.)
 - Runtime major bumps: TRIAGE.md writeup + changelog read before landing; never casually.

@@ -2,9 +2,8 @@
  * Configuration module - types and validation for Drift configuration.
  */
 
-// Zod schema for config validation (used by CLI)
 export type { DriftConfigInput } from './schema';
-export { driftConfigSchema, normalizeConfig } from './schema';
+export { driftConfigSchema, normalizeConfig, parseDriftConfig } from './schema';
 export type {
   CoverageConfig,
   DocsConfig,
