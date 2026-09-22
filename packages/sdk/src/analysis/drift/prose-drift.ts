@@ -214,7 +214,11 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
             i === 0 ? importSpecifier : entry.importSpecifier,
             entry.registry.localNames,
           )
-        : { namespaces: new Set<string>(), aliases: new Map<string, string>() }),
+        : {
+            namespaces: new Set<string>(),
+            importedNamespaces: new Set<string>(),
+            aliases: new Map<string, string>(),
+          }),
     }));
 
     for (const [index, block] of file.codeBlocks.entries()) {
@@ -258,16 +262,19 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
         others,
       );
 
+      // Only an imported alias carries a claim: an inferred one is a guess, and
+      // a name bound from another package (`import { z } from 'zod'`) is not ours.
       if (!skipFence) {
         detectNamespaceExportRefs(
           block.code,
-          state.namespaces,
+          state.importedNamespaces,
           active,
           file.path,
           block.lineStart,
           issues,
           state.specifier ?? packageName,
           others,
+          fileExternalImports,
         );
       }
 
@@ -375,8 +382,9 @@ function detectBrokenImports(
 }
 
 /**
- * `ns.member` on a package namespace alias is the export `member`.
- * The alias itself is never a broken reference.
+ * `ns.member` on an imported package namespace alias is the export `member`.
+ * The alias itself is never a broken reference; neither is a receiver the
+ * page imports from another package, or one it never imports at all.
  */
 function detectNamespaceExportRefs(
   code: string,
@@ -387,10 +395,11 @@ function detectNamespaceExportRefs(
   issues: SpecDocDrift[],
   specifier: string,
   others: readonly ExportRegistry[] = [],
+  foreign: ReadonlySet<string> = new Set(),
 ): void {
   if (namespaces.size === 0) return;
   for (const call of extractFenceCalls(code)) {
-    if (!namespaces.has(call.objectName)) continue;
+    if (!namespaces.has(call.objectName) || foreign.has(call.objectName)) continue;
     if (JS_BUILTIN_METHODS.has(call.methodName)) continue;
     if (registry.all.has(call.methodName)) continue;
     if (others.some((r) => r.all.has(call.methodName))) continue;

@@ -5135,3 +5135,43 @@ describe('prose-unknown-key across overloads', () => {
     expect(hits({ type: 'string' }, code)).toEqual(["Unknown key 'uri' on 'toJSONSchema'"]);
   });
 });
+
+describe('a receiver bound by an import from another package is foreign', () => {
+  const F3 = '```';
+  const spec = {
+    meta: { name: 'ai' },
+    exports: [
+      { id: 'tool', name: 'tool', kind: 'function', signatures: [{ parameters: [] }] },
+      { id: 'object', name: 'object', kind: 'function', signatures: [{ parameters: [] }] },
+      { id: 'array', name: 'array', kind: 'function', signatures: [{ parameters: [] }] },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  const registry = buildExportRegistry(spec);
+
+  function broken(content: string) {
+    return buildPageDocument({ spec, registry, file: 'docs/tool.md', content, packageName: 'ai' })
+      .claims.filter((c) => c.rule?.type === 'prose-broken-reference')
+      .map((c) => c.rule?.issue);
+  }
+
+  test("`z` from 'zod' beside an `ai` import: no claim on z.*, whatever `ai` exports", () => {
+    const content = `# tool\n\n${F3}ts\nimport { tool } from 'ai';\nimport { z } from 'zod';\nconst t = tool({ inputSchema: z.object({ city: z.string(), n: z.array(z.number()) }) });\n${F3}\n`;
+    expect(broken(content)).toEqual([]);
+  });
+
+  test('the foreign import in an earlier fence still binds z in a later one', () => {
+    const content = `# tool\n\n${F3}ts\nimport { z } from 'zod';\n${F3}\n\n${F3}ts\nimport { tool } from 'ai';\nconst s = z.object({ a: z.array(z.string()) });\n${F3}\n`;
+    expect(broken(content)).toEqual([]);
+  });
+
+  test('a receiver the page never imports from us is not a namespace claim', () => {
+    const content = `# tool\n\n${F3}ts\nconst s = z.object({ a: z.array(z.string()) });\n${F3}\n`;
+    expect(broken(content)).toEqual([]);
+  });
+
+  test('an explicit `import * as ai` alias is still checked', () => {
+    const content = `# tool\n\n${F3}ts\nimport * as ai from 'ai';\nai.object();\nai.nope();\n${F3}\n`;
+    expect(broken(content)).toEqual(["'nope' on 'ai' does not exist in package exports"]);
+  });
+});

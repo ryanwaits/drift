@@ -901,9 +901,21 @@ export function fenceImportKind(
   return 'none';
 }
 
+/** What the page's imports bind to one entry of the package. */
+export type PackageNamespaces = {
+  /** Namespace aliases: imported (`import * as ns`) or inferred from `x.<export>(` use */
+  namespaces: Set<string>;
+  /** The imported aliases only: the ones a `ns.member` claim may stand on */
+  importedNamespaces: Set<string>;
+  namedImports: Set<string>;
+  aliases: Map<string, string>;
+};
+
 /**
  * `import * as ns from '<pkg>'`, plus a short ident used as `x.<export>(`
  * for two or more distinct package exports when the page never shows the import.
+ * A name any fence imports from another package (`import { z } from 'zod'`)
+ * is foreign: never inferred, whatever it calls.
  * `aliases` maps a renamed local to its export (`import { a as b }` → b → a;
  * `import x` → x → `default`, which resolves only when the spec has that export).
  * With `localNames`, the default export's source name (`useSWR`) is an alias of
@@ -915,15 +927,19 @@ export function collectPackageNamespaces(
   packageName: string,
   importSpecifier?: string,
   localNames?: ReadonlyMap<string, string>,
-): { namespaces: Set<string>; namedImports: Set<string>; aliases: Map<string, string> } {
+): PackageNamespaces {
   const namespaces = new Set<string>();
   const namedImports = new Set<string>();
   const aliases = new Map<string, string>();
   const imported = new Set<string>();
+  const foreign = new Set<string>();
   for (const code of codes) {
     for (const imp of extractFenceImports(code)) {
       imported.add(imp.name);
-      if (!isPackageSpecifier(imp.from, packageName, importSpecifier)) continue;
+      if (!isPackageSpecifier(imp.from, packageName, importSpecifier)) {
+        if (!isPackageModule(imp.from, packageName)) foreign.add(imp.name);
+        continue;
+      }
       if (imp.kind === 'namespace') namespaces.add(imp.name);
       else namedImports.add(imp.name);
       // A default import (either spelling) is the export named `default`, never
@@ -937,12 +953,13 @@ export function collectPackageNamespaces(
   for (const [local, exportName] of localNames ?? []) {
     if (!imported.has(local) && !exportNames.has(local)) aliases.set(local, exportName);
   }
+  const importedNamespaces = new Set(namespaces);
   if (namespaces.size === 0) {
     const hits = new Map<string, Set<string>>();
     for (const code of codes) {
       for (const call of extractFenceCalls(code)) {
         if (!exportNames.has(call.methodName)) continue;
-        if (exportNames.has(call.objectName)) continue;
+        if (exportNames.has(call.objectName) || foreign.has(call.objectName)) continue;
         if (call.objectName.length > 3) continue;
         let set = hits.get(call.objectName);
         if (!set) {
@@ -954,5 +971,5 @@ export function collectPackageNamespaces(
     }
     for (const [ident, names] of hits) if (names.size >= 2) namespaces.add(ident);
   }
-  return { namespaces, namedImports, aliases };
+  return { namespaces, importedNamespaces, namedImports, aliases };
 }
