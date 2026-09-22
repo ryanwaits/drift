@@ -174,6 +174,24 @@ export function memberReturnType(
   return namedReturnType(signaturesOf(spec, typeName, member)[0]?.returns?.schema);
 }
 
+/**
+ * Spec type a member holds or returns: a property's one `$ref` type (after
+ * `Promise` / `| null`), or a method's named return type. Undefined when the
+ * spec does not name one (`ReadableStream`, a primitive, a union).
+ */
+export function memberTypeName(
+  spec: ApiSpec,
+  typeName: string,
+  member: string,
+): string | undefined {
+  const mem = findMember(spec, typeName, member);
+  if (!mem) return undefined;
+  if (mem.kind === 'method' || mem.signatures?.length) {
+    return memberReturnType(spec, typeName, member);
+  }
+  return soleRefName(unwrapPromise(mem.schema));
+}
+
 /** Overload list for an export or `Type.member`. Empty when the spec has none. */
 export function signaturesOf(spec: ApiSpec, exportName: string, member?: string): ApiSignature[] {
   if (member) {

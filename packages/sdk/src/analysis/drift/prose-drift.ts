@@ -3,6 +3,7 @@ import {
   extractImportsAST,
   extractMethodCallsAST,
   type ImportInfo,
+  type MethodCallInfo,
 } from '../../markdown/ast-extractor';
 import type { MarkdownDocFile } from '../../markdown/types';
 import { ambiguousExports, fenceEntry, type SpecEntry } from '../../page/entries';
@@ -17,6 +18,7 @@ import {
 import { collectHeadings, sectionText } from '../../page/locators';
 import {
   destructuredTypeName,
+  memberTypeName,
   namedReturnType,
   parseDeprecationReplacement,
   signaturesOf,
@@ -289,6 +291,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
           state.derivedTypes,
           state.paramTypes,
           state.namespaces,
+          state.entry.spec,
         );
       }
 
@@ -560,7 +563,9 @@ function packageReceiverType(
 
 /**
  * Detect method/property calls on package-typed receivers that don't exist
- * on that type. Unknown receivers are not flagged.
+ * on that type. Unknown receivers are not flagged. A chained receiver
+ * (`result.stream.pipeThrough()`) is judged on the type the spec gives the
+ * property read on the way, or not at all.
  */
 function detectUnresolvedMembers(
   code: string,
@@ -571,14 +576,18 @@ function detectUnresolvedMembers(
   packageDerivedTypes: Map<string, string>,
   packageParamTypes: Map<string, string>,
   namespaces: ReadonlySet<string> = new Set(),
+  spec?: ApiSpec,
 ): void {
   let calls = extractMethodCallsAST(code);
   if (calls.length === 0) return;
 
-  // Deduplicate: same objectName.methodName pair in the same block
+  const receiverOf = (call: MethodCallInfo): string =>
+    call.via ? `${call.objectName}.${call.via}` : call.objectName;
+
+  // Deduplicate: same receiver.methodName pair in the same block
   const seen = new Set<string>();
   calls = calls.filter((call) => {
-    const key = `${call.objectName}.${call.methodName}`;
+    const key = `${receiverOf(call)}.${call.methodName}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -588,10 +597,18 @@ function detectUnresolvedMembers(
     if (GLOBAL_RECEIVERS.has(call.objectName)) continue;
     if (namespaces.has(call.objectName)) continue;
     if (JS_BUILTIN_METHODS.has(call.methodName)) continue;
-    const typeName = packageReceiverType(call.objectName, packageDerivedTypes, packageParamTypes);
+    const rootType = packageReceiverType(call.objectName, packageDerivedTypes, packageParamTypes);
+    if (!rootType) continue;
+    const typeName =
+      call.via === undefined
+        ? rootType
+        : spec
+          ? memberTypeName(spec, rootType, call.via)
+          : undefined;
     if (!typeName) continue;
     if (!registry.closedReceivers.has(typeName)) continue;
     if (registry.typeMembers.get(call.methodName)?.has(typeName)) continue;
+    const receiver = receiverOf(call);
 
     // Only members of the receiver's own type: another type's member is no fix.
     const own = registry.allMemberNames.filter((m) => registry.typeMembers.get(m)?.has(typeName));
@@ -602,8 +619,8 @@ function detectUnresolvedMembers(
 
     issues.push({
       type: 'prose-unresolved-member',
-      target: `${call.objectName}.${call.methodName}`,
-      issue: `Method '${call.methodName}' called on '${call.objectName}' does not exist on '${typeName}'`,
+      target: `${receiver}.${call.methodName}`,
+      issue: `Method '${call.methodName}' called on '${receiver}' does not exist on '${typeName}'`,
       suggestion,
       filePath,
       line: lineStart + call.line,

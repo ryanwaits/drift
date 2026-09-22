@@ -82,8 +82,10 @@ export interface CallInfo {
 }
 
 export interface MethodCallInfo {
-  /** The object/variable name (e.g., "client") */
+  /** The root object/variable name (e.g., "client") */
   objectName: string;
+  /** For `root.via.method()`: the one property read between root and method */
+  via?: string;
   /** The method being called (e.g., "evaluateChainhook") */
   methodName: string;
   /** Line number (0-indexed) */
@@ -306,15 +308,18 @@ export function extractMethodCallsAST(code: string): MethodCallInfo[] {
           const objectExpr = expression.expression;
           const lineNumber = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line;
 
-          // Get the immediate object name
+          // The root identifier, plus the one property read on the way for
+          // `a.b.method()`. Deeper chains and call receivers name no root.
           let objectName: string | undefined;
+          let via: string | undefined;
           if (ts.isIdentifier(objectExpr)) {
             objectName = objectExpr.text;
-          } else if (ts.isPropertyAccessExpression(objectExpr)) {
-            // For chained access like a.b.method(), get 'a.b' or just 'a'
-            if (ts.isIdentifier(objectExpr.expression)) {
-              objectName = objectExpr.expression.text;
-            }
+          } else if (
+            ts.isPropertyAccessExpression(objectExpr) &&
+            ts.isIdentifier(objectExpr.expression)
+          ) {
+            objectName = objectExpr.expression.text;
+            via = objectExpr.name.text;
           } else if (objectExpr.kind === ts.SyntaxKind.ThisKeyword) {
             objectName = 'this';
           }
@@ -323,6 +328,7 @@ export function extractMethodCallsAST(code: string): MethodCallInfo[] {
           if (objectName && !isBuiltInIdentifier(objectName)) {
             calls.push({
               objectName,
+              ...(via !== undefined ? { via } : {}),
               methodName,
               line: lineNumber,
               context: lines[lineNumber]?.trim() ?? '',

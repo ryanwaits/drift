@@ -5941,3 +5941,76 @@ describe('prose-unknown-key in prose: "the `k` option" of an export whose option
     expect(d.claims.filter((c) => c.rule?.type === 'prose-unknown-key')).toEqual([]);
   });
 });
+
+describe('prose-unresolved-member on a chained receiver (vercel/ai `result.stream.pipeThrough`)', () => {
+  const F3 = '```';
+  const spec = {
+    meta: { name: 'ai' },
+    exports: [
+      {
+        id: 'streamText',
+        name: 'streamText',
+        kind: 'function',
+        signatures: [{ returns: { schema: { $ref: '#/types/StreamTextResult' } } }],
+      },
+      {
+        id: 'StreamTextResult',
+        name: 'StreamTextResult',
+        kind: 'interface',
+        members: [
+          { name: 'textStream', kind: 'property', schema: { 'x-ts-type': 'ReadableStream' } },
+          { name: 'stream', kind: 'property', schema: { 'x-ts-type': 'ReadableStream' } },
+          { name: 'usage', kind: 'property', schema: { $ref: '#/types/Usage' } },
+          { name: 'toUIMessageStream', kind: 'method' },
+        ],
+      },
+      {
+        id: 'Usage',
+        name: 'Usage',
+        kind: 'interface',
+        members: [{ name: 'total', kind: 'method' }],
+      },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  const registry = buildExportRegistry(spec);
+  function unresolved(code: string) {
+    const md = `# Streaming\n\n${F3}ts\nimport { streamText } from 'ai';\nconst result = streamText({});\n${code}\n${F3}\n`;
+    const file = parseMarkdownFile(md, 'docs/streaming.md');
+    return detectProseDrift({ packageName: 'ai', markdownFiles: [file], registry, spec })
+      .filter((i) => i.type === 'prose-unresolved-member')
+      .map((i) => `${i.target} on ${i.owner}`);
+  }
+
+  test("a.b.c() is skipped when b's type does not resolve to a closed spec type", () => {
+    expect(unresolved('result.stream.pipeThrough(transform);')).toEqual([]);
+    expect(unresolved('result.textStream.getReader();')).toEqual([]);
+    expect(unresolved('result.nope.getReader();')).toEqual([]);
+    expect(unresolved('result.usage.total.toFixed(2);')).toEqual([]);
+  });
+
+  test("a.b.c() is judged on b's type when it resolves", () => {
+    expect(unresolved('result.usage.total();')).toEqual([]);
+    expect(unresolved('result.usage.nope();')).toEqual(['result.usage.nope on Usage']);
+  });
+
+  test('a direct member on the root receiver still fires', () => {
+    expect(unresolved('result.nope();')).toEqual(['result.nope on StreamTextResult']);
+  });
+
+  test('the page claim sits on the chained call', () => {
+    const md = `# Streaming\n\n${F3}ts\nimport { streamText } from 'ai';\nconst result = streamText({});\nresult.usage.nope();\n${F3}\n`;
+    const d = buildPageDocument({
+      spec,
+      registry,
+      file: 'docs/streaming.md',
+      content: md,
+      packageName: 'ai',
+    });
+    const hit = d.claims.find((c) => c.rule?.type === 'prose-unresolved-member');
+    expect(hit?.locator.start.line).toBe(6);
+    expect(hit?.rule?.issue).toBe(
+      "Method 'nope' called on 'result.usage' does not exist on 'Usage'",
+    );
+  });
+});
