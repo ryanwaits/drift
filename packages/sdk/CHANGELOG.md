@@ -1,5 +1,12 @@
 # @doccov/sdk
 
+## 1.18.1
+
+### Patch Changes
+
+- 0e5430e: `prose-missing-required` also fires when a call satisfies none of the alternatives a spec requires (`one of prompt, messages`)
+- 19e7ae1: On OpenPkg 0.55.1: a destructured union parameter keeps which keys a caller must pick between, so `generateText({ model })` is reported as needing one of `prompt`, `messages`.
+
 ## 1.18.0
 
 ### Minor Changes
