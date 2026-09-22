@@ -8,7 +8,7 @@ import {
   extractDocumentedKeys,
   resolveTypeEntries,
 } from '../analysis/key-coverage';
-import { parseMarkdownFile } from '../markdown/parser';
+import { getExecutableLangs, parseMarkdownFile } from '../markdown/parser';
 import type { MarkdownDocFile } from '../markdown/types';
 import { closedObjectShape, detectCallSiteHits } from './call-sites';
 import { extractFenceDeclarations } from './declarations';
@@ -16,6 +16,7 @@ import { ambiguousExports, fenceEntry } from './entries';
 import {
   blockContaining,
   collectPackageNamespaces,
+  diffView,
   extractCallSites,
   extractExportBindings,
   extractFenceCalls,
@@ -115,7 +116,14 @@ const NONE: ReadonlySet<string> = new Set();
 function pageScope(opts: BuildPageDocumentOptions): PageScope {
   let scope = scopes.get(opts);
   if (!scope) {
-    const parsed = parseMarkdownFile(opts.content, opts.file);
+    // A `diff` fence, or a ts fence with `+` / `-` lines, is read as its "after" code.
+    const raw = parseMarkdownFile(opts.content, opts.file, {
+      executableLangs: [...getExecutableLangs(), 'diff'],
+    });
+    const parsed: MarkdownDocFile = {
+      ...raw,
+      codeBlocks: raw.codeBlocks.map((b) => ({ ...b, code: diffView(b.code).code })),
+    };
     const packageName = opts.packageName ?? opts.spec.meta.name;
     const codes = parsed.codeBlocks.map((b) => b.code);
     const secondaries = opts.alsoSpecs ?? [];

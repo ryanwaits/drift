@@ -9,6 +9,7 @@ import { detectProseDrift } from '../src/analysis/drift/prose-drift';
 import { parseMarkdownFile } from '../src/markdown/parser';
 import { buildPageDocument, buildPageDocuments } from '../src/page';
 import { closedObjectShape } from '../src/page/call-sites';
+import { diffView } from '../src/page/fences';
 import { collectHeadings } from '../src/page/locators';
 
 const PKG = '@waits/lively-react';
@@ -6026,9 +6027,7 @@ describe('JSX props: one object parameter the spec cannot close claims nothing',
         kind: 'function',
         signatures: [
           {
-            parameters: [
-              { name: 'options', required: true, schema: { $ref: '#/types/Missing' } },
-            ],
+            parameters: [{ name: 'options', required: true, schema: { $ref: '#/types/Missing' } }],
           },
         ],
       },
@@ -6036,14 +6035,18 @@ describe('JSX props: one object parameter the spec cannot close claims nothing',
         id: 'Labelled',
         name: 'Labelled',
         kind: 'function',
-        signatures: [{ parameters: [{ name: 'label', required: true, schema: { type: 'string' } }] }],
+        signatures: [
+          { parameters: [{ name: 'label', required: true, schema: { type: 'string' } }] },
+        ],
       },
       {
         id: 'Panel',
         name: 'Panel',
         kind: 'function',
         signatures: [
-          { parameters: [{ name: 'props', required: true, schema: { $ref: '#/types/PanelProps' } }] },
+          {
+            parameters: [{ name: 'props', required: true, schema: { $ref: '#/types/PanelProps' } }],
+          },
         ],
       },
       // OpenPkg prints a type export as a self-`$ref` beside the full entry in `types`.
@@ -6077,7 +6080,10 @@ describe('JSX props: one object parameter the spec cannot close claims nothing',
       packageName: '@ai-sdk/react',
     })
       .claims.filter((c) => c.rule)
-      .map((c) => `${c.rule?.type}: ${c.rule?.issue}${c.rule?.suggestion ? ` (${c.rule.suggestion})` : ''}`);
+      .map(
+        (c) =>
+          `${c.rule?.type}: ${c.rule?.issue}${c.rule?.suggestion ? ` (${c.rule.suggestion})` : ''}`,
+      );
   }
 
   test('an unresolved props type: no synthetic `options` prop, no claim', () => {
@@ -6099,5 +6105,99 @@ describe('JSX props: one object parameter the spec cannot close claims nothing',
     expect(rulesOf('<Panel fallback={f} />')).toEqual([
       "prose-missing-required: JSX '<Panel>' is missing required prop 'part'",
     ]);
+  });
+});
+
+describe('diff fences: removed lines are not checked, added lines are (vercel/ai workflow-agent)', () => {
+  const F3 = '```';
+  const spec = {
+    meta: { name: 'ai' },
+    exports: [
+      {
+        id: 'tool',
+        name: 'tool',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [
+              {
+                name: 'tool',
+                required: true,
+                schema: {
+                  type: 'object',
+                  properties: { description: {}, inputSchema: {}, execute: {}, needsApproval: {} },
+                  required: ['inputSchema'],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  const registry = buildExportRegistry(spec);
+  function rulesOf(fence: string) {
+    return buildPageDocument({
+      spec,
+      registry,
+      file: 'docs/agents/workflow-agent.mdx',
+      content: `# Workflow agent\n\n## Approvals\n\n${fence}`,
+      packageName: 'ai',
+    })
+      .claims.filter((c) => c.rule)
+      .map(
+        (c) => `${c.locator.start.line}:${c.locator.start.col} ${c.rule?.type}: ${c.rule?.issue}`,
+      );
+  }
+  const body = [
+    "import { tool } from 'ai';",
+    '  bookFlight: tool({',
+    "    description: 'Book a flight',",
+    '    inputSchema: schema,',
+    '+   needsApproval: true,',
+    '-   execute: async (input) => {',
+    '-     const approved = await waitForApprovalHook(input);',
+    '-     return bookFlightStep(input);',
+    '-   },',
+    '+   execute: bookFlightStep,',
+    '  }),',
+  ].join('\n');
+
+  test('a ts fence with +/- prefixed lines is read as the added code, not as one broken call', () => {
+    expect(rulesOf(`${F3}ts\n${body}\n${F3}\n`)).toEqual([]);
+  });
+
+  test('a `diff` fence is checked the same way', () => {
+    expect(rulesOf(`${F3}diff\n${body}\n${F3}\n`)).toEqual([]);
+  });
+
+  test('an added unknown key is reported on the call, located through the markers; a removed one is not', () => {
+    const added = body.replace('+   needsApproval: true,', '+   nope: true,');
+    expect(rulesOf(`${F3}ts\n${added}\n${F3}\n`)).toEqual([
+      "7:15 prose-unknown-key: Unknown key 'nope' on 'tool'",
+    ]);
+    const addedCall = body.replace(
+      "import { tool } from 'ai';",
+      "import { tool } from 'ai';\n+ tool({ nope: 1 });",
+    );
+    expect(rulesOf(`${F3}ts\n${addedCall}\n${F3}\n`)).toEqual([
+      "7:3 prose-unknown-key: Unknown key 'nope' on 'tool'",
+      "7:3 prose-missing-required: Call 'tool' is missing required argument 'inputSchema'",
+    ]);
+    const removed = body.replace('+   needsApproval: true,', '-   nope: true,');
+    expect(rulesOf(`${F3}ts\n${removed}\n${F3}\n`)).toEqual([]);
+  });
+
+  test('a leading minus with no space, or a bullet inside a template literal, is code', () => {
+    expect(diffView('const x =\n-1;\ntool({ inputSchema: s });').diff).toBe(false);
+    const prompt =
+      'tool({\n  description: `Rules:\n- search first\n- reply directly`,\n  inputSchema: s,\n});';
+    expect(diffView(prompt)).toEqual({ diff: false, code: prompt });
+    expect(rulesOf(`${F3}ts\nimport { tool } from 'ai';\n${prompt}\n${F3}\n`)).toEqual([]);
+    expect(diffView('- import { a } from "b";\n+ import { c } from "d";')).toEqual({
+      diff: true,
+      code: '\n  import { c } from "d";',
+    });
   });
 });

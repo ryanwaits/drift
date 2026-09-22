@@ -905,6 +905,58 @@ export function isPackageModule(from: string, packageName: string): boolean {
   return from === packageName || from.startsWith(`${packageName}/`);
 }
 
+const DIFF_LINE: RegExp = /^[+-](?: |$)/;
+
+/** Offsets of template literals and block comments: a `- ` bullet inside a prompt string is text. */
+function literalRanges(code: string): Array<[number, number]> {
+  const ranges: Array<[number, number]> = [];
+  try {
+    const sourceFile = ts.createSourceFile(
+      'temp.ts',
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const walk = (node: TS.Node): void => {
+      if (ts.isTemplateLiteral(node) || ts.isStringLiteral(node)) {
+        ranges.push([node.getStart(sourceFile), node.end]);
+        return;
+      }
+      for (const r of ts.getLeadingCommentRanges(code, node.getFullStart()) ?? []) {
+        if (r.kind === ts.SyntaxKind.MultiLineCommentTrivia) ranges.push([r.pos, r.end]);
+      }
+      ts.forEachChild(node, walk);
+    };
+    walk(sourceFile);
+  } catch {
+    // parse failure: no ranges
+  }
+  return ranges;
+}
+
+/**
+ * A fence written as a diff: lines prefixed `+` / `-` at column 0 (a space
+ * after the marker; `-1` is a number; a `- ` bullet inside a template
+ * literal is text). `code` is the "after" view with the same lines and
+ * columns: removed lines blanked, markers replaced by a space. Not a diff:
+ * `code` unchanged.
+ */
+export function diffView(code: string): { diff: boolean; code: string } {
+  const lines = code.split('\n');
+  if (!lines.some((l) => DIFF_LINE.test(l))) return { diff: false, code };
+  const ranges = literalRanges(code);
+  let offset = 0;
+  const marker: boolean[] = lines.map((l) => {
+    const at = offset;
+    offset += l.length + 1;
+    return DIFF_LINE.test(l) && !ranges.some(([a, b]) => at > a && at < b);
+  });
+  if (!marker.some(Boolean)) return { diff: false, code };
+  const after = lines.map((l, i) => (marker[i] ? (l[0] === '-' ? '' : ` ${l.slice(1)}`) : l));
+  return { diff: true, code: after.join('\n') };
+}
+
 /**
  * Prose that negates an API rather than teaching it: `has been removed`,
  * `no longer available`, `will no longer work`, `Removed`, `renamed from`.
