@@ -6538,3 +6538,79 @@ describe("a section that walks a type's members documents its surface (lively /d
     ]);
   });
 });
+
+describe('a migration "before" fence yields no claims at all, not even inventory', () => {
+  const F3 = '```';
+  const spec = {
+    meta: { name: 'ai' },
+    exports: [
+      {
+        id: 'streamText',
+        name: 'streamText',
+        kind: 'function',
+        signatures: [
+          { parameters: [{ name: 'options', required: true, schema: { type: 'object' } }] },
+        ],
+      },
+      {
+        id: 'oldHelper',
+        name: 'oldHelper',
+        kind: 'function',
+        deprecated: true,
+        deprecationReason: 'Use newHelper instead',
+      },
+      { id: 'newHelper', name: 'newHelper', kind: 'function' },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  const registry = buildExportRegistry(spec);
+  const fence = (info: string, helper: string) =>
+    `${F3}${info}\nimport { streamText, ${helper} } from 'ai';\nconst r = streamText({ model });\n${helper}();\n${F3}\n`;
+  function doc(content: string) {
+    return buildPageDocument({
+      spec,
+      registry,
+      file: 'docs/migration.mdx',
+      content,
+      packageName: 'ai',
+    });
+  }
+  const inside = (d: ReturnType<typeof doc>, from: number, to: number) =>
+    d.claims.filter((c) => c.locator.start.line >= from && c.locator.start.line <= to);
+
+  test('Before / After headings: nothing inside the before fence, normal claims in the after fence', () => {
+    // Lines: 1 H1, 3 ## Before, 5-9 before fence, 11 ## After, 13-17 after fence.
+    const d = doc(
+      `# Migration\n\n## Before\n\n${fence('ts', 'oldHelper')}\n## After\n\n${fence('ts', 'newHelper')}`,
+    );
+    expect(inside(d, 5, 9)).toEqual([]);
+    const after = inside(d, 13, 17);
+    expect(after.map((c) => `${c.rule?.type ?? c.kind}:${c.specRef?.export}`).sort()).toEqual([
+      'inline:newHelper',
+      'inline:streamText',
+    ]);
+    expect(after.every((c) => c.candidate)).toBe(true);
+  });
+
+  test('fence titles: `title="AI SDK 5"` beside `title="AI SDK 6"`', () => {
+    const d = doc(
+      `# Migration\n\n${fence('tsx title="AI SDK 5"', 'oldHelper')}\n${fence('tsx title="AI SDK 6"', 'newHelper')}`,
+    );
+    expect(inside(d, 3, 7)).toEqual([]);
+    expect(
+      inside(d, 9, 13)
+        .map((c) => c.specRef?.export)
+        .sort(),
+    ).toEqual(['newHelper', 'streamText']);
+  });
+
+  test('prose around a before fence is still claimed', () => {
+    const d = doc(
+      `# Migration\n\n## Before\n\nCall \`oldHelper\` like this:\n\n${fence('ts', 'oldHelper')}`,
+    );
+    expect(d.claims.map((c) => `${c.kind}:${c.locator.start.line}`)).toEqual([
+      'inline:5',
+      'prose:5',
+    ]);
+  });
+});

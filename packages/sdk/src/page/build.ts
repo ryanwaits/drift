@@ -1160,7 +1160,8 @@ function proseClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): C
  * Build a page-level document of claims, locators, and spec slices.
  *
  * Detection only. Hosts paint the JSON. A separate review product may Jev
- * `candidate` claims — this package does not.
+ * `candidate` claims — this package does not. A migration "before" fence
+ * (`isMigrationFence`) carries no claims at all.
  *
  * @param options - Spec, registry, and markdown page
  * @returns Page document for one markdown file
@@ -1197,7 +1198,17 @@ export function buildPageDocument(options: BuildPageDocumentOptions): PageDocume
   for (const c of proseClaims(opts, headings)) pushUnique(claims, c);
   for (const c of gapClaims(opts, headings, claims)) pushUnique(claims, c);
 
-  const ordered = sortClaims(claims);
+  // A "before" fence shows the old API on purpose: no claim, so no question is asked of it.
+  const history = parsed.codeBlocks.filter((b) =>
+    isMigrationFence(opts.content, b.lineStart, b.code),
+  );
+  const current = claims.filter(
+    (c) =>
+      !history.some(
+        (b) => c.locator.start.line >= b.lineStart && c.locator.start.line <= b.lineEnd,
+      ),
+  );
+  const ordered = sortClaims(current);
   const refs = ordered.map((c) => c.specRef).filter((r): r is SpecRef => r !== null);
 
   return {
