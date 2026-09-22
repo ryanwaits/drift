@@ -89,7 +89,9 @@ export type RuleHit = {
  * Unknown receiver = no claim. Type arguments are not arguments. A fence that
  * prints a signature (`name: Type` params, `): ReturnType`) is not a call.
  * An argument list that is only a comment or `...` is an elision: no arity
- * or missing-required claim. `import * as ns from '<pkg>'` is a namespace
+ * or missing-required claim. An object literal whose body carries an elision
+ * marker (a `...` / `…` comment, a bare `…` line, a spread) or a JSX tag with `{...props}`
+ * is a partial sample: no missing-required, but a written key is still judged. `import * as ns from '<pkg>'` is a namespace
  * alias, never a missing export; `ns.member` is checked as the export
  * `member`. A receiver is a spec type only through a visible binding
  * (`new T()`, a typed return, `: T`, an import) — not because its name

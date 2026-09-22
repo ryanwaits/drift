@@ -453,7 +453,8 @@ function missingRequired(spec: ApiSpec, overloads: OverloadShape[], site: CallSi
       if (p.rest) return;
       if (p.required) names.add(`param:${i}:${p.name}`);
       const arg = site.args[i];
-      if (arg?.keys) {
+      // An elided literal (`{ // ... }`, `{ ...rest }`) may hold its keys in the part not shown.
+      if (arg?.keys && !arg.elided) {
         const sh = closedAt(spec, ov, i);
         if (sh) for (const k of sh.required) names.add(`key:${k}`);
       }

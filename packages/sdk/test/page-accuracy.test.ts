@@ -5262,3 +5262,99 @@ describe('a printed `interface X { ... }` documents the members it declares', ()
     expect(declared(doc(page(`interface ToolCallPart {\n  ${body}\n}`)))).toHaveLength(1);
   });
 });
+
+describe('an elided object literal is a partial sample: no missing-required, unknown keys still judged', () => {
+  const F3 = '```';
+  const spec = {
+    meta: { name: 'ai' },
+    exports: [
+      {
+        id: 'generateText',
+        name: 'generateText',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [
+              {
+                name: 'options',
+                required: true,
+                schema: {
+                  type: 'object',
+                  properties: { model: {}, prompt: {}, output: {}, tools: {} },
+                  required: ['model'],
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'Button',
+        name: 'Button',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [
+              {
+                name: 'props',
+                required: true,
+                schema: {
+                  type: 'object',
+                  properties: { label: {}, size: {} },
+                  required: ['label'],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  const registry = buildExportRegistry(spec);
+  function rulesOf(code: string, lang = 'ts') {
+    return buildPageDocument({
+      spec,
+      registry,
+      file: 'docs/generating-structured-data.md',
+      content: `# Structured data\n\n${F3}${lang}\nimport { generateText, Button } from 'ai';\n${code}\n${F3}\n`,
+      packageName: 'ai',
+    })
+      .claims.filter((c) => c.rule)
+      .map((c) => `${c.rule?.type}: ${c.rule?.issue}`);
+  }
+
+  test('`// ...` as the first line of the body', () => {
+    expect(
+      rulesOf(
+        'const result = await generateText({\n  // ...\n  output: Output.object({ schema }),\n});',
+      ),
+    ).toEqual([]);
+  });
+
+  test('`/* ... */` alone in the body, and a marker with trailing text', () => {
+    expect(rulesOf('generateText({\n  /* ... */\n})')).toEqual([]);
+    expect(rulesOf('generateText({\n  prompt: "hi",\n  // ... other options\n})')).toEqual([]);
+    expect(rulesOf('generateText({\n  prompt: "hi",\n  // …\n})')).toEqual([]);
+  });
+
+  test('a spread in the body', () => {
+    expect(rulesOf('generateText({ ...options, prompt: "hi" })')).toEqual([]);
+    expect(rulesOf('<Button {...props} size="lg" />', 'tsx')).toEqual([]);
+  });
+
+  test('a written key that is wrong still fires', () => {
+    expect(rulesOf('generateText({\n  // ...\n  promt: "hi",\n})')).toEqual([
+      "prose-unknown-key: Unknown key 'promt' on 'generateText'",
+    ]);
+  });
+
+  test('a full literal still gets missing-required', () => {
+    expect(rulesOf('generateText({\n  prompt: "hi", // the prompt\n})')).toEqual([
+      "prose-missing-required: Call 'generateText' is missing required argument 'model'",
+    ]);
+    expect(rulesOf('<Button size="lg" />', 'tsx')).toEqual([
+      "prose-missing-required: JSX '<Button>' is missing required prop 'label'",
+    ]);
+  });
+});

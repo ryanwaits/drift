@@ -433,6 +433,8 @@ export type LiteralValue = {
 export type CallSiteArg = {
   keys?: string[];
   hasSpread?: boolean;
+  /** Object literal whose body carries an elision marker (`// ...`) or a spread: a partial sample */
+  elided?: boolean;
   /** The argument is a literal */
   literal?: LiteralValue;
   /** Literal property values of an object-literal argument */
@@ -540,6 +542,8 @@ function isBareStatement(node: TS.CallExpression): boolean {
   }
 }
 
+const COMMENT_ELLIPSIS: RegExp = /^(?:\/\/|\/\*)\s*(?:\.\.\.|…)/;
+
 function isElidedArgList(
   node: TS.CallExpression | TS.NewExpression,
   sourceFile: TS.SourceFile,
@@ -551,6 +555,26 @@ function isElidedArgList(
     .trim();
   if (stripped === '...' || stripped === '…') return true;
   return stripped === '' && /\/\*|\/\//.test(inner);
+}
+
+/**
+ * An object literal whose body says "more here": a comment that is only
+ * `...` / `…` (trailing words allowed: `// ... other options`) before any
+ * property or before the closing brace, or a bare `…` line. Spreads are
+ * reported by `objectLiteralKeys` itself.
+ */
+function hasElisionMarker(obj: TS.ObjectLiteralExpression, sourceFile: TS.SourceFile): boolean {
+  const text = sourceFile.text;
+  const positions = [...obj.properties.map((p) => p.getFullStart()), obj.properties.end];
+  for (const pos of positions) {
+    for (const range of ts.getLeadingCommentRanges(text, pos) ?? []) {
+      if (COMMENT_ELLIPSIS.test(text.slice(range.pos, range.end))) return true;
+    }
+  }
+  return obj
+    .getText(sourceFile)
+    .split('\n')
+    .some((line) => /^\s*…\s*$/.test(line));
 }
 
 function literalValue(expr: TS.Expression, sourceFile: TS.SourceFile): LiteralValue | undefined {
@@ -576,7 +600,14 @@ function literalValue(expr: TS.Expression, sourceFile: TS.SourceFile): LiteralVa
 function objectLiteralKeys(
   expr: TS.Expression,
   sourceFile: TS.SourceFile,
-): { keys: string[]; hasSpread: boolean; props: NonNullable<CallSiteArg['props']> } | undefined {
+):
+  | {
+      keys: string[];
+      hasSpread: boolean;
+      elided: boolean;
+      props: NonNullable<CallSiteArg['props']>;
+    }
+  | undefined {
   let inner: TS.Expression = expr;
   if (ts.isParenthesizedExpression(inner)) inner = inner.expression;
   if (ts.isAsExpression(inner)) inner = inner.expression;
@@ -602,7 +633,7 @@ function objectLiteralKeys(
       : undefined;
     if (literal) props.push({ key: n.text, literal });
   }
-  return { keys, hasSpread, props };
+  return { keys, hasSpread, elided: hasSpread || hasElisionMarker(inner, sourceFile), props };
 }
 
 function valueArgs(
@@ -629,6 +660,7 @@ function valueArgs(
         ? {
             keys: obj.keys,
             hasSpread: obj.hasSpread,
+            ...(obj.elided ? { elided: true } : {}),
             ...(obj.props.length ? { props: obj.props } : {}),
           }
         : literal
