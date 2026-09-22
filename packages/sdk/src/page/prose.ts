@@ -4,7 +4,6 @@ import {
   fencedLines,
   frontmatterTitle,
   HEADING,
-  headingAncestorNames,
   headingAncestors,
   indexToPos,
   isApiToken,
@@ -15,7 +14,7 @@ import {
   type PageHeading,
   unwrapApiToken,
 } from './locators';
-import { resolveApiName, resolveMemberName, specRefKey } from './spec-ref';
+import { preferredParents, resolveApiName, resolveMemberName, specRefKey } from './spec-ref';
 import type { SourcePos, SpecRef } from './types';
 
 const BACKTICK: RegExp = /`([^`\n]+)`/g;
@@ -131,18 +130,6 @@ function extractUnits(content: string): Span[] {
   return units;
 }
 
-function ancestorPreferred(
-  registry: ExportRegistry,
-  headings: PageHeading[],
-  line: number,
-): Set<string> | undefined {
-  const preferred = new Set<string>();
-  for (const name of headingAncestorNames(headings, line)) {
-    if (registry.all.has(name) || registry.typeNames.includes(name)) preferred.add(name);
-  }
-  return preferred.size > 0 ? preferred : undefined;
-}
-
 function refsInText(
   text: string,
   spec: ApiSpec,
@@ -194,6 +181,8 @@ export function findProseHits(
   registry: ExportRegistry,
   headings: PageHeading[] = [],
   namespaces?: ReadonlySet<string>,
+  /** Types the whole page is about: a bare member name may be theirs */
+  pageTypes: Iterable<string> = [],
 ): ProseHit[] {
   const hits: ProseHit[] = [];
   const title = frontmatterTitle(content);
@@ -204,7 +193,7 @@ export function findProseHits(
       unit.text,
       spec,
       registry,
-      ancestorPreferred(registry, headings, start.line),
+      preferredParents(registry, headings, start.line, pageTypes),
       namespaces,
       { ancestors: headingAncestors(headings, start.line), title },
     );

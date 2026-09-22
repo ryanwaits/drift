@@ -7,6 +7,7 @@ import {
   resolveTypeEntries,
 } from '../analysis/key-coverage';
 import type { KeyMeta } from '../analysis/key-coverage/types';
+import { headingAncestorNames, type PageHeading } from './locators';
 import type { SpecRef, SpecSlice } from './types';
 
 const IDENT: RegExp = /^[A-Za-z_$][\w$]*$/;
@@ -298,22 +299,33 @@ export function resolveApiName(
   const local = IDENT.test(trimmed) ? registry.localNames?.get(trimmed) : undefined;
   if (local) return makeSpecRef(spec, registry, local);
 
+  // A bare member name is a claim only within a type in scope (a heading,
+  // the page's title or docs-map type): `schema` in an option list is not
+  // the one interface that happens to have a `schema` member.
   const parents = registry.typeMembers.get(trimmed);
   if (!parents || parents.size === 0) return null;
-
-  if (preferredParents) {
-    for (const p of preferredParents) {
-      if (parents.has(p)) return makeSpecRef(spec, registry, p, trimmed);
-    }
-  }
-  if (parents.size === 1) {
-    return makeSpecRef(spec, registry, [...parents][0], trimmed);
-  }
-  const dep = registry.deprecatedMembers.get(trimmed);
-  if (dep && dep.parents.size === 1 && parents.size === dep.parents.size) {
-    return makeSpecRef(spec, registry, [...dep.parents][0], trimmed);
+  for (const p of preferredParents ?? []) {
+    if (parents.has(p)) return makeSpecRef(spec, registry, p, trimmed);
   }
   return null;
+}
+
+/**
+ * Types a bare member name may belong to at `line`: the heading ancestors
+ * that name an export or type, plus the page's own types (`pageTypes`: the
+ * frontmatter title, the docs-map type). Undefined when there are none.
+ */
+export function preferredParents(
+  registry: ExportRegistry,
+  headings: PageHeading[],
+  line: number,
+  pageTypes: Iterable<string> = [],
+): Set<string> | undefined {
+  const preferred = new Set<string>();
+  for (const name of [...headingAncestorNames(headings, line), ...pageTypes]) {
+    if (registry.all.has(name) || registry.typeNames.includes(name)) preferred.add(name);
+  }
+  return preferred.size > 0 ? preferred : undefined;
 }
 
 /** `type Schema = ZodType<...>`: the entry an alias stands for. */

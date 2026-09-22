@@ -56,6 +56,7 @@ import { findParamDocHits, paramDocBlocks } from './param-docs';
 import { findProseHits } from './prose';
 import {
   makeSpecRef,
+  preferredParents,
   resolveApiName,
   resolveCall,
   resolveMemberName,
@@ -584,7 +585,7 @@ function inlineClaims(
     for (const m of line.matchAll(BACKTICK)) {
       const raw = m[1];
       const name = unwrapApiToken(raw);
-      const preferred = ancestorPreferred(registry, headings, lineNo);
+      const preferred = ancestorPreferred(opts, headings, lineNo);
       const after = line.slice((m.index ?? 0) + m[0].length);
       const ancestors = headingAncestors(headings, lineNo);
       // A builtin name is never a member by context: the export, or the language's.
@@ -722,7 +723,7 @@ function headingRef(
     spec,
     registry,
     name,
-    ancestorPreferred(registry, headings, heading.line),
+    ancestorPreferred(opts, headings, heading.line),
     pageScope(opts).namespaces,
   );
 }
@@ -746,16 +747,26 @@ function headingClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]):
   return claims;
 }
 
+/** The types the whole page is about: its frontmatter title and docs-map type. */
+function pageTypes(opts: BuildPageDocumentOptions): string[] {
+  const { spec, registry } = opts;
+  const types: string[] = [];
+  const mapped = mappedPage(opts)?.type;
+  if (mapped) types.push(mapped);
+  const title = frontmatterTitle(opts.content);
+  const ref = title
+    ? resolveApiName(spec, registry, normalizeApiName(title), undefined, pageScope(opts).namespaces)
+    : null;
+  if (ref && !ref.member) types.push(ref.export);
+  return types;
+}
+
 function ancestorPreferred(
-  registry: ExportRegistry,
+  opts: BuildPageDocumentOptions,
   headings: PageHeading[],
   line: number,
 ): Set<string> | undefined {
-  const preferred = new Set<string>();
-  for (const name of headingAncestorNames(headings, line)) {
-    if (registry.all.has(name) || registry.typeNames.includes(name)) preferred.add(name);
-  }
-  return preferred.size > 0 ? preferred : undefined;
+  return preferredParents(opts.registry, headings, line, pageTypes(opts));
 }
 
 /** Lines a heading's section spans: the heading to the next one of its level or higher. */
@@ -1083,7 +1094,14 @@ function gapClaims(
 function proseClaims(opts: BuildPageDocumentOptions, headings: PageHeading[]): Claim[] {
   const { spec, registry, file, content } = opts;
   const claims: Claim[] = [];
-  for (const hit of findProseHits(content, spec, registry, headings, pageScope(opts).namespaces)) {
+  for (const hit of findProseHits(
+    content,
+    spec,
+    registry,
+    headings,
+    pageScope(opts).namespaces,
+    pageTypes(opts),
+  )) {
     const locator = attachHeading({ path: file, start: hit.start, end: hit.end }, headings);
     pushUnique(claims, {
       id: claimId(file, 'prose', hit.specRef, hit.text, locator.start.line),

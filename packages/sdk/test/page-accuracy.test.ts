@@ -104,10 +104,12 @@ describe('spec-not-in-claims is scoped', () => {
     ).toEqual(['getStorage', 'roomId', 'subscribe']);
   });
 
-  test('heading that names a member joins sibling members without a map', () => {
+  test('a heading that names a member with no type in scope joins nothing', () => {
     const doc = page('docs/api/room.md', '# getStorage\n\nFetch the CRDT root.\n');
+    expect(gaps(doc)).toEqual([]);
+    const under = page('docs/api/room.md', '# `Room`\n\n## getStorage\n\nFetch the CRDT root.\n');
     expect(
-      gaps(doc)
+      gaps(under)
         .map((c) => c.text)
         .sort(),
     ).toEqual(['roomId', 'subscribe']);
@@ -5722,5 +5724,75 @@ describe('gaps need the section to document the surface (vercel/ai testing guide
   test("a table in a sibling section is not this section's", () => {
     const table = '## Other\n\n| Option | Type |\n| --- | --- |\n| `model` | `LanguageModel` |\n';
     expect(gapsOf(`# Testing\n\n### ToolLoopAgent\n\n${example}\n${table}`)).toEqual([]);
+  });
+});
+
+describe('a bare backticked member resolves only within a type in scope (vercel/ai telemetry)', () => {
+  const spec = {
+    meta: { name: 'ai' },
+    exports: [
+      { id: 'generateObject', name: 'generateObject', kind: 'function', signatures: [{}] },
+      {
+        id: 'GenerateObjectStartEvent',
+        name: 'GenerateObjectStartEvent',
+        kind: 'interface',
+        members: [
+          { name: 'schema', kind: 'property', deprecated: true, deprecationReason: 'Use output' },
+          { name: 'model', kind: 'property' },
+        ],
+      },
+      {
+        id: 'UseCompletionOptions',
+        name: 'UseCompletionOptions',
+        kind: 'interface',
+        members: [{ name: 'streamProtocol', kind: 'property' }],
+      },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  function refs(content: string, map?: { page: string; type: string }[]) {
+    return buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/telemetry.mdx',
+      content,
+      packageName: 'ai',
+      ...(map ? { docsMap: { pages: map } } : {}),
+    })
+      .claims.filter((c) => c.kind !== 'gap' && c.kind !== 'heading')
+      .map((c) => `${c.kind}:${c.specRef?.export ?? '-'}.${c.specRef?.member ?? ''}`)
+      .sort();
+  }
+  const list = '- `schema`: object generation schema and output mode attributes.\n';
+
+  test('no type in scope: the sole owner is not assumed', () => {
+    expect(refs(`# Telemetry\n\n## Attributes\n\n${list}`)).toEqual([]);
+    expect(refs('# Chatbot\n\nSet the `streamProtocol` option to `text`.\n')).toEqual([]);
+  });
+
+  test('a heading ancestor, the frontmatter title, or the docs map puts the type in scope', () => {
+    const bound = [
+      'inline:GenerateObjectStartEvent.schema',
+      'prose:GenerateObjectStartEvent.schema',
+    ];
+    expect(refs(`# Telemetry\n\n## GenerateObjectStartEvent\n\n${list}`)).toEqual(bound);
+    // The frontmatter line itself names the export in prose.
+    expect(refs(`---\ntitle: GenerateObjectStartEvent\n---\n\n## Attributes\n\n${list}`)).toEqual([
+      bound[0],
+      'prose:GenerateObjectStartEvent.',
+      bound[1],
+    ]);
+    expect(
+      refs(`# Telemetry\n\n${list}`, [
+        { page: 'docs/telemetry.mdx', type: 'GenerateObjectStartEvent' },
+      ]),
+    ).toEqual(bound);
+  });
+
+  test('a leading-dot member (`.schema`) still names its sole owner', () => {
+    expect(refs('# Telemetry\n\nRead `.schema` off the event.\n')).toEqual([
+      'inline:GenerateObjectStartEvent.schema',
+      'prose:GenerateObjectStartEvent.schema',
+    ]);
   });
 });
