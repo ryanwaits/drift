@@ -869,19 +869,28 @@ function headingIsReference(
   return heading.code === true || isCallForm(heading.text) || pageNamesType(opts, headings, type);
 }
 
+/** Distinct public members a reference-style section names before it is on the hook for the rest. */
+const WALKED_MEMBERS = 3;
+
 /**
  * The section documents the type's surface: it prints a declaration of the
- * type, or carries a parameter / option table (or `Parameters` list) whose
- * owner is the type or whose keys are members of it. A fence that merely
- * uses the type (one mock example on a testing guide) is not that.
+ * type, carries a parameter / option table (or `Parameters` list) whose
+ * owner is the type or whose keys are members of it, or walks the type's
+ * members one by one (`WALKED_MEMBERS` distinct public members named by
+ * code-span labels, `x.member(` calls on a bound receiver or `Type.member`
+ * text; option keys do not count). A fence that merely uses the type (one
+ * mock example on a testing guide) is not that.
  */
 function sectionDocumentsType(
   opts: BuildPageDocumentOptions,
   headings: PageHeading[],
   heading: PageHeading,
   type: string,
+  claims: Claim[],
 ): boolean {
   const { spec, registry, content } = opts;
+  const walked = mentionedMembers(opts, type, claims, headings, { optionKeys: false });
+  if (walked.size >= WALKED_MEMBERS) return true;
   if (
     sectionFences(opts, headings, heading).some((b) =>
       extractFenceDeclarations(b.code).some((d) => d.name === type),
@@ -906,9 +915,13 @@ function sectionDocumentsType(
  * heading joins (`headingJoins`) whose section documents the surface: the
  * heading is written as the API or the page is titled after the type
  * (`headingIsReference`), or the section prints a declaration or an option
- * table for it (`sectionDocumentsType`).
+ * table for it, or walks its members (`sectionDocumentsType`).
  */
-function joinTypes(opts: BuildPageDocumentOptions, headings: PageHeading[]): Set<string> {
+function joinTypes(
+  opts: BuildPageDocumentOptions,
+  headings: PageHeading[],
+  claims: Claim[],
+): Set<string> {
   const types = new Set<string>();
   const mapped = mappedPage(opts);
   if (mapped) types.add(mapped.type);
@@ -923,7 +936,7 @@ function joinTypes(opts: BuildPageDocumentOptions, headings: PageHeading[]): Set
     if (!headingJoins(opts, headings, heading, type)) continue;
     if (
       headingIsReference(opts, headings, heading, type) ||
-      sectionDocumentsType(opts, headings, heading, type)
+      sectionDocumentsType(opts, headings, heading, type, claims)
     ) {
       types.add(type);
     }
@@ -954,11 +967,18 @@ function listedMembers(
   return [...names];
 }
 
+/**
+ * Members of `typeName` the page names: claims on `Type.member`, `Type.member`
+ * text, printed declarations, `x.member` on a receiver bound to the type (or
+ * any member under the type's heading), code-span labels under the type's
+ * heading, and (`optionKeys`, default on) option keys written to the type.
+ */
 function mentionedMembers(
   opts: BuildPageDocumentOptions,
   typeName: string,
   claims: Claim[],
   headings: PageHeading[],
+  { optionKeys = true }: { optionKeys?: boolean } = {},
 ): Set<string> {
   const mentioned = new Set<string>();
   for (const c of claims) {
@@ -985,7 +1005,7 @@ function mentionedMembers(
       for (const key of decl.keys) mentioned.add(key.name);
     }
     // An option key written to the type (`new T({ tools })`, `<T tools />`) names the member of that name.
-    for (const site of extractCallSites(block.code)) {
+    for (const site of optionKeys ? extractCallSites(block.code) : []) {
       const names = site.objectName
         ? namespaces.has(site.objectName)
           ? site.name
@@ -1058,7 +1078,7 @@ function gapClaims(
   existing: Claim[],
 ): Claim[] {
   const { spec, registry, file } = opts;
-  const types = joinTypes(opts, headings);
+  const types = joinTypes(opts, headings, existing);
   if (types.size === 0) return [];
 
   const claims: Claim[] = [];

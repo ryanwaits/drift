@@ -6381,3 +6381,160 @@ describe('before / after migration fences: the old code is history, the new code
     expect(hits(`# Guide\n\n${F3}ts\n// before\n${code('oldHelper')}\n${F3}\n`)).toEqual([]);
   });
 });
+
+describe("a section that walks a type's members documents its surface (lively /docs/storage)", () => {
+  const F3 = '```';
+  const spec = {
+    meta: { name: '@waits/lively-storage' },
+    exports: [
+      {
+        id: 'StorageDocument',
+        name: 'StorageDocument',
+        kind: 'class',
+        members: [
+          { name: 'getRoot', kind: 'method' },
+          { name: 'serialize', kind: 'method' },
+          { name: 'deserialize', kind: 'method' },
+          { name: 'subscribe', kind: 'method' },
+          { name: 'applyOps', kind: 'method' },
+          { name: 'applySnapshot', kind: 'method' },
+          { name: 'applyLocalOps', kind: 'method' },
+          { name: 'setOnOpsGenerated', kind: 'method' },
+        ],
+      },
+      {
+        id: 'LiveObject',
+        name: 'LiveObject',
+        kind: 'class',
+        members: [
+          { name: 'get', kind: 'method' },
+          { name: 'set', kind: 'method' },
+          { name: 'delete', kind: 'method' },
+          { name: 'toObject', kind: 'method' },
+          { name: 'toImmutable', kind: 'method' },
+        ],
+      },
+      {
+        id: 'ToolLoopAgent',
+        name: 'ToolLoopAgent',
+        kind: 'class',
+        signatures: [
+          {
+            parameters: [
+              {
+                name: 'settings',
+                required: true,
+                schema: { type: 'object', properties: { model: {}, tools: {} } },
+              },
+            ],
+          },
+        ],
+        members: [
+          { name: 'generate', kind: 'method' },
+          { name: 'stream', kind: 'method' },
+          { name: 'tools', kind: 'property' },
+          { name: 'version', kind: 'property' },
+        ],
+      },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  const gapsOf = (content: string, map?: { page: string; type: string }[]) =>
+    buildPageDocument({
+      spec,
+      registry: buildExportRegistry(spec),
+      file: 'docs/storage.md',
+      content,
+      packageName: '@waits/lively-storage',
+      ...(map ? { docsMap: { pages: map } } : {}),
+    })
+      .claims.filter((c) => c.rule?.type === 'spec-not-in-claims')
+      .map((c) => `${c.specRef?.export}.${c.text}`)
+      .sort();
+  const storage = [
+    '# Storage',
+    '',
+    '## StorageDocument',
+    '',
+    'The top-level container that owns the CRDT tree.',
+    '',
+    'Create a document with a root object:',
+    '',
+    `${F3}ts`,
+    'import { StorageDocument, LiveObject } from "@waits/lively-storage";',
+    'const doc = new StorageDocument(root);',
+    F3,
+    '',
+    '`getRoot()` returns the root `LiveObject`:',
+    '',
+    `${F3}ts`,
+    'const root = doc.getRoot();',
+    F3,
+    '',
+    'Serialize and deserialize for persistence:',
+    '',
+    `${F3}ts`,
+    'const snapshot = doc.serialize();',
+    'const restored = StorageDocument.deserialize(snapshot);',
+    F3,
+    '',
+    'Subscribe to changes — shallow or deep:',
+    '',
+    `${F3}ts`,
+    'const unsub = doc.subscribe(root, () => {});',
+    F3,
+    '',
+    '## LiveObject',
+    '',
+    'Constructor and basic operations:',
+    '',
+    `${F3}ts`,
+    'import { LiveObject } from "@waits/lively-storage";',
+    'const obj = new LiveObject({ x: 0 });',
+    F3,
+    '',
+    '`get(key)` — read a field. `set(key, value)` — write a field. `delete(key)` — remove a field.',
+    '',
+  ].join('\n');
+
+  test('the lively storage page: members walked one by one, the rest are gaps', () => {
+    expect(gapsOf(storage)).toEqual([
+      'LiveObject.toImmutable',
+      'LiveObject.toObject',
+      'StorageDocument.applyLocalOps',
+      'StorageDocument.applyOps',
+      'StorageDocument.applySnapshot',
+      'StorageDocument.setOnOpsGenerated',
+    ]);
+  });
+
+  test('two members mentioned is below the bar; a bare heading with no fence evidence never joins', () => {
+    const two = storage.replace('`delete(key)` — remove a field.', '');
+    expect(gapsOf(two).filter((g) => g.startsWith('LiveObject.'))).toEqual([]);
+    const noFence = storage.replace(
+      `${F3}ts\nimport { LiveObject } from "@waits/lively-storage";\nconst obj = new LiveObject({ x: 0 });\n${F3}\n`,
+      '',
+    );
+    expect(gapsOf(noFence).filter((g) => g.startsWith('LiveObject.'))).toEqual([]);
+  });
+
+  test('one example with an option key stays a guide section: no gaps', () => {
+    const guide = `# Testing\n\n### ToolLoopAgent\n\n${F3}ts\nimport { ToolLoopAgent } from 'ai';\nconst agent = new ToolLoopAgent({ model, tools: {} });\nconst result = await agent.generate({ prompt: 'hi' });\n${F3}\n`;
+    expect(gapsOf(guide)).toEqual([]);
+    // Option keys do not count toward the bar: `tools` + `generate` + `stream` still only two members.
+    const withStream = guide.replace(
+      "const result = await agent.generate({ prompt: 'hi' });",
+      "const result = await agent.generate({ prompt: 'hi' });\nconst s = agent.stream({ prompt: 'hi' });",
+    );
+    expect(gapsOf(withStream)).toEqual([]);
+  });
+
+  test('a docs-mapped page dumps gaps regardless', () => {
+    const guide = `# Testing\n\n### ToolLoopAgent\n\n${F3}ts\nimport { ToolLoopAgent } from 'ai';\nconst agent = new ToolLoopAgent({ model, tools: {} });\n${F3}\n`;
+    expect(gapsOf(guide, [{ page: 'docs/storage.md', type: 'ToolLoopAgent' }])).toEqual([
+      'ToolLoopAgent.generate',
+      'ToolLoopAgent.stream',
+      'ToolLoopAgent.version',
+    ]);
+  });
+});
