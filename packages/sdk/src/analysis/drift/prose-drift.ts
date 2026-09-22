@@ -249,11 +249,12 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
         shadowed[index],
       );
 
+      // A "before" fence (heading, title version, comment) is history: no reference rule runs on it.
+      const before = isMigrationFence(file.content, block.lineStart, block.code);
       const skipFence =
-        isMigrationFence(file.content, block.lineStart, block.code) ||
-        fenceImportKind(block.code, packageName, state.specifier) === 'foreign';
+        before || fenceImportKind(block.code, packageName, state.specifier) === 'foreign';
       // A fence under `Removed` / after `has been removed` shows what is gone.
-      const negated = isNegatedFence(file.content, block.lineStart);
+      const negated = before || isNegatedFence(file.content, block.lineStart);
 
       // 1. Check imports (existing behavior)
       if (!negated) {
@@ -301,7 +302,7 @@ export function detectProseDrift(options: ProseDriftOptions): SpecDocDrift[] {
       }
 
       // 3. Check references to deprecated exports/members without a deprecation note
-      if (active.deprecated.size > 0 || active.deprecatedMembers.size > 0) {
+      if (!before && (active.deprecated.size > 0 || active.deprecatedMembers.size > 0)) {
         detectDeprecatedReferences(
           block,
           file,

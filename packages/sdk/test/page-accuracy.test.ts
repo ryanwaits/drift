@@ -6215,7 +6215,13 @@ describe('prose-broken-reference is silent under negation (vercel/ai migration g
   const registry = buildExportRegistry(spec);
   const oldFence = `${F3}ts\nimport { convertToCoreMessages, type CoreMessage } from 'ai';\n\nconst coreMessages = convertToCoreMessages(messages);\n${F3}\n`;
   function broken(content: string) {
-    return buildPageDocument({ spec, registry, file: 'docs/migration.mdx', content, packageName: 'ai' })
+    return buildPageDocument({
+      spec,
+      registry,
+      file: 'docs/migration.mdx',
+      content,
+      packageName: 'ai',
+    })
       .claims.filter((c) => c.rule?.type === 'prose-broken-reference')
       .map((c) => c.text);
   }
@@ -6242,5 +6248,136 @@ describe('prose-broken-reference is silent under negation (vercel/ai migration g
   test('negation two paragraphs up does not reach the fence', () => {
     const md = `# Guide\n\n### Messages\n\n\`Foo\` has been removed.\n\nConvert them like this:\n\n${oldFence}`;
     expect(broken(md)).toEqual(['convertToCoreMessages', 'CoreMessage']);
+  });
+});
+
+describe('before / after migration fences: the old code is history, the new code is checked', () => {
+  const F3 = '```';
+  const spec = {
+    meta: { name: 'ai' },
+    exports: [
+      {
+        id: 'streamText',
+        name: 'streamText',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [
+              {
+                name: 'options',
+                required: true,
+                schema: {
+                  type: 'object',
+                  properties: { model: {}, prompt: {} },
+                  required: ['model', 'prompt'],
+                },
+              },
+            ],
+            returns: { schema: { $ref: '#/types/StreamTextResult' } },
+          },
+        ],
+      },
+      {
+        id: 'StreamTextResult',
+        name: 'StreamTextResult',
+        kind: 'interface',
+        members: [{ name: 'textStream', kind: 'property' }],
+      },
+      {
+        id: 'oldHelper',
+        name: 'oldHelper',
+        kind: 'function',
+        deprecated: true,
+        deprecationReason: 'Use newHelper instead',
+      },
+      { id: 'newHelper', name: 'newHelper', kind: 'function' },
+    ],
+    types: [],
+  } as unknown as ApiSpec;
+  const registry = buildExportRegistry(spec);
+  const code = (helper: string) =>
+    `import { streamText, ${helper}, gone } from 'ai';\nconst r = streamText({ model });\nr.nope();\n${helper}();`;
+  const fence = (info: string, helper: string) => `${F3}${info}\n${code(helper)}\n${F3}\n`;
+  const ALL = [
+    'prose-broken-reference:gone',
+    'prose-deprecated-reference:oldHelper',
+    'prose-missing-required:streamText({ model })',
+    'prose-unresolved-member:r.nope()',
+  ];
+  const AFTER = [
+    'prose-broken-reference:gone',
+    'prose-missing-required:streamText({ model })',
+    'prose-unresolved-member:r.nope()',
+  ];
+  function hits(content: string) {
+    return buildPageDocument({
+      spec,
+      registry,
+      file: 'docs/migration.mdx',
+      content,
+      packageName: 'ai',
+    })
+      .claims.filter((c) => c.rule)
+      .map((c) => `${c.rule?.type}:${c.text}`)
+      .sort();
+  }
+  const pair = (before: string, after: string) => `# Migration\n\n${before}${after}`;
+
+  test('a neutral fence reports everything', () => {
+    expect(hits(`# Migration\n\n## Usage\n\n${fence('ts', 'oldHelper')}`)).toEqual(ALL);
+  });
+
+  test('Before / After headings: the before fence is silent, the after fence is checked', () => {
+    const md = pair(
+      `## Before\n\n${fence('ts', 'oldHelper')}\n`,
+      `## After\n\n${fence('ts', 'newHelper')}`,
+    );
+    expect(hits(md)).toEqual(AFTER);
+  });
+
+  test('Previous / New, Old / New, v4 / v5, 4.x / 5.0 headings', () => {
+    for (const [a, b] of [
+      ['Previous', 'New'],
+      ['Old', 'New'],
+      ['v4', 'v5'],
+      ['4.x', '5.0'],
+    ]) {
+      const md = pair(
+        `## ${a}\n\n${fence('ts', 'oldHelper')}\n`,
+        `## ${b}\n\n${fence('ts', 'newHelper')}`,
+      );
+      expect(hits(md)).toEqual(AFTER);
+    }
+  });
+
+  test('numbered steps are not versions: both fences are checked', () => {
+    const md = pair(
+      `## Step 1\n\n${fence('ts', 'oldHelper')}\n`,
+      `## Step 2\n\n${fence('ts', 'newHelper')}`,
+    );
+    expect(hits(md)).toEqual([...ALL, ...AFTER].sort());
+    const titled = pair(
+      fence('ts title="Option 1"', 'oldHelper'),
+      fence('ts title="Option 2"', 'newHelper'),
+    );
+    // Under the H1 alone, the page names the replacement, so the deprecation is acknowledged.
+    expect(hits(titled)).toEqual([...AFTER, ...AFTER].sort());
+  });
+
+  test('fence titles: `title="AI SDK 5"` is before when a later version is on the page', () => {
+    const md = pair(
+      fence('tsx title="AI SDK 5"', 'oldHelper'),
+      fence('tsx title="AI SDK 6"', 'newHelper'),
+    );
+    expect(hits(md)).toEqual(AFTER);
+    // The highest version alone is current, and checked.
+    expect(hits(`# Migration\n\n${fence('tsx title="AI SDK 6"', 'oldHelper')}`)).toEqual(ALL);
+  });
+
+  test('a "Migrating from X" heading and a `// before` comment mark old code', () => {
+    expect(
+      hits(`# Guide\n\n## Migrating from DurableAgent\n\n${fence('ts', 'oldHelper')}`),
+    ).toEqual([]);
+    expect(hits(`# Guide\n\n${F3}ts\n// before\n${code('oldHelper')}\n${F3}\n`)).toEqual([]);
   });
 });

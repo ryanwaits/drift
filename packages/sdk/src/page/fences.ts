@@ -5,7 +5,7 @@ import { namedImportElements } from '../markdown/ast-extractor';
 import type { MarkdownCodeBlock } from '../markdown/types';
 import { ts } from '../ts-module';
 import { isBuiltInIdentifier } from '../utils/builtin-detection';
-import { collectHeadings, FENCE, HEADING, nearestHeading } from './locators';
+import { collectHeadings, FENCE, fencedLines, HEADING, nearestHeading } from './locators';
 import { destructuredTypeName, memberReturnType } from './spec-ref';
 
 export type FenceCall = {
@@ -990,17 +990,77 @@ export function isNegatedFence(markdown: string | undefined, blockLineStart: num
   return isNegatedApiText(introText(markdown.split('\n'), blockLineStart));
 }
 
-/** Heading or fence comment that presents another library's "before" code. */
+const BEFORE_WORD: RegExp =
+  /^(?:change this|before|previous|old)(?:\s+(?:api|code|version|way))?$/i;
+const MIGRATING_FROM: RegExp = /^migrating from\b/i;
+/** `v4`, `4.x`, `4.2`, `Version 3.1`: a heading that is a version and nothing else. */
+const VERSION_HEADING: RegExp = /^(?:(?:v|version\s*)(\d+)(?:\.(?:\d+|x))*|(\d+)\.(?:\d+|x))$/i;
+/** As a fence title, a product name may precede it: `AI SDK 5`, `zod 3.x`. */
+const VERSION_TITLE: RegExp = /^(?:([a-z][a-z ]*?)\s+)?(?:v|version\s*)?(\d+)(?:\.(?:\d+|x))*$/i;
+/** `Step 2`, `Option 1`: an enumerator, never a version. */
+const ENUMERATOR: RegExp =
+  /\b(?:step|option|example|part|phase|chapter|section|approach|variant|attempt|method|way|tip|note|item|case|round|iteration|try)$/i;
+const FENCE_TITLE: RegExp = /\btitle=(?:"([^"]*)"|'([^']*)'|(\S+))/;
+
+function headingVersion(label: string): number | undefined {
+  const m = label.trim().match(VERSION_HEADING);
+  return m ? Number(m[1] ?? m[2]) : undefined;
+}
+
+function titleVersion(label: string): number | undefined {
+  const m = label.trim().match(VERSION_TITLE);
+  if (!m || (m[1] && ENUMERATOR.test(m[1]))) return undefined;
+  return Number(m[2]);
+}
+
+/** `title="AI SDK 5"` of the fence opening at `blockLineStart` (1-indexed). */
+function fenceTitle(lines: readonly string[], blockLineStart: number): string | undefined {
+  const m = lines[blockLineStart - 1]?.match(FENCE_TITLE);
+  return m ? (m[1] ?? m[2] ?? m[3]) : undefined;
+}
+
+/**
+ * The fence shows "before" code: a `// before` / `// previous` / `// change
+ * this` comment; a `Before` / `Previous` / `Old` / `Migrating from X`
+ * heading; or a version label (heading `v4`, fence `title="AI SDK 5"`)
+ * lower than another version label of the same kind on the page. The
+ * "after" side (`After`, `New`, the highest version) is current code, and
+ * checked in full.
+ */
 export function isMigrationFence(
   markdown: string | undefined,
   blockLineStart: number,
   code: string,
 ): boolean {
-  if (/^\s*(\/\/|\/\*)\s*(change this|before|previous)\b/im.test(code)) return true;
+  if (/^\s*(\/\/|\/\*)\s*(change this|before|previous|old)\b/im.test(code)) return true;
   if (!markdown) return false;
-  const heading = nearestHeading(collectHeadings(markdown), blockLineStart)?.text ?? '';
-  return /^(change this|before|previous)(\s+api)?$/i.test(heading);
+  const headings = collectHeadings(markdown);
+  const heading = nearestHeading(headings, blockLineStart)?.text ?? '';
+  if (BEFORE_WORD.test(heading) || MIGRATING_FROM.test(heading)) return true;
+  const lines = markdown.split('\n');
+  const title = fenceTitle(lines, blockLineStart);
+  const own = title !== undefined ? titleVersion(title) : undefined;
+  if (own !== undefined) {
+    const fenced = fencedLines(lines);
+    const titles = lines
+      .map((line, i) =>
+        fenced[i] && FENCE_OPEN_LINE.test(line) ? fenceTitle(lines, i + 1) : undefined,
+      )
+      .map((t) => (t === undefined ? undefined : titleVersion(t)))
+      .filter((v): v is number => v !== undefined);
+    if (titles.some((v) => v > own)) return true;
+  }
+  const version = headingVersion(heading);
+  if (version !== undefined) {
+    const versions = headings
+      .map((h) => headingVersion(h.text))
+      .filter((v): v is number => v !== undefined);
+    if (versions.some((v) => v > version)) return true;
+  }
+  return false;
 }
+
+const FENCE_OPEN_LINE: RegExp = /^\s*(?:>\s*)*(?:`{3,}|~{3,})\S/;
 
 export function fenceImportKind(
   code: string,
